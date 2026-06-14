@@ -30,6 +30,11 @@ const {
 } = require("./plan-management");
 const { getMyTeam, joinTeam, sendEncouragement } = require("./team");
 const {
+  deleteUserData,
+  getCommunityEntry,
+  getProfileData,
+} = require("./profile");
+const {
   parseAiJson,
   validateGoal,
   validatePlan,
@@ -64,6 +69,12 @@ function failure(error) {
     "CANNOT_ENCOURAGE_SELF",
     "MEMBER_NOT_FOUND",
     "ENCOURAGEMENT_ALREADY_SENT",
+    "USER_NOT_FOUND",
+    "COMMUNITY_LOCKED",
+    "COMMUNITY_CONFIG_NOT_FOUND",
+    "DELETE_CONFIRMATION_INVALID",
+    "DELETE_IN_PROGRESS",
+    "DATA_DELETE_FAILED",
   ];
   const code = allowedCodes.includes(error.code) ? error.code : "INTERNAL_ERROR";
   const messages = {
@@ -89,6 +100,12 @@ function failure(error) {
     CANNOT_ENCOURAGE_SELF: error.message,
     MEMBER_NOT_FOUND: error.message,
     ENCOURAGEMENT_ALREADY_SENT: error.message,
+    USER_NOT_FOUND: "用户信息不存在，请重新进入小程序。",
+    COMMUNITY_LOCKED: error.message,
+    COMMUNITY_CONFIG_NOT_FOUND: error.message,
+    DELETE_CONFIRMATION_INVALID: error.message,
+    DELETE_IN_PROGRESS: "数据正在清除，请勿重复提交。",
+    DATA_DELETE_FAILED: "数据暂时未能清除，请稍后重试。",
     INTERNAL_ERROR: "服务暂时不可用，请稍后重试。",
   };
   return {
@@ -334,6 +351,15 @@ exports.main = async (event) => {
     }
     if (event.action === "sendEncouragement") {
       return success(await sendEncouragement(context.OPENID, event));
+    }
+    if (event.action === "getProfileData") {
+      return success(await getProfileData(context.OPENID));
+    }
+    if (event.action === "getCommunityEntry") {
+      return success(await getCommunityEntry(context.OPENID));
+    }
+    if (event.action === "deleteUserData") {
+      return success(await deleteUserData(context.OPENID, event));
     }
 
     const error = new Error("不支持的操作。");

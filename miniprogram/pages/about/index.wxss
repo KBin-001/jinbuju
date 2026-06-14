@@ -1,0 +1,52 @@
+.about-page {
+  padding-top: 72rpx;
+  text-align: center;
+}
+
+.about-mark {
+  width: 128rpx;
+  height: 128rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  border-radius: 38rpx;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-size: 54rpx;
+  font-weight: 700;
+}
+
+.about-title {
+  margin-top: 24rpx;
+  font-size: 44rpx;
+  font-weight: 700;
+}
+
+.about-version {
+  margin-top: 8rpx;
+  color: var(--color-text-secondary);
+  font-size: 24rpx;
+}
+
+.about-card {
+  margin-top: 48rpx;
+  text-align: left;
+}
+
+.about-heading {
+  font-size: 31rpx;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.about-copy,
+.about-footnote {
+  margin-top: 18rpx;
+  color: var(--color-text-secondary);
+  line-height: 1.75;
+}
+
+.about-footnote {
+  font-size: 23rpx;
+}

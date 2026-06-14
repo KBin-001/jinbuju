@@ -1,0 +1,14 @@
+<view class="page about-page">
+  <view class="about-mark">进</view>
+  <view class="about-title">进步局</view>
+  <view class="about-version">版本 {{version}}</view>
+  <view class="card about-card">
+    <view class="about-heading">把想变好，拆成今天就能做到的一步</view>
+    <view class="about-copy">
+      进步局帮助你建立一个清晰目标，用 7 天计划开始行动，并通过每日打卡和轻量小队保持节奏。
+    </view>
+  </view>
+  <view class="about-footnote">
+    产品与法律文本仍在 V1 验证阶段，正式上线信息将在完成审核后补充。
+  </view>
+</view>

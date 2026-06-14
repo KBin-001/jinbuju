@@ -1,0 +1,76 @@
+.data-page {
+  padding-top: 40rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 650;
+}
+
+.scope-list {
+  margin-top: 20rpx;
+  color: var(--color-text-secondary);
+  line-height: 2;
+}
+
+.scope-list view::before {
+  margin-right: 12rpx;
+  color: var(--color-primary);
+  content: "·";
+}
+
+.warning-card {
+  margin-top: 24rpx;
+  padding: 26rpx;
+  border-radius: 24rpx;
+  background: #fff0ee;
+  color: #8f3e37;
+  line-height: 1.65;
+}
+
+.danger-outline-button,
+.danger-button {
+  width: 100%;
+  margin-top: 32rpx;
+  padding: 25rpx;
+  border-radius: 999rpx;
+  font-weight: 650;
+}
+
+.danger-outline-button {
+  border: 1rpx solid #b44c43;
+  color: #b44c43;
+}
+
+.confirmation-card {
+  margin-top: 32rpx;
+}
+
+.confirmation-copy {
+  margin-top: 12rpx;
+  color: var(--color-text-secondary);
+}
+
+.confirmation-input {
+  height: 92rpx;
+  margin-top: 24rpx;
+  padding: 0 24rpx;
+  border: 1rpx solid var(--color-border);
+  border-radius: 20rpx;
+  background: #f9faf7;
+}
+
+.danger-button {
+  background: #b44c43;
+  color: #ffffff;
+}
+
+.danger-button[disabled] {
+  opacity: 0.45;
+}
+
+.error-copy {
+  margin-top: 14rpx;
+  color: #b44c43;
+  font-size: 24rpx;
+}

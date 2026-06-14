@@ -40,6 +40,9 @@ miniprogram/
     plan/                计划
     team/                小队
     profile/             我的
+    legal/               隐私政策与用户协议
+    data-management/     用户数据清除
+    about/               产品说明
   typings/               项目类型声明
   app.ts                 小程序入口
   app.json               页面与 Tab 配置
@@ -66,12 +69,20 @@ AGENTS.md                项目协作与开发约束
 - `plans`
 - `tasks`
 - `plan_generation_requests`
+- `checkins`
+- `teams`
+- `team_members`
+- `encouragements`
+- `community_config`
 
 建议索引：
 
 - `goals`：`_openid + status`
 - `tasks`：`_openid + taskDate`
 - `plan_generation_requests`：`_openid + createdAt`
+- `checkins`：`_openid + businessDate`
+- `team_members`：`userKey + status`
+- `encouragements`：`teamId + receiverUserKey`
 
 所有业务写入均由 `generatePlan` 云函数完成。客户端不需要集合写权限。
 
@@ -135,6 +146,28 @@ npm test
 - `GOAL_DRAFT_V1`：未完成的目标草稿。
 - `PLAN_PREVIEW_V1`：校验后的计划预览，24 小时过期。
 
+## 我的页面与社群配置
+
+“我的”页面通过 `generatePlan` 的 `getProfileData` 动作聚合当前用户的目标、任务、打卡、阶段和小队数据。统计、徽章与社群资格均在云函数中计算，客户端不提交统计值或身份字段。
+
+社群入口使用 `community_config/default` 文档，示例字段：
+
+```json
+{
+  "status": "active",
+  "title": "加入微信陪跑群",
+  "description": "扫码加入陪跑群，一起稳步行动。",
+  "imageFileId": "cloud://环境/社群二维码文件",
+  "minimumCheckinDays": 1,
+  "minimumStreakDays": 3,
+  "requiresActiveGoal": true
+}
+```
+
+`imageFileId` 应指向云存储文件，不要在客户端硬编码公开二维码地址。未配置或配置过期时，页面会显示稳定的不可用提示。
+
+数据清除通过 `deleteUserData` 动作执行，按当前 `OPENID` 删除用户资料、目标、计划、任务、打卡、小队关系、鼓励和生成请求，并清理本地缓存。
+
 ## 开发原则
 
 - AI 调用只允许通过云函数发起，前端不得保存密钥。
@@ -143,9 +176,9 @@ npm test
 - 所有页面必须覆盖加载、空数据、失败和重试状态。
 - V1 仅支持一个进行中的目标。
 
-## 尚未实现
+## V1 暂不实现
 
-- 今日任务读取与打卡
-- 连续打卡统计
-- 小队和固定鼓励
-- 社群入口、隐私政策与数据删除
+- 私聊与实时聊天
+- 多目标并行
+- 复杂历史目标管理
+- 付费与课程商城

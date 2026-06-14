@@ -7,7 +7,11 @@
     "pages/checkin/index",
     "pages/plan/index",
     "pages/team/index",
-    "pages/profile/index"
+    "pages/profile/index",
+    "pages/legal/privacy/index",
+    "pages/legal/terms/index",
+    "pages/data-management/index",
+    "pages/about/index"
   ],
   "window": {
     "backgroundColor": "#F5F7F2",

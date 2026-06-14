@@ -1,0 +1,34 @@
+<view class="page legal-page">
+  <view class="legal-title">进步局用户协议</view>
+  <view class="legal-notice">
+    TODO：上线前补充正式用户协议内容。当前为 V1 产品说明稿，仍需由专业法律顾问审核并补充运营主体、联系方式、生效日期及争议解决条款。
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading">服务说明</view>
+    <view class="legal-copy">
+      进步局提供成长目标拆解、7 天行动计划、任务记录、打卡统计、轻量小队与社群入口。AI 生成内容仅作为行动建议，不构成考试结果、职业录用或其他专业承诺。
+    </view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading">使用规则</view>
+    <view class="legal-copy">
+      你应如实使用自己的账户，不得尝试访问他人数据、绕过权限验证、批量滥用 AI 服务或通过本产品发布违法、不安全内容。
+    </view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading">服务变更</view>
+    <view class="legal-copy">
+      V1 功能仍在持续完善，部分入口可能因云服务、配置或合规要求暂时不可用。我们会尽量保留已有行动记录并提供清晰提示。
+    </view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading">账户与数据</view>
+    <view class="legal-copy">
+      你可以停止使用服务，并在数据管理页清除与当前微信用户身份直接关联的数据。清除后相关记录无法恢复。
+    </view>
+  </view>
+</view>

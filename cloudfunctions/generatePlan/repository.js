@@ -13,6 +13,7 @@ const REQUIRED_COLLECTIONS = [
   "teams",
   "team_members",
   "encouragements",
+  "community_config",
 ];
 let collectionsReady = false;
 

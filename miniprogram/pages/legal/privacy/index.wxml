@@ -1,0 +1,48 @@
+<view class="page legal-page">
+  <view class="legal-title">进步局隐私政策</view>
+  <view class="legal-notice">
+    TODO：上线前补充正式隐私政策内容。当前为 V1 产品说明稿，仍需由专业法律顾问审核并补充运营主体、联系方式与生效日期。
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading">我们处理的信息</view>
+    <view class="legal-copy">
+      为提供目标计划、任务、打卡、连续行动统计、小队进度与社群入口，我们会处理微信平台提供的必要用户标识，以及你主动创建的目标、计划、任务完成情况、打卡记录和小队关系。
+    </view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading">信息使用方式</view>
+    <view class="legal-copy">
+      信息仅用于实现上述产品功能、保障账户与数据安全、定位服务故障，以及在满足条件时展示社群入口。AI 生成仅通过云函数传递生成计划所需的最少目标信息。
+    </view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading">展示与共享</view>
+    <view class="legal-copy">
+      小队成员只能看到昵称、头像和必要的行动进度。我们不会向其他成员展示 OPENID、完整目标描述、AI 输入原文或打卡备注。
+    </view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading">存储与删除</view>
+    <view class="legal-copy">
+      数据存储于项目配置的腾讯云 CloudBase 环境。你可以在“我的 - 数据管理”中发起清除，系统会删除与你直接关联的用户资料、目标、计划、任务、打卡、小队关系和鼓励记录。
+    </view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading">你的权利</view>
+    <view class="legal-copy">
+      你可以查看当前数据、停止使用相关功能并申请清除数据。正式版本的访问、更正、投诉渠道和响应时限仍待法律审核后补充。
+    </view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading">问题反馈</view>
+    <view class="legal-copy">
+      你可以通过“我的 - 问题反馈”使用微信提供的反馈入口。正式版本的其他反馈渠道仍待人工确认。
+    </view>
+  </view>
+</view>

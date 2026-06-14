@@ -8,6 +8,7 @@ const {
   isValidEncouragementType,
   publicMemberId,
 } = require("./team-rules");
+const { buildBadges, isCommunityUnlocked } = require("./profile-rules");
 
 const categories = ["exam", "skill", "career"];
 const weeklyDaysOptions = [3, 5, 7];
@@ -92,6 +93,44 @@ assert.strictEqual(
     "2026-06-15",
   ),
   "expired",
+);
+const badges = buildBadges({
+  checkinDays: 3,
+  longestStreak: 3,
+  completedStages: 0,
+});
+assert.strictEqual(badges.find((badge) => badge.code === "first_checkin").unlocked, true);
+assert.strictEqual(badges.find((badge) => badge.code === "streak_7").unlocked, false);
+assert.strictEqual(
+  isCommunityUnlocked({
+    hasCurrentGoal: true,
+    totalCheckinDays: 3,
+    longestStreak: 3,
+  }),
+  true,
+);
+assert.strictEqual(
+  isCommunityUnlocked({
+    hasCurrentGoal: false,
+    totalCheckinDays: 3,
+    longestStreak: 3,
+  }),
+  false,
+);
+assert.strictEqual(
+  isCommunityUnlocked(
+    {
+      hasCurrentGoal: false,
+      totalCheckinDays: 1,
+      longestStreak: 1,
+    },
+    {
+      requiresActiveGoal: false,
+      minimumCheckinDays: 1,
+      minimumStreakDays: 1,
+    },
+  ),
+  true,
 );
 
 console.log("generatePlan tests passed");

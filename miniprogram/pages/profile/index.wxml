@@ -1,21 +1,13 @@
-<view class="page">
+<view class="page profile-page">
   <view class="page-header">
-    <view class="page-eyebrow">记录每一次完成</view>
-    <view class="page-title">我的进步</view>
-    <view class="page-subtitle">统计、隐私和社群入口都会放在这里。</view>
+    <view class="page-eyebrow">看见每一步积累</view>
+    <view class="page-title">我的</view>
   </view>
 
   <view wx:if="{{status === 'loading'}}" class="card state-card">
     <view class="loading-dot"></view>
-    <view class="state-title">正在读取个人数据</view>
-    <view class="state-description">正在同步你的进步记录。</view>
-  </view>
-
-  <view wx:elif="{{status === 'empty'}}" class="card state-card">
-    <view class="state-mark">0</view>
-    <view class="state-title">第一步还在等你</view>
-    <view class="state-description">完成首次打卡后，这里会展示连续天数和累计完成数据。</view>
-    <button class="primary-button" bindtap="goToToday">去今日页</button>
+    <view class="state-title">正在整理你的行动记录</view>
+    <view class="state-description">统计结果来自云端可信数据。</view>
   </view>
 
   <view wx:elif="{{status === 'error'}}" class="card state-card">
@@ -25,8 +17,160 @@
     <button class="primary-button" bindtap="retry">重新加载</button>
   </view>
 
-  <view wx:else class="card">
-    <view class="state-title">个人数据已更新</view>
-    <view class="state-description">统计与隐私功能将在后续模块中接入。</view>
-  </view>
+  <block wx:else>
+    <view class="card user-card">
+      <image class="avatar" src="{{avatarDisplay}}" mode="aspectFill" aria-label="用户头像" />
+      <view class="user-main">
+        <view class="nickname">{{profile.user.nickname}}</view>
+        <view class="user-copy">加入进步局 {{profile.user.joinedDays}} 天</view>
+        <view class="user-copy">每一次行动，都在让目标更近一点。</view>
+      </view>
+      <view class="streak-box">
+        <view class="streak-value">{{profile.user.streakDays}}</view>
+        <view class="streak-label">连续行动天数</view>
+      </view>
+    </view>
+
+    <view wx:if="{{profile.currentGoal}}" class="card goal-card">
+      <view class="section-heading">
+        <view>
+          <view class="section-eyebrow">当前目标</view>
+          <view class="goal-title">{{profile.currentGoal.title}}</view>
+        </view>
+        <view class="goal-category">{{profile.currentGoal.categoryLabel}}</view>
+      </view>
+      <view class="goal-meta">
+        当前阶段：{{profile.currentGoal.stageTitle}}
+      </view>
+      <view class="goal-meta">
+        第 {{profile.currentGoal.currentDay}} 天 / 共 {{profile.currentGoal.totalDays}} 天
+        · {{profile.currentGoal.planStatus === 'paused' ? '已暂停' : '进行中'}}
+        · 连续行动 {{profile.user.streakDays}} 天
+      </view>
+      <view class="progress-row">
+        <text>阶段完成率</text>
+        <text>{{profile.currentGoal.stageCompletionRate}}%</text>
+      </view>
+      <view
+        class="progress-track"
+        aria-role="progressbar"
+        aria-label="阶段完成 {{profile.currentGoal.stageCompletionRate}}%"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="{{profile.currentGoal.stageCompletionRate}}"
+      >
+        <view class="progress-fill" style="width: {{profile.currentGoal.stageCompletionRate}}%;"></view>
+      </view>
+      <button class="text-button" bindtap="goToPlan">查看当前计划</button>
+    </view>
+
+    <view wx:else class="card empty-goal-card">
+      <view class="section-title">还没有进行中的目标</view>
+      <view class="muted-copy">创建一个目标，开始你的第一个 7 天计划。</view>
+      <button class="primary-button compact-button" bindtap="createGoal">创建目标</button>
+    </view>
+
+    <view class="section-block">
+      <view class="section-title">行动数据</view>
+      <view class="stats-grid">
+        <view class="card stat-card">
+          <view class="stat-value">{{profile.statistics.totalCheckinDays}}</view>
+          <view class="stat-label">累计打卡天数</view>
+        </view>
+        <view class="card stat-card">
+          <view class="stat-value">{{profile.statistics.longestStreak}}</view>
+          <view class="stat-label">最长连续天数</view>
+        </view>
+        <view class="card stat-card">
+          <view class="stat-value">{{profile.statistics.completedTaskCount}}</view>
+          <view class="stat-label">完成任务数量</view>
+        </view>
+        <view class="card stat-card">
+          <view class="stat-value stat-duration">{{actionDuration}}</view>
+          <view class="stat-label">累计行动时长</view>
+        </view>
+        <view class="card stat-card stat-card-wide">
+          <view class="stat-value">{{profile.statistics.completedStageCount}}</view>
+          <view class="stat-label">完成 7 天阶段</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-block">
+      <view class="section-title">成长徽章</view>
+      <scroll-view class="badge-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+        <view wx:if="{{badges.length > 0}}" class="badge-row">
+          <view
+            wx:for="{{badges}}"
+            wx:key="code"
+            class="badge-card {{item.unlocked ? 'badge-unlocked' : 'badge-locked'}}"
+          >
+            <view class="badge-mark">{{item.mark}}</view>
+            <view class="badge-name">{{item.name}}</view>
+            <view class="badge-description">{{item.description}}</view>
+            <view class="badge-progress">
+              {{item.unlocked && item.unlockedAt ? item.unlockedAt + ' 获得' : item.progressDescription}}
+            </view>
+          </view>
+        </view>
+        <view wx:else class="card small-empty">完成行动后，徽章会记录在这里。</view>
+      </scroll-view>
+    </view>
+
+    <view class="section-block">
+      <view class="section-heading">
+        <view class="section-title">最近目标</view>
+        <button class="history-link" bindtap="showAllHistory">查看全部</button>
+      </view>
+      <view wx:if="{{profile.recentGoals.length === 0}}" class="card small-empty">
+        完成或结束目标后，会在这里留下阶段记录。
+      </view>
+      <button
+        wx:for="{{profile.recentGoals}}"
+        wx:key="id"
+        class="card history-card"
+        data-goal-id="{{item.id}}"
+        bindtap="showHistoryGoal"
+      >
+        <view class="history-main">
+          <view class="history-title">{{item.title}}</view>
+          <view class="history-meta">{{item.categoryLabel}} · 创建于 {{item.startedAt || '暂无日期'}}</view>
+          <view class="history-meta">打卡 {{item.checkinDays}} 天 · 完成阶段 {{item.completedStageCount}} 个</view>
+        </view>
+        <view class="history-status">{{item.status === 'completed' ? '已完成' : '已结束'}}</view>
+      </button>
+    </view>
+
+    <view class="card community-card">
+      <view class="community-mark">{{profile.community.unlocked ? '群' : '锁'}}</view>
+      <view class="community-main">
+        <view class="section-title">{{profile.community.title}}</view>
+        <view class="muted-copy">{{profile.community.description}}</view>
+      </view>
+      <button
+        class="community-button"
+        loading="{{loadingCommunity}}"
+        disabled="{{loadingCommunity}}"
+        bindtap="openCommunity"
+      >{{profile.community.unlocked ? '查看入口' : '查看条件'}}</button>
+    </view>
+
+    <view class="menu-card">
+      <button class="menu-row" open-type="feedback">
+        <text>问题反馈</text><text class="menu-arrow">›</text>
+      </button>
+      <button class="menu-row" bindtap="openPrivacy">
+        <text>隐私政策</text><text class="menu-arrow">›</text>
+      </button>
+      <button class="menu-row" bindtap="openTerms">
+        <text>用户协议</text><text class="menu-arrow">›</text>
+      </button>
+      <button class="menu-row danger-menu-row" bindtap="openDataManagement">
+        <text>清除我的数据</text><text class="menu-arrow">›</text>
+      </button>
+      <button class="menu-row" bindtap="openAbout">
+        <text>关于进步局</text><text class="menu-arrow">›</text>
+      </button>
+    </view>
+  </block>
 </view>

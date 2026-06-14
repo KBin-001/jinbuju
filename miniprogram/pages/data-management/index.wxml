@@ -1,0 +1,50 @@
+<view class="page data-page">
+  <view class="page-header">
+    <view class="page-eyebrow">你的数据由你决定</view>
+    <view class="page-title">数据管理</view>
+    <view class="page-subtitle">清除操作不可恢复，请先了解影响范围。</view>
+  </view>
+
+  <view class="card scope-card">
+    <view class="section-title">将清除的数据</view>
+    <view class="scope-list">
+      <view>用户资料与个人统计</view>
+      <view>目标、计划和任务记录</view>
+      <view>每日打卡记录</view>
+      <view>小队成员关系与固定鼓励记录</view>
+      <view>与当前用户直接关联的其他业务数据</view>
+    </view>
+  </view>
+
+  <view class="warning-card">
+    清除完成后无法恢复。小队中其他成员的数据不会受到影响，系统只会更新相应的小队人数。
+  </view>
+
+  <button
+    wx:if="{{!confirmedRisk}}"
+    class="danger-outline-button"
+    bindtap="startDelete"
+  >清除我的全部数据</button>
+
+  <view wx:else class="card confirmation-card">
+    <view class="section-title">再次确认</view>
+    <view class="confirmation-copy">
+      请输入“确认清除”，然后提交最终请求。
+    </view>
+    <input
+      class="confirmation-input"
+      value="{{confirmation}}"
+      placeholder="确认清除"
+      maxlength="4"
+      disabled="{{deleting}}"
+      bindinput="onConfirmationInput"
+    />
+    <view wx:if="{{errorMessage}}" class="error-copy">{{errorMessage}}</view>
+    <button
+      class="danger-button"
+      loading="{{deleting}}"
+      disabled="{{confirmation !== '确认清除' || deleting}}"
+      bindtap="submitDelete"
+    >{{deleting ? '正在清除' : '确认清除全部数据'}}</button>
+  </view>
+</view>
