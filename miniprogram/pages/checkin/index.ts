@@ -78,6 +78,13 @@ Page({
 
     getTodayCheckinStatus()
       .then((serverData: CheckinStatusData) => {
+        if (serverData.planStatus === "paused") {
+          this.setData({
+            status: "error",
+            errorMessage: "当前计划已暂停，恢复计划后再继续打卡。",
+          });
+          return;
+        }
         if (serverData.checkedInToday) {
           this.setData({
             status: "error",

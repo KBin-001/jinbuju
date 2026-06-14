@@ -4,7 +4,11 @@ import {
   CurrentPlan,
   DeletePlanResult,
   GoalDraft,
+  NextWeekGenerateResult,
+  PlanActionResult,
+  PlanPageData,
   PlanPreview,
+  PostponeTaskResult,
 } from "../types/goal";
 
 interface GenerateResponse {
@@ -16,12 +20,35 @@ interface ActiveGoalResponse {
   hasActiveGoal: boolean;
 }
 
-function callGeneratePlan<T>(data: Record<string, unknown>): Promise<T> {
-  return wx.cloud
-    .callFunction({
+function callGeneratePlan<T>(
+  data: Record<string, unknown>,
+  timeoutMilliseconds = 60000,
+): Promise<T> {
+  const request = new Promise<{ result?: CloudFunctionResult<T> }>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      const timeoutError = new Error("请求时间有点久，请稍后重试。") as Error & {
+        code?: string;
+      };
+      timeoutError.code = "FUNCTION_TIMEOUT";
+      reject(timeoutError);
+    }, timeoutMilliseconds);
+
+    wx.cloud.callFunction({
       name: "generatePlan",
       data,
-    })
+    }).then(
+      (response: any) => {
+        clearTimeout(timer);
+        resolve(response);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+
+  return request
     .then((response: any) => {
       const result = response.result as CloudFunctionResult<T>;
       if (!result || !result.success || !result.data) {
@@ -110,5 +137,65 @@ export function getCurrentPlan(): Promise<CurrentPlan | null> {
 export function deleteCurrentPlan(): Promise<DeletePlanResult> {
   return callGeneratePlan<DeletePlanResult>({
     action: "deleteCurrent",
+  });
+}
+
+export function getPlanPageData(): Promise<PlanPageData> {
+  return callGeneratePlan<PlanPageData>({ action: "getPlanPageData" }, 12000);
+}
+
+export function updatePlanTime(
+  planId: string,
+  dailyReminderTime: string,
+): Promise<PlanActionResult> {
+  return callGeneratePlan<PlanActionResult>({
+    action: "updatePlanTime",
+    planId,
+    dailyReminderTime,
+  }, 12000);
+}
+
+export function postponePlanTask(
+  taskId: string,
+  planId: string,
+): Promise<PostponeTaskResult> {
+  return callGeneratePlan<PostponeTaskResult>({
+    action: "postponeTask",
+    taskId,
+    planId,
+  }, 12000);
+}
+
+export function pauseCurrentPlan(planId: string): Promise<PlanActionResult> {
+  return callGeneratePlan<PlanActionResult>({ action: "pausePlan", planId }, 12000);
+}
+
+export function resumeCurrentPlan(planId: string): Promise<PlanActionResult> {
+  return callGeneratePlan<PlanActionResult>({ action: "resumePlan", planId }, 12000);
+}
+
+export function generateNextWeekPlan(
+  planId: string,
+  requestId: string,
+  forceFallback = false,
+): Promise<NextWeekGenerateResult> {
+  return callGeneratePlan<NextWeekGenerateResult>({
+    action: "generateNextWeek",
+    planId,
+    requestId,
+    forceFallback,
+  });
+}
+
+export function adoptNextWeekPlan(
+  planId: string,
+  requestId: string,
+  plan: PlanPreview,
+): Promise<AdoptResult> {
+  return callGeneratePlan<AdoptResult>({
+    action: "adoptNextWeek",
+    planId,
+    requestId,
+    plan,
   });
 }

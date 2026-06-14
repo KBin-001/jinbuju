@@ -156,6 +156,7 @@ async function adoptPlan(openid, requestId, goal, plan) {
         status: "active",
         startDate: plan.days[0].date,
         endDate: plan.days[6].date,
+        dailyReminderTime: "21:00",
         requestId,
         createdAt: now,
         updatedAt: now,
@@ -180,6 +181,7 @@ async function adoptPlan(openid, requestId, goal, plan) {
             order: index + 1,
             status: "pending",
             createdAt: now,
+            updatedAt: now,
           },
         });
       }
@@ -205,6 +207,80 @@ async function adoptPlan(openid, requestId, goal, plan) {
     }
 
     return { goalId, planId, adopted: true };
+  });
+}
+
+async function adoptNextWeekPlan(openid, requestId, goal, previousPlan, plan) {
+  const planId = stableId("plan", `${openid}:${requestId}`);
+  return db.runTransaction(async (transaction) => {
+    const existingPlan = await transaction.collection("plans").doc(planId).get().catch(() => null);
+    if (existingPlan && existingPlan.data) {
+      return { goalId: goal._id, planId, adopted: false };
+    }
+
+    const currentResult = await transaction
+      .collection("plans")
+      .doc(previousPlan._id)
+      .get()
+      .catch(() => null);
+    const current = currentResult && currentResult.data;
+    if (!current || current._openid !== openid || current.status !== "active") {
+      const error = new Error("当前计划状态已变化，请刷新后重试。");
+      error.code = "PLAN_STATUS_INVALID";
+      throw error;
+    }
+
+    const now = db.serverDate();
+    await transaction.collection("plans").doc(previousPlan._id).update({
+      data: {
+        status: "completed",
+        completedAt: now,
+        updatedAt: now,
+      },
+    });
+    await transaction.collection("plans").doc(planId).set({
+      data: {
+        _openid: openid,
+        goalId: goal._id,
+        summary: plan.summary,
+        weeklyGoal: plan.weeklyGoal,
+        fallbackAdvice: plan.fallbackAdvice,
+        source: plan.source,
+        status: "active",
+        startDate: plan.days[0].date,
+        endDate: plan.days[6].date,
+        previousPlanId: previousPlan._id,
+        dailyReminderTime: previousPlan.dailyReminderTime || "21:00",
+        requestId,
+        createdAt: now,
+        updatedAt: now,
+      },
+    });
+
+    for (const day of plan.days) {
+      for (let index = 0; index < day.tasks.length; index += 1) {
+        const task = day.tasks[index];
+        const taskId = stableId("task", `${openid}:${requestId}:${day.day}:${index}`);
+        await transaction.collection("tasks").doc(taskId).set({
+          data: {
+            _openid: openid,
+            goalId: goal._id,
+            planId,
+            day: day.day,
+            taskDate: day.date,
+            dayTitle: day.title,
+            isStudyDay: day.isStudyDay,
+            title: task.title,
+            estimatedMinutes: task.estimatedMinutes,
+            order: index + 1,
+            status: "pending",
+            createdAt: now,
+            updatedAt: now,
+          },
+        });
+      }
+    }
+    return { goalId: goal._id, planId, adopted: true };
   });
 }
 
@@ -300,6 +376,7 @@ async function deleteCurrentPlan(openid) {
 
 module.exports = {
   adoptPlan,
+  adoptNextWeekPlan,
   deleteCurrentPlan,
   ensureCollections,
   enforceRateLimit,

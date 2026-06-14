@@ -68,7 +68,7 @@ function parseAiJson(text) {
   }
 }
 
-function validatePlan(input, goal) {
+function validatePlan(input, goal, requestedStartDate) {
   if (!input || typeof input !== "object") fail("PLAN_SCHEMA_INVALID", "计划结构无效。");
   if (!isSafeText(input.summary, 100)) fail("PLAN_SCHEMA_INVALID", "计划摘要无效。");
   if (!isSafeText(input.weeklyGoal, 100)) fail("PLAN_SCHEMA_INVALID", "本周目标无效。");
@@ -78,7 +78,7 @@ function validatePlan(input, goal) {
   }
 
   const dayNumbers = new Set();
-  const startDate = formatBusinessDate();
+  const startDate = requestedStartDate || formatBusinessDate();
   const days = input.days.map((day, index) => {
     if (!day || typeof day !== "object") fail("PLAN_SCHEMA_INVALID", "每日计划无效。");
     if (!Number.isInteger(day.day) || day.day < 1 || day.day > 7 || dayNumbers.has(day.day)) {

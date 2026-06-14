@@ -1,8 +1,9 @@
-import { GoalDraft, PreviewCache } from "../types/goal";
+import { GoalDraft, NextWeekPreviewCache, PreviewCache } from "../types/goal";
 
 export const GOAL_DRAFT_KEY = "GOAL_DRAFT_V1";
 export const PLAN_PREVIEW_KEY = "PLAN_PREVIEW_V1";
 const GOAL_EDIT_STEP_KEY = "GOAL_EDIT_STEP_V1";
+const NEXT_WEEK_PREVIEW_KEY = "NEXT_WEEK_PREVIEW_V1";
 const PREVIEW_MAX_AGE = 24 * 60 * 60 * 1000;
 
 export function getGoalDraft(): GoalDraft | null {
@@ -48,4 +49,26 @@ export function consumeGoalEditStep(): number | null {
   const step = Number(wx.getStorageSync(GOAL_EDIT_STEP_KEY));
   wx.removeStorageSync(GOAL_EDIT_STEP_KEY);
   return step >= 1 && step <= 6 ? step : null;
+}
+
+export function getNextWeekPreview(): NextWeekPreviewCache | null {
+  const value = wx.getStorageSync(NEXT_WEEK_PREVIEW_KEY) as
+    | NextWeekPreviewCache
+    | undefined;
+  if (!value || typeof value !== "object" || !value.generatedAt) {
+    return null;
+  }
+  if (Date.now() - value.generatedAt > PREVIEW_MAX_AGE) {
+    clearNextWeekPreview();
+    return null;
+  }
+  return value;
+}
+
+export function saveNextWeekPreview(preview: NextWeekPreviewCache): void {
+  wx.setStorageSync(NEXT_WEEK_PREVIEW_KEY, preview);
+}
+
+export function clearNextWeekPreview(): void {
+  wx.removeStorageSync(NEXT_WEEK_PREVIEW_KEY);
 }

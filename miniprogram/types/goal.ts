@@ -2,6 +2,15 @@ export type GoalCategory = "exam" | "skill" | "career";
 export type GoalLevel = "zero" | "basic" | "intermediate" | "experienced" | "improve";
 export type GoalIntensity = "light" | "normal" | "intensive";
 export type PlanSource = "ai" | "fallback";
+export type PlanStatus = "active" | "paused" | "completed";
+export type PlanDayStatus =
+  | "future"
+  | "today"
+  | "completed"
+  | "partial"
+  | "missed"
+  | "paused";
+export type PlanTaskState = "pending" | "completed" | "postponed" | "expired" | "paused";
 
 export interface GoalDraft {
   category: GoalCategory | "";
@@ -62,6 +71,81 @@ export interface CurrentPlan {
 
 export interface DeletePlanResult {
   deleted: boolean;
+}
+
+export interface PlanPageTask {
+  id: string;
+  planId: string;
+  day: number;
+  title: string;
+  description: string;
+  estimatedMinutes: number;
+  scheduledDate: string;
+  originalScheduledDate: string;
+  completed: boolean;
+  completedAt: unknown | null;
+  postponed: boolean;
+  state: PlanTaskState;
+  canPostpone: boolean;
+}
+
+export interface PlanDaySummary {
+  day: number;
+  date: string;
+  isToday: boolean;
+  status: PlanDayStatus;
+  completedCount: number;
+  totalCount: number;
+  tasks: PlanPageTask[];
+}
+
+export interface PlanPageData {
+  businessDate: string;
+  goal: {
+    id: string;
+    title: string;
+    category: string;
+  } | null;
+  plan: {
+    id: string;
+    status: PlanStatus;
+    summary: string;
+    weeklyGoal: string;
+    startDate: string;
+    endDate: string;
+    currentDay: number;
+    totalDays: number;
+    dailyReminderTime: string;
+    completedCount: number;
+    totalCount: number;
+    completionRate: number;
+    nextWeekEligible: boolean;
+  } | null;
+  days: PlanDaySummary[];
+}
+
+export interface PlanActionResult {
+  planId: string;
+  status?: PlanStatus;
+  changed?: boolean;
+  dailyReminderTime?: string;
+}
+
+export interface PostponeTaskResult {
+  taskId: string;
+  planId: string;
+  scheduledDate: string;
+  postponed: boolean;
+}
+
+export interface NextWeekGenerateResult {
+  requestId: string;
+  previousPlanId: string;
+  plan: PlanPreview;
+}
+
+export interface NextWeekPreviewCache extends NextWeekGenerateResult {
+  generatedAt: number;
 }
 
 export interface CloudFunctionResult<T> {

@@ -10,6 +10,7 @@ const { getHomeData, toggleTask } = require("./home");
 const { buildPrompt, buildRepairPrompt } = require("./prompt");
 const {
   adoptPlan,
+  adoptNextWeekPlan,
   deleteCurrentPlan,
   ensureCollections,
   enforceRateLimit,
@@ -19,6 +20,14 @@ const {
   recordGeneration,
   verifyGeneratedPlan,
 } = require("./repository");
+const {
+  getNextWeekContext,
+  getPlanPageData,
+  pausePlan,
+  postponeTask,
+  resumePlan,
+  updatePlanTime,
+} = require("./plan-management");
 const {
   parseAiJson,
   validateGoal,
@@ -41,6 +50,11 @@ function failure(error) {
     "PLAN_NOT_FOUND",
     "TASK_NOT_FOUND",
     "CHECKIN_ALREADY_EXISTS",
+    "PLAN_PAUSED",
+    "PLAN_STATUS_INVALID",
+    "TASK_NOT_ELIGIBLE",
+    "TASK_ALREADY_POSTPONED",
+    "PLAN_DATE_EXCEEDED",
   ];
   const code = allowedCodes.includes(error.code) ? error.code : "INTERNAL_ERROR";
   const messages = {
@@ -53,6 +67,11 @@ function failure(error) {
     PLAN_NOT_FOUND: "当前计划不存在，请重新进入小程序。",
     TASK_NOT_FOUND: "今日暂无任务安排。",
     CHECKIN_ALREADY_EXISTS: "今天已经打过卡了，明天继续加油。",
+    PLAN_PAUSED: error.message,
+    PLAN_STATUS_INVALID: error.message,
+    TASK_NOT_ELIGIBLE: error.message,
+    TASK_ALREADY_POSTPONED: error.message,
+    PLAN_DATE_EXCEEDED: error.message,
     INTERNAL_ERROR: "服务暂时不可用，请稍后重试。",
   };
   return {
@@ -142,6 +161,83 @@ async function getHome(openid) {
   return success(await getHomeData(openid));
 }
 
+async function generateNextWeek(event, openid) {
+  const context = await getNextWeekContext(openid, event.planId);
+  const requestId = validateRequestId(event.requestId);
+  await enforceRateLimit(openid, requestId, event.forceFallback === true);
+  await recordGeneration(openid, requestId, event.forceFallback ? "fallback" : "pending", "processing");
+
+  let plan;
+  let source = "fallback";
+  if (!event.forceFallback) {
+    let firstOutput = "";
+    try {
+      firstOutput = await generateText(
+        buildPrompt(context.goal, context.nextStartDate),
+        18000,
+      );
+      plan = validatePlan(
+        parseAiJson(firstOutput),
+        context.goal,
+        context.nextStartDate,
+      );
+      source = "ai";
+    } catch (firstError) {
+      console.warn("generateNextWeek first AI attempt failed", {
+        requestId,
+        code: firstError.code || "AI_GENERATION_FAILED",
+      });
+      try {
+        const repairedOutput = await generateText(
+          buildRepairPrompt(context.goal, firstOutput, context.nextStartDate),
+          16000,
+        );
+        plan = validatePlan(
+          parseAiJson(repairedOutput),
+          context.goal,
+          context.nextStartDate,
+        );
+        source = "ai";
+      } catch (repairError) {
+        console.warn("generateNextWeek AI fallback", {
+          requestId,
+          code: repairError.code || "AI_GENERATION_FAILED",
+        });
+      }
+    }
+  }
+  if (!plan) {
+    plan = validatePlan(
+      buildFallbackPlan(context.goal, context.nextStartDate),
+      context.goal,
+      context.nextStartDate,
+    );
+  }
+  plan.source = source;
+  await recordGeneration(openid, requestId, source, "generated", hashPlan(plan));
+  return success({
+    requestId,
+    previousPlanId: context.plan._id,
+    plan,
+  });
+}
+
+async function adoptNextWeek(event, openid) {
+  const context = await getNextWeekContext(openid, event.planId);
+  const requestId = validateRequestId(event.requestId);
+  const plan = validatePlan(event.plan, context.goal, context.nextStartDate);
+  await verifyGeneratedPlan(openid, requestId, plan);
+  return success(
+    await adoptNextWeekPlan(
+      openid,
+      requestId,
+      context.goal,
+      context.plan,
+      plan,
+    ),
+  );
+}
+
 async function handleToggleTask(event, openid) {
   return success(await toggleTask(openid, event));
 }
@@ -191,6 +287,27 @@ exports.main = async (event) => {
     }
     if (event.action === "toggleTask") {
       return await handleToggleTask(event, context.OPENID);
+    }
+    if (event.action === "getPlanPageData") {
+      return success(await getPlanPageData(context.OPENID));
+    }
+    if (event.action === "updatePlanTime") {
+      return success(await updatePlanTime(context.OPENID, event));
+    }
+    if (event.action === "postponeTask") {
+      return success(await postponeTask(context.OPENID, event));
+    }
+    if (event.action === "pausePlan") {
+      return success(await pausePlan(context.OPENID, event));
+    }
+    if (event.action === "resumePlan") {
+      return success(await resumePlan(context.OPENID, event));
+    }
+    if (event.action === "generateNextWeek") {
+      return await generateNextWeek(event, context.OPENID);
+    }
+    if (event.action === "adoptNextWeek") {
+      return await adoptNextWeek(event, context.OPENID);
     }
 
     const error = new Error("不支持的操作。");

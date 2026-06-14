@@ -2,6 +2,7 @@ const cloud = require("wx-server-sdk");
 const { businessDateDiff, formatBusinessDate } = require("./date");
 
 const db = cloud.database();
+const command = db.command;
 
 function clampPercentage(value) {
   return Math.min(Math.max(Math.round(value), 0), 100);
@@ -60,11 +61,14 @@ async function getHomeData(openid) {
     };
   }
 
-  const plan = await getFirst("plans", {
+  const plans = await getMany("plans", {
     _openid: openid,
     goalId: goal._id,
-    status: "active",
-  });
+  }, 20);
+  const plan =
+    plans.find((item) => item.status === "active") ||
+    plans.find((item) => item.status === "paused") ||
+    null;
 
   if (!plan) {
     return {
@@ -78,6 +82,7 @@ async function getHomeData(openid) {
         currentDay: 1,
         totalDays: 7,
         weeklyCompletionRate: 0,
+        planStatus: "active",
       },
       todayTasks: [],
       completedCount: 0,
@@ -130,6 +135,7 @@ async function getHomeData(openid) {
       currentDay: calculateCurrentDay(plan.startDate, businessDate),
       totalDays: 7,
       weeklyCompletionRate,
+      planStatus: plan.status,
     },
     todayTasks,
     completedCount,
@@ -176,9 +182,29 @@ async function toggleTask(openid, event) {
     throw error;
   }
 
+  const plan = await getFirst("plans", {
+    _openid: openid,
+    _id: task.data.planId,
+  });
+  if (!plan || plan.status !== "active") {
+    const error = new Error(
+      plan && plan.status === "paused"
+        ? "计划暂停期间不能修改任务。"
+        : "当前计划状态不支持修改任务。",
+    );
+    error.code = plan && plan.status === "paused" ? "PLAN_PAUSED" : "PLAN_STATUS_INVALID";
+    throw error;
+  }
+  if (task.data.taskDate !== formatBusinessDate()) {
+    const error = new Error("只能在今日页修改当天任务。");
+    error.code = "TASK_NOT_ELIGIBLE";
+    throw error;
+  }
+
   await db.collection("tasks").doc(taskId).update({
     data: {
       status: newStatus,
+      completedAt: completed ? db.serverDate() : command.remove(),
       updatedAt: db.serverDate(),
     },
   });

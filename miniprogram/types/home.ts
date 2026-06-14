@@ -1,4 +1,7 @@
-import { CloudFunctionResult as SharedCloudFunctionResult } from "./goal";
+import {
+  CloudFunctionResult as SharedCloudFunctionResult,
+  PlanStatus,
+} from "./goal";
 
 export type CloudFunctionResult<T> = SharedCloudFunctionResult<T>;
 
@@ -15,6 +18,7 @@ export interface GoalSummary {
   currentDay: number;
   totalDays: number;
   weeklyCompletionRate: number;
+  planStatus: PlanStatus;
 }
 
 export interface TodayTask {
@@ -71,4 +75,5 @@ export interface CheckinStatusData {
   tasks: TodayTask[];
   completedCount: number;
   totalCount: number;
+  planStatus: PlanStatus | null;
 }

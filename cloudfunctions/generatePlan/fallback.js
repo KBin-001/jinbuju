@@ -44,10 +44,10 @@ function splitMinutes(total, intensity) {
   return [first, total - first];
 }
 
-function buildFallbackPlan(goal) {
+function buildFallbackPlan(goal, requestedStartDate) {
   const copy = CATEGORY_COPY[goal.category];
   const studyIndexes = getStudyIndexes(goal.weeklyDays);
-  const startDate = formatBusinessDate();
+  const startDate = requestedStartDate || formatBusinessDate();
   const studyMinutes =
     goal.intensity === "light"
       ? Math.max(15, Math.floor(goal.dailyMinutes * 0.75))

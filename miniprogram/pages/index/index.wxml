@@ -42,6 +42,10 @@
     </view>
 
     <block wx:else>
+      <view wx:if="{{planPaused}}" class="paused-notice">
+        <view class="paused-notice-title">当前计划已暂停</view>
+        <view>任务仍然保留，恢复计划后可以继续完成和打卡。</view>
+      </view>
       <view class="card goal-card">
         <view class="card-heading-row">
           <view>
@@ -114,7 +118,7 @@
           <button
             class="task-toggle {{item.completed ? 'task-toggle-completed' : ''}}"
             data-id="{{item.id}}"
-            disabled="{{item.toggling}}"
+            disabled="{{item.toggling || planPaused}}"
             aria-label="{{item.completed ? '标记为未完成：' : '标记为完成：'}}{{item.title}}"
             bindtap="toggleTask"
           >
@@ -127,7 +131,7 @@
       <view class="bottom-action">
         <button
           class="checkin-button {{checkedInToday ? 'checkin-button-done' : ''}}"
-          disabled="{{completedCount === 0 || navigating || !goal.planId || checkedInToday}}"
+          disabled="{{completedCount === 0 || navigating || !goal.planId || checkedInToday || planPaused}}"
           loading="{{navigating}}"
           bindtap="prepareCheckin"
         >

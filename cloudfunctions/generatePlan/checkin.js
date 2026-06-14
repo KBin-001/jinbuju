@@ -95,10 +95,15 @@ async function submitCheckin(openid, event) {
     _openid: openid,
     _id: input.planId,
     goalId: input.goalId,
-    status: "active",
   });
   if (!plan) {
     fail("PLAN_NOT_FOUND", "当前计划不存在，请重新进入小程序。");
+  }
+  if (plan.status === "paused") {
+    fail("PLAN_PAUSED", "计划暂停期间不能提交打卡。");
+  }
+  if (plan.status !== "active") {
+    fail("PLAN_STATUS_INVALID", "当前计划状态不支持打卡。");
   }
 
   // Fetch today's tasks and build valid ID set.
@@ -221,17 +226,32 @@ async function getCheckinStatus(openid) {
   const checkedInToday = checkinRecords.data.length > 0;
 
   if (!goal) {
-    return { checkedInToday, tasks: [], completedCount: 0, totalCount: 0 };
+    return {
+      checkedInToday,
+      tasks: [],
+      completedCount: 0,
+      totalCount: 0,
+      planStatus: null,
+    };
   }
 
-  const plan = await getFirst("plans", {
+  const plans = await getMany("plans", {
     _openid: openid,
     goalId: goal._id,
-    status: "active",
-  });
+  }, 20);
+  const plan =
+    plans.find((item) => item.status === "active") ||
+    plans.find((item) => item.status === "paused") ||
+    null;
 
   if (!plan) {
-    return { checkedInToday, tasks: [], completedCount: 0, totalCount: 0 };
+    return {
+      checkedInToday,
+      tasks: [],
+      completedCount: 0,
+      totalCount: 0,
+      planStatus: null,
+    };
   }
 
   const todayTaskRecords = await getMany("tasks", {
@@ -259,6 +279,7 @@ async function getCheckinStatus(openid) {
     tasks,
     completedCount,
     totalCount: tasks.length,
+    planStatus: plan.status,
   };
 }
 

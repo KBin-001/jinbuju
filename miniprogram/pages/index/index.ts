@@ -58,7 +58,11 @@ function getCheckinButtonText(
   completedCount: number,
   totalCount: number,
   checkedInToday: boolean,
+  planPaused: boolean,
 ): string {
+  if (planPaused) {
+    return "计划已暂停";
+  }
   if (checkedInToday) {
     return "今日已打卡";
   }
@@ -86,8 +90,9 @@ Page({
     totalCount: 0,
     completionRate: 0,
     progressText: getProgressText(0),
-    checkinButtonText: getCheckinButtonText(0, 0, false),
+    checkinButtonText: getCheckinButtonText(0, 0, false, false),
     checkedInToday: false,
+    planPaused: false,
     navigating: false,
   },
 
@@ -122,6 +127,7 @@ Page({
     const tasks = homeData.todayTasks.map((task) => ({ ...task, toggling: false }));
     const goal = homeData.goal;
     const checkedInToday = homeData.checkedInToday || false;
+    const planPaused = goal?.planStatus === "paused";
     this.setData({
       status: "success",
       businessDate: homeData.businessDate,
@@ -133,6 +139,7 @@ Page({
       tasks,
       navigating: false,
       checkedInToday,
+      planPaused,
     });
     this.updateProgress(tasks);
   },
@@ -151,6 +158,7 @@ Page({
         completedCount,
         totalCount,
         this.data.checkedInToday,
+        this.data.planPaused,
       ),
     });
   },
@@ -158,7 +166,7 @@ Page({
   toggleTask(event: TaskToggleEvent) {
     const taskId = String(event.currentTarget.dataset.id || "");
     const currentTask = this.data.tasks.find((task: TodayViewTask) => task.id === taskId);
-    if (!taskId || !currentTask || currentTask.toggling) {
+    if (!taskId || !currentTask || currentTask.toggling || this.data.planPaused) {
       return;
     }
 
@@ -221,7 +229,8 @@ Page({
       this.data.navigating ||
       this.data.completedCount === 0 ||
       !goal ||
-      !goal.planId
+      !goal.planId ||
+      this.data.planPaused
     ) {
       return;
     }
