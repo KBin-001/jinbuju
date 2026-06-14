@@ -1,0 +1,32 @@
+<view class="page">
+  <view class="page-header">
+    <view class="page-eyebrow">记录每一次完成</view>
+    <view class="page-title">我的进步</view>
+    <view class="page-subtitle">统计、隐私和社群入口都会放在这里。</view>
+  </view>
+
+  <view wx:if="{{status === 'loading'}}" class="card state-card">
+    <view class="loading-dot"></view>
+    <view class="state-title">正在读取个人数据</view>
+    <view class="state-description">正在同步你的进步记录。</view>
+  </view>
+
+  <view wx:elif="{{status === 'empty'}}" class="card state-card">
+    <view class="state-mark">0</view>
+    <view class="state-title">第一步还在等你</view>
+    <view class="state-description">完成首次打卡后，这里会展示连续天数和累计完成数据。</view>
+    <button class="primary-button" bindtap="goToToday">去今日页</button>
+  </view>
+
+  <view wx:elif="{{status === 'error'}}" class="card state-card">
+    <view class="state-mark">!</view>
+    <view class="state-title">个人数据加载失败</view>
+    <view class="state-description">{{errorMessage}}</view>
+    <button class="primary-button" bindtap="retry">重新加载</button>
+  </view>
+
+  <view wx:else class="card">
+    <view class="state-title">个人数据已更新</view>
+    <view class="state-description">统计与隐私功能将在后续模块中接入。</view>
+  </view>
+</view>

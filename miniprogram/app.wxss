@@ -1,0 +1,136 @@
+page {
+  --color-primary: #356859;
+  --color-primary-light: #e3efe9;
+  --color-text: #20251f;
+  --color-text-secondary: #6f776c;
+  --color-background: #f5f7f2;
+  --color-surface: #ffffff;
+  --color-border: #e6eae2;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 28rpx;
+}
+
+view,
+text,
+button {
+  box-sizing: border-box;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+button::after {
+  border: 0;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 56rpx 32rpx calc(48rpx + env(safe-area-inset-bottom));
+}
+
+.page-header {
+  margin-bottom: 32rpx;
+}
+
+.page-eyebrow {
+  color: var(--color-primary);
+  font-size: 24rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+}
+
+.page-title {
+  margin-top: 8rpx;
+  font-size: 52rpx;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.page-subtitle {
+  margin-top: 14rpx;
+  color: var(--color-text-secondary);
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+.card {
+  padding: 32rpx;
+  border: 1rpx solid var(--color-border);
+  border-radius: 28rpx;
+  background: var(--color-surface);
+  box-shadow: 0 12rpx 32rpx rgba(46, 67, 55, 0.06);
+}
+
+.state-card {
+  min-height: 420rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.state-mark {
+  width: 96rpx;
+  height: 96rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 28rpx;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 42rpx;
+  font-weight: 700;
+}
+
+.state-title {
+  margin-top: 28rpx;
+  font-size: 34rpx;
+  font-weight: 650;
+}
+
+.state-description {
+  max-width: 520rpx;
+  margin-top: 14rpx;
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+}
+
+.primary-button {
+  min-width: 240rpx;
+  margin-top: 32rpx;
+  padding: 24rpx 36rpx;
+  border-radius: 999rpx;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-weight: 600;
+  text-align: center;
+}
+
+.loading-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: var(--color-primary);
+  animation: pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}

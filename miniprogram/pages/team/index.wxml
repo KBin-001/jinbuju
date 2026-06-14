@@ -1,0 +1,32 @@
+<view class="page">
+  <view class="page-header">
+    <view class="page-eyebrow">3～5 人轻量陪伴</view>
+    <view class="page-title">我的小队</view>
+    <view class="page-subtitle">看见彼此的行动，不制造额外压力。</view>
+  </view>
+
+  <view wx:if="{{status === 'loading'}}" class="card state-card">
+    <view class="loading-dot"></view>
+    <view class="state-title">正在寻找队友</view>
+    <view class="state-description">正在同步小队信息。</view>
+  </view>
+
+  <view wx:elif="{{status === 'empty'}}" class="card state-card">
+    <view class="state-mark">3</view>
+    <view class="state-title">还没有加入小队</view>
+    <view class="state-description">完成目标创建后，可以加入同阶段的轻量打卡小队。</view>
+    <button class="primary-button" bindtap="findTeam">了解小队</button>
+  </view>
+
+  <view wx:elif="{{status === 'error'}}" class="card state-card">
+    <view class="state-mark">!</view>
+    <view class="state-title">小队加载失败</view>
+    <view class="state-description">{{errorMessage}}</view>
+    <button class="primary-button" bindtap="retry">重新加载</button>
+  </view>
+
+  <view wx:else class="card">
+    <view class="state-title">小队已集结</view>
+    <view class="state-description">成员进度将在后续“小队”模块中接入。</view>
+  </view>
+</view>

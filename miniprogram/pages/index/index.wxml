@@ -1,0 +1,32 @@
+<view class="page">
+  <view class="page-header">
+    <view class="page-eyebrow">今天也向前一点</view>
+    <view class="page-title">今日任务</view>
+    <view class="page-subtitle">把目标拆成今天可以完成的小事。</view>
+  </view>
+
+  <view wx:if="{{status === 'loading'}}" class="card state-card">
+    <view class="loading-dot"></view>
+    <view class="state-title">正在准备今日任务</view>
+    <view class="state-description">稍等一下，马上回来。</view>
+  </view>
+
+  <view wx:elif="{{status === 'empty'}}" class="card state-card">
+    <view class="state-mark">1</view>
+    <view class="state-title">还没有今日任务</view>
+    <view class="state-description">创建一个目标后，AI 会为你生成未来 7 天的执行计划。</view>
+    <button class="primary-button" bindtap="goToPlan">创建目标</button>
+  </view>
+
+  <view wx:elif="{{status === 'error'}}" class="card state-card">
+    <view class="state-mark">!</view>
+    <view class="state-title">任务加载失败</view>
+    <view class="state-description">{{errorMessage}}</view>
+    <button class="primary-button" bindtap="retry">重新加载</button>
+  </view>
+
+  <view wx:else class="card">
+    <view class="state-title">今日任务已就绪</view>
+    <view class="state-description">任务数据将在后续“今日任务”模块中接入。</view>
+  </view>
+</view>

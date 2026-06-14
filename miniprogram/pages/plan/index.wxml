@@ -1,0 +1,32 @@
+<view class="page">
+  <view class="page-header">
+    <view class="page-eyebrow">一周行动地图</view>
+    <view class="page-title">我的计划</view>
+    <view class="page-subtitle">聚焦一个目标，完成接下来 7 天。</view>
+  </view>
+
+  <view wx:if="{{status === 'loading'}}" class="card state-card">
+    <view class="loading-dot"></view>
+    <view class="state-title">正在读取计划</view>
+    <view class="state-description">正在同步你的目标和进度。</view>
+  </view>
+
+  <view wx:elif="{{status === 'empty'}}" class="card state-card">
+    <view class="state-mark">7</view>
+    <view class="state-title">从一个清晰目标开始</view>
+    <view class="state-description">告诉我们你想通过的考试、想掌握的技能，或正在准备的岗位。</view>
+    <button class="primary-button" bindtap="createGoal">创建目标</button>
+  </view>
+
+  <view wx:elif="{{status === 'error'}}" class="card state-card">
+    <view class="state-mark">!</view>
+    <view class="state-title">计划加载失败</view>
+    <view class="state-description">{{errorMessage}}</view>
+    <button class="primary-button" bindtap="retry">重新加载</button>
+  </view>
+
+  <view wx:else class="card">
+    <view class="state-title">7 天计划已生成</view>
+    <view class="state-description">目标创建与 AI 计划将在后续模块接入。</view>
+  </view>
+</view>
