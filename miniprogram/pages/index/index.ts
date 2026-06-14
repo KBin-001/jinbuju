@@ -1,4 +1,4 @@
-import { getHomeData } from "../../services/home";
+import { getHomeData, toggleTaskStatus } from "../../services/home";
 import { GoalSummary, HomeData, TodayCheckinDraft, TodayTask, UserProgress } from "../../types/home";
 import { saveTodayCheckinDraft } from "../../utils/checkin-draft";
 
@@ -162,19 +162,37 @@ Page({
       return;
     }
 
+    const newCompleted = !currentTask.completed;
+
+    // Optimistic UI update.
     const tasks = this.data.tasks.map((task: TodayViewTask) =>
       task.id === taskId
-        ? { ...task, completed: !task.completed, toggling: true }
+        ? { ...task, completed: newCompleted, toggling: true }
         : task,
     );
     this.updateProgress(tasks);
 
-    setTimeout(() => {
-      const unlockedTasks = this.data.tasks.map((task: TodayViewTask) =>
-        task.id === taskId ? { ...task, toggling: false } : task,
-      );
-      this.setData({ tasks: unlockedTasks });
-    }, 350);
+    toggleTaskStatus(taskId, newCompleted)
+      .then(() => {
+        const unlockedTasks = this.data.tasks.map((task: TodayViewTask) =>
+          task.id === taskId ? { ...task, toggling: false } : task,
+        );
+        this.setData({ tasks: unlockedTasks });
+      })
+      .catch(() => {
+        // Revert on failure.
+        const revertedTasks = this.data.tasks.map((task: TodayViewTask) =>
+          task.id === taskId
+            ? { ...task, completed: !newCompleted, toggling: false }
+            : task,
+        );
+        this.updateProgress(revertedTasks);
+        wx.showToast({
+          title: "任务状态未保存，请重试",
+          icon: "none",
+          duration: 2000,
+        });
+      });
   },
 
   retry() {

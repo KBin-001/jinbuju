@@ -139,6 +139,54 @@ async function getHomeData(openid) {
   };
 }
 
+async function toggleTask(openid, event) {
+  if (!event || typeof event !== "object") {
+    const error = new Error("任务信息不完整。");
+    error.code = "INVALID_ARGUMENT";
+    throw error;
+  }
+
+  const { taskId, completed } = event;
+
+  if (typeof taskId !== "string" || !taskId.trim()) {
+    const error = new Error("任务 ID 无效。");
+    error.code = "INVALID_ARGUMENT";
+    throw error;
+  }
+
+  if (typeof completed !== "boolean") {
+    const error = new Error("任务状态无效。");
+    error.code = "INVALID_ARGUMENT";
+    throw error;
+  }
+
+  const newStatus = completed ? "completed" : "pending";
+
+  // Verify the task belongs to the current user before updating.
+  const task = await db.collection("tasks").doc(taskId).get().catch(() => null);
+  if (!task || !task.data) {
+    const error = new Error("任务不存在。");
+    error.code = "TASK_NOT_FOUND";
+    throw error;
+  }
+
+  if (task.data._openid !== openid) {
+    const error = new Error("无权操作此任务。");
+    error.code = "UNAUTHORIZED";
+    throw error;
+  }
+
+  await db.collection("tasks").doc(taskId).update({
+    data: {
+      status: newStatus,
+      updatedAt: db.serverDate(),
+    },
+  });
+
+  return { taskId, completed, status: newStatus };
+}
+
 module.exports = {
   getHomeData,
+  toggleTask,
 };

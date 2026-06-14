@@ -6,7 +6,7 @@ const { generateText } = require("./ai");
 const { submitCheckin, getCheckinStatus } = require("./checkin");
 const { formatBusinessDate } = require("./date");
 const { buildFallbackPlan } = require("./fallback");
-const { getHomeData } = require("./home");
+const { getHomeData, toggleTask } = require("./home");
 const { buildPrompt, buildRepairPrompt } = require("./prompt");
 const {
   adoptPlan,
@@ -142,6 +142,10 @@ async function getHome(openid) {
   return success(await getHomeData(openid));
 }
 
+async function handleToggleTask(event, openid) {
+  return success(await toggleTask(openid, event));
+}
+
 async function handleSubmitCheckin(event, openid) {
   return success(await submitCheckin(openid, event));
 }
@@ -184,6 +188,9 @@ exports.main = async (event) => {
     }
     if (event.action === "getCheckinStatus") {
       return await handleGetCheckinStatus(context.OPENID);
+    }
+    if (event.action === "toggleTask") {
+      return await handleToggleTask(event, context.OPENID);
     }
 
     const error = new Error("不支持的操作。");
