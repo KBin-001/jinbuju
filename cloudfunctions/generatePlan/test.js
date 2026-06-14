@@ -3,6 +3,11 @@ const { buildFallbackPlan } = require("./fallback");
 const { addBusinessDays } = require("./date");
 const { validateGoal, validatePlan } = require("./validate");
 const { getDayStatus, getTaskState } = require("./plan-rules");
+const {
+  ENCOURAGEMENT_TYPES,
+  isValidEncouragementType,
+  publicMemberId,
+} = require("./team-rules");
 
 const categories = ["exam", "skill", "career"];
 const weeklyDaysOptions = [3, 5, 7];
@@ -72,6 +77,10 @@ const nextWeekPlan = validatePlan(
 assert.strictEqual(nextWeekPlan.days[0].date, "2026-06-30");
 assert.strictEqual(nextWeekPlan.days[6].date, "2026-07-06");
 assert.strictEqual(addBusinessDays("2026-06-30", 1), "2026-07-01");
+assert.strictEqual(ENCOURAGEMENT_TYPES.length, 4);
+assert.strictEqual(isValidEncouragementType("keep_going"), true);
+assert.strictEqual(isValidEncouragementType("custom_message"), false);
+assert.match(publicMemberId("team_test", "user_test"), /^member_[a-f0-9]{24}$/);
 assert.strictEqual(
   getTaskState("paused", { status: "pending", taskDate: "2026-06-15" }, "2026-06-15"),
   "paused",

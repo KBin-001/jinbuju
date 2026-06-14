@@ -28,6 +28,7 @@ const {
   resumePlan,
   updatePlanTime,
 } = require("./plan-management");
+const { getMyTeam, joinTeam, sendEncouragement } = require("./team");
 const {
   parseAiJson,
   validateGoal,
@@ -55,6 +56,14 @@ function failure(error) {
     "TASK_NOT_ELIGIBLE",
     "TASK_ALREADY_POSTPONED",
     "PLAN_DATE_EXCEEDED",
+    "STAGE_NOT_FOUND",
+    "TEAM_NOT_FOUND",
+    "NOT_TEAM_MEMBER",
+    "ALREADY_IN_TEAM",
+    "TEAM_FULL",
+    "CANNOT_ENCOURAGE_SELF",
+    "MEMBER_NOT_FOUND",
+    "ENCOURAGEMENT_ALREADY_SENT",
   ];
   const code = allowedCodes.includes(error.code) ? error.code : "INTERNAL_ERROR";
   const messages = {
@@ -72,6 +81,14 @@ function failure(error) {
     TASK_NOT_ELIGIBLE: error.message,
     TASK_ALREADY_POSTPONED: error.message,
     PLAN_DATE_EXCEEDED: error.message,
+    STAGE_NOT_FOUND: error.message,
+    TEAM_NOT_FOUND: error.message,
+    NOT_TEAM_MEMBER: error.message,
+    ALREADY_IN_TEAM: error.message,
+    TEAM_FULL: error.message,
+    CANNOT_ENCOURAGE_SELF: error.message,
+    MEMBER_NOT_FOUND: error.message,
+    ENCOURAGEMENT_ALREADY_SENT: error.message,
     INTERNAL_ERROR: "服务暂时不可用，请稍后重试。",
   };
   return {
@@ -308,6 +325,15 @@ exports.main = async (event) => {
     }
     if (event.action === "adoptNextWeek") {
       return await adoptNextWeek(event, context.OPENID);
+    }
+    if (event.action === "getMyTeam") {
+      return success(await getMyTeam(context.OPENID));
+    }
+    if (event.action === "joinTeam") {
+      return success(await joinTeam(context.OPENID));
+    }
+    if (event.action === "sendEncouragement") {
+      return success(await sendEncouragement(context.OPENID, event));
     }
 
     const error = new Error("不支持的操作。");

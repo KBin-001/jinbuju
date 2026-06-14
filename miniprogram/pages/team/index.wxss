@@ -1,3 +1,227 @@
-.page-header {
-  padding-top: 16rpx;
+.team-page {
+  padding-top: 40rpx;
+}
+
+.team-summary-card {
+  margin-bottom: 34rpx;
+}
+
+.summary-heading,
+.section-heading,
+.member-top,
+.member-name-row,
+.member-progress-row,
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-eyebrow {
+  color: var(--color-primary);
+  font-size: 24rpx;
+  font-weight: 650;
+}
+
+.team-name {
+  max-width: 470rpx;
+  margin-top: 10rpx;
+  font-size: 38rpx;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.member-count {
+  flex-shrink: 0;
+  padding: 12rpx 18rpx;
+  border-radius: 999rpx;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 24rpx;
+  font-weight: 650;
+}
+
+.team-detail {
+  margin-top: 28rpx;
+  padding: 22rpx;
+  border-radius: 20rpx;
+  background: #f7f9f6;
+}
+
+.detail-row + .detail-row {
+  margin-top: 16rpx;
+}
+
+.detail-label {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+  font-size: 23rpx;
+}
+
+.detail-value {
+  max-width: 450rpx;
+  margin-left: 24rpx;
+  font-size: 24rpx;
+  text-align: right;
+  line-height: 1.45;
+}
+
+.today-summary {
+  margin-top: 24rpx;
+  color: var(--color-text-secondary);
+}
+
+.today-summary text {
+  color: var(--color-primary);
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.waiting-notice,
+.full-notice {
+  margin-top: 20rpx;
+  padding: 18rpx 22rpx;
+  border-radius: 18rpx;
+  font-size: 24rpx;
+}
+
+.waiting-notice {
+  background: #faf3e8;
+  color: #735b33;
+}
+
+.full-notice {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.section-title {
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.privacy-copy {
+  color: var(--color-text-secondary);
+  font-size: 22rpx;
+}
+
+.member-card {
+  margin-top: 20rpx;
+  padding: 28rpx;
+}
+
+.member-self {
+  border-color: #cfe1d8;
+  background: #f7faf8;
+}
+
+.member-avatar {
+  width: 82rpx;
+  height: 82rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #e7ebe6;
+}
+
+.member-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 20rpx;
+}
+
+.member-name-row {
+  justify-content: flex-start;
+}
+
+.member-name {
+  max-width: 250rpx;
+  overflow: hidden;
+  font-size: 29rpx;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.self-tag {
+  margin-left: 12rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-size: 19rpx;
+}
+
+.member-streak {
+  margin-top: 8rpx;
+  color: var(--color-text-secondary);
+  font-size: 22rpx;
+}
+
+.today-tag {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  padding: 9rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 21rpx;
+}
+
+.today-done {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.today-pending {
+  background: #edf0ed;
+  color: #626a63;
+}
+
+.member-progress-row {
+  justify-content: flex-start;
+  gap: 80rpx;
+  margin-top: 26rpx;
+  padding-top: 22rpx;
+  border-top: 1rpx solid var(--color-border);
+}
+
+.member-progress-value {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.member-progress-label {
+  margin-top: 5rpx;
+  color: var(--color-text-secondary);
+  font-size: 21rpx;
+}
+
+.member-progress-track {
+  height: 12rpx;
+  margin-top: 18rpx;
+  overflow: hidden;
+  border-radius: 999rpx;
+  background: #e8ece6;
+}
+
+.member-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+}
+
+.encourage-button {
+  width: 100%;
+  margin-top: 24rpx;
+  padding: 20rpx;
+  border: 2rpx solid var(--color-primary);
+  border-radius: 999rpx;
+  color: var(--color-primary);
+  font-size: 24rpx;
+  font-weight: 650;
+}
+
+.encouraged-button,
+.encourage-button[disabled] {
+  border-color: #dce2dc;
+  background: #edf1ed;
+  color: #7d867e;
 }

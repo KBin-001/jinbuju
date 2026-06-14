@@ -10,6 +10,9 @@ const REQUIRED_COLLECTIONS = [
   "tasks",
   "plan_generation_requests",
   "checkins",
+  "teams",
+  "team_members",
+  "encouragements",
 ];
 let collectionsReady = false;
 
