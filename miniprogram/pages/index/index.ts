@@ -54,7 +54,14 @@ function getProgressText(completionRate: number): string {
   return "今天先完成一件小事";
 }
 
-function getCheckinButtonText(completedCount: number, totalCount: number): string {
+function getCheckinButtonText(
+  completedCount: number,
+  totalCount: number,
+  checkedInToday: boolean,
+): string {
+  if (checkedInToday) {
+    return "今日已打卡";
+  }
   if (completedCount === 0) {
     return "完成任务后再打卡";
   }
@@ -79,7 +86,8 @@ Page({
     totalCount: 0,
     completionRate: 0,
     progressText: getProgressText(0),
-    checkinButtonText: getCheckinButtonText(0, 0),
+    checkinButtonText: getCheckinButtonText(0, 0, false),
+    checkedInToday: false,
     navigating: false,
   },
 
@@ -113,6 +121,7 @@ Page({
   applyHomeData(homeData: HomeData) {
     const tasks = homeData.todayTasks.map((task) => ({ ...task, toggling: false }));
     const goal = homeData.goal;
+    const checkedInToday = homeData.checkedInToday || false;
     this.setData({
       status: "success",
       businessDate: homeData.businessDate,
@@ -123,6 +132,7 @@ Page({
       categoryLabel: goal ? CATEGORY_LABELS[goal.category] || "成长目标" : "",
       tasks,
       navigating: false,
+      checkedInToday,
     });
     this.updateProgress(tasks);
   },
@@ -137,7 +147,11 @@ Page({
       totalCount,
       completionRate,
       progressText: getProgressText(completionRate),
-      checkinButtonText: getCheckinButtonText(completedCount, totalCount),
+      checkinButtonText: getCheckinButtonText(
+        completedCount,
+        totalCount,
+        this.data.checkedInToday,
+      ),
     });
   },
 
@@ -209,12 +223,8 @@ Page({
     };
     saveTodayCheckinDraft(draft);
 
-    // 后续打卡页从 TODAY_CHECKIN_DRAFT_V1 读取，不在 URL 中传递完整任务数据。
-    wx.showModal({
-      title: "今日进度已准备好",
-      content: "打卡提交页将在后续功能中接入，本次不会写入打卡记录或增加连续天数。",
-      showCancel: false,
-      confirmText: "知道了",
+    wx.navigateTo({
+      url: "/pages/checkin/index",
       complete: () => {
         this.setData({ navigating: false });
       },

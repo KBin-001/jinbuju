@@ -126,8 +126,8 @@
 
       <view class="bottom-action">
         <button
-          class="checkin-button"
-          disabled="{{completedCount === 0 || navigating || !goal.planId}}"
+          class="checkin-button {{checkedInToday ? 'checkin-button-done' : ''}}"
+          disabled="{{completedCount === 0 || navigating || !goal.planId || checkedInToday}}"
           loading="{{navigating}}"
           bindtap="prepareCheckin"
         >

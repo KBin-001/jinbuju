@@ -9,6 +9,7 @@ const REQUIRED_COLLECTIONS = [
   "plans",
   "tasks",
   "plan_generation_requests",
+  "checkins",
 ];
 let collectionsReady = false;
 
@@ -306,5 +307,6 @@ module.exports = {
   hasActiveGoal,
   hashPlan,
   recordGeneration,
+  stableId,
   verifyGeneratedPlan,
 };

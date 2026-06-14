@@ -33,6 +33,7 @@ export interface HomeData {
   completedCount: number;
   totalCount: number;
   completionRate: number;
+  checkedInToday: boolean;
 }
 
 export interface TodayCheckinDraft {
@@ -44,4 +45,30 @@ export interface TodayCheckinDraft {
   completedCount: number;
   totalCount: number;
   preparedAt: number;
+}
+
+export type CheckinFeeling = "easy" | "normal" | "challenging" | "rewarding";
+
+export interface SubmitCheckinParams {
+  goalId: string;
+  planId: string;
+  completedTaskIds: string[];
+  feeling: CheckinFeeling;
+  note?: string;
+}
+
+export interface SubmitCheckinResult {
+  businessDate: string;
+  completedCount: number;
+  totalCount: number;
+  completionRate: number;
+  streakDays: number;
+  isFirstCheckinToday: boolean;
+}
+
+export interface CheckinStatusData {
+  checkedInToday: boolean;
+  tasks: TodayTask[];
+  completedCount: number;
+  totalCount: number;
 }

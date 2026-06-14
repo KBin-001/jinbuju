@@ -56,6 +56,7 @@ async function getHomeData(openid) {
       completedCount: 0,
       totalCount: 0,
       completionRate: 0,
+      checkedInToday: false,
     };
   }
 
@@ -82,10 +83,11 @@ async function getHomeData(openid) {
       completedCount: 0,
       totalCount: 0,
       completionRate: 0,
+      checkedInToday: false,
     };
   }
 
-  const [todayTaskRecords, planTaskRecords] = await Promise.all([
+  const [todayTaskRecords, planTaskRecords, checkinRecords] = await Promise.all([
     getMany("tasks", {
       _openid: openid,
       planId: plan._id,
@@ -95,6 +97,10 @@ async function getHomeData(openid) {
       _openid: openid,
       planId: plan._id,
     }),
+    getMany("checkins", {
+      _openid: openid,
+      businessDate,
+    }, 1),
   ]);
   todayTaskRecords.sort(
     (left, right) => Number(left.order || 0) - Number(right.order || 0),
@@ -129,6 +135,7 @@ async function getHomeData(openid) {
     completedCount,
     totalCount,
     completionRate,
+    checkedInToday: checkinRecords.length > 0,
   };
 }
 

@@ -1,0 +1,142 @@
+<view class="page checkin-page">
+
+  <!-- Loading state -->
+  <view wx:if="{{status === 'loading'}}" class="card state-card page-state">
+    <view class="loading-dot"></view>
+    <view class="state-title">正在加载打卡信息</view>
+    <view class="state-description">稍等一下，马上回来。</view>
+  </view>
+
+  <!-- Error state -->
+  <view wx:elif="{{status === 'error'}}" class="card state-card page-state">
+    <view class="state-mark">!</view>
+    <view class="state-title">打卡遇到问题</view>
+    <view class="state-description">{{errorMessage}}</view>
+    <button class="primary-button" bindtap="goBackToToday">返回今日页</button>
+  </view>
+
+  <!-- Success state -->
+  <view wx:elif="{{status === 'success'}}" class="success-view">
+    <view class="card success-card">
+      <view class="success-mark" aria-label="打卡成功">✓</view>
+      <view class="success-title">今天的行动已记录</view>
+      <view class="success-stats">
+        <view class="stat-row">
+          <text class="stat-label">今日完成率</text>
+          <text class="stat-value">{{resultData.completionRate}}%</text>
+        </view>
+        <view class="stat-row">
+          <text class="stat-label">连续行动</text>
+          <text class="stat-value">{{resultData.streakDays}} 天</text>
+        </view>
+      </view>
+      <view class="success-encouragement">{{encouragementText}}</view>
+    </view>
+    <button class="primary-button back-home-button" bindtap="goBackToToday">
+      返回今日页
+    </button>
+  </view>
+
+  <!-- Ready state: checkin form -->
+  <block wx:else>
+
+    <!-- Summary card -->
+    <view class="card summary-card">
+      <view class="section-eyebrow">完成今日打卡</view>
+      <view class="summary-subtitle">记录今天已经完成的行动。</view>
+      <view class="summary-date">{{dateDisplay}}</view>
+      <view class="summary-progress">
+        <view class="progress-count">
+          <text class="progress-count-strong">{{completedCount}}</text>
+          <text> / {{totalCount}} 项完成</text>
+        </view>
+        <view class="progress-rate">{{completionRate}}%</view>
+      </view>
+      <view
+        class="progress-track"
+        aria-role="progressbar"
+        aria-label="今日任务完成 {{completionRate}}%"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="{{completionRate}}"
+      >
+        <view class="progress-fill" style="width: {{completionRate}}%;"></view>
+      </view>
+    </view>
+
+    <!-- Completed tasks list -->
+    <view class="completed-section">
+      <view class="section-title-row">
+        <view class="section-title">已完成的任务</view>
+        <view class="section-count">{{completedCount}} 项</view>
+      </view>
+
+      <view wx:if="{{completedCount === 0}}" class="card no-task-card">
+        <view class="state-mark small-mark">0</view>
+        <view class="no-task-title">还没有完成任何任务</view>
+        <view class="state-description">返回今日页标记完成的任务后再打卡。</view>
+        <button class="primary-button" bindtap="goBackToToday">返回今日页</button>
+      </view>
+
+      <view
+        wx:for="{{mergedTasks}}"
+        wx:if="{{item.completed}}"
+        wx:key="id"
+        class="card task-done-card"
+      >
+        <text class="done-icon">✓</text>
+        <view class="done-content">
+          <view class="done-title">{{item.title}}</view>
+          <view wx:if="{{item.description}}" class="done-description">{{item.description}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Feeling selector -->
+    <view class="card feeling-card">
+      <view class="section-title">今天的感受</view>
+      <view class="feeling-options">
+        <button
+          wx:for="{{feelingOptions}}"
+          wx:key="value"
+          class="feeling-btn {{feeling === item.value ? 'feeling-active' : ''}}"
+          data-value="{{item.value}}"
+          bindtap="selectFeeling"
+          aria-label="选择感受：{{item.label}}"
+        >
+          <text class="feeling-label">{{item.label}}</text>
+        </button>
+      </view>
+    </view>
+
+    <!-- Note input -->
+    <view class="card note-card">
+      <view class="note-header">
+        <view class="section-title">今日备注</view>
+        <view class="note-count">{{noteRemaining}}/100</view>
+      </view>
+      <view class="note-hint">记录一下今天的想法（可选）</view>
+      <textarea
+        class="note-input"
+        placeholder="写点什么..."
+        maxlength="100"
+        value="{{note}}"
+        bindinput="onNoteInput"
+        auto-height
+      />
+    </view>
+
+    <!-- Submit button -->
+    <view class="bottom-action">
+      <button
+        class="checkin-button"
+        disabled="{{submitting || completedCount === 0}}"
+        loading="{{submitting}}"
+        bindtap="doSubmitCheckin"
+      >
+        确认完成今日打卡
+      </button>
+    </view>
+
+  </block>
+</view>

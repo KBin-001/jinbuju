@@ -295,3 +295,8 @@
   background: #d9ded8;
   color: #899087;
 }
+
+.checkin-button-done {
+  background: #e3efe9;
+  color: var(--color-primary);
+}

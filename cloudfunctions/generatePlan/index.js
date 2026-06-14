@@ -3,6 +3,7 @@ const cloud = require("wx-server-sdk");
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const { generateText } = require("./ai");
+const { submitCheckin, getCheckinStatus } = require("./checkin");
 const { formatBusinessDate } = require("./date");
 const { buildFallbackPlan } = require("./fallback");
 const { getHomeData } = require("./home");
@@ -36,6 +37,10 @@ function failure(error) {
     "GOAL_ALREADY_EXISTS",
     "PLAN_SCHEMA_INVALID",
     "RATE_LIMITED",
+    "GOAL_NOT_FOUND",
+    "PLAN_NOT_FOUND",
+    "TASK_NOT_FOUND",
+    "CHECKIN_ALREADY_EXISTS",
   ];
   const code = allowedCodes.includes(error.code) ? error.code : "INTERNAL_ERROR";
   const messages = {
@@ -44,6 +49,10 @@ function failure(error) {
     GOAL_ALREADY_EXISTS: error.message,
     PLAN_SCHEMA_INVALID: "计划内容暂时不可用，请重新生成。",
     RATE_LIMITED: error.message,
+    GOAL_NOT_FOUND: "当前目标不存在，请重新进入小程序。",
+    PLAN_NOT_FOUND: "当前计划不存在，请重新进入小程序。",
+    TASK_NOT_FOUND: "今日暂无任务安排。",
+    CHECKIN_ALREADY_EXISTS: "今天已经打过卡了，明天继续加油。",
     INTERNAL_ERROR: "服务暂时不可用，请稍后重试。",
   };
   return {
@@ -133,6 +142,14 @@ async function getHome(openid) {
   return success(await getHomeData(openid));
 }
 
+async function handleSubmitCheckin(event, openid) {
+  return success(await submitCheckin(openid, event));
+}
+
+async function handleGetCheckinStatus(openid) {
+  return success(await getCheckinStatus(openid));
+}
+
 exports.main = async (event) => {
   try {
     const context = cloud.getWXContext();
@@ -161,6 +178,12 @@ exports.main = async (event) => {
     }
     if (event.action === "getHomeData") {
       return await getHome(context.OPENID);
+    }
+    if (event.action === "submitCheckin") {
+      return await handleSubmitCheckin(event, context.OPENID);
+    }
+    if (event.action === "getCheckinStatus") {
+      return await handleGetCheckinStatus(context.OPENID);
     }
 
     const error = new Error("不支持的操作。");
