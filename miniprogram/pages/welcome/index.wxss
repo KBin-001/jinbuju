@@ -1,0 +1,243 @@
+.welcome-page {
+  min-height: 100vh;
+  padding: calc(48rpx + env(safe-area-inset-top)) 48rpx calc(40rpx + env(safe-area-inset-bottom));
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(242, 184, 75, 0.22) 0, rgba(242, 184, 75, 0) 30%),
+    linear-gradient(160deg, #f8faf5 0%, #edf4ee 100%);
+}
+
+.welcome-state {
+  min-height: calc(100vh - 120rpx);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.welcome-content {
+  min-height: calc(100vh - 88rpx - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+}
+
+.brand-mark {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 5rpx;
+  padding: 13rpx;
+  border-radius: 20rpx;
+  background: var(--color-primary);
+  box-shadow: 0 12rpx 28rpx rgba(53, 104, 89, 0.2);
+}
+
+.brand-step {
+  width: 8rpx;
+  border-radius: 4rpx 4rpx 2rpx 2rpx;
+  background: #ffffff;
+}
+
+.brand-step-small {
+  height: 12rpx;
+  opacity: 0.65;
+}
+
+.brand-step-medium {
+  height: 22rpx;
+  opacity: 0.82;
+}
+
+.brand-step-large {
+  height: 34rpx;
+}
+
+.brand-name {
+  margin-left: 18rpx;
+  color: var(--color-primary);
+  font-size: 32rpx;
+  font-weight: 700;
+  letter-spacing: 3rpx;
+}
+
+.hero {
+  margin-top: 15vh;
+}
+
+.hero-label {
+  display: inline-flex;
+  padding: 10rpx 20rpx;
+  border-radius: 999rpx;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.hero-title {
+  max-width: 630rpx;
+  margin-top: 28rpx;
+  color: #1d2a23;
+  font-size: 62rpx;
+  font-weight: 750;
+  line-height: 1.34;
+  letter-spacing: -1rpx;
+}
+
+.hero-subtitle {
+  max-width: 590rpx;
+  margin-top: 28rpx;
+  color: var(--color-text-secondary);
+  font-size: 30rpx;
+  line-height: 1.75;
+}
+
+.example-card {
+  margin-top: 40rpx;
+  padding: 28rpx;
+  border: 1rpx solid rgba(53, 104, 89, 0.12);
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18rpx 50rpx rgba(46, 67, 55, 0.08);
+}
+
+.example-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.example-tag {
+  color: var(--color-primary);
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.example-title {
+  margin-top: 8rpx;
+  font-size: 29rpx;
+  font-weight: 650;
+}
+
+.example-day {
+  padding: 8rpx 14rpx;
+  border-radius: 12rpx;
+  background: #f7edd5;
+  color: #88601b;
+  font-size: 22rpx;
+}
+
+.example-task {
+  display: flex;
+  align-items: center;
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid var(--color-border);
+}
+
+.task-check {
+  width: 52rpx;
+  height: 52rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 16rpx;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.task-content {
+  margin-left: 18rpx;
+}
+
+.task-title {
+  font-size: 27rpx;
+  font-weight: 600;
+}
+
+.task-meta {
+  margin-top: 6rpx;
+  color: var(--color-text-secondary);
+  font-size: 22rpx;
+}
+
+.example-note {
+  margin-top: 22rpx;
+  color: var(--color-text-secondary);
+  font-size: 23rpx;
+}
+
+.welcome-actions {
+  margin-top: auto;
+  padding-top: 40rpx;
+}
+
+.start-button,
+.example-button {
+  width: 100%;
+  height: 100rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  font-weight: 650;
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.start-button {
+  background: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 18rpx 36rpx rgba(53, 104, 89, 0.2);
+}
+
+.start-button-active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+.example-button {
+  margin-top: 18rpx;
+  border: 2rpx solid rgba(53, 104, 89, 0.24);
+  background: rgba(255, 255, 255, 0.52);
+  color: var(--color-primary);
+}
+
+.example-button-active {
+  background: var(--color-primary-light);
+  transform: scale(0.98);
+}
+
+@media (max-height: 700px) {
+  .hero {
+    margin-top: 8vh;
+  }
+
+  .hero-title {
+    font-size: 54rpx;
+  }
+
+  .example-card {
+    margin-top: 24rpx;
+    padding: 22rpx;
+  }
+
+  .welcome-actions {
+    padding-top: 24rpx;
+  }
+
+  .start-button,
+  .example-button {
+    height: 88rpx;
+  }
+}
