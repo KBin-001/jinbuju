@@ -8,6 +8,7 @@ const { buildFallbackPlan } = require("./fallback");
 const { buildPrompt, buildRepairPrompt } = require("./prompt");
 const {
   adoptPlan,
+  ensureCollections,
   enforceRateLimit,
   hasActiveGoal,
   hashPlan,
@@ -110,6 +111,8 @@ exports.main = async (event) => {
       error.code = "UNAUTHORIZED";
       throw error;
     }
+
+    await ensureCollections();
 
     if (event.action === "generate") {
       return await generate(event, context.OPENID);

@@ -3,6 +3,13 @@ const cloud = require("wx-server-sdk");
 
 const db = cloud.database();
 const command = db.command;
+const REQUIRED_COLLECTIONS = [
+  "users",
+  "goals",
+  "plans",
+  "tasks",
+  "plan_generation_requests",
+];
 
 function stableId(prefix, value) {
   return `${prefix}_${crypto.createHash("sha256").update(value).digest("hex").slice(0, 24)}`;
@@ -10,6 +17,25 @@ function stableId(prefix, value) {
 
 function hashPlan(plan) {
   return crypto.createHash("sha256").update(JSON.stringify(plan)).digest("hex");
+}
+
+async function ensureCollections() {
+  for (const collectionName of REQUIRED_COLLECTIONS) {
+    try {
+      await db.createCollection(collectionName);
+    } catch (error) {
+      const message = String(error && (error.errMsg || error.message || error));
+      const alreadyExists =
+        error.errCode === -502005 ||
+        message.includes("DATABASE_COLLECTION_EXIST") ||
+        message.includes("CollectionName") ||
+        message.includes("already exists") ||
+        message.includes("exist");
+      if (!alreadyExists) {
+        throw error;
+      }
+    }
+  }
 }
 
 async function recordGeneration(openid, requestId, source, status, planHash = "") {
@@ -191,6 +217,7 @@ async function hasActiveGoal(openid) {
 
 module.exports = {
   adoptPlan,
+  ensureCollections,
   enforceRateLimit,
   hasActiveGoal,
   hashPlan,
