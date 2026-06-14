@@ -10,6 +10,7 @@ const REQUIRED_COLLECTIONS = [
   "tasks",
   "plan_generation_requests",
 ];
+let collectionsReady = false;
 
 function stableId(prefix, value) {
   return `${prefix}_${crypto.createHash("sha256").update(value).digest("hex").slice(0, 24)}`;
@@ -20,6 +21,8 @@ function hashPlan(plan) {
 }
 
 async function ensureCollections() {
+  if (collectionsReady) return;
+
   for (const collectionName of REQUIRED_COLLECTIONS) {
     try {
       await db.createCollection(collectionName);
@@ -36,6 +39,7 @@ async function ensureCollections() {
       }
     }
   }
+  collectionsReady = true;
 }
 
 async function recordGeneration(openid, requestId, source, status, planHash = "") {
@@ -215,10 +219,90 @@ async function hasActiveGoal(openid) {
   return result.data.length > 0;
 }
 
+async function getCurrentPlan(openid) {
+  const goalsResult = await db
+    .collection("goals")
+    .where({
+      _openid: openid,
+      status: "active",
+    })
+    .limit(1)
+    .get();
+  const goal = goalsResult.data[0];
+  if (!goal) return null;
+
+  const plansResult = await db
+    .collection("plans")
+    .where({
+      _openid: openid,
+      goalId: goal._id,
+      status: "active",
+    })
+    .limit(1)
+    .get();
+  const plan = plansResult.data[0];
+  if (!plan) return null;
+
+  return {
+    goalId: goal._id,
+    planId: plan._id,
+    goalTitle: goal.goalTitle,
+    summary: plan.summary,
+    weeklyGoal: plan.weeklyGoal,
+    startDate: plan.startDate,
+    endDate: plan.endDate,
+    source: plan.source,
+  };
+}
+
+async function deleteCurrentPlan(openid) {
+  const goalsResult = await db
+    .collection("goals")
+    .where({
+      _openid: openid,
+      status: "active",
+    })
+    .limit(1)
+    .get();
+  const goal = goalsResult.data[0];
+  if (!goal) {
+    return { deleted: false };
+  }
+
+  await db.collection("tasks").where({
+    _openid: openid,
+    goalId: goal._id,
+  }).remove();
+
+  await db.collection("plans").where({
+    _openid: openid,
+    goalId: goal._id,
+  }).remove();
+
+  await db.collection("goals").doc(goal._id).remove();
+
+  const userId = stableId("user", openid);
+  await db.collection("users").doc(userId).update({
+    data: {
+      currentGoalId: command.remove(),
+      updatedAt: db.serverDate(),
+    },
+  }).catch(() => null);
+
+  if (goal.requestId) {
+    const generationId = stableId("generation", `${openid}:${goal.requestId}`);
+    await db.collection("plan_generation_requests").doc(generationId).remove().catch(() => null);
+  }
+
+  return { deleted: true };
+}
+
 module.exports = {
   adoptPlan,
+  deleteCurrentPlan,
   ensureCollections,
   enforceRateLimit,
+  getCurrentPlan,
   hasActiveGoal,
   hashPlan,
   recordGeneration,

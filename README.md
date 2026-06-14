@@ -82,17 +82,18 @@ AGENTS.md                项目协作与开发约束
 云函数环境变量：
 
 ```text
-CLOUDBASE_AI_ENABLED=true
 CLOUDBASE_AI_MODEL=hy3-preview
 CLOUDBASE_ENV=你的云开发环境 ID
 ```
 
-- 未设置 `CLOUDBASE_AI_ENABLED=true` 时，流程自动使用本地推荐模板。
+- 默认会调用 CloudBase AI；只有显式设置 `CLOUDBASE_AI_ENABLED=false` 时才禁用 AI 并使用推荐模板。
 - `hy3-preview` 是“小程序成长计划”提供免费额度的混元体验模型，不需要额外 API Key。
 - `CLOUDBASE_AI_MODEL` 可省略，默认使用 `hy3-preview`。
+- `CLOUDBASE_AI_PROVIDER` 可省略，默认使用 SDK 推荐的 `cloudbase` 路由。
 - 如改用 `deepseek-v4-flash` 等模型，需要另外购买 CloudBase Token 资源包并在控制台开启对应模型。
 - 不要在小程序前端、Git 或日志中保存任何 AI 密钥。
-- 云函数建议使用 Node.js 18 或更高运行时，并将超时时间设为至少 30 秒。
+- 云函数建议使用 Node.js 18 或更高运行时。
+- `generatePlan` 包含 AI 调用，必须在云函数配置中将执行超时设置为 `60 秒`，内存建议 `256 MB` 或以上。
 
 ## 目标与计划流程
 
@@ -103,6 +104,7 @@ CLOUDBASE_ENV=你的云开发环境 ID
 5. 用户点击“采用这个计划”后，前端调用 `adopt`。
 6. 云函数重新校验并使用事务写入 `goals`、`plans`、`tasks` 和 `users.currentGoalId`。
 7. 同一 `requestId` 重复采用不会重复创建数据；已有 active 目标时拒绝新建。
+8. 用户可在“计划”页二次确认后删除当前目标、计划和任务，再创建新目标。
 
 ## 测试
 
@@ -124,7 +126,7 @@ npm test
 
 兜底流程：
 
-1. 将 `CLOUDBASE_AI_ENABLED` 删除或设为 `false`。
+1. 将 `CLOUDBASE_AI_ENABLED` 设为 `false`。
 2. 重新生成计划。
 3. 页面应显示推荐计划提示，仍可正常采用和保存。
 

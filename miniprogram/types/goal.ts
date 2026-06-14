@@ -49,6 +49,21 @@ export interface AdoptResult {
   adopted: boolean;
 }
 
+export interface CurrentPlan {
+  goalId: string;
+  planId: string;
+  goalTitle: string;
+  summary: string;
+  weeklyGoal: string;
+  startDate: string;
+  endDate: string;
+  source: PlanSource;
+}
+
+export interface DeletePlanResult {
+  deleted: boolean;
+}
+
 export interface CloudFunctionResult<T> {
   success: boolean;
   data?: T;

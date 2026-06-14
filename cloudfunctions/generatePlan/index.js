@@ -8,8 +8,10 @@ const { buildFallbackPlan } = require("./fallback");
 const { buildPrompt, buildRepairPrompt } = require("./prompt");
 const {
   adoptPlan,
+  deleteCurrentPlan,
   ensureCollections,
   enforceRateLimit,
+  getCurrentPlan,
   hasActiveGoal,
   hashPlan,
   recordGeneration,
@@ -53,6 +55,8 @@ function failure(error) {
 }
 
 async function generate(event, openid) {
+  const startedAt = Date.now();
+  const fallbackDeadline = startedAt + 48000;
   const goal = validateGoal(event.goal);
   const requestId = validateRequestId(event.requestId);
   await enforceRateLimit(openid, requestId, event.forceFallback === true);
@@ -63,13 +67,25 @@ async function generate(event, openid) {
   if (!event.forceFallback) {
     let firstOutput = "";
     try {
-      firstOutput = await generateText(buildPrompt(goal, formatBusinessDate()));
+      firstOutput = await generateText(buildPrompt(goal, formatBusinessDate()), 18000);
       plan = validatePlan(parseAiJson(firstOutput), goal);
       source = "ai";
     } catch (firstError) {
+      console.warn("generatePlan first AI attempt failed", {
+        requestId,
+        code: firstError.code || "AI_GENERATION_FAILED",
+        message: String(firstError.message || "").slice(0, 160),
+      });
       try {
+        const remainingMilliseconds = fallbackDeadline - Date.now();
+        if (remainingMilliseconds < 5000) {
+          const timeoutError = new Error("AI_REPAIR_SKIPPED");
+          timeoutError.code = "AI_REPAIR_SKIPPED";
+          throw timeoutError;
+        }
         const repairedOutput = await generateText(
           buildRepairPrompt(goal, firstOutput, formatBusinessDate()),
+          Math.min(16000, remainingMilliseconds),
         );
         plan = validatePlan(parseAiJson(repairedOutput), goal);
         source = "ai";
@@ -77,6 +93,7 @@ async function generate(event, openid) {
         console.warn("generatePlan AI fallback", {
           requestId,
           code: repairError.code || "AI_GENERATION_FAILED",
+          message: String(repairError.message || "").slice(0, 160),
         });
       }
     }
@@ -103,6 +120,14 @@ async function checkActive(openid) {
   return success({ hasActiveGoal: await hasActiveGoal(openid) });
 }
 
+async function getCurrent(openid) {
+  return success({ currentPlan: await getCurrentPlan(openid) });
+}
+
+async function deleteCurrent(openid) {
+  return success(await deleteCurrentPlan(openid));
+}
+
 exports.main = async (event) => {
   try {
     const context = cloud.getWXContext();
@@ -122,6 +147,12 @@ exports.main = async (event) => {
     }
     if (event.action === "checkActive") {
       return await checkActive(context.OPENID);
+    }
+    if (event.action === "getCurrent") {
+      return await getCurrent(context.OPENID);
+    }
+    if (event.action === "deleteCurrent") {
+      return await deleteCurrent(context.OPENID);
     }
 
     const error = new Error("不支持的操作。");

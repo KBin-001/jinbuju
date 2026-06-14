@@ -11,7 +11,7 @@ import {
 
 type PreviewStatus = "initial" | "generating" | "success" | "error" | "fallback";
 
-const GENERATION_TIMEOUT = 25000;
+const GENERATION_TIMEOUT = 55000;
 
 Page({
   data: {

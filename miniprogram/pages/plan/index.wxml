@@ -25,9 +25,28 @@
     <button class="primary-button" bindtap="retry">重新加载</button>
   </view>
 
-  <view wx:else class="card">
+  <view wx:elif="{{status === 'preview'}}" class="card">
     <view class="state-title">计划预览已准备好</view>
     <view class="state-description">你有一份尚未采用的 7 天计划，可以继续查看并确认。</view>
     <button class="primary-button" bindtap="continuePreview">继续查看计划</button>
+  </view>
+
+  <view wx:else class="active-plan-card">
+    <view class="active-plan-label">进行中的目标</view>
+    <view class="active-plan-title">{{currentPlan.goalTitle}}</view>
+    <view class="active-plan-summary">{{currentPlan.summary}}</view>
+
+    <view class="plan-detail">
+      <view class="plan-detail-label">本周目标</view>
+      <view class="plan-detail-value">{{currentPlan.weeklyGoal}}</view>
+    </view>
+    <view class="plan-date">{{currentPlan.startDate}} 至 {{currentPlan.endDate}}</view>
+
+    <button
+      class="delete-button {{deleting ? 'delete-button-disabled' : ''}}"
+      loading="{{deleting}}"
+      disabled="{{deleting}}"
+      bindtap="confirmDelete"
+    >删除当前计划</button>
   </view>
 </view>

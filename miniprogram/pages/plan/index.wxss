@@ -1,3 +1,68 @@
 .page-header {
   padding-top: 16rpx;
 }
+
+.active-plan-card {
+  padding: 34rpx;
+  border: 1rpx solid var(--color-border);
+  border-radius: 28rpx;
+  background: var(--color-surface);
+  box-shadow: 0 12rpx 32rpx rgba(46, 67, 55, 0.06);
+}
+
+.active-plan-label {
+  color: var(--color-primary);
+  font-size: 24rpx;
+  font-weight: 650;
+}
+
+.active-plan-title {
+  margin-top: 12rpx;
+  font-size: 40rpx;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.active-plan-summary {
+  margin-top: 16rpx;
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+}
+
+.plan-detail {
+  margin-top: 30rpx;
+  padding: 26rpx;
+  border-radius: 20rpx;
+  background: var(--color-primary-light);
+}
+
+.plan-detail-label {
+  color: var(--color-primary);
+  font-size: 23rpx;
+  font-weight: 650;
+}
+
+.plan-detail-value {
+  margin-top: 8rpx;
+  line-height: 1.6;
+}
+
+.plan-date {
+  margin-top: 22rpx;
+  color: var(--color-text-secondary);
+  font-size: 24rpx;
+}
+
+.delete-button {
+  width: 100%;
+  margin-top: 42rpx;
+  padding: 24rpx;
+  border: 2rpx solid #d88a8a;
+  border-radius: 999rpx;
+  color: #b74444;
+  font-weight: 650;
+}
+
+.delete-button-disabled {
+  opacity: 0.55;
+}

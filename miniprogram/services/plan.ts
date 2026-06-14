@@ -1,6 +1,8 @@
 import {
   AdoptResult,
   CloudFunctionResult,
+  CurrentPlan,
+  DeletePlanResult,
   GoalDraft,
   PlanPreview,
 } from "../types/goal";
@@ -47,9 +49,16 @@ function callGeneratePlan<T>(data: Record<string, unknown>): Promise<T> {
       } else if (rawMessage.includes("Environment not found")) {
         error.code = "ENVIRONMENT_NOT_FOUND";
         error.message = "未找到云开发环境，请检查环境 ID。";
+      } else if (
+        rawMessage.includes("TIMEOUT") ||
+        rawMessage.includes("time limit") ||
+        rawMessage.includes("超时")
+      ) {
+        error.code = "FUNCTION_TIMEOUT";
+        error.message = "计划生成超时，请将 generatePlan 云函数超时设置为 60 秒后重试。";
       } else {
         error.code = "NETWORK_ERROR";
-        error.message = "云服务连接失败，请检查网络后重试。";
+        error.message = "云函数调用失败，请检查 generatePlan 日志和运行配置。";
       }
 
       throw error;
@@ -90,4 +99,16 @@ export function checkActiveGoal(): Promise<boolean> {
   return callGeneratePlan<ActiveGoalResponse>({
     action: "checkActive",
   }).then((result) => result.hasActiveGoal);
+}
+
+export function getCurrentPlan(): Promise<CurrentPlan | null> {
+  return callGeneratePlan<{ currentPlan: CurrentPlan | null }>({
+    action: "getCurrent",
+  }).then((result) => result.currentPlan);
+}
+
+export function deleteCurrentPlan(): Promise<DeletePlanResult> {
+  return callGeneratePlan<DeletePlanResult>({
+    action: "deleteCurrent",
+  });
 }
