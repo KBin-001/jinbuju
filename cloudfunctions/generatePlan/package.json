@@ -1,0 +1,16 @@
+{
+  "name": "generate-plan",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@cloudbase/node-sdk": "^3.16.0",
+    "wx-server-sdk": "~2.4.0"
+  }
+}

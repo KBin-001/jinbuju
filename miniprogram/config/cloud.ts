@@ -1,4 +1,4 @@
-export const CLOUD_ENV_ID = "";
+export const CLOUD_ENV_ID = "ai-d3g9qsay37da6a3cc";
 
 export function initCloud(): void {
   if (!wx.cloud) {

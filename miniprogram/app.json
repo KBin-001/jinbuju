@@ -1,6 +1,8 @@
 {
   "pages": [
     "pages/welcome/index",
+    "pages/goal-create/index",
+    "pages/plan-preview/index",
     "pages/index/index",
     "pages/plan/index",
     "pages/team/index",

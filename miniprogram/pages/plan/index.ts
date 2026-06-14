@@ -1,3 +1,5 @@
+import { getPlanPreview } from "../../utils/storage";
+
 type PageStatus = "loading" | "empty" | "error" | "ready";
 
 Page({
@@ -10,10 +12,14 @@ Page({
     this.loadPlan();
   },
 
+  onShow() {
+    this.loadPlan();
+  },
+
   loadPlan() {
     this.setData({ status: "loading", errorMessage: "" });
     setTimeout(() => {
-      this.setData({ status: "empty" });
+      this.setData({ status: getPlanPreview() ? "ready" : "empty" });
     }, 300);
   },
 
@@ -22,9 +28,10 @@ Page({
   },
 
   createGoal() {
-    wx.showToast({
-      title: "目标创建模块即将接入",
-      icon: "none",
-    });
+    wx.navigateTo({ url: "/pages/goal-create/index" });
+  },
+
+  continuePreview() {
+    wx.navigateTo({ url: "/pages/plan-preview/index" });
   },
 });

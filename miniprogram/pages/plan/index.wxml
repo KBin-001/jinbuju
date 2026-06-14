@@ -26,7 +26,8 @@
   </view>
 
   <view wx:else class="card">
-    <view class="state-title">7 天计划已生成</view>
-    <view class="state-description">目标创建与 AI 计划将在后续模块接入。</view>
+    <view class="state-title">计划预览已准备好</view>
+    <view class="state-description">你有一份尚未采用的 7 天计划，可以继续查看并确认。</view>
+    <button class="primary-button" bindtap="continuePreview">继续查看计划</button>
   </view>
 </view>

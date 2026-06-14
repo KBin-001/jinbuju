@@ -1,5 +1,7 @@
 type PageStatus = "loading" | "empty" | "error" | "ready";
 
+export {};
+
 Page({
   data: {
     status: "loading" as PageStatus,

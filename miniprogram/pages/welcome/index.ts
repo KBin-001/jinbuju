@@ -48,12 +48,12 @@ Page({
   startPlanning() {
     try {
       wx.setStorageSync(WELCOME_COMPLETED_KEY, true);
-      wx.switchTab({
-        url: "/pages/plan/index",
+      wx.navigateTo({
+        url: "/pages/goal-create/index",
         fail: () => {
           wx.removeStorageSync(WELCOME_COMPLETED_KEY);
           wx.showToast({
-            title: "暂时无法进入计划页",
+            title: "暂时无法进入目标创建页",
             icon: "none",
           });
         },
