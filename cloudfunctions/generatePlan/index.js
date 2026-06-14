@@ -5,6 +5,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const { generateText } = require("./ai");
 const { formatBusinessDate } = require("./date");
 const { buildFallbackPlan } = require("./fallback");
+const { getHomeData } = require("./home");
 const { buildPrompt, buildRepairPrompt } = require("./prompt");
 const {
   adoptPlan,
@@ -128,6 +129,10 @@ async function deleteCurrent(openid) {
   return success(await deleteCurrentPlan(openid));
 }
 
+async function getHome(openid) {
+  return success(await getHomeData(openid));
+}
+
 exports.main = async (event) => {
   try {
     const context = cloud.getWXContext();
@@ -153,6 +158,9 @@ exports.main = async (event) => {
     }
     if (event.action === "deleteCurrent") {
       return await deleteCurrent(context.OPENID);
+    }
+    if (event.action === "getHomeData") {
+      return await getHome(context.OPENID);
     }
 
     const error = new Error("不支持的操作。");

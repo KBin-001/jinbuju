@@ -1,32 +1,139 @@
-<view class="page">
-  <view class="page-header">
-    <view class="page-eyebrow">今天也向前一点</view>
-    <view class="page-title">今日任务</view>
-    <view class="page-subtitle">把目标拆成今天可以完成的小事。</view>
-  </view>
-
-  <view wx:if="{{status === 'loading'}}" class="card state-card">
+<view class="page today-page">
+  <view wx:if="{{status === 'loading'}}" class="card state-card page-state">
     <view class="loading-dot"></view>
-    <view class="state-title">正在准备今日任务</view>
+    <view class="state-title">正在准备今天的行动</view>
     <view class="state-description">稍等一下，马上回来。</view>
   </view>
 
-  <view wx:elif="{{status === 'empty'}}" class="card state-card">
-    <view class="state-mark">1</view>
-    <view class="state-title">还没有今日任务</view>
-    <view class="state-description">创建一个目标后，AI 会为你生成未来 7 天的执行计划。</view>
-    <button class="primary-button" bindtap="goToPlan">创建目标</button>
-  </view>
-
-  <view wx:elif="{{status === 'error'}}" class="card state-card">
+  <view wx:elif="{{status === 'error'}}" class="card state-card page-state">
     <view class="state-mark">!</view>
-    <view class="state-title">任务加载失败</view>
+    <view class="state-title">今日数据加载失败</view>
     <view class="state-description">{{errorMessage}}</view>
     <button class="primary-button" bindtap="retry">重新加载</button>
   </view>
 
-  <view wx:else class="card">
-    <view class="state-title">今日任务已就绪</view>
-    <view class="state-description">任务数据将在后续“今日任务”模块中接入。</view>
-  </view>
+  <block wx:else>
+    <view class="today-header">
+      <view class="date-row">
+        <view>
+          <view class="date-title">{{dateTitle}}</view>
+          <view class="weekday">{{weekday}}</view>
+        </view>
+        <view class="streak-pill" aria-label="已连续行动 {{user.streakDays}} 天">
+          <text class="streak-number">{{user.streakDays}}</text>
+          <text>天连续行动</text>
+        </view>
+      </view>
+      <view class="greeting">继续向目标靠近一点</view>
+    </view>
+
+    <view wx:if="{{!goal}}" class="card empty-goal-card">
+      <view class="section-eyebrow">你的第一个目标</view>
+      <view class="empty-goal-title">先创建一个目标，开始你的第一个 7 天计划。</view>
+      <view class="empty-goal-description">把想做的事拆成每天可以完成的小步骤。</view>
+      <button
+        class="primary-button create-button"
+        loading="{{navigating}}"
+        disabled="{{navigating}}"
+        bindtap="goToCreateGoal"
+      >
+        创建目标
+      </button>
+    </view>
+
+    <block wx:else>
+      <view class="card goal-card">
+        <view class="card-heading-row">
+          <view>
+            <view class="section-eyebrow">当前目标</view>
+            <view class="goal-title">{{goal.title}}</view>
+          </view>
+          <view class="category-tag">{{categoryLabel}}</view>
+        </view>
+        <view class="goal-meta">
+          <view class="meta-item">
+            <view class="meta-value">第 {{goal.currentDay}} / {{goal.totalDays}} 天</view>
+            <view class="meta-label">计划进度</view>
+          </view>
+          <view class="meta-divider"></view>
+          <view class="meta-item">
+            <view class="meta-value">{{goal.weeklyCompletionRate}}%</view>
+            <view class="meta-label">本周整体完成率</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="card progress-card">
+        <view class="card-heading-row">
+          <view>
+            <view class="section-eyebrow">今日进度</view>
+            <view class="progress-count">
+              <text class="progress-count-strong">{{completedCount}}</text>
+              <text> / {{totalCount}} 项完成</text>
+            </view>
+          </view>
+          <view class="progress-rate">{{completionRate}}%</view>
+        </view>
+        <view
+          class="progress-track"
+          aria-role="progressbar"
+          aria-label="今日任务完成 {{completionRate}}%"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="{{completionRate}}"
+        >
+          <view class="progress-fill" style="width: {{completionRate}}%;"></view>
+        </view>
+        <view class="progress-status">{{progressText}}</view>
+      </view>
+
+      <view class="task-section">
+        <view class="section-title-row">
+          <view class="section-title">今日任务</view>
+          <view class="section-count">{{totalCount}} 项</view>
+        </view>
+
+        <view wx:if="{{totalCount === 0}}" class="card no-task-card">
+          <view class="state-mark small-mark">0</view>
+          <view class="no-task-title">今天暂时没有安排任务</view>
+          <view class="state-description">可以先休息一下，或前往计划页查看完整安排。</view>
+        </view>
+
+        <view
+          wx:for="{{tasks}}"
+          wx:key="id"
+          class="card task-card {{item.completed ? 'task-card-completed' : ''}}"
+        >
+          <view class="task-content">
+            <view class="task-title {{item.completed ? 'task-title-completed' : ''}}">
+              {{item.title}}
+            </view>
+            <view wx:if="{{item.description}}" class="task-description">{{item.description}}</view>
+            <view class="task-duration">预计 {{item.estimatedMinutes}} 分钟</view>
+          </view>
+          <button
+            class="task-toggle {{item.completed ? 'task-toggle-completed' : ''}}"
+            data-id="{{item.id}}"
+            disabled="{{item.toggling}}"
+            aria-label="{{item.completed ? '标记为未完成：' : '标记为完成：'}}{{item.title}}"
+            bindtap="toggleTask"
+          >
+            <text class="task-toggle-icon">{{item.completed ? '✓' : ''}}</text>
+            <text>{{item.completed ? '已完成' : '完成'}}</text>
+          </button>
+        </view>
+      </view>
+
+      <view class="bottom-action">
+        <button
+          class="checkin-button"
+          disabled="{{completedCount === 0 || navigating || !goal.planId}}"
+          loading="{{navigating}}"
+          bindtap="prepareCheckin"
+        >
+          {{checkinButtonText}}
+        </button>
+      </view>
+    </block>
+  </block>
 </view>
