@@ -8,6 +8,10 @@ const CATEGORY_LABELS = {
   exam: "考试备考",
   skill: "技能学习",
   career: "求职提升",
+  reading: "阅读成长",
+  fitness: "运动健康",
+  habit: "习惯养成",
+  other: "其他目标",
 };
 
 function fail(code, message) {
@@ -64,7 +68,11 @@ function calculateJoinedDays(user) {
 
 function calculateCurrentDay(plan, businessDate) {
   if (!plan || !plan.startDate) return 1;
-  return Math.min(Math.max(businessDateDiff(plan.startDate, businessDate) + 1, 1), 7);
+  const durationDays = Math.max(Number(plan.durationDays || plan.totalDays || 7), 1);
+  return Math.min(
+    Math.max(businessDateDiff(plan.startDate, businessDate) + 1, 1),
+    durationDays,
+  );
 }
 
 function findCheckinUnlockDate(checkins, predicate) {
@@ -92,7 +100,7 @@ async function buildProfile(openid) {
     ? plans.find(
         (plan) =>
           plan.goalId === currentGoal._id &&
-          (plan.status === "active" || plan.status === "paused"),
+          ["active", "paused", "reviewing"].includes(plan.status),
       ) || null
     : null;
   const currentPlanTasks = currentPlan
@@ -139,7 +147,7 @@ async function buildProfile(openid) {
       const goalPlanIds = new Set(goalPlans.map((plan) => plan._id));
       return {
         id: String(goal._id),
-        title: String(goal.goalTitle || "成长目标"),
+        title: String(goal.title || goal.goalTitle || "成长目标"),
         category: String(goal.category || ""),
         categoryLabel: CATEGORY_LABELS[goal.category] || "成长行动",
         status: goal.status === "completed" ? "completed" : "stopped",
@@ -178,15 +186,21 @@ async function buildProfile(openid) {
       ? {
           id: String(currentGoal._id),
           planId: currentPlan ? String(currentPlan._id) : "",
-          title: String(currentGoal.goalTitle || "当前目标"),
+          title: String(currentGoal.title || currentGoal.goalTitle || "当前目标"),
           category: String(currentGoal.category || ""),
           categoryLabel: CATEGORY_LABELS[currentGoal.category] || "成长行动",
           stageTitle: String(
-            (currentPlan && (currentPlan.weeklyGoal || currentPlan.summary)) ||
-              "当前 7 天行动阶段",
+            (currentPlan &&
+              (currentPlan.stageTitle ||
+                currentPlan.title ||
+                currentPlan.weeklyGoal ||
+                currentPlan.summary)) ||
+              "当前行动阶段",
           ),
           currentDay: currentPlan ? calculateCurrentDay(currentPlan, businessDate) : 1,
-          totalDays: 7,
+          totalDays: currentPlan
+            ? Math.max(Number(currentPlan.durationDays || currentPlan.totalDays || 7), 1)
+            : 7,
           planStatus: currentPlan ? String(currentPlan.status) : "completed",
           stageCompletionRate:
             currentPlanTasks.length > 0
@@ -299,6 +313,9 @@ async function deleteUserData(openid, event) {
       db.collection("plans").where({ _openid: openid }).remove(),
       db.collection("goals").where({ _openid: openid }).remove(),
       db.collection("plan_generation_requests").where({ _openid: openid }).remove(),
+      db.collection("stage_generation_requests").where({ _openid: openid }).remove(),
+      db.collection("stage_previews").where({ _openid: openid }).remove(),
+      db.collection("stage_reviews").where({ _openid: openid }).remove(),
     ]);
     await db.collection("team_members").where({ userKey }).remove();
     await db.collection("users").where({ _openid: openid }).remove();

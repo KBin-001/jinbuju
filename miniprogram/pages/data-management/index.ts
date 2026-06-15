@@ -22,7 +22,7 @@ Page({
     wx.showModal({
       title: "确认清除全部数据？",
       content:
-        "目标、计划、任务、打卡、小队关系和鼓励记录都会被清除，且无法恢复。",
+        "目标、行动阶段、每日行动、打卡、小队关系和鼓励记录都会被清除，且无法恢复。",
       confirmText: "继续",
       confirmColor: "#B44C43",
       success: (result: { confirm: boolean }) => {

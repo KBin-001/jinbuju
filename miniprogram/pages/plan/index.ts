@@ -1,8 +1,5 @@
 import {
-  adoptNextWeekPlan,
-  createRequestId,
   deleteCurrentPlan,
-  generateNextWeekPlan,
   getPlanPageData,
   pauseCurrentPlan,
   postponePlanTask,
@@ -10,7 +7,6 @@ import {
   updatePlanTime,
 } from "../../services/plan";
 import {
-  NextWeekPreviewCache,
   PlanDayStatus,
   PlanDaySummary,
   PlanPageData,
@@ -19,11 +15,10 @@ import {
 } from "../../types/goal";
 import {
   clearGoalDraft,
-  clearNextWeekPreview,
+  clearLongTermGoalDraft,
   clearPlanPreview,
-  getNextWeekPreview,
-  getPlanPreview,
-  saveNextWeekPreview,
+  clearStagePreviewCache,
+  getStagePreviewCache,
 } from "../../utils/storage";
 
 type PageStatus = "loading" | "empty" | "error" | "preview" | "ready";
@@ -53,12 +48,17 @@ const CATEGORY_LABELS: Record<string, string> = {
   exam: "考试备考",
   skill: "技能学习",
   career: "求职提升",
+  reading: "阅读成长",
+  fitness: "运动健康",
+  habit: "习惯养成",
+  other: "其他目标",
 };
 
 const PLAN_STATUS_LABELS: Record<PlanStatus, string> = {
   active: "进行中",
   paused: "已暂停",
   completed: "已完成",
+  reviewing: "待复盘",
 };
 
 const DAY_STATUS_LABELS: Record<PlanDayStatus, string> = {
@@ -83,10 +83,10 @@ function formatDay(dateValue: string): { monthDay: string; weekday: string } {
 }
 
 function getProgressText(rate: number): string {
-  if (rate >= 100) return "本周行动已经完成";
-  if (rate >= 80) return "本周计划接近完成";
+  if (rate >= 100) return "当前阶段行动已经完成";
+  if (rate >= 80) return "当前阶段接近完成";
   if (rate >= 40) return "你正在稳步推进";
-  if (rate > 0) return "计划已经开始，继续保持";
+  if (rate > 0) return "阶段已经开始，继续保持";
   return "从今天的一件小事开始";
 }
 
@@ -105,6 +105,7 @@ Page({
     errorMessage: "",
     pageData: null as PlanPageData | null,
     days: [] as PlanDayView[],
+    recentDays: [] as PlanDayView[],
     selectedDate: "",
     selectedDay: null as PlanDayView | null,
     categoryLabel: "",
@@ -113,10 +114,6 @@ Page({
     actionLoading: "",
     actionTaskId: "",
     deleting: false,
-    nextWeekPreview: null as NextWeekPreviewCache | null,
-    nextWeekGenerating: false,
-    nextWeekAdopting: false,
-    nextWeekError: "",
   },
 
   onShow() {
@@ -129,22 +126,24 @@ Page({
       .then((pageData) => {
         if (!pageData.goal || !pageData.plan) {
           this.setData({
-            status: getPlanPreview() ? "preview" : "empty",
+            status: getStagePreviewCache() ? "preview" : "empty",
             pageData: null,
             days: [],
+            recentDays: [],
             selectedDay: null,
           });
           return;
         }
 
         const days = pageData.days.map(toDayView);
+        const recentDays = pageData.recentDays.map(toDayView);
         const selectedDate = this.resolveSelectedDate(pageData, days);
         const selectedDay = days.find((day) => day.date === selectedDate) || days[0] || null;
-        const cached = getNextWeekPreview();
         this.setData({
           status: "ready",
           pageData,
           days,
+          recentDays,
           selectedDate,
           selectedDay,
           categoryLabel: CATEGORY_LABELS[pageData.goal.category] || "成长目标",
@@ -152,14 +151,12 @@ Page({
           progressText: getProgressText(pageData.plan.completionRate),
           actionLoading: "",
           actionTaskId: "",
-          nextWeekPreview:
-            cached && cached.previousPlanId === pageData.plan.id ? cached : null,
         });
       })
       .catch((error: Error) => {
         this.setData({
           status: "error",
-          errorMessage: error.message || "计划加载失败，请重试。",
+          errorMessage: error.message || "进度加载失败，请重试。",
         });
       });
   },
@@ -194,11 +191,24 @@ Page({
   },
 
   continuePreview() {
-    wx.navigateTo({ url: "/pages/plan-preview/index" });
+    const cached = getStagePreviewCache();
+    const previewId = cached?.result.previewId;
+    wx.navigateTo({
+      url: previewId
+        ? `/pages/plan-preview/index?previewId=${previewId}`
+        : "/pages/plan-preview/index",
+    });
   },
 
   goToToday() {
     wx.switchTab({ url: "/pages/index/index" });
+  },
+
+  goToStageReview() {
+    const stageId = this.data.pageData?.plan.id;
+    if (stageId) {
+      wx.navigateTo({ url: `/pages/stage-review/index?stageId=${stageId}` });
+    }
   },
 
   changePlanTime(event: TimeChangeEvent) {
@@ -208,7 +218,7 @@ Page({
     this.setData({ actionLoading: "time" });
     updatePlanTime(plan.id, value)
       .then(() => {
-        wx.showToast({ title: "计划时间已更新", icon: "success" });
+        wx.showToast({ title: "行动时间已更新", icon: "success" });
         this.loadPlan();
       })
       .catch((error: Error) => {
@@ -227,7 +237,7 @@ Page({
     if (!task || !task.canPostpone || this.data.actionLoading) return;
     wx.showModal({
       title: "顺延到明天？",
-      content: "任务会移动到明天，当前计划的其他任务不会改变。",
+      content: "行动会移动到明天，当前阶段的其他行动不会改变。",
       confirmText: "确认顺延",
       confirmColor: "#356859",
       success: (result: { confirm: boolean }) => {
@@ -242,7 +252,7 @@ Page({
     this.setData({ actionLoading: "task", actionTaskId: task.id });
     postponePlanTask(task.id, plan.id)
       .then(() => {
-        wx.showToast({ title: "任务已顺延到明天", icon: "none" });
+        wx.showToast({ title: "行动已顺延到明天", icon: "none" });
         this.loadPlan();
       })
       .catch((error: Error) => {
@@ -259,16 +269,16 @@ Page({
     const plan = this.data.pageData?.plan;
     if (!plan || plan.status !== "active" || this.data.actionLoading) return;
     wx.showModal({
-      title: "暂停当前计划？",
-      content: "暂停后，计划任务会保留，但暂停期间不会计入连续行动统计。是否继续？",
-      confirmText: "暂停计划",
+      title: "暂停当前阶段？",
+      content: "暂停后，每日行动会保留，但暂停期间不会计入连续行动统计。是否继续？",
+      confirmText: "暂停阶段",
       confirmColor: "#356859",
       success: (result: { confirm: boolean }) => {
         if (!result.confirm) return;
         this.setData({ actionLoading: "status" });
         pauseCurrentPlan(plan.id)
           .then(() => {
-            wx.showToast({ title: "计划已暂停", icon: "none" });
+            wx.showToast({ title: "阶段已暂停", icon: "none" });
             this.loadPlan();
           })
           .catch((error: Error) => this.showActionError(error));
@@ -282,7 +292,7 @@ Page({
     this.setData({ actionLoading: "status" });
     resumeCurrentPlan(plan.id)
       .then(() => {
-        wx.showToast({ title: "计划已恢复", icon: "success" });
+        wx.showToast({ title: "阶段已恢复", icon: "success" });
         this.loadPlan();
       })
       .catch((error: Error) => this.showActionError(error));
@@ -297,72 +307,11 @@ Page({
     });
   },
 
-  startNextWeekGeneration() {
-    this.generateNextWeek(false);
-  },
-
-  generateNextWeek(forceFallback: boolean) {
-    const plan = this.data.pageData?.plan;
-    if (!plan || !plan.nextWeekEligible || this.data.nextWeekGenerating) return;
-    const requestId = createRequestId();
-    this.setData({
-      nextWeekGenerating: true,
-      nextWeekError: "",
-      nextWeekPreview: null,
-    });
-    clearNextWeekPreview();
-    generateNextWeekPlan(plan.id, requestId, forceFallback)
-      .then((result) => {
-        const cache: NextWeekPreviewCache = {
-          ...result,
-          generatedAt: Date.now(),
-        };
-        saveNextWeekPreview(cache);
-        this.setData({ nextWeekPreview: cache });
-      })
-      .catch((error: Error) => {
-        this.setData({
-          nextWeekError: error.message || "下一周计划生成失败，请稍后重试。",
-        });
-      })
-      .then(() => this.setData({ nextWeekGenerating: false }));
-  },
-
-  retryNextWeek() {
-    this.generateNextWeek(false);
-  },
-
-  useNextWeekFallback() {
-    this.generateNextWeek(true);
-  },
-
-  adoptNextWeek() {
-    const currentPlan = this.data.pageData?.plan;
-    const preview = this.data.nextWeekPreview;
-    if (!currentPlan || !preview || this.data.nextWeekAdopting) return;
-    this.setData({ nextWeekAdopting: true });
-    adoptNextWeekPlan(currentPlan.id, preview.requestId, preview.plan)
-      .then(() => {
-        clearNextWeekPreview();
-        this.setData({ nextWeekPreview: null });
-        wx.showToast({ title: "下一周计划已启用", icon: "success" });
-        this.loadPlan();
-      })
-      .catch((error: Error) => {
-        wx.showModal({
-          title: "暂时无法采用计划",
-          content: error.message || "请稍后重试。",
-          showCancel: false,
-        });
-      })
-      .then(() => this.setData({ nextWeekAdopting: false }));
-  },
-
   confirmDelete() {
     if (this.data.deleting) return;
     wx.showModal({
-      title: "删除当前计划？",
-      content: "目标、7 天计划和相关任务都会删除，此操作无法撤销。",
+      title: "删除当前目标？",
+      content: "长期目标、当前阶段和相关行动都会删除，此操作无法撤销。",
       confirmText: "确认删除",
       confirmColor: "#C65353",
       success: (result: { confirm: boolean }) => {
@@ -377,10 +326,11 @@ Page({
     deleteCurrentPlan()
       .then(() => {
         clearGoalDraft();
+        clearLongTermGoalDraft();
         clearPlanPreview();
-        clearNextWeekPreview();
+        clearStagePreviewCache();
         this.setData({ deleting: false, pageData: null, status: "empty" });
-        wx.showToast({ title: "当前计划已删除", icon: "success" });
+        wx.showToast({ title: "当前目标已删除", icon: "success" });
       })
       .catch((error: Error) => {
         this.setData({ deleting: false });

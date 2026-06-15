@@ -29,7 +29,7 @@
 
     <view wx:if="{{!goal}}" class="card empty-goal-card">
       <view class="section-eyebrow">你的第一个目标</view>
-      <view class="empty-goal-title">先创建一个目标，开始你的第一个 7 天计划。</view>
+      <view class="empty-goal-title">创建一个目标，把想做的事变成今天可以完成的一小步。</view>
       <view class="empty-goal-description">把想做的事拆成每天可以完成的小步骤。</view>
       <button
         class="primary-button create-button"
@@ -43,8 +43,12 @@
 
     <block wx:else>
       <view wx:if="{{planPaused}}" class="paused-notice">
-        <view class="paused-notice-title">当前计划已暂停</view>
-        <view>任务仍然保留，恢复计划后可以继续完成和打卡。</view>
+        <view class="paused-notice-title">当前阶段已暂停</view>
+        <view>行动仍然保留，恢复后可以继续完成和记录。</view>
+      </view>
+      <view wx:elif="{{planReviewing}}" class="paused-notice">
+        <view class="paused-notice-title">当前阶段等待复盘</view>
+        <view>完成阶段复盘并确认下一阶段后，新的今日行动会显示在这里。</view>
       </view>
       <view class="card goal-card">
         <view class="card-heading-row">
@@ -56,13 +60,13 @@
         </view>
         <view class="goal-meta">
           <view class="meta-item">
-            <view class="meta-value">第 {{goal.currentDay}} / {{goal.totalDays}} 天</view>
-            <view class="meta-label">计划进度</view>
+            <view class="meta-value">{{goal.stageTitle || '行动阶段正在准备'}}</view>
+            <view class="meta-label">本阶段第 {{goal.currentDay}} 天</view>
           </view>
           <view class="meta-divider"></view>
           <view class="meta-item">
             <view class="meta-value">{{goal.weeklyCompletionRate}}%</view>
-            <view class="meta-label">本周整体完成率</view>
+            <view class="meta-label">阶段完成率</view>
           </view>
         </view>
       </view>
@@ -81,7 +85,7 @@
         <view
           class="progress-track"
           aria-role="progressbar"
-          aria-label="今日任务完成 {{completionRate}}%"
+          aria-label="今日行动完成 {{completionRate}}%"
           aria-valuemin="0"
           aria-valuemax="100"
           aria-valuenow="{{completionRate}}"
@@ -93,14 +97,14 @@
 
       <view class="task-section">
         <view class="section-title-row">
-          <view class="section-title">今日任务</view>
+          <view class="section-title">今日行动</view>
           <view class="section-count">{{totalCount}} 项</view>
         </view>
 
         <view wx:if="{{totalCount === 0}}" class="card no-task-card">
           <view class="state-mark small-mark">0</view>
-          <view class="no-task-title">今天暂时没有安排任务</view>
-          <view class="state-description">可以先休息一下，或前往计划页查看完整安排。</view>
+          <view class="no-task-title">{{goal.planId ? '今天暂时没有安排行动' : 'AI 正在帮你制定第一个行动阶段'}}</view>
+          <view class="state-description">{{goal.planId ? '可以先休息一下，或前往进度页查看当前阶段。' : '完成后会在这里展示今天可以开始的一小步。'}}</view>
         </view>
 
         <view
@@ -118,7 +122,7 @@
           <button
             class="task-toggle {{item.completed ? 'task-toggle-completed' : ''}}"
             data-id="{{item.id}}"
-            disabled="{{item.toggling || planPaused}}"
+            disabled="{{item.toggling || planReadOnly}}"
             aria-label="{{item.completed ? '标记为未完成：' : '标记为完成：'}}{{item.title}}"
             bindtap="toggleTask"
           >
@@ -131,7 +135,7 @@
       <view class="bottom-action">
         <button
           class="checkin-button {{checkedInToday ? 'checkin-button-done' : ''}}"
-          disabled="{{completedCount === 0 || navigating || !goal.planId || checkedInToday || planPaused}}"
+          disabled="{{completedCount === 0 || navigating || !goal.planId || checkedInToday || planReadOnly}}"
           loading="{{navigating}}"
           bindtap="prepareCheckin"
         >

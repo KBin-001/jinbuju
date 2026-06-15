@@ -2,7 +2,7 @@ export type GoalCategory = "exam" | "skill" | "career";
 export type GoalLevel = "zero" | "basic" | "intermediate" | "experienced" | "improve";
 export type GoalIntensity = "light" | "normal" | "intensive";
 export type PlanSource = "ai" | "fallback";
-export type PlanStatus = "active" | "paused" | "completed";
+export type PlanStatus = "active" | "paused" | "completed" | "reviewing";
 export type PlanDayStatus =
   | "future"
   | "today"
@@ -101,6 +101,10 @@ export interface PlanDaySummary {
 
 export interface PlanPageData {
   businessDate: string;
+  progress: {
+    streakDays: number;
+    totalActionDays: number;
+  };
   goal: {
     id: string;
     title: string;
@@ -110,6 +114,9 @@ export interface PlanPageData {
     id: string;
     status: PlanStatus;
     summary: string;
+    stageTitle: string;
+    focus: string;
+    stageNumber: number;
     weeklyGoal: string;
     startDate: string;
     endDate: string;
@@ -120,8 +127,10 @@ export interface PlanPageData {
     totalCount: number;
     completionRate: number;
     nextWeekEligible: boolean;
+    reviewEligible: boolean;
   } | null;
   days: PlanDaySummary[];
+  recentDays: PlanDaySummary[];
 }
 
 export interface PlanActionResult {

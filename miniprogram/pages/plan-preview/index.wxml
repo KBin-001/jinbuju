@@ -1,92 +1,67 @@
 <view class="preview-page">
   <view class="preview-header">
-    <button class="preview-back" disabled="{{generating || adopting}}" bindtap="goBack">‹</button>
-    <view class="preview-header-title">7 天成长计划</view>
+    <button class="preview-back" disabled="{{generating || confirming}}" bindtap="goBack">‹</button>
+    <view class="preview-header-title">行动阶段预览</view>
     <view class="preview-header-space"></view>
   </view>
 
   <view wx:if="{{status === 'initial'}}" class="preview-state">
-    <view class="loading-dot"></view>
-    <view class="state-title">正在准备计划</view>
+    <view class="loading-dot"></view><view class="state-title">正在读取行动阶段</view>
   </view>
-
   <view wx:elif="{{status === 'generating'}}" class="preview-state generating-state">
-    <view class="generation-visual">
-      <view class="generation-ring"></view>
-      <view class="generation-number">7</view>
-    </view>
-    <view class="generation-title">正在为你制定 7 天计划</view>
-    <view class="generation-description">AI 正在根据你的目标、基础和每日时间拆分任务</view>
+    <view class="generation-visual"><view class="generation-ring"></view><view class="generation-number">1</view></view>
+    <view class="generation-title">正在为你拆解第一个行动阶段</view>
+    <view class="generation-description">这通常只需要一点时间</view>
     <view class="generation-stage">{{stageText}}</view>
   </view>
-
   <view wx:elif="{{status === 'error'}}" class="preview-state">
-    <view class="state-mark">!</view>
-    <view class="state-title">计划生成遇到问题</view>
+    <view class="state-mark">!</view><view class="state-title">阶段生成遇到问题</view>
     <view class="state-description">{{errorMessage}}</view>
-    <button class="primary-button" bindtap="retry">重新生成</button>
-    <button class="outline-action" bindtap="useFallback">使用推荐模板</button>
-    <button class="text-action" bindtap="editGoal">返回修改目标</button>
+    <button class="primary-button" bindtap="retry">{{isNextStage ? '重新加载' : '重新生成'}}</button>
+    <button wx:if="{{input}}" class="outline-action" bindtap="useFallback">使用基础行动方案</button>
+    <button class="text-action" bindtap="editGoal">{{isNextStage ? '返回阶段复盘' : '返回修改目标'}}</button>
   </view>
 
   <scroll-view wx:else class="plan-scroll" scroll-y enhanced show-scrollbar="{{false}}">
     <view class="plan-content">
       <view wx:if="{{status === 'fallback'}}" class="fallback-notice">
-        AI 暂时繁忙，已为你生成一份推荐计划，你仍然可以正常使用。
+        已为你生成一份基础行动方案，稍后可以继续调整。
       </view>
-
       <view class="plan-hero">
-        <view class="plan-label">本周计划</view>
-        <view class="plan-summary">{{plan.summary}}</view>
+        <view class="plan-label">第 {{preview.stageNumber}} 个行动阶段 · {{preview.stagePlan.stage.durationDays}} 天</view>
+        <view class="plan-summary">{{preview.stagePlan.stage.title}}</view>
         <view class="weekly-goal">
-          <view class="weekly-goal-label">本周目标</view>
-          <view>{{plan.weeklyGoal}}</view>
+          <view class="weekly-goal-label">阶段重点</view>
+          <view>{{preview.stagePlan.stage.focus}}</view>
         </view>
+        <view class="stage-summary">{{preview.stagePlan.stage.summary}}</view>
       </view>
-
-      <view
-        wx:for="{{plan.days}}"
-        wx:key="day"
-        class="day-card {{item.isStudyDay ? '' : 'rest-card'}}"
-      >
+      <view wx:for="{{preview.stagePlan.days}}" wx:key="dayIndex" class="day-card">
         <view class="day-header">
           <view>
-            <view class="day-index">第 {{item.day}} 天 · {{item.date}}</view>
-            <view class="day-title">{{item.title}}</view>
+            <view class="day-index">第 {{item.dayIndex}} 天 · 预计 {{item.totalMinutes}} 分钟</view>
+            <view class="day-title">{{item.theme}}</view>
           </view>
-          <view class="day-type">{{item.isStudyDay ? '学习日' : '休息日'}}</view>
+          <view class="day-type">{{item.actions.length}} 项行动</view>
         </view>
-        <view wx:if="{{item.tasks.length}}">
-          <view wx:for="{{item.tasks}}" wx:for-item="task" wx:key="title" class="task-row">
-            <view class="task-order">{{index + 1}}</view>
-            <view class="task-main">
-              <view class="task-name">{{task.title}}</view>
-              <view class="task-time">预计 {{task.estimatedMinutes}} 分钟</view>
-            </view>
+        <view wx:for="{{item.actions}}" wx:for-item="action" wx:key="title" class="task-row">
+          <view class="task-order">{{index + 1}}</view>
+          <view class="task-main">
+            <view class="task-name">{{action.title}}</view>
+            <view class="task-description">{{action.description}}</view>
+            <view class="task-time">预计 {{action.estimatedMinutes}} 分钟</view>
           </view>
         </view>
-        <view wx:else class="rest-copy">休息一下，也可以花几分钟简单回顾。</view>
-      </view>
-
-      <view class="advice-card">
-        <view class="advice-title">没有按时完成也没关系</view>
-        <view class="advice-copy">{{plan.fallbackAdvice}}</view>
       </view>
       <view class="plan-bottom-spacer"></view>
     </view>
   </scroll-view>
 
   <view wx:if="{{status === 'success' || status === 'fallback'}}" class="preview-actions">
-    <button
-      class="adopt-button {{adopting ? 'button-disabled' : ''}}"
-      loading="{{adopting}}"
-      disabled="{{adopting}}"
-      bindtap="adopt"
-    >采用这个计划</button>
+    <button class="adopt-button" loading="{{confirming}}" disabled="{{confirming}}" bindtap="confirmStage">确认开始</button>
     <view class="secondary-actions">
-      <button disabled="{{adopting}}" bindtap="regenerate">重新生成</button>
-      <button disabled="{{adopting}}" bindtap="adjustTime">调整时间</button>
-      <button disabled="{{adopting}}" bindtap="editGoal">修改目标</button>
+      <button disabled="{{confirming}}" bindtap="regenerate">调整行动安排</button>
+      <button wx:if="{{input}}" disabled="{{confirming}}" bindtap="editGoal">调整目标信息</button>
     </view>
   </view>
 </view>

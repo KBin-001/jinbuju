@@ -5,7 +5,7 @@
   <view class="card about-card">
     <view class="about-heading">把想变好，拆成今天就能做到的一步</view>
     <view class="about-copy">
-      进步局帮助你建立一个清晰目标，用 7 天计划开始行动，并通过每日打卡和轻量小队保持节奏。
+      进步局帮助你建立一个长期目标，由 AI 分阶段生成可执行行动，并通过每日记录和轻量小队保持节奏。
     </view>
   </view>
   <view class="about-footnote">

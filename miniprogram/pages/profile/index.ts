@@ -100,7 +100,7 @@ Page({
     if (!goal) return;
     wx.showModal({
       title: goal.title,
-      content: `${goal.categoryLabel}\n打卡 ${goal.checkinDays} 天 · 完成任务 ${goal.completedTaskCount} 项`,
+      content: `${goal.categoryLabel}\n行动 ${goal.checkinDays} 天 · 完成行动 ${goal.completedTaskCount} 项`,
       showCancel: false,
     });
   },

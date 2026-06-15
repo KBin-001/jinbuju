@@ -14,6 +14,9 @@ const REQUIRED_COLLECTIONS = [
   "team_members",
   "encouragements",
   "community_config",
+  "stage_generation_requests",
+  "stage_previews",
+  "stage_reviews",
 ];
 let collectionsReady = false;
 
@@ -351,6 +354,21 @@ async function deleteCurrentPlan(openid) {
   }
 
   await db.collection("tasks").where({
+    _openid: openid,
+    goalId: goal._id,
+  }).remove();
+
+  await db.collection("checkins").where({
+    _openid: openid,
+    goalId: goal._id,
+  }).remove();
+
+  await db.collection("stage_reviews").where({
+    _openid: openid,
+    goalId: goal._id,
+  }).remove();
+
+  await db.collection("stage_previews").where({
     _openid: openid,
     goalId: goal._id,
   }).remove();

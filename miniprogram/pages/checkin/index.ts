@@ -81,7 +81,7 @@ Page({
         if (serverData.planStatus === "paused") {
           this.setData({
             status: "error",
-            errorMessage: "当前计划已暂停，恢复计划后再继续打卡。",
+            errorMessage: "当前阶段已暂停，恢复后再继续记录行动。",
           });
           return;
         }
@@ -169,7 +169,7 @@ Page({
     if (completedTaskIds.length === 0) {
       this.setData({
         status: "error",
-        errorMessage: "请至少完成一项任务后再打卡。",
+        errorMessage: "请至少完成一项行动后再记录。",
       });
       return;
     }

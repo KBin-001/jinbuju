@@ -149,6 +149,21 @@
   padding: 28rpx 28rpx 62rpx;
 }
 
+.textarea-card {
+  position: relative;
+  min-height: 300rpx;
+  padding: 28rpx 28rpx 64rpx;
+  border: 2rpx solid var(--color-border);
+  border-radius: 24rpx;
+  background: var(--color-surface);
+}
+
+.textarea-card textarea {
+  width: 100%;
+  min-height: 210rpx;
+  line-height: 1.65;
+}
+
 .input-card input {
   height: 60rpx;
   font-size: 30rpx;

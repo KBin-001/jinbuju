@@ -3,6 +3,7 @@
     "pages/welcome/index",
     "pages/goal-create/index",
     "pages/plan-preview/index",
+    "pages/stage-review/index",
     "pages/index/index",
     "pages/checkin/index",
     "pages/plan/index",
@@ -34,7 +35,7 @@
       },
       {
         "pagePath": "pages/plan/index",
-        "text": "计划",
+        "text": "进度",
         "iconPath": "images/icons/goods.png",
         "selectedIconPath": "images/icons/goods-active.png"
       },

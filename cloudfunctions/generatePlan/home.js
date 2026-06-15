@@ -28,10 +28,10 @@ function buildTask(task) {
   };
 }
 
-function calculateCurrentDay(startDate, businessDate) {
+function calculateCurrentDay(startDate, businessDate, durationDays) {
   if (!startDate) return 1;
   const day = businessDateDiff(startDate, businessDate) + 1;
-  return Math.min(Math.max(day, 1), 7);
+  return Math.min(Math.max(day, 1), durationDays);
 }
 
 async function getHomeData(openid) {
@@ -68,6 +68,7 @@ async function getHomeData(openid) {
   const plan =
     plans.find((item) => item.status === "active") ||
     plans.find((item) => item.status === "paused") ||
+    plans.find((item) => item.status === "reviewing") ||
     null;
 
   if (!plan) {
@@ -77,10 +78,11 @@ async function getHomeData(openid) {
       goal: {
         id: String(goal._id),
         planId: "",
-        title: String(goal.goalTitle || "当前目标"),
+        title: String(goal.title || goal.goalTitle || "当前目标"),
         category: String(goal.category || ""),
         currentDay: 1,
         totalDays: 7,
+        stageTitle: "",
         weeklyCompletionRate: 0,
         planStatus: "active",
       },
@@ -123,6 +125,7 @@ async function getHomeData(openid) {
     planTaskRecords.length > 0
       ? clampPercentage((weeklyCompleted / planTaskRecords.length) * 100)
       : 0;
+  const durationDays = Math.max(Number(plan.durationDays || plan.totalDays || 7), 1);
 
   return {
     businessDate,
@@ -130,10 +133,11 @@ async function getHomeData(openid) {
     goal: {
       id: String(goal._id),
       planId: String(plan._id),
-      title: String(goal.goalTitle || "当前目标"),
+      title: String(goal.title || goal.goalTitle || "当前目标"),
       category: String(goal.category || ""),
-      currentDay: calculateCurrentDay(plan.startDate, businessDate),
-      totalDays: 7,
+      currentDay: calculateCurrentDay(plan.startDate, businessDate, durationDays),
+      totalDays: durationDays,
+      stageTitle: String(plan.stageTitle || plan.title || plan.weeklyGoal || "当前行动阶段"),
       weeklyCompletionRate,
       planStatus: plan.status,
     },

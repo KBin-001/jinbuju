@@ -25,14 +25,14 @@
     <view class="hero">
       <view class="hero-label">把目标变成行动</view>
       <view class="hero-title">把想变好，拆成今天就能做到的一步</view>
-      <view class="hero-subtitle">AI 为你生成成长计划，搭子陪你坚持完成</view>
+      <view class="hero-subtitle">把长期目标拆成今天能完成的一小步，搭子陪你持续行动</view>
     </view>
 
     <view wx:if="{{showExample}}" class="example-card">
       <view class="example-heading">
         <view>
-          <view class="example-tag">计划示例</view>
-          <view class="example-title">7 天掌握面试自我介绍</view>
+          <view class="example-tag">目标示例</view>
+          <view class="example-title">长期目标：提升面试表达</view>
         </view>
         <view class="example-day">第 1 天</view>
       </view>
@@ -48,7 +48,7 @@
 
     <view class="welcome-actions">
       <button class="start-button" hover-class="start-button-active" bindtap="startPlanning">
-        开始制定计划
+        创建长期目标
       </button>
       <button class="example-button" hover-class="example-button-active" bindtap="toggleExample">
         {{showExample ? '收起示例' : '先看看示例'}}

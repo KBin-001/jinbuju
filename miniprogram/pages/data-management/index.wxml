@@ -9,7 +9,7 @@
     <view class="section-title">将清除的数据</view>
     <view class="scope-list">
       <view>用户资料与个人统计</view>
-      <view>目标、计划和任务记录</view>
+      <view>目标、行动阶段和每日行动记录</view>
       <view>每日打卡记录</view>
       <view>小队成员关系与固定鼓励记录</view>
       <view>与当前用户直接关联的其他业务数据</view>

@@ -19,6 +19,7 @@ export interface GoalSummary {
   totalDays: number;
   weeklyCompletionRate: number;
   planStatus: PlanStatus;
+  stageTitle: string;
 }
 
 export interface TodayTask {

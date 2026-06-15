@@ -1,193 +1,178 @@
-import { adoptPlan, createRequestId, generatePlan } from "../../services/plan";
-import { GoalDraft, PlanPreview } from "../../types/goal";
 import {
-  clearGoalDraft,
-  clearPlanPreview,
-  getGoalDraft,
-  getPlanPreview,
-  savePlanPreview,
-  setGoalEditStep,
+  confirmStagePlan,
+  createStageRequestId,
+  generateStagePlan,
+  getStagePreview,
+} from "../../services/stage";
+import {
+  LongTermGoalDraft,
+  StageGenerationResult,
+  StagePlanGenerationInput,
+} from "../../types/stage";
+import {
+  clearLongTermGoalDraft,
+  clearStagePreviewCache,
+  getLongTermGoalDraft,
+  getStagePreviewCache,
+  saveStagePreviewCache,
 } from "../../utils/storage";
 
 type PreviewStatus = "initial" | "generating" | "success" | "error" | "fallback";
 
-const GENERATION_TIMEOUT = 55000;
+function toInput(draft: LongTermGoalDraft): StagePlanGenerationInput {
+  return {
+    goalTitle: draft.title,
+    category: draft.category as StagePlanGenerationInput["category"],
+    desiredResult: draft.desiredResult,
+    dailyMinutes: draft.dailyMinutes,
+    targetDuration: draft.targetDuration,
+    stageNumber: 1,
+    durationDays: 7,
+  };
+}
 
 Page({
   data: {
     status: "initial" as PreviewStatus,
-    goal: null as GoalDraft | null,
-    plan: null as PlanPreview | null,
-    requestId: "",
+    input: null as StagePlanGenerationInput | null,
+    preview: null as StageGenerationResult | null,
     errorMessage: "",
-    stageText: "正在分析你的目标",
-    adopting: false,
+    stageText: "正在理解你的长期目标",
     generating: false,
+    confirming: false,
+    previewId: "",
+    isNextStage: false,
   },
 
-  onLoad(options: { generate?: string }) {
-    const goal = getGoalDraft();
-    if (!goal) {
-      this.setData({
-        status: "error",
-        errorMessage: "没有找到目标信息，请返回重新填写。",
-      });
+  onLoad(options: { generate?: string; previewId?: string }) {
+    if (options.previewId) {
+      this.setData({ previewId: options.previewId, isNextStage: true });
+      this.restoreServerPreview(options.previewId);
       return;
     }
-
-    const cached = getPlanPreview();
+    const cached = getStagePreviewCache();
     if (options.generate !== "1" && cached) {
-      this.setData({
-        goal: cached.goal,
-        plan: cached.plan,
-        requestId: cached.requestId,
-        status: cached.plan.source === "fallback" ? "fallback" : "success",
-      });
+      this.applyPreview(cached.input, cached.result);
       return;
     }
-
-    this.setData({ goal });
-    this.startGeneration();
+    const draft = getLongTermGoalDraft();
+    if (!draft || !draft.category) {
+      this.setData({ status: "error", errorMessage: "没有找到长期目标信息，请返回重新填写。" });
+      return;
+    }
+    const input = toInput(draft);
+    this.setData({ input });
+    this.startGeneration(false, false);
   },
 
-  onUnload() {
-    this.clearStageTimers();
+  restoreServerPreview(previewId: string) {
+    this.setData({ status: "initial" });
+    getStagePreview(previewId)
+      .then((preview) => {
+        const cached = getStagePreviewCache();
+        this.applyPreview(cached?.input || null, preview);
+      })
+      .catch((error: Error) => {
+        this.setData({ status: "error", errorMessage: error.message || "阶段预览加载失败。" });
+      });
   },
 
-  startGeneration(forceFallback = false) {
-    if (this.data.generating || !this.data.goal) return;
-    const requestId = createRequestId();
+  applyPreview(input: StagePlanGenerationInput | null, preview: StageGenerationResult) {
+    this.setData({
+      input,
+      preview,
+      status: preview.generatedBy === "template" ? "fallback" : "success",
+      generating: false,
+    });
+  },
+
+  startGeneration(forceFallback: boolean, regenerate: boolean) {
+    const input = this.data.input;
+    if (!input || this.data.generating) return;
+    const requestId = createStageRequestId();
     this.setData({
       status: "generating",
       generating: true,
-      requestId,
       errorMessage: "",
-      stageText: forceFallback ? "正在准备推荐计划" : "正在分析你的目标",
+      stageText: forceFallback ? "正在准备基础行动方案" : "正在制定行动方案",
     });
-    this.startStageTimers(forceFallback);
-
-    const timeout = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error("GENERATION_TIMEOUT")), GENERATION_TIMEOUT);
-    });
-
-    Promise.race([generatePlan(this.data.goal, requestId, forceFallback), timeout])
+    generateStagePlan(input, requestId, forceFallback, regenerate)
       .then((result) => {
-        const cache = {
-          requestId: result.requestId,
-          goal: this.data.goal as GoalDraft,
-          plan: result.plan,
-          generatedAt: Date.now(),
-        };
-        savePlanPreview(cache);
+        saveStagePreviewCache({ input, result, generatedAt: Date.now() });
+        this.applyPreview(input, result);
+      })
+      .catch((error: Error) => {
         this.setData({
-          plan: result.plan,
-          requestId: result.requestId,
-          status: result.plan.source === "fallback" ? "fallback" : "success",
+          status: "error",
+          errorMessage: error.message || "行动阶段生成失败，请稍后重试。",
         });
       })
-      .catch((error: Error & { code?: string }) => {
-        const message =
-          error.message === "GENERATION_TIMEOUT"
-            ? "生成时间有点久，可以重新生成或直接使用推荐模板。"
-            : error.message || "计划生成失败，请稍后重试。";
-        this.setData({ status: "error", errorMessage: message });
-      })
-      .then(() => {
-        this.clearStageTimers();
-        this.setData({ generating: false });
-      });
-  },
-
-  startStageTimers(forceFallback: boolean) {
-    this.clearStageTimers();
-    if (forceFallback) return;
-    (this as any).stageTimers = [
-      setTimeout(() => this.setData({ stageText: "正在安排每日任务" }), 4500),
-      setTimeout(() => this.setData({ stageText: "正在检查任务时间" }), 9500),
-      setTimeout(() => this.setData({ stageText: "正在生成最终计划" }), 15000),
-    ];
-  },
-
-  clearStageTimers() {
-    const timers = (this as any).stageTimers || [];
-    timers.forEach((timer: number) => clearTimeout(timer));
-    (this as any).stageTimers = [];
+      .then(() => this.setData({ generating: false }));
   },
 
   retry() {
-    this.startGeneration(false);
+    if (this.data.previewId) {
+      this.restoreServerPreview(this.data.previewId);
+      return;
+    }
+    this.startGeneration(false, false);
   },
 
   useFallback() {
-    this.startGeneration(true);
+    if (!this.data.input) return;
+    this.startGeneration(true, true);
   },
 
   regenerate() {
+    if (!this.data.input) {
+      wx.showToast({ title: "下一阶段请先返回复盘页调整", icon: "none" });
+      return;
+    }
     wx.showModal({
-      title: "重新生成计划？",
-      content: "会重新生成当前 7 天计划，尚未采用的预览将被替换。",
-      confirmText: "重新生成",
-      success: (result: any) => {
-        if (!result.confirm) return;
-        clearPlanPreview();
-        this.startGeneration(false);
+      title: "调整行动安排？",
+      content: "会替换当前尚未确认的阶段预览，每个阶段最多调整两次。",
+      confirmText: "重新制定",
+      success: (result: { confirm: boolean }) => {
+        if (result.confirm) this.startGeneration(false, true);
       },
     });
   },
 
-  adjustTime() {
-    if (this.data.generating || this.data.adopting) return;
-    this.returnToGoalStep(5);
-  },
-
   editGoal() {
-    if (this.data.generating || this.data.adopting) return;
-    this.returnToGoalStep(1);
-  },
-
-  returnToGoalStep(step: number) {
-    const pages = getCurrentPages();
-    const previousPage = pages.length > 1 ? pages[pages.length - 2] : null;
-    if (previousPage && previousPage.route === "pages/goal-create/index") {
-      setGoalEditStep(step);
-      wx.navigateBack();
-      return;
-    }
-    wx.redirectTo({ url: `/pages/goal-create/index?step=${step}` });
+    if (this.data.generating || this.data.confirming) return;
+    wx.navigateBack({
+      fail: () => wx.redirectTo({ url: "/pages/goal-create/index" }),
+    });
   },
 
   goBack() {
-    if (this.data.generating || this.data.adopting) return;
-    wx.navigateBack();
+    if (!this.data.generating && !this.data.confirming) wx.navigateBack();
   },
 
-  adopt() {
-    if (this.data.adopting || !this.data.goal || !this.data.plan) return;
-    this.setData({ adopting: true });
-    adoptPlan(this.data.goal, this.data.plan, this.data.requestId)
+  confirmStage() {
+    const preview = this.data.preview;
+    if (!preview || this.data.confirming) return;
+    this.setData({ confirming: true });
+    confirmStagePlan(preview.previewId)
       .then(() => {
-        clearGoalDraft();
-        clearPlanPreview();
+        clearLongTermGoalDraft();
+        clearStagePreviewCache();
         wx.switchTab({
           url: "/pages/index/index",
-          success: () => {
-            setTimeout(() => {
-              wx.showToast({
-                title: "计划已创建，从今天开始行动吧",
-                icon: "none",
-                duration: 2500,
-              });
-            }, 250);
-          },
+          success: () =>
+            setTimeout(
+              () => wx.showToast({ title: "行动阶段已开始", icon: "success" }),
+              200,
+            ),
         });
       })
       .catch((error: Error) => {
         wx.showModal({
-          title: "暂时无法采用计划",
+          title: "暂时无法开始",
           content: error.message || "请稍后重试。",
           showCancel: false,
         });
       })
-      .then(() => this.setData({ adopting: false }));
+      .then(() => this.setData({ confirming: false }));
   },
 });

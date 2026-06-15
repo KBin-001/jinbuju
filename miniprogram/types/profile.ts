@@ -30,7 +30,7 @@ export interface CurrentGoalSummary {
   stageTitle: string;
   currentDay: number;
   totalDays: number;
-  planStatus: "active" | "paused" | "completed";
+  planStatus: "active" | "paused" | "completed" | "reviewing";
   stageCompletionRate: number;
 }
 

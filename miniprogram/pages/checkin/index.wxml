@@ -3,14 +3,14 @@
   <!-- Loading state -->
   <view wx:if="{{status === 'loading'}}" class="card state-card page-state">
     <view class="loading-dot"></view>
-    <view class="state-title">正在加载打卡信息</view>
+    <view class="state-title">正在加载行动记录</view>
     <view class="state-description">稍等一下，马上回来。</view>
   </view>
 
   <!-- Error state -->
   <view wx:elif="{{status === 'error'}}" class="card state-card page-state">
     <view class="state-mark">!</view>
-    <view class="state-title">打卡遇到问题</view>
+    <view class="state-title">记录行动遇到问题</view>
     <view class="state-description">{{errorMessage}}</view>
     <button class="primary-button" bindtap="goBackToToday">返回今日页</button>
   </view>
@@ -42,7 +42,7 @@
 
     <!-- Summary card -->
     <view class="card summary-card">
-      <view class="section-eyebrow">完成今日打卡</view>
+      <view class="section-eyebrow">记录今日行动</view>
       <view class="summary-subtitle">记录今天已经完成的行动。</view>
       <view class="summary-date">{{dateDisplay}}</view>
       <view class="summary-progress">
@@ -55,7 +55,7 @@
       <view
         class="progress-track"
         aria-role="progressbar"
-        aria-label="今日任务完成 {{completionRate}}%"
+        aria-label="今日行动完成 {{completionRate}}%"
         aria-valuemin="0"
         aria-valuemax="100"
         aria-valuenow="{{completionRate}}"
@@ -67,14 +67,14 @@
     <!-- Completed tasks list -->
     <view class="completed-section">
       <view class="section-title-row">
-        <view class="section-title">已完成的任务</view>
+        <view class="section-title">已完成的行动</view>
         <view class="section-count">{{completedCount}} 项</view>
       </view>
 
       <view wx:if="{{completedCount === 0}}" class="card no-task-card">
         <view class="state-mark small-mark">0</view>
-        <view class="no-task-title">还没有完成任何任务</view>
-        <view class="state-description">返回今日页标记完成的任务后再打卡。</view>
+        <view class="no-task-title">还没有完成任何行动</view>
+        <view class="state-description">返回今日页完成一项行动后再记录。</view>
         <button class="primary-button" bindtap="goBackToToday">返回今日页</button>
       </view>
 
@@ -134,7 +134,7 @@
         loading="{{submitting}}"
         bindtap="doSubmitCheckin"
       >
-        确认完成今日打卡
+        记录今日行动
       </button>
     </view>
 

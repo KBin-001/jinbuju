@@ -25,6 +25,10 @@ const CATEGORY_LABELS: Record<string, string> = {
   exam: "考试备考",
   skill: "技能学习",
   career: "求职提升",
+  reading: "阅读",
+  fitness: "运动健康",
+  habit: "习惯养成",
+  other: "其他",
 };
 
 function formatDateTitle(businessDate: string): string {
@@ -59,20 +63,24 @@ function getCheckinButtonText(
   totalCount: number,
   checkedInToday: boolean,
   planPaused: boolean,
+  planReviewing = false,
 ): string {
+  if (planReviewing) {
+    return "请先完成阶段复盘";
+  }
   if (planPaused) {
-    return "计划已暂停";
+    return "阶段已暂停";
   }
   if (checkedInToday) {
     return "今日已打卡";
   }
   if (completedCount === 0) {
-    return "完成任务后再打卡";
+    return "完成行动后再记录";
   }
   if (completedCount < totalCount) {
-    return "去完成今日打卡";
+    return "记录今日行动";
   }
-  return "完成今日打卡";
+  return "记录今日行动";
 }
 
 Page({
@@ -93,6 +101,8 @@ Page({
     checkinButtonText: getCheckinButtonText(0, 0, false, false),
     checkedInToday: false,
     planPaused: false,
+    planReviewing: false,
+    planReadOnly: false,
     navigating: false,
   },
 
@@ -128,6 +138,7 @@ Page({
     const goal = homeData.goal;
     const checkedInToday = homeData.checkedInToday || false;
     const planPaused = goal?.planStatus === "paused";
+    const planReviewing = goal?.planStatus === "reviewing";
     this.setData({
       status: "success",
       businessDate: homeData.businessDate,
@@ -140,6 +151,8 @@ Page({
       navigating: false,
       checkedInToday,
       planPaused,
+      planReviewing,
+      planReadOnly: Boolean(goal?.planId) && goal?.planStatus !== "active",
     });
     this.updateProgress(tasks);
   },
@@ -159,6 +172,7 @@ Page({
         totalCount,
         this.data.checkedInToday,
         this.data.planPaused,
+        this.data.planReviewing,
       ),
     });
   },
@@ -166,7 +180,7 @@ Page({
   toggleTask(event: TaskToggleEvent) {
     const taskId = String(event.currentTarget.dataset.id || "");
     const currentTask = this.data.tasks.find((task: TodayViewTask) => task.id === taskId);
-    if (!taskId || !currentTask || currentTask.toggling || this.data.planPaused) {
+    if (!taskId || !currentTask || currentTask.toggling || this.data.planReadOnly) {
       return;
     }
 
@@ -196,7 +210,7 @@ Page({
         );
         this.updateProgress(revertedTasks);
         wx.showToast({
-          title: "任务状态未保存，请重试",
+          title: "行动状态未保存，请重试",
           icon: "none",
           duration: 2000,
         });
@@ -230,7 +244,7 @@ Page({
       this.data.completedCount === 0 ||
       !goal ||
       !goal.planId ||
-      this.data.planPaused
+      this.data.planReadOnly
     ) {
       return;
     }

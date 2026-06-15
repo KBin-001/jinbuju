@@ -55,6 +55,7 @@ async function getCurrentGoalAndPlan(openid) {
   const plan =
     plans.find((item) => item.status === "active") ||
     plans.find((item) => item.status === "paused") ||
+    plans.find((item) => item.status === "reviewing") ||
     plans.find((item) => item.status === "completed") ||
     null;
   return { goal, plan };
@@ -62,34 +63,45 @@ async function getCurrentGoalAndPlan(openid) {
 
 function getCurrentDay(startDate, businessDate) {
   const day = businessDateDiff(startDate, businessDate) + 1;
-  return Math.min(Math.max(day, 1), 7);
+  return Math.max(day, 1);
 }
 
 async function getPlanPageData(openid) {
   const businessDate = formatBusinessDate();
   const { goal, plan } = await getCurrentGoalAndPlan(openid);
   if (!goal || !plan) {
-    return { businessDate, goal: null, plan: null, days: [] };
+    return {
+      businessDate,
+      progress: { streakDays: 0, totalActionDays: 0 },
+      goal: null,
+      plan: null,
+      days: [],
+      recentDays: [],
+    };
   }
 
-  const taskRecords = await getMany("tasks", {
-    _openid: openid,
-    planId: plan._id,
-  });
+  const [taskRecords, checkins, user] = await Promise.all([
+    getMany("tasks", {
+      _openid: openid,
+      planId: plan._id,
+    }),
+    getMany("checkins", { _openid: openid }, 1000),
+    getFirst("users", { _openid: openid }),
+  ]);
   const totalCount = taskRecords.length;
   const completedCount = taskRecords.filter((task) => task.status === "completed").length;
   const completionRate =
     totalCount > 0 ? clampPercentage((completedCount / totalCount) * 100) : 0;
   const tomorrow = addBusinessDays(businessDate, 1);
 
-  const days = Array.from({ length: 7 }, (_, index) => {
-    const date = addBusinessDays(plan.startDate, index);
+  const durationDays = Math.max(Number(plan.durationDays || plan.totalDays || 7), 1);
+  const buildDay = (date, dayNumber) => {
     const dayTasks = taskRecords
       .filter((task) => task.taskDate === date)
       .sort((left, right) => Number(left.order || 0) - Number(right.order || 0));
     const dayCompletedCount = dayTasks.filter((task) => task.status === "completed").length;
     return {
-      day: index + 1,
+      day: dayNumber,
       date,
       isToday: date === businessDate,
       status: getDayStatus(
@@ -104,7 +116,7 @@ async function getPlanPageData(openid) {
       tasks: dayTasks.map((task) => ({
         id: String(task._id),
         planId: String(plan._id),
-        day: Number(task.day || index + 1),
+        day: Number(task.day || dayNumber),
         title: String(task.title || "计划任务"),
         description: String(task.description || task.dayTitle || ""),
         estimatedMinutes: Math.max(Number(task.estimatedMinutes) || 0, 0),
@@ -122,31 +134,50 @@ async function getPlanPageData(openid) {
           tomorrow <= plan.endDate,
       })),
     };
+  };
+  const days = Array.from({ length: durationDays }, (_, index) =>
+    buildDay(addBusinessDays(plan.startDate, index), index + 1),
+  );
+  const recentDays = Array.from({ length: 7 }, (_, index) => {
+    const date = addBusinessDays(businessDate, index - 6);
+    return buildDay(date, businessDateDiff(plan.startDate, date) + 1);
   });
 
   return {
     businessDate,
+    progress: {
+      streakDays: Math.max(Number((user && user.streakDays) || 0), 0),
+      totalActionDays: new Set(
+        checkins.map((item) => String(item.businessDate || "")).filter(Boolean),
+      ).size,
+    },
     goal: {
       id: String(goal._id),
-      title: String(goal.goalTitle || "当前目标"),
+      title: String(goal.title || goal.goalTitle || "当前目标"),
       category: String(goal.category || ""),
     },
     plan: {
       id: String(plan._id),
       status: plan.status || "active",
       summary: String(plan.summary || ""),
+      stageTitle: String(plan.stageTitle || plan.title || plan.weeklyGoal || "当前行动阶段"),
+      focus: String(plan.focus || plan.weeklyGoal || ""),
+      stageNumber: Math.max(Number(plan.stageNumber || 1), 1),
       weeklyGoal: String(plan.weeklyGoal || ""),
       startDate: String(plan.startDate),
       endDate: String(plan.endDate),
-      currentDay: getCurrentDay(plan.startDate, businessDate),
-      totalDays: 7,
+      currentDay: Math.min(getCurrentDay(plan.startDate, businessDate), durationDays),
+      totalDays: durationDays,
       dailyReminderTime: String(plan.dailyReminderTime || "21:00"),
       completedCount,
       totalCount,
       completionRate,
       nextWeekEligible: plan.status === "active" && businessDate >= plan.endDate,
+      reviewEligible:
+        ["active", "reviewing"].includes(plan.status) && businessDate >= plan.endDate,
     },
     days,
+    recentDays,
   };
 }
 
@@ -203,7 +234,9 @@ async function postponeTask(openid, event) {
       data: {
         originalScheduledDate: task.originalScheduledDate || task.taskDate,
         taskDate: targetDate,
+        scheduledDate: targetDate,
         day: businessDateDiff(plan.startDate, targetDate) + 1,
+        dayIndex: businessDateDiff(plan.startDate, targetDate) + 1,
         postponed: true,
         postponedAt: db.serverDate(),
         updatedAt: db.serverDate(),

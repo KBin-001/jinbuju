@@ -1,10 +1,13 @@
 import { GoalDraft, NextWeekPreviewCache, PreviewCache } from "../types/goal";
+import { LongTermGoalDraft, StagePreviewCache } from "../types/stage";
 
 export const GOAL_DRAFT_KEY = "GOAL_DRAFT_V1";
 export const PLAN_PREVIEW_KEY = "PLAN_PREVIEW_V1";
 const GOAL_EDIT_STEP_KEY = "GOAL_EDIT_STEP_V1";
 const NEXT_WEEK_PREVIEW_KEY = "NEXT_WEEK_PREVIEW_V1";
 const PREVIEW_MAX_AGE = 24 * 60 * 60 * 1000;
+const LONG_TERM_GOAL_DRAFT_KEY = "LONG_TERM_GOAL_DRAFT_V1";
+const STAGE_PREVIEW_KEY = "STAGE_PREVIEW_V1";
 
 export function getGoalDraft(): GoalDraft | null {
   const value = wx.getStorageSync(GOAL_DRAFT_KEY);
@@ -71,4 +74,37 @@ export function saveNextWeekPreview(preview: NextWeekPreviewCache): void {
 
 export function clearNextWeekPreview(): void {
   wx.removeStorageSync(NEXT_WEEK_PREVIEW_KEY);
+}
+
+export function getLongTermGoalDraft(): LongTermGoalDraft | null {
+  const value = wx.getStorageSync(LONG_TERM_GOAL_DRAFT_KEY);
+  return value && typeof value === "object"
+    ? (value as LongTermGoalDraft)
+    : null;
+}
+
+export function saveLongTermGoalDraft(value: LongTermGoalDraft): void {
+  wx.setStorageSync(LONG_TERM_GOAL_DRAFT_KEY, value);
+}
+
+export function clearLongTermGoalDraft(): void {
+  wx.removeStorageSync(LONG_TERM_GOAL_DRAFT_KEY);
+}
+
+export function getStagePreviewCache(): StagePreviewCache | null {
+  const value = wx.getStorageSync(STAGE_PREVIEW_KEY) as StagePreviewCache | undefined;
+  if (!value || typeof value !== "object" || !value.generatedAt) return null;
+  if (Date.now() - value.generatedAt > PREVIEW_MAX_AGE) {
+    clearStagePreviewCache();
+    return null;
+  }
+  return value;
+}
+
+export function saveStagePreviewCache(value: StagePreviewCache): void {
+  wx.setStorageSync(STAGE_PREVIEW_KEY, value);
+}
+
+export function clearStagePreviewCache(): void {
+  wx.removeStorageSync(STAGE_PREVIEW_KEY);
 }

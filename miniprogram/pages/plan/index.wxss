@@ -112,6 +112,12 @@
   color: #59625b;
 }
 
+.status-reviewing {
+  display: inline-block;
+  background: #eef0f5;
+  color: #59657a;
+}
+
 .time-row {
   margin-top: 26rpx;
   padding: 22rpx;
@@ -173,6 +179,81 @@
   overflow: hidden;
   border-radius: 999rpx;
   background: #e8ece6;
+}
+
+.action-stats {
+  display: flex;
+  margin-top: 26rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid var(--color-border);
+}
+
+.action-stat {
+  flex: 1;
+  text-align: center;
+}
+
+.action-stat + .action-stat {
+  border-left: 1rpx solid var(--color-border);
+}
+
+.action-stat-value {
+  color: var(--color-primary);
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.action-stat-label {
+  margin-top: 6rpx;
+  color: var(--color-text-secondary);
+  font-size: 22rpx;
+}
+
+.recent-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8rpx;
+  margin-top: 20rpx;
+}
+
+.recent-day {
+  min-width: 0;
+  padding: 16rpx 4rpx;
+  border: 1rpx solid var(--color-border);
+  border-radius: 16rpx;
+  background: #ffffff;
+  text-align: center;
+}
+
+.recent-completed,
+.recent-today {
+  background: var(--color-primary-light);
+}
+
+.recent-partial,
+.recent-missed,
+.recent-paused {
+  background: #faf7f1;
+}
+
+.recent-date,
+.recent-status,
+.recent-count {
+  overflow: hidden;
+  font-size: 18rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-status {
+  margin-top: 8rpx;
+  color: var(--color-primary);
+  font-weight: 650;
+}
+
+.recent-count {
+  margin-top: 6rpx;
+  color: var(--color-text-secondary);
 }
 
 .progress-fill {

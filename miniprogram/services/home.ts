@@ -104,7 +104,7 @@ export function toggleTaskStatus(taskId: string, completed: boolean): Promise<To
       if (!result || !result.success || !result.data) {
         throw createServiceError(
           result?.error?.code || "INTERNAL_ERROR",
-          result?.error?.message || "任务状态更新失败，请稍后重试。",
+          result?.error?.message || "行动状态更新失败，请稍后重试。",
         );
       }
       return result.data;
@@ -120,8 +120,8 @@ export function toggleTaskStatus(taskId: string, completed: boolean): Promise<To
         rawMessage.includes("time limit") ||
         rawMessage.includes("超时")
       ) {
-        throw createServiceError("REQUEST_TIMEOUT", "任务状态更新超时，请稍后重试。");
+        throw createServiceError("REQUEST_TIMEOUT", "行动状态更新超时，请稍后重试。");
       }
-      throw createServiceError("NETWORK_ERROR", "网络连接不稳定，任务状态可能未保存。");
+      throw createServiceError("NETWORK_ERROR", "网络连接不稳定，行动状态可能未保存。");
     });
 }

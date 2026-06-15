@@ -2,162 +2,78 @@
   <view class="goal-header">
     <button class="back-button" disabled="{{submitting}}" bindtap="previousStep">‹</button>
     <view class="header-center">
-      <view class="header-title">创建成长目标</view>
+      <view class="header-title">创建长期目标</view>
       <view class="step-text">{{currentStep}} / {{totalSteps}}</view>
     </view>
     <view class="header-placeholder"></view>
   </view>
-
-  <view class="progress-track">
-    <view class="progress-value" style="width: {{pageStatus === 'form' ? progress : 0}}%;"></view>
-  </view>
+  <view class="progress-track"><view class="progress-value" style="width: {{pageStatus === 'form' ? progress : 0}}%;"></view></view>
 
   <view wx:if="{{pageStatus === 'loading'}}" class="goal-state">
-    <view class="loading-dot"></view>
-    <view class="state-title">正在检查目标状态</view>
-    <view class="state-description">马上就好。</view>
+    <view class="loading-dot"></view><view class="state-title">正在检查目标状态</view>
   </view>
-
   <view wx:elif="{{pageStatus === 'error'}}" class="goal-state">
-    <view class="state-mark">!</view>
-    <view class="state-title">暂时无法开始创建</view>
+    <view class="state-mark">!</view><view class="state-title">暂时无法开始创建</view>
     <view class="state-description">{{pageError}}</view>
     <button class="primary-button" bindtap="retryInitialize">重新加载</button>
   </view>
 
   <scroll-view wx:else class="form-scroll" scroll-y enhanced show-scrollbar="{{false}}">
     <view wx:if="{{currentStep === 1}}" class="step-section">
-      <view class="step-title">你想从哪方面开始进步？</view>
-      <view class="step-subtitle">先选一个方向，后面可以随时调整细节。</view>
-      <view
-        wx:for="{{categoryOptions}}"
-        wx:key="value"
-        class="choice-card {{draft.category === item.value ? 'choice-card-active' : ''}}"
-        data-value="{{item.value}}"
-        bindtap="selectCategory"
-      >
-        <view class="choice-title">{{item.label}}</view>
-        <view class="choice-description">{{item.description}}</view>
+      <view class="step-title">你想长期推进什么？</view>
+      <view class="step-subtitle">把想做的事，变成今天能完成的一小步。</view>
+      <view class="input-card">
+        <input value="{{draft.title}}" maxlength="30" placeholder="例如：通过英语四级" bindinput="inputTitle" />
+        <view class="input-count">{{draft.title.length}} / 30</view>
       </view>
     </view>
-
     <view wx:elif="{{currentStep === 2}}" class="step-section">
-      <view class="step-title">这次想完成什么目标？</view>
-      <view class="step-subtitle">选择常用目标，或用一句短句写下自己的目标。</view>
-      <view class="chip-grid">
-        <view
-          wx:for="{{templateOptions}}"
-          wx:key="value"
-          class="choice-chip {{draft.goalTemplate === item.value ? 'choice-chip-active' : ''}}"
-          data-value="{{item.value}}"
-          bindtap="selectTemplate"
-        >{{item.label}}</view>
-      </view>
-      <view wx:if="{{customGoal}}" class="input-card">
-        <input
-          value="{{draft.goalTitle}}"
-          maxlength="30"
-          placeholder="例如：准备产品经理面试"
-          bindinput="inputCustomGoal"
-        />
-        <view class="input-count">{{draft.goalTitle.length}} / 30</view>
-      </view>
-      <view wx:elif="{{draft.goalTitle}}" class="generated-goal">
-        <view class="generated-label">已为你整理为</view>
-        <view class="generated-title">{{draft.goalTitle}}</view>
-      </view>
-    </view>
-
-    <view wx:elif="{{currentStep === 3}}" class="step-section">
-      <view class="step-title">你目前处在哪个阶段？</view>
-      <view class="step-subtitle">如实选择，计划会更贴合你的基础。</view>
-      <view
-        wx:for="{{levelOptions}}"
-        wx:key="value"
-        class="radio-row {{draft.currentLevel === item.value ? 'radio-row-active' : ''}}"
-        data-value="{{item.value}}"
-        bindtap="selectLevel"
-      >
-        <view>{{item.label}}</view>
-        <view class="radio-dot"></view>
-      </view>
-    </view>
-
-    <view wx:elif="{{currentStep === 4}}" class="step-section">
-      <view class="step-title">希望什么时候完成？</view>
-      <view class="step-subtitle">截止日期会帮助 AI 安排当前一周的节奏。</view>
-      <picker mode="date" value="{{draft.deadline}}" start="{{minDeadline}}" bindchange="changeDeadline">
-        <view class="date-card">
-          <view class="date-label">目标截止日期</view>
-          <view class="date-value">{{deadlineDisplay}}</view>
-        </view>
-      </picker>
-      <view wx:if="{{deadlineHint}}" class="notice notice-warning">{{deadlineHint}}</view>
-      <view class="notice">第一版会先为你生成未来 7 天计划，完成后可以继续生成下一周。</view>
-    </view>
-
-    <view wx:elif="{{currentStep === 5}}" class="step-section">
-      <view class="step-title">你每周能投入多少时间？</view>
-      <view class="step-subtitle">选择一个真正能坚持的节奏。</view>
-      <view class="field-label">每周学习几天</view>
-      <view class="chip-grid compact-grid">
-        <view
-          wx:for="{{weeklyDayOptions}}"
-          wx:key="*this"
-          class="choice-chip {{draft.weeklyDays === item ? 'choice-chip-active' : ''}}"
-          data-value="{{item}}"
-          bindtap="selectWeeklyDays"
-        >{{item}} 天</view>
-      </view>
-      <view class="field-label field-spacing">每天可投入时间</view>
-      <view class="chip-grid compact-grid">
-        <view
-          wx:for="{{minuteOptions}}"
-          wx:key="*this"
-          class="choice-chip {{draft.dailyMinutes === item ? 'choice-chip-active' : ''}}"
-          data-value="{{item}}"
-          bindtap="selectMinutes"
-        >{{item}} 分钟</view>
-      </view>
-    </view>
-
-    <view wx:else class="step-section summary-section">
-      <view class="step-title">最后，选择执行强度</view>
-      <view class="step-subtitle">这只影响任务密度，不会改变你的长期目标。</view>
-      <view
-        wx:for="{{intensityOptions}}"
-        wx:key="value"
-        class="choice-card intensity-card {{draft.intensity === item.value ? 'choice-card-active' : ''}}"
-        data-value="{{item.value}}"
-        bindtap="selectIntensity"
-      >
+      <view class="step-title">这个目标属于哪个方向？</view>
+      <view class="step-subtitle">选择最接近的一项即可。</view>
+      <view wx:for="{{categoryOptions}}" wx:key="value"
+        class="choice-card {{draft.category === item.value ? 'choice-card-active' : ''}}"
+        data-value="{{item.value}}" bindtap="selectCategory">
         <view class="choice-title">{{item.label}}</view>
         <view class="choice-description">{{item.description}}</view>
       </view>
-
+    </view>
+    <view wx:elif="{{currentStep === 3}}" class="step-section">
+      <view class="step-title">你希望最终达到什么结果？</view>
+      <view class="step-subtitle">写得具体一些，行动阶段会更贴合。</view>
+      <view class="textarea-card">
+        <textarea value="{{draft.desiredResult}}" maxlength="200" placeholder="例如：能够达到四级合格水平，并稳定完成词汇、听力和真题练习" bindinput="inputDesiredResult" />
+        <view class="input-count">{{draft.desiredResult.length}} / 200</view>
+      </view>
+    </view>
+    <view wx:else class="step-section">
+      <view class="step-title">选择一个能长期坚持的节奏</view>
+      <view class="step-subtitle">AI 会先为你拆解第一个行动阶段。</view>
+      <view class="field-label">每天可投入时间</view>
+      <view class="chip-grid compact-grid">
+        <view wx:for="{{minuteOptions}}" wx:key="*this"
+          class="choice-chip {{draft.dailyMinutes === item ? 'choice-chip-active' : ''}}"
+          data-value="{{item}}" bindtap="selectMinutes">{{item}} 分钟</view>
+      </view>
+      <view class="field-label field-spacing">长期目标周期</view>
+      <view class="chip-grid">
+        <view wx:for="{{durationOptions}}" wx:key="value"
+          class="choice-chip {{draft.targetDuration === item.value ? 'choice-chip-active' : ''}}"
+          data-value="{{item.value}}" bindtap="selectDuration">{{item.label}}</view>
+      </view>
       <view class="summary-card">
         <view class="summary-title">目标摘要</view>
-        <view class="summary-row"><text>目标类型</text><text>{{categoryLabel}}</text></view>
-        <view class="summary-row"><text>具体目标</text><text>{{draft.goalTitle}}</text></view>
-        <view class="summary-row"><text>当前水平</text><text>{{levelLabel}}</text></view>
-        <view class="summary-row"><text>截止日期</text><text>{{deadlineDisplay}}</text></view>
-        <view class="summary-row"><text>每周学习</text><text>{{draft.weeklyDays}} 天</text></view>
+        <view class="summary-row"><text>目标</text><text>{{draft.title}}</text></view>
+        <view class="summary-row"><text>方向</text><text>{{categoryLabel}}</text></view>
         <view class="summary-row"><text>每日时间</text><text>{{draft.dailyMinutes}} 分钟</text></view>
-        <view class="summary-row"><text>执行强度</text><text>{{intensityLabel}}</text></view>
+        <view class="summary-row"><text>目标周期</text><text>{{durationLabel}}</text></view>
       </view>
     </view>
-    <view class="scroll-spacer"></view>
   </scroll-view>
 
   <view wx:if="{{pageStatus === 'form'}}" class="bottom-actions">
-    <button class="previous-button" disabled="{{submitting}}" bindtap="previousStep">
-      {{currentStep === 1 ? '返回' : '上一步'}}
+    <button class="previous-button" disabled="{{submitting}}" bindtap="previousStep">{{currentStep === 1 ? '返回' : '上一步'}}</button>
+    <button class="next-button {{submitting ? 'button-disabled' : ''}}" loading="{{submitting}}" disabled="{{submitting}}" bindtap="nextStep">
+      {{currentStep === 4 ? 'AI 帮我拆解' : '下一步'}}
     </button>
-    <button
-      class="next-button {{submitting ? 'button-disabled' : ''}}"
-      loading="{{submitting}}"
-      disabled="{{submitting}}"
-      bindtap="nextStep"
-    >{{currentStep === 6 ? '生成我的 7 天计划' : '下一步'}}</button>
   </view>
 </view>

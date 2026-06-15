@@ -164,6 +164,14 @@
   font-weight: 650;
 }
 
+.stage-summary,
+.task-description {
+  margin-top: 14rpx;
+  color: var(--color-text-secondary);
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
 .day-card {
   margin-top: 20rpx;
   padding: 28rpx;

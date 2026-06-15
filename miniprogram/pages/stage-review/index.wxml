@@ -1,0 +1,100 @@
+<view class="page review-page">
+  <view class="page-header">
+    <view class="page-eyebrow">行动阶段复盘</view>
+    <view class="page-title">回顾，再走下一段</view>
+    <view class="page-subtitle">用真实完成情况调整节奏，不追求一次做到完美。</view>
+  </view>
+
+  <view wx:if="{{status === 'loading'}}" class="card state-card">
+    <view class="loading-dot"></view>
+    <view class="state-title">正在整理阶段数据</view>
+    <view class="state-description">完成率和行动天数由服务端统计。</view>
+  </view>
+
+  <view wx:elif="{{status === 'error'}}" class="card state-card">
+    <view class="state-mark">!</view>
+    <view class="state-title">复盘加载失败</view>
+    <view class="state-description">{{errorMessage}}</view>
+    <button class="primary-button" bindtap="retry">重新加载</button>
+  </view>
+
+  <block wx:else>
+    <view class="card stats-card">
+      <view class="section-title">这一阶段的行动记录</view>
+      <view class="stats-grid">
+        <view class="stat-item">
+          <view class="stat-value">{{review.completionRate}}%</view>
+          <view class="stat-label">行动完成率</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-value">{{review.actionDays}}</view>
+          <view class="stat-label">行动天数</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-value">{{review.streakDays}}</view>
+          <view class="stat-label">最长连续天数</view>
+        </view>
+      </view>
+      <view class="stats-note">已完成 {{review.completedActionCount}} / {{review.totalActionCount}} 项行动</view>
+    </view>
+
+    <view wx:if="{{review.reviewed}}" class="card reviewed-card">
+      <view class="section-title">复盘已经完成</view>
+      <view class="section-copy">下一阶段预览已经生成，可以继续查看并确认。</view>
+      <button
+        wx:if="{{review.previewId}}"
+        class="primary-button full-button"
+        bindtap="continuePreview"
+      >继续制定下一阶段</button>
+      <view wx:else class="section-copy">预览暂时不可用，请稍后从进度页重试。</view>
+    </view>
+
+    <block wx:else>
+      <view class="card question-card">
+        <view class="section-title">这段节奏感觉如何？</view>
+        <button
+          wx:for="{{difficultyOptions}}"
+          wx:key="value"
+          class="choice {{difficulty === item.value ? 'choice-active' : ''}}"
+          data-value="{{item.value}}"
+          bindtap="chooseDifficulty"
+        >
+          <view class="choice-title">{{item.label}}</view>
+          <view class="choice-description">{{item.description}}</view>
+        </button>
+      </view>
+
+      <view class="card question-card">
+        <view class="section-title">下一阶段怎么调整？</view>
+        <button
+          wx:for="{{preferenceOptions}}"
+          wx:key="value"
+          class="choice {{nextPreference === item.value ? 'choice-active' : ''}}"
+          data-value="{{item.value}}"
+          bindtap="choosePreference"
+        >
+          <view class="choice-title">{{item.label}}</view>
+          <view class="choice-description">{{item.description}}</view>
+        </button>
+        <textarea
+          wx:if="{{nextPreference === 'change_focus'}}"
+          class="focus-input"
+          maxlength="50"
+          value="{{focusAdjustment}}"
+          placeholder="例如：减少理论阅读，多做两次模拟练习"
+          bindinput="updateFocus"
+        />
+      </view>
+
+      <view wx:if="{{!review.canReview}}" class="notice">
+        当前阶段结束后开放复盘。你可以先回到今日页继续行动。
+      </view>
+      <button
+        class="submit-button {{!review.canReview ? 'button-disabled' : ''}}"
+        disabled="{{!review.canReview || submitting}}"
+        loading="{{submitting}}"
+        bindtap="submit"
+      >生成下一阶段</button>
+    </block>
+  </block>
+</view>

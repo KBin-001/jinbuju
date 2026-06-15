@@ -1,35 +1,35 @@
 <view class="page plan-page">
   <view class="page-header">
-    <view class="page-eyebrow">一周行动地图</view>
-    <view class="page-title">计划</view>
-    <view class="page-subtitle">看清今天的位置，按自己的节奏继续。</view>
+    <view class="page-eyebrow">长期目标行动记录</view>
+    <view class="page-title">进度</view>
+    <view class="page-subtitle">看见当前阶段，也看见每一次行动。</view>
   </view>
 
   <view wx:if="{{status === 'loading'}}" class="card state-card">
     <view class="loading-dot"></view>
-    <view class="state-title">正在读取计划</view>
+    <view class="state-title">正在读取行动进度</view>
     <view class="state-description">正在同步你的目标和进度。</view>
   </view>
 
   <view wx:elif="{{status === 'empty'}}" class="card state-card">
-    <view class="state-mark">7</view>
+    <view class="state-mark">1</view>
     <view class="state-title">还没有进行中的目标</view>
-    <view class="state-description">创建一个目标，开始你的第一个 7 天计划。</view>
+    <view class="state-description">创建一个长期目标，开始第一个行动阶段。</view>
     <button class="primary-button" bindtap="createGoal">创建目标</button>
   </view>
 
   <view wx:elif="{{status === 'error'}}" class="card state-card">
     <view class="state-mark">!</view>
-    <view class="state-title">计划加载失败</view>
+    <view class="state-title">进度加载失败</view>
     <view class="state-description">{{errorMessage}}</view>
     <button class="primary-button" bindtap="retry">重新加载</button>
   </view>
 
   <view wx:elif="{{status === 'preview'}}" class="card state-card">
-    <view class="state-mark">7</view>
-    <view class="state-title">计划预览已准备好</view>
-    <view class="state-description">你有一份尚未采用的 7 天计划。</view>
-    <button class="primary-button" bindtap="continuePreview">继续查看计划</button>
+    <view class="state-mark">1</view>
+    <view class="state-title">行动阶段预览已准备好</view>
+    <view class="state-description">确认后就可以开始今天的行动。</view>
+    <button class="primary-button" bindtap="continuePreview">继续查看阶段</button>
   </view>
 
   <block wx:else>
@@ -41,10 +41,10 @@
         </view>
         <view class="category-tag">{{categoryLabel}}</view>
       </view>
-      <view class="goal-summary">{{pageData.plan.summary}}</view>
+      <view class="goal-summary">{{pageData.plan.stageTitle}}</view>
       <view class="weekly-goal">
-        <view class="weekly-goal-label">本周目标</view>
-        <view>{{pageData.plan.weeklyGoal}}</view>
+        <view class="weekly-goal-label">本阶段重点</view>
+        <view>{{pageData.plan.focus}}</view>
       </view>
       <view class="goal-grid">
         <view class="goal-grid-item">
@@ -53,18 +53,18 @@
         </view>
         <view class="goal-grid-item">
           <view class="status-badge status-{{pageData.plan.status}}">{{planStatusLabel}}</view>
-          <view class="goal-grid-label">当前计划状态</view>
+          <view class="goal-grid-label">当前阶段状态</view>
         </view>
       </view>
       <view class="time-row">
         <view>
-          <view class="time-label">每日计划时间</view>
+          <view class="time-label">每日行动时间</view>
           <view class="time-value">{{pageData.plan.dailyReminderTime}}</view>
         </view>
         <picker
           mode="time"
           value="{{pageData.plan.dailyReminderTime}}"
-          disabled="{{actionLoading !== '' || pageData.plan.status === 'completed'}}"
+          disabled="{{actionLoading !== '' || (pageData.plan.status !== 'active' && pageData.plan.status !== 'paused')}}"
           bindchange="changePlanTime"
         >
           <view class="outline-button">修改时间</view>
@@ -73,14 +73,14 @@
     </view>
 
     <view wx:if="{{pageData.plan.status === 'paused'}}" class="paused-notice">
-      <view class="paused-title">当前计划已暂停</view>
-      <view>任务会继续保留，暂停期间不能打卡或顺延任务。</view>
+      <view class="paused-title">当前阶段已暂停</view>
+      <view>行动会继续保留，暂停期间不能记录或顺延。</view>
     </view>
 
     <view class="card progress-card">
       <view class="section-heading">
         <view>
-          <view class="section-eyebrow">本周完成率</view>
+          <view class="section-eyebrow">阶段完成率</view>
           <view class="progress-count">{{pageData.plan.completedCount}} / {{pageData.plan.totalCount}} 项完成</view>
         </view>
         <view class="progress-rate">{{pageData.plan.completionRate}}%</view>
@@ -88,7 +88,7 @@
       <view
         class="progress-track"
         aria-role="progressbar"
-        aria-label="本周任务完成 {{pageData.plan.completionRate}}%"
+        aria-label="阶段行动完成 {{pageData.plan.completionRate}}%"
         aria-valuemin="0"
         aria-valuemax="100"
         aria-valuenow="{{pageData.plan.completionRate}}"
@@ -96,10 +96,31 @@
         <view class="progress-fill" style="width: {{pageData.plan.completionRate}}%;"></view>
       </view>
       <view class="progress-copy">{{progressText}}</view>
+      <view class="action-stats">
+        <view class="action-stat">
+          <view class="action-stat-value">{{pageData.progress.streakDays}}</view>
+          <view class="action-stat-label">连续行动天数</view>
+        </view>
+        <view class="action-stat">
+          <view class="action-stat-value">{{pageData.progress.totalActionDays}}</view>
+          <view class="action-stat-label">累计行动天数</view>
+        </view>
+      </view>
     </view>
 
     <view class="timeline-section">
-      <view class="section-title">7 天时间轴</view>
+      <view class="section-title">近 7 天行动</view>
+      <view class="recent-grid">
+        <view wx:for="{{recentDays}}" wx:key="date" class="recent-day recent-{{item.status}}">
+          <view class="recent-date">{{item.monthDay}}</view>
+          <view class="recent-status">{{item.isToday ? '今天' : item.statusLabel}}</view>
+          <view class="recent-count">{{item.completedCount}} / {{item.totalCount}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="timeline-section">
+      <view class="section-title">阶段每日行动概览</view>
       <scroll-view class="timeline-scroll" scroll-x enhanced show-scrollbar="{{false}}">
         <view class="timeline-row">
           <button
@@ -123,7 +144,7 @@
     <view class="task-section">
       <view class="section-heading">
         <view>
-          <view class="section-title">第 {{selectedDay.day}} 天任务</view>
+          <view class="section-title">第 {{selectedDay.day}} 天行动</view>
           <view class="selected-date">{{selectedDay.monthDay}} · {{selectedDay.weekday}}</view>
         </view>
         <view class="day-status-text">{{selectedDay.statusLabel}}</view>
@@ -131,7 +152,7 @@
 
       <view wx:if="{{selectedDay.tasks.length === 0}}" class="card empty-tasks">
         <view class="state-mark small-mark">0</view>
-        <view class="empty-task-title">这一天没有安排任务</view>
+        <view class="empty-task-title">这一天没有安排行动</view>
         <view class="state-description">留一点空白，也是在为下一步积蓄精力。</view>
       </view>
 
@@ -168,9 +189,9 @@
     </view>
 
     <view class="card management-card">
-      <view class="section-title">计划管理</view>
+      <view class="section-title">阶段管理</view>
       <view wx:if="{{pageData.plan.status === 'paused'}}" class="resume-copy">
-        恢复后将继续当前计划，暂停期间的日期不会自动顺延。
+        恢复后将继续当前阶段，暂停期间的日期不会自动顺延。
       </view>
       <button
         wx:if="{{pageData.plan.status === 'active'}}"
@@ -178,65 +199,29 @@
         loading="{{actionLoading === 'status'}}"
         disabled="{{actionLoading !== ''}}"
         bindtap="confirmPause"
-      >暂停计划</button>
+      >暂停阶段</button>
       <button
         wx:elif="{{pageData.plan.status === 'paused'}}"
         class="primary-management-button"
         loading="{{actionLoading === 'status'}}"
         disabled="{{actionLoading !== ''}}"
         bindtap="resumePlan"
-      >恢复计划</button>
+      >恢复阶段</button>
       <button
         class="delete-button"
         loading="{{deleting}}"
         disabled="{{deleting || actionLoading !== ''}}"
         bindtap="confirmDelete"
-      >删除当前计划</button>
+      >删除当前目标</button>
     </view>
 
     <view class="card next-week-card">
-      <view class="section-eyebrow">下一周计划</view>
-      <view class="next-week-title">
-        {{pageData.plan.nextWeekEligible ? '继续准备下一周' : '第 7 天开放生成'}}
-      </view>
-      <view class="next-week-copy">
-        {{pageData.plan.nextWeekEligible ? '沿用当前目标生成新的 7 天安排，旧任务不会自动迁移。' : '完成当前计划节奏后，可以继续生成下一周计划。'}}
-      </view>
-
-      <button
-        wx:if="{{pageData.plan.nextWeekEligible && !nextWeekPreview}}"
-        class="primary-button full-button"
-        loading="{{nextWeekGenerating}}"
-        disabled="{{nextWeekGenerating || pageData.plan.status !== 'active'}}"
-        bindtap="startNextWeekGeneration"
-      >生成下一周计划</button>
-
-      <view wx:if="{{nextWeekError}}" class="next-week-error">
-        <view>{{nextWeekError}}</view>
-        <view class="error-actions">
-          <button bindtap="retryNextWeek">重新生成</button>
-          <button bindtap="useNextWeekFallback">使用推荐模板</button>
-        </view>
-      </view>
-
-      <view wx:if="{{nextWeekPreview}}" class="next-preview">
-        <view class="next-preview-summary">{{nextWeekPreview.plan.summary}}</view>
-        <view class="next-preview-goal">{{nextWeekPreview.plan.weeklyGoal}}</view>
-        <view
-          wx:for="{{nextWeekPreview.plan.days}}"
-          wx:key="day"
-          class="next-preview-day"
-        >
-          <view>第 {{item.day}} 天 · {{item.date}}</view>
-          <view>{{item.title}} · {{item.tasks.length}} 项任务</view>
-        </view>
-        <button
-          class="primary-button full-button"
-          loading="{{nextWeekAdopting}}"
-          disabled="{{nextWeekAdopting}}"
-          bindtap="adoptNextWeek"
-        >采用下一周计划</button>
-      </view>
+      <view class="section-eyebrow">阶段复盘</view>
+      <view class="next-week-title">{{pageData.plan.reviewEligible ? '回顾这一阶段' : '阶段结束后开放'}}</view>
+      <view class="next-week-copy">完成复盘后，会根据你的实际完成情况制定下一阶段。</view>
+      <button wx:if="{{pageData.plan.reviewEligible}}" class="primary-button full-button" bindtap="goToStageReview">
+        {{pageData.plan.status === 'reviewing' ? '继续制定下一阶段' : '开始阶段复盘'}}
+      </button>
     </view>
   </block>
 </view>

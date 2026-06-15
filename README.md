@@ -1,6 +1,6 @@
 # 进步局
 
-“进步局”是一款微信原生小程序，帮助年轻人围绕考试、技能学习或求职目标，获得 AI 生成的 7 天执行计划，并通过每日打卡和轻量小队持续行动。
+“进步局”是一款长期目标行动和轻量陪跑小程序。用户创建长期目标后，由 AI 分阶段拆解为每天可完成的小行动，并通过每日记录、阶段复盘和轻量小队持续推进。
 
 ## 技术栈
 
@@ -14,30 +14,30 @@
 
 当前已完成：
 
-- 首次启动引导页与计划示例预览
-- 六步创建目标流程、本地草稿和逐步校验
-- AI 生成 7 天计划、预览恢复、重新生成和推荐模板兜底
-- 采用计划后保存目标、计划、任务及用户当前目标
-- 四个底部 Tab：今日、计划、小队、我的
+- 首次启动引导页与长期目标示例
+- 四步长期目标创建、本地草稿和逐步校验
+- AI 生成第一个行动阶段、服务端预览、有限重新生成和模板兜底
+- 阶段确认后事务保存目标、阶段、每日行动及用户当前目标
+- 今日行动、记录今日行动、阶段进度、阶段复盘和下一阶段生成
+- 四个底部 Tab：今日、进度、小队、我的
 - 全局主题样式与通用页面状态
 - CloudBase 客户端初始化
 - TypeScript 编译配置
-
-今日打卡、小队和个人统计仍为后续模块。
 
 ## 目录结构
 
 ```text
 cloudfunctions/          云函数
-  generatePlan/          AI 计划生成、校验、兜底和采用
+  generatePlan/          阶段生成、校验、确认、复盘及其他可信业务
 miniprogram/
   config/                客户端配置
   images/                图片与 Tab 图标
   pages/
-    goal-create/         六步创建目标
-    plan-preview/        7 天计划生成与预览
+    goal-create/         长期目标创建
+    plan-preview/        行动阶段生成与预览
+    stage-review/        阶段复盘与下一阶段入口
     index/               今日
-    plan/                计划
+    plan/                进度（保留历史目录名）
     team/                小队
     profile/             我的
     legal/               隐私政策与用户协议
@@ -74,6 +74,9 @@ AGENTS.md                项目协作与开发约束
 - `team_members`
 - `encouragements`
 - `community_config`
+- `stage_generation_requests`
+- `stage_previews`
+- `stage_reviews`
 
 建议索引：
 
@@ -83,6 +86,9 @@ AGENTS.md                项目协作与开发约束
 - `checkins`：`_openid + businessDate`
 - `team_members`：`userKey + status`
 - `encouragements`：`teamId + receiverUserKey`
+- `stage_generation_requests`：`_openid + inputFingerprint + stageNumber + status`
+- `stage_generation_requests`：`_openid + createdAt`
+- `stage_reviews`：`_openid + stageId`
 
 所有业务写入均由 `generatePlan` 云函数完成。客户端不需要集合写权限。
 
@@ -106,16 +112,41 @@ CLOUDBASE_ENV=你的云开发环境 ID
 - 云函数建议使用 Node.js 18 或更高运行时。
 - `generatePlan` 包含 AI 调用，必须在云函数配置中将执行超时设置为 `60 秒`，内存建议 `256 MB` 或以上。
 
-## 目标与计划流程
+## 长期目标与行动阶段流程
 
-1. 用户在六步内完成目标设置。
-2. 前端调用 `generatePlan` 的 `generate` 动作。
-3. 云函数校验目标、调用 AI、严格校验 JSON；失败时自动返回推荐模板。
-4. 预览只在本地保存 24 小时，不写入业务集合。
-5. 用户点击“采用这个计划”后，前端调用 `adopt`。
-6. 云函数重新校验并使用事务写入 `goals`、`plans`、`tasks` 和 `users.currentGoalId`。
-7. 同一 `requestId` 重复采用不会重复创建数据；已有 active 目标时拒绝新建。
-8. 用户可在“计划”页二次确认后删除当前目标、计划和任务，再创建新目标。
+1. 用户填写长期目标、期望结果、每日投入时间和目标周期。
+2. 前端调用 `generateStagePlan`，AI 仅在云函数中运行。
+3. 云函数校验输入和固定 JSON；失败时自动使用同结构模板。
+4. 校验后的预览保存到 `stage_previews`，本地只缓存预览标识和展示数据。
+5. 用户确认时仅提交 `previewId`。
+6. 云函数事务写入 `goals`、历史集合 `plans`、`tasks` 和 `users.currentGoalId`。
+7. 阶段结束后，服务端计算完成率、行动天数和连续天数。
+8. 用户提交难度与下一阶段偏好，AI 据此生成下一阶段预览。
+9. 下一阶段确认后，旧阶段标记完成，新阶段设为 active，长期目标保持唯一 active。
+
+## 长期目标阶段生成
+
+阶段生成能力复用 `generatePlan` 云函数，通过
+`generateStagePlan`、`getStagePreview`、`confirmStagePlan`、
+`getStageReview` 和 `submitStageReview` 等 action 完成。
+
+- 输入使用长期目标字段：目标名称、分类、期望结果、每日时间和目标周期。
+- 阶段默认 7 天，数据结构同时支持 10 天和 14 天。
+- AI 只在云函数中调用，先进行一次正常生成和最多一次格式修复。
+- AI 连续失败后使用考试、技能、求职或通用模板降级。
+- 所有 AI 输出经过严格字段、长度、天数、行动数量、重复内容和时间校验。
+- 生成结果保存到 `stage_previews`，前端确认阶段时只提交 `previewId`。
+- 同一请求或页面刷新会复用已有预览；主动重新生成最多允许 2 次。
+- 阶段统计和下一阶段上下文由服务端生成，客户端不能提交完成率或连续天数。
+
+相关集合：
+
+- `stage_generation_requests`：阶段生成状态、限流和幂等记录。
+- `stage_previews`：24 小时有效的服务端阶段预览。
+- `stage_reviews`：服务端统计结果、用户复盘选择和下一阶段预览关联。
+
+`plans` 与 `tasks` 暂时保留为历史集合名称。新业务代码使用
+`Stage` 和 `Action` 语义，正式集合迁移不在本模块中自动执行。
 
 ## 测试
 
@@ -129,22 +160,26 @@ npm test
 微信开发者工具正常流程：
 
 1. 清除缓存并重新编译。
-2. 点击“开始制定计划”。
-3. 完成六步表单并生成计划。
-4. 检查 7 天日期、学习日数量、每日任务和时间。
-5. 点击“采用这个计划”，确认跳转今日页。
-6. 在数据库核对目标、计划、任务和用户当前目标。
+2. 点击“创建长期目标”。
+3. 完成四步表单并生成第一个行动阶段。
+4. 检查阶段标题、重点、每日行动数量和预计时间。
+5. 点击“确认开始”，确认跳转今日页。
+6. 在数据库核对目标、阶段、每日行动和用户当前目标。
+7. 将测试阶段结束日期调整到当前业务日期，进入进度页完成阶段复盘。
+8. 检查下一阶段预览，确认后核对旧阶段完成状态和新阶段关联。
 
 兜底流程：
 
 1. 将 `CLOUDBASE_AI_ENABLED` 设为 `false`。
-2. 重新生成计划。
-3. 页面应显示推荐计划提示，仍可正常采用和保存。
+2. 重新生成行动阶段。
+3. 页面应显示基础行动方案提示，仍可正常确认和保存。
 
 本地缓存：
 
 - `GOAL_DRAFT_V1`：未完成的目标草稿。
 - `PLAN_PREVIEW_V1`：校验后的计划预览，24 小时过期。
+- `LONG_TERM_GOAL_DRAFT_V1`：未完成的长期目标草稿。
+- `STAGE_PREVIEW_V1`：行动阶段展示缓存，24 小时过期；正式保存仍以服务端预览为准。
 
 ## 我的页面与社群配置
 

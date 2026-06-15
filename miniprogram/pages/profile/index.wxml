@@ -44,7 +44,7 @@
       </view>
       <view class="goal-meta">
         第 {{profile.currentGoal.currentDay}} 天 / 共 {{profile.currentGoal.totalDays}} 天
-        · {{profile.currentGoal.planStatus === 'paused' ? '已暂停' : '进行中'}}
+        · {{profile.currentGoal.planStatus === 'paused' ? '已暂停' : profile.currentGoal.planStatus === 'reviewing' ? '待复盘' : '进行中'}}
         · 连续行动 {{profile.user.streakDays}} 天
       </view>
       <view class="progress-row">
@@ -61,12 +61,12 @@
       >
         <view class="progress-fill" style="width: {{profile.currentGoal.stageCompletionRate}}%;"></view>
       </view>
-      <button class="text-button" bindtap="goToPlan">查看当前计划</button>
+      <button class="text-button" bindtap="goToPlan">查看行动进度</button>
     </view>
 
     <view wx:else class="card empty-goal-card">
       <view class="section-title">还没有进行中的目标</view>
-      <view class="muted-copy">创建一个目标，开始你的第一个 7 天计划。</view>
+      <view class="muted-copy">创建一个长期目标，开始第一个行动阶段。</view>
       <button class="primary-button compact-button" bindtap="createGoal">创建目标</button>
     </view>
 
@@ -83,7 +83,7 @@
         </view>
         <view class="card stat-card">
           <view class="stat-value">{{profile.statistics.completedTaskCount}}</view>
-          <view class="stat-label">完成任务数量</view>
+          <view class="stat-label">完成行动数量</view>
         </view>
         <view class="card stat-card">
           <view class="stat-value stat-duration">{{actionDuration}}</view>
@@ -91,7 +91,7 @@
         </view>
         <view class="card stat-card stat-card-wide">
           <view class="stat-value">{{profile.statistics.completedStageCount}}</view>
-          <view class="stat-label">完成 7 天阶段</view>
+          <view class="stat-label">完成阶段数量</view>
         </view>
       </view>
     </view>

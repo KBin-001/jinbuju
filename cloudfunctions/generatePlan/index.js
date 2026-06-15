@@ -40,6 +40,13 @@ const {
   validatePlan,
   validateRequestId,
 } = require("./validate");
+const { generateStagePlan } = require("./stage-generation");
+const {
+  confirmStagePlan,
+  getStagePreview,
+  getStageReview,
+  submitStageReview,
+} = require("./stage-management");
 
 function success(data) {
   return { success: true, data };
@@ -75,6 +82,17 @@ function failure(error) {
     "DELETE_CONFIRMATION_INVALID",
     "DELETE_IN_PROGRESS",
     "DATA_DELETE_FAILED",
+    "STAGE_ALREADY_EXISTS",
+    "STAGE_GENERATION_IN_PROGRESS",
+    "STAGE_GENERATION_LIMIT_REACHED",
+    "AI_REQUEST_FAILED",
+    "AI_RESPONSE_INVALID",
+    "AI_RESPONSE_SCHEMA_INVALID",
+    "STAGE_PREVIEW_NOT_FOUND",
+    "STAGE_ALREADY_CONFIRMED",
+    "ACTIVE_GOAL_ALREADY_EXISTS",
+    "STAGE_REVIEW_NOT_ALLOWED",
+    "STAGE_REVIEW_ALREADY_EXISTS",
   ];
   const code = allowedCodes.includes(error.code) ? error.code : "INTERNAL_ERROR";
   const messages = {
@@ -106,6 +124,17 @@ function failure(error) {
     DELETE_CONFIRMATION_INVALID: error.message,
     DELETE_IN_PROGRESS: "数据正在清除，请勿重复提交。",
     DATA_DELETE_FAILED: "数据暂时未能清除，请稍后重试。",
+    STAGE_ALREADY_EXISTS: error.message,
+    STAGE_GENERATION_IN_PROGRESS: error.message,
+    STAGE_GENERATION_LIMIT_REACHED: error.message,
+    AI_REQUEST_FAILED: "行动阶段暂时无法生成，请稍后重试。",
+    AI_RESPONSE_INVALID: "生成结果格式暂时不可用，请重新生成。",
+    AI_RESPONSE_SCHEMA_INVALID: "生成结果未通过安全校验，请重新生成。",
+    STAGE_PREVIEW_NOT_FOUND: "阶段预览已失效，请重新生成。",
+    STAGE_ALREADY_CONFIRMED: "当前阶段已经确认。",
+    ACTIVE_GOAL_ALREADY_EXISTS: error.message,
+    STAGE_REVIEW_NOT_ALLOWED: error.message,
+    STAGE_REVIEW_ALREADY_EXISTS: error.message,
     INTERNAL_ERROR: "服务暂时不可用，请稍后重试。",
   };
   return {
@@ -360,6 +389,21 @@ exports.main = async (event) => {
     }
     if (event.action === "deleteUserData") {
       return success(await deleteUserData(context.OPENID, event));
+    }
+    if (event.action === "generateStagePlan") {
+      return success(await generateStagePlan(context.OPENID, event));
+    }
+    if (event.action === "getStagePreview") {
+      return success(await getStagePreview(context.OPENID, event));
+    }
+    if (event.action === "confirmStagePlan") {
+      return success(await confirmStagePlan(context.OPENID, event));
+    }
+    if (event.action === "getStageReview") {
+      return success(await getStageReview(context.OPENID, event));
+    }
+    if (event.action === "submitStageReview") {
+      return success(await submitStageReview(context.OPENID, event));
     }
 
     const error = new Error("不支持的操作。");
