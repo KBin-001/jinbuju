@@ -54,6 +54,10 @@ function publicPreview(preview) {
     generatedBy: preview.generatedBy === "template" ? "template" : "ai",
     stagePlan: preview.stagePlan,
     reused: true,
+    revision: Number(preview.revision || 1),
+    editedSlotIds: Array.isArray(preview.editedSlotIds) ? preview.editedSlotIds : [],
+    optimizationStatus: preview.optimizationStatus || "idle",
+    optimizationAttempts: Number(preview.optimizationAttempts || 0),
   };
 }
 
@@ -73,6 +77,13 @@ async function confirmStagePlan(openid, event) {
   if (preview.status !== "preview") {
     fail("STAGE_ALREADY_CONFIRMED", "阶段已经确认。");
   }
+  if (
+    event &&
+    event.revision !== undefined &&
+    Number(event.revision) !== Number(preview.revision || 1)
+  ) {
+    fail("STAGE_PREVIEW_CONFLICT", "计划已发生变化，请刷新后重试。");
+  }
 
   const goalId =
     preview.stageNumber === 1
@@ -86,6 +97,32 @@ async function confirmStagePlan(openid, event) {
   const endDate = addBusinessDays(startDate, stagePlan.stage.durationDays - 1);
 
   return db.runTransaction(async (transaction) => {
+    const currentPreviewResult = await transaction
+      .collection("stage_previews")
+      .doc(preview._id)
+      .get()
+      .catch(() => null);
+    const currentPreview = currentPreviewResult && currentPreviewResult.data;
+    if (!currentPreview || currentPreview._openid !== openid) {
+      fail("STAGE_PREVIEW_NOT_FOUND", "阶段预览不存在。");
+    }
+    if (currentPreview.status !== "preview") {
+      if (currentPreview.status === "confirmed" && currentPreview.goalId && currentPreview.stageId) {
+        return {
+          goalId: currentPreview.goalId,
+          stageId: currentPreview.stageId,
+          confirmed: false,
+        };
+      }
+      fail("STAGE_ALREADY_CONFIRMED", "阶段已经确认。");
+    }
+    if (
+      event &&
+      event.revision !== undefined &&
+      Number(event.revision) !== Number(currentPreview.revision || 1)
+    ) {
+      fail("STAGE_PREVIEW_CONFLICT", "计划已发生变化，请刷新后重试。");
+    }
     const existingStage = await transaction
       .collection("plans")
       .doc(stageId)
@@ -115,6 +152,12 @@ async function confirmStagePlan(openid, event) {
           desiredResult: input.desiredResult,
           dailyMinutes: input.dailyMinutes,
           targetDuration: input.targetDuration,
+          templateId: input.templateId || "",
+          currentLevel: input.currentLevel || "zero",
+          weeklyDays: Number(input.weeklyDays || 7),
+          intensity: input.intensity || "normal",
+          durationDays: Number(input.durationDays || stagePlan.stage.durationDays),
+          deadline: input.deadline || "",
           status: "active",
           currentStageId: stageId,
           requestId: preview.requestId,
@@ -204,6 +247,7 @@ async function confirmStagePlan(openid, event) {
             title: action.title,
             description: action.description,
             estimatedMinutes: action.estimatedMinutes,
+            slotId: action.slotId || `slot_day_${day.dayIndex}_${index + 1}`,
             order: index + 1,
             status: "pending",
             createdAt: now,
@@ -313,6 +357,11 @@ async function submitStageReview(openid, event) {
       desiredResult: goal.desiredResult || goal.goalTitle,
       dailyMinutes: Number(goal.dailyMinutes || 30),
       targetDuration: goal.targetDuration || "long_term",
+      templateId: goal.templateId || "",
+      currentLevel: goal.currentLevel || "zero",
+      weeklyDays: Number(goal.weeklyDays || 7),
+      intensity: goal.intensity || "normal",
+      deadline: goal.deadline || "",
       stageNumber: Number(stage.stageNumber || 1) + 1,
       durationDays: Number(stage.durationDays || stage.totalDays || 7),
       previousReview: {

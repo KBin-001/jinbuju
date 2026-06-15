@@ -1,42 +1,65 @@
 import { checkActiveGoal } from "../../services/plan";
-import { LongTermGoalDraft, LongTermGoalCategory, TargetDuration } from "../../types/stage";
 import {
-  clearLongTermGoalDraft,
+  GoalIntensity,
+  GoalLevel,
+  GoalTemplateId,
+  LongTermGoalDraft,
+  PlanDurationDays,
+} from "../../types/stage";
+import {
   clearStagePreviewCache,
   getLongTermGoalDraft,
   saveLongTermGoalDraft,
 } from "../../utils/storage";
+import { addDays, formatDate } from "../../utils/date";
 
-interface Choice {
-  value: string | number;
-  label: string;
-  description?: string;
+interface DatasetEvent {
+  currentTarget: {
+    dataset: {
+      value?: string | number;
+    };
+  };
 }
 
-const CATEGORY_OPTIONS: Choice[] = [
-  { value: "exam", label: "考试提升", description: "考试、证书与升学准备" },
-  { value: "skill", label: "技能学习", description: "编程、设计、AI 与工作技能" },
-  { value: "career", label: "求职成长", description: "简历、面试、作品集与职场能力" },
-  { value: "reading", label: "阅读", description: "建立阅读节奏与知识积累" },
-  { value: "fitness", label: "运动健康", description: "建立适合自己的日常运动习惯" },
-  { value: "habit", label: "习惯养成", description: "把想坚持的事变成稳定行动" },
-  { value: "other", label: "其他", description: "定义一个对你重要的长期方向" },
+const TEMPLATE_OPTIONS = [
+  { value: "cet4", label: "英语四级", description: "词汇、听力、阅读与写作" },
+  { value: "teacher_exam", label: "教师资格证", description: "考情、知识点与练习" },
+  { value: "python", label: "Python 入门", description: "基础语法与动手练习" },
+  { value: "ai_tools", label: "AI 工具学习", description: "提示方法与实际应用" },
+  { value: "video_editing", label: "视频剪辑", description: "素材、剪辑、字幕与导出" },
+  { value: "resume", label: "完善简历", description: "岗位方向、经历与成果表达" },
+  { value: "interview", label: "面试准备", description: "问题梳理、回答与模拟练习" },
+  { value: "custom", label: "自定义目标", description: "创建一个自己的成长方向" },
 ];
-const DURATION_OPTIONS: Choice[] = [
-  { value: "1_month", label: "1 个月" },
-  { value: "3_months", label: "3 个月" },
-  { value: "6_months", label: "6 个月" },
-  { value: "long_term", label: "长期坚持" },
+const LEVEL_OPTIONS = [
+  { value: "zero", label: "零基础" },
+  { value: "basic", label: "了解一点" },
+  { value: "intermediate", label: "有一定基础" },
 ];
-const MINUTE_OPTIONS = [10, 15, 30, 45, 60, 90, 120, 180];
+const MINUTE_OPTIONS = [15, 30, 45, 60, 90];
+const WEEKLY_OPTIONS = [3, 5, 7];
+const DURATION_OPTIONS = [
+  { value: 7, label: "7 天体验" },
+  { value: 21, label: "21 天习惯" },
+  { value: 30, label: "30 天成长" },
+];
+const INTENSITY_OPTIONS = [
+  { value: "light", label: "轻松", description: "使用约 75% 的可投入时间" },
+  { value: "normal", label: "普通", description: "稳定推进，适合大多数人" },
+  { value: "intensive", label: "挑战", description: "时间不增加，任务更有挑战" },
+];
 
 function defaultDraft(): LongTermGoalDraft {
   return {
-    title: "",
-    category: "",
-    desiredResult: "",
+    version: 2,
+    templateId: "cet4",
+    customGoalTitle: "",
+    currentLevel: "zero",
     dailyMinutes: 30,
-    targetDuration: "3_months",
+    weeklyDays: 5,
+    intensity: "normal",
+    durationDays: 7,
+    deadline: "",
   };
 }
 
@@ -45,15 +68,16 @@ Page({
     pageStatus: "loading" as "loading" | "form" | "error",
     pageError: "",
     currentStep: 1,
-    totalSteps: 4,
-    progress: 25,
     submitting: false,
+    advancedOpen: false,
     draft: defaultDraft(),
-    categoryOptions: CATEGORY_OPTIONS,
-    durationOptions: DURATION_OPTIONS,
+    templateOptions: TEMPLATE_OPTIONS,
+    levelOptions: LEVEL_OPTIONS,
     minuteOptions: MINUTE_OPTIONS,
-    categoryLabel: "",
-    durationLabel: "3 个月",
+    weeklyOptions: WEEKLY_OPTIONS,
+    durationOptions: DURATION_OPTIONS,
+    intensityOptions: INTENSITY_OPTIONS,
+    minimumDeadline: formatDate(addDays(new Date(), 6)),
   },
 
   onLoad() {
@@ -72,14 +96,16 @@ Page({
         if (active) {
           wx.showModal({
             title: "已有进行中的目标",
-            content: "V1 暂不支持同时创建多个长期目标。",
+            content: "V1 暂不支持同时创建多个目标。",
             showCancel: false,
             success: () => wx.switchTab({ url: "/pages/plan/index" }),
           });
           return;
         }
-        const saved = getLongTermGoalDraft();
-        this.applyDraft(saved || defaultDraft());
+        this.setData({
+          pageStatus: "form",
+          draft: getLongTermGoalDraft() || defaultDraft(),
+        });
       })
       .catch((error: Error) => {
         this.setData({
@@ -89,80 +115,86 @@ Page({
       });
   },
 
-  applyDraft(draft: LongTermGoalDraft) {
-    this.setData({
-      pageStatus: "form",
-      draft,
-      categoryLabel:
-        CATEGORY_OPTIONS.find((item) => item.value === draft.category)?.label || "",
-      durationLabel:
-        DURATION_OPTIONS.find((item) => item.value === draft.targetDuration)?.label || "",
-    });
-  },
-
   retryInitialize() {
     this.setData({ pageStatus: "loading", pageError: "" });
     this.initialize();
   },
 
-  inputTitle(event: { detail: { value?: string } }) {
-    const draft = { ...this.data.draft, title: String(event.detail.value || "").slice(0, 30) };
-    this.setData({ draft });
+  selectTemplate(event: DatasetEvent) {
+    const templateId = String(event.currentTarget.dataset.value || "") as GoalTemplateId;
+    this.setData({ draft: { ...this.data.draft, templateId } });
   },
 
-  selectCategory(event: { currentTarget: { dataset: { value?: string } } }) {
-    const category = String(event.currentTarget.dataset.value || "") as LongTermGoalCategory;
-    const draft = { ...this.data.draft, category };
+  inputCustomGoal(event: { detail: { value?: string } }) {
     this.setData({
-      draft,
-      categoryLabel: CATEGORY_OPTIONS.find((item) => item.value === category)?.label || "",
+      draft: {
+        ...this.data.draft,
+        customGoalTitle: String(event.detail.value || "").slice(0, 30),
+      },
     });
   },
 
-  inputDesiredResult(event: { detail: { value?: string } }) {
-    const draft = {
-      ...this.data.draft,
-      desiredResult: String(event.detail.value || "").slice(0, 200),
-    };
-    this.setData({ draft });
-  },
-
-  selectMinutes(event: { currentTarget: { dataset: { value?: number } } }) {
-    const draft = { ...this.data.draft, dailyMinutes: Number(event.currentTarget.dataset.value) };
-    this.setData({ draft });
-  },
-
-  selectDuration(event: { currentTarget: { dataset: { value?: string } } }) {
-    const targetDuration = String(event.currentTarget.dataset.value || "") as TargetDuration;
-    const draft = { ...this.data.draft, targetDuration };
+  selectLevel(event: DatasetEvent) {
     this.setData({
-      draft,
-      durationLabel:
-        DURATION_OPTIONS.find((item) => item.value === targetDuration)?.label || "",
+      draft: {
+        ...this.data.draft,
+        currentLevel: String(event.currentTarget.dataset.value || "") as GoalLevel,
+      },
     });
   },
 
-  validateStep(step: number): boolean {
-    const draft = this.data.draft;
-    if (step === 1 && (draft.title.trim().length < 2 || draft.title.trim().length > 30)) {
-      return this.showError("目标名称需为 2～30 个字符");
-    }
-    if (step === 2 && !draft.category) return this.showError("请选择目标分类");
-    if (
-      step === 3 &&
-      (draft.desiredResult.trim().length < 5 || draft.desiredResult.trim().length > 200)
-    ) {
-      return this.showError("期望结果需为 5～200 个字符");
-    }
-    if (step === 4 && (draft.dailyMinutes < 10 || draft.dailyMinutes > 180)) {
-      return this.showError("请选择每天可投入时间");
-    }
-    return true;
+  selectMinutes(event: DatasetEvent) {
+    this.setData({
+      draft: {
+        ...this.data.draft,
+        dailyMinutes: Number(event.currentTarget.dataset.value) as LongTermGoalDraft["dailyMinutes"],
+      },
+    });
   },
 
-  showError(message: string): false {
-    wx.showToast({ title: message, icon: "none" });
-    return false;
+  selectWeeklyDays(event: DatasetEvent) {
+    this.setData({
+      draft: {
+        ...this.data.draft,
+        weeklyDays: Number(event.currentTarget.dataset.value) as 3 | 5 | 7,
+      },
+    });
+  },
+
+  toggleAdvanced() {
+    this.setData({ advancedOpen: !this.data.advancedOpen });
+  },
+
+  selectDuration(event: DatasetEvent) {
+    const durationDays = Number(event.currentTarget.dataset.value) as PlanDurationDays;
+    const minimumDeadline = formatDate(addDays(new Date(), durationDays - 1));
+    const deadline =
+      this.data.draft.deadline && this.data.draft.deadline < minimumDeadline
+        ? ""
+        : this.data.draft.deadline;
+    this.setData({
+      minimumDeadline,
+      draft: { ...this.data.draft, durationDays, deadline },
+    });
+  },
+
+  selectIntensity(event: DatasetEvent) {
+    this.setData({
+      draft: {
+        ...this.data.draft,
+        intensity: String(event.currentTarget.dataset.value || "") as GoalIntensity,
+      },
+    });
+  },
+
+  changeDeadline(event: { detail: { value?: string } }) {
+    this.setData({
+      draft: { ...this.data.draft, deadline: String(event.detail.value || "") },
+    });
+  },
+
+  clearDeadline() {
+    this.setData({ draft: { ...this.data.draft, deadline: "" } });
   },
 
   previousStep() {
@@ -170,28 +202,31 @@ Page({
       wx.navigateBack();
       return;
     }
-    const currentStep = this.data.currentStep - 1;
-    this.setData({ currentStep, progress: (currentStep / 4) * 100 });
+    this.setData({ currentStep: 1 });
   },
 
   nextStep() {
-    if (!this.validateStep(this.data.currentStep)) return;
-    if (this.data.currentStep < 4) {
-      const currentStep = this.data.currentStep + 1;
-      this.setData({ currentStep, progress: (currentStep / 4) * 100 });
+    if (this.data.currentStep === 1) {
+      if (
+        this.data.draft.templateId === "custom" &&
+        this.data.draft.customGoalTitle!.trim().length < 2
+      ) {
+        wx.showToast({ title: "请输入 2～30 个字的目标", icon: "none" });
+        return;
+      }
+      this.setData({ currentStep: 2 });
       return;
     }
     if (this.data.submitting) return;
     const draft = {
       ...this.data.draft,
-      title: this.data.draft.title.trim(),
-      desiredResult: this.data.draft.desiredResult.trim(),
+      customGoalTitle: this.data.draft.customGoalTitle?.trim() || "",
     };
     saveLongTermGoalDraft(draft);
     clearStagePreviewCache();
     this.setData({ submitting: true });
     wx.navigateTo({
-      url: "/pages/plan-preview/index?generate=1",
+      url: "/pages/plan-preview/index?create=1",
       complete: () => this.setData({ submitting: false }),
     });
   },

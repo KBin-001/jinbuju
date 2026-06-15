@@ -1,9 +1,9 @@
 function getDayStatus(planStatus, date, businessDate, completedCount, totalCount) {
+  if (totalCount === 0) return "rest";
   if (totalCount > 0 && completedCount === totalCount) return "completed";
   if (planStatus === "paused") return "paused";
   if (date === businessDate) return "today";
   if (date > businessDate) return "future";
-  if (totalCount === 0) return "completed";
   if (completedCount > 0) return "partial";
   return "missed";
 }

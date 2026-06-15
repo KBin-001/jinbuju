@@ -1,13 +1,17 @@
 import {
+  applyStageOptimization,
   confirmStagePlan,
+  createStagePreview,
   createStageRequestId,
-  generateStagePlan,
   getStagePreview,
+  optimizeStagePreview,
+  updateStagePreviewTask,
 } from "../../services/stage";
 import {
-  LongTermGoalDraft,
+  AIStageAction,
+  AIStageDay,
+  CreateStagePreviewInput,
   StageGenerationResult,
-  StagePlanGenerationInput,
 } from "../../types/stage";
 import {
   clearLongTermGoalDraft,
@@ -17,153 +21,358 @@ import {
   saveStagePreviewCache,
 } from "../../utils/storage";
 
-type PreviewStatus = "initial" | "generating" | "success" | "error" | "fallback";
+type PreviewStatus = "loading" | "ready" | "error";
 
-function toInput(draft: LongTermGoalDraft): StagePlanGenerationInput {
-  return {
-    goalTitle: draft.title,
-    category: draft.category as StagePlanGenerationInput["category"],
-    desiredResult: draft.desiredResult,
-    dailyMinutes: draft.dailyMinutes,
-    targetDuration: draft.targetDuration,
-    stageNumber: 1,
-    durationDays: 7,
+interface WeekView {
+  number: number;
+  expanded: boolean;
+  days: AIStageDay[];
+}
+
+interface DatasetEvent {
+  currentTarget: {
+    dataset: {
+      week?: number;
+      slotId?: string;
+    };
   };
+}
+
+function toCreateInput(): CreateStagePreviewInput | null {
+  const draft = getLongTermGoalDraft();
+  if (!draft) return null;
+  return {
+    templateId: draft.templateId,
+    customGoalTitle: draft.templateId === "custom" ? draft.customGoalTitle : undefined,
+    currentLevel: draft.currentLevel,
+    dailyMinutes: draft.dailyMinutes,
+    weeklyDays: draft.weeklyDays,
+    intensity: draft.intensity,
+    durationDays: draft.durationDays,
+    deadline: draft.deadline || undefined,
+  };
+}
+
+function buildWeeks(days: AIStageDay[], current: WeekView[] = []): WeekView[] {
+  const expanded = new Map(current.map((week) => [week.number, week.expanded]));
+  const weeks: WeekView[] = [];
+  for (let index = 0; index < days.length; index += 7) {
+    const number = Math.floor(index / 7) + 1;
+    weeks.push({
+      number,
+      expanded: expanded.has(number) ? Boolean(expanded.get(number)) : number === 1,
+      days: days.slice(index, index + 7),
+    });
+  }
+  return weeks;
 }
 
 Page({
   data: {
-    status: "initial" as PreviewStatus,
-    input: null as StagePlanGenerationInput | null,
+    status: "loading" as PreviewStatus,
     preview: null as StageGenerationResult | null,
+    weeks: [] as WeekView[],
     errorMessage: "",
-    stageText: "正在理解你的长期目标",
-    generating: false,
     confirming: false,
-    previewId: "",
+    applying: false,
+    optimizing: false,
     isNextStage: false,
+    isV2Create: false,
+    editingSlotId: "",
+    editTitle: "",
+    editDescription: "",
+    editMinutes: 30,
+    savingTask: false,
+    createRequestId: "",
+    optimizationPollCount: 0,
   },
 
-  onLoad(options: { generate?: string; previewId?: string }) {
+  onLoad(options: { create?: string; previewId?: string }) {
     if (options.previewId) {
-      this.setData({ previewId: options.previewId, isNextStage: true });
+      const cached = getStagePreviewCache();
+      const cachedInput = cached?.input as CreateStagePreviewInput | null | undefined;
+      const isV2Create =
+        cached?.result.previewId === options.previewId &&
+        Boolean(cachedInput && "templateId" in cachedInput && !("goalTitle" in cachedInput));
+      this.setData({ isNextStage: !isV2Create, isV2Create });
       this.restoreServerPreview(options.previewId);
       return;
     }
+    if (options.create === "1") {
+      this.createBasePreview();
+      return;
+    }
     const cached = getStagePreviewCache();
-    if (options.generate !== "1" && cached) {
-      this.applyPreview(cached.input, cached.result);
-      return;
-    }
-    const draft = getLongTermGoalDraft();
-    if (!draft || !draft.category) {
-      this.setData({ status: "error", errorMessage: "没有找到长期目标信息，请返回重新填写。" });
-      return;
-    }
-    const input = toInput(draft);
-    this.setData({ input });
-    this.startGeneration(false, false);
-  },
-
-  restoreServerPreview(previewId: string) {
-    this.setData({ status: "initial" });
-    getStagePreview(previewId)
-      .then((preview) => {
-        const cached = getStagePreviewCache();
-        this.applyPreview(cached?.input || null, preview);
-      })
-      .catch((error: Error) => {
-        this.setData({ status: "error", errorMessage: error.message || "阶段预览加载失败。" });
+    if (cached) {
+      const cachedInput = cached.input as CreateStagePreviewInput | null;
+      this.setData({
+        isV2Create: Boolean(
+          cachedInput && "templateId" in cachedInput && !("goalTitle" in cachedInput),
+        ),
       });
-  },
-
-  applyPreview(input: StagePlanGenerationInput | null, preview: StageGenerationResult) {
+      this.applyPreview(cached.result);
+      if (this.data.isV2Create && cached.result.optimizationStatus === "idle") {
+        this.startOptimization();
+      }
+      return;
+    }
     this.setData({
-      input,
-      preview,
-      status: preview.generatedBy === "template" ? "fallback" : "success",
-      generating: false,
+      status: "error",
+      errorMessage: "没有找到计划信息，请返回重新创建。",
     });
   },
 
-  startGeneration(forceFallback: boolean, regenerate: boolean) {
-    const input = this.data.input;
-    if (!input || this.data.generating) return;
-    const requestId = createStageRequestId();
+  createBasePreview() {
+    const input = toCreateInput();
+    if (!input) {
+      this.setData({ status: "error", errorMessage: "没有找到目标信息，请返回重新选择。" });
+      return;
+    }
+    const requestId = this.data.createRequestId || createStageRequestId();
     this.setData({
-      status: "generating",
-      generating: true,
+      status: "loading",
+      isV2Create: true,
       errorMessage: "",
-      stageText: forceFallback ? "正在准备基础行动方案" : "正在制定行动方案",
+      createRequestId: requestId,
     });
-    generateStagePlan(input, requestId, forceFallback, regenerate)
+    createStagePreview(input, requestId)
       .then((result) => {
         saveStagePreviewCache({ input, result, generatedAt: Date.now() });
-        this.applyPreview(input, result);
+        this.applyPreview(result);
+        this.startOptimization();
       })
       .catch((error: Error) => {
         this.setData({
           status: "error",
-          errorMessage: error.message || "行动阶段生成失败，请稍后重试。",
+          errorMessage: error.message || "基础计划生成失败，请稍后重试。",
         });
+      });
+  },
+
+  restoreServerPreview(previewId: string) {
+    this.setData({ status: "loading", errorMessage: "" });
+    getStagePreview(previewId)
+      .then((preview) => {
+        this.applyPreview(preview);
+        if (this.data.isV2Create && preview.optimizationStatus === "idle") {
+          this.startOptimization();
+        }
       })
-      .then(() => this.setData({ generating: false }));
+      .catch((error: Error) => {
+        this.setData({
+          status: "error",
+          errorMessage: error.message || "计划预览加载失败。",
+        });
+      });
+  },
+
+  applyPreview(preview: StageGenerationResult) {
+    const cached = getStagePreviewCache();
+    if (this.data.isV2Create || cached?.input) {
+      saveStagePreviewCache({
+        input: cached?.input || toCreateInput(),
+        result: preview,
+        generatedAt: Date.now(),
+      });
+    }
+    this.setData({
+      status: "ready",
+      preview,
+      weeks: buildWeeks(preview.stagePlan.days, this.data.weeks),
+      optimizing: preview.optimizationStatus === "processing",
+      editingSlotId: "",
+      savingTask: false,
+      optimizationPollCount:
+        preview.optimizationStatus === "processing"
+          ? this.data.optimizationPollCount
+          : 0,
+    });
+    if (this.data.isV2Create && preview.optimizationStatus === "processing") {
+      this.scheduleOptimizationPoll(preview.previewId);
+    }
+  },
+
+  scheduleOptimizationPoll(previewId: string) {
+    if (this.data.optimizationPollCount >= 30) return;
+    const optimizationPollCount = this.data.optimizationPollCount + 1;
+    this.setData({ optimizationPollCount });
+    setTimeout(() => {
+      if (this.data.preview?.previewId !== previewId || this.data.confirming) return;
+      getStagePreview(previewId)
+        .then((result) => this.applyPreview(result))
+        .catch(() => undefined);
+    }, 2000);
+  },
+
+  startOptimization() {
+    const preview = this.data.preview;
+    if (
+      !this.data.isV2Create ||
+      !preview ||
+      preview.optimizationStatus === "ready" ||
+      preview.optimizationStatus === "processing" ||
+      preview.optimizationAttempts >= 2
+    ) {
+      return;
+    }
+    this.setData({ optimizing: true });
+    optimizeStagePreview(preview.previewId)
+      .then((result) => this.applyPreview(result))
+      .catch((error: Error & { code?: string }) => {
+        if (error.code === "STAGE_OPTIMIZATION_IN_PROGRESS") {
+          setTimeout(() => this.restoreServerPreview(preview.previewId), 1500);
+          return;
+        }
+        this.setData({ optimizing: false });
+      });
   },
 
   retry() {
-    if (this.data.previewId) {
-      this.restoreServerPreview(this.data.previewId);
-      return;
+    if (this.data.preview?.previewId) {
+      this.restoreServerPreview(this.data.preview.previewId);
+    } else if (this.data.isV2Create) {
+      this.createBasePreview();
     }
-    this.startGeneration(false, false);
   },
 
-  useFallback() {
-    if (!this.data.input) return;
-    this.startGeneration(true, true);
+  retryOptimization() {
+    if (!this.data.optimizing) this.startOptimization();
   },
 
-  regenerate() {
-    if (!this.data.input) {
-      wx.showToast({ title: "下一阶段请先返回复盘页调整", icon: "none" });
-      return;
-    }
-    wx.showModal({
-      title: "调整行动安排？",
-      content: "会替换当前尚未确认的阶段预览，每个阶段最多调整两次。",
-      confirmText: "重新制定",
-      success: (result: { confirm: boolean }) => {
-        if (result.confirm) this.startGeneration(false, true);
-      },
+  recoverOptimization() {
+    const preview = this.data.preview;
+    if (!preview || this.data.optimizing) return;
+    this.setData({ optimizing: true });
+    optimizeStagePreview(preview.previewId)
+      .then((result) => this.applyPreview(result))
+      .catch((error: Error) => {
+        this.setData({ optimizing: false });
+        wx.showToast({ title: error.message || "AI 优化仍在处理中", icon: "none" });
+      });
+  },
+
+  toggleWeek(event: DatasetEvent) {
+    const weekNumber = Number(event.currentTarget.dataset.week);
+    this.setData({
+      weeks: this.data.weeks.map((week: WeekView) =>
+        week.number === weekNumber ? { ...week, expanded: !week.expanded } : week,
+      ),
     });
   },
 
+  beginEdit(event: DatasetEvent) {
+    if (!this.data.isV2Create || this.data.savingTask) return;
+    const slotId = String(event.currentTarget.dataset.slotId || "");
+    let action: AIStageAction | null = null;
+    this.data.preview?.stagePlan.days.forEach((day: AIStageDay) => {
+      if (day.actions[0]?.slotId === slotId) action = day.actions[0];
+    });
+    if (!action) return;
+    this.setData({
+      editingSlotId: slotId,
+      editTitle: action.title,
+      editDescription: action.description,
+      editMinutes: action.estimatedMinutes,
+    });
+  },
+
+  inputEditTitle(event: { detail: { value?: string } }) {
+    this.setData({ editTitle: String(event.detail.value || "").slice(0, 40) });
+  },
+
+  inputEditDescription(event: { detail: { value?: string } }) {
+    this.setData({ editDescription: String(event.detail.value || "").slice(0, 150) });
+  },
+
+  inputEditMinutes(event: { detail: { value?: string } }) {
+    this.setData({ editMinutes: Number(event.detail.value || 0) });
+  },
+
+  cancelEdit() {
+    if (!this.data.savingTask) this.setData({ editingSlotId: "" });
+  },
+
+  saveTask() {
+    const preview = this.data.preview;
+    const title = this.data.editTitle.trim();
+    const description = this.data.editDescription.trim();
+    const minutes = Number(this.data.editMinutes);
+    if (!preview || !this.data.editingSlotId || this.data.savingTask) return;
+    if (title.length < 2 || description.length < 2 || !Number.isInteger(minutes) || minutes < 5) {
+      wx.showToast({ title: "请完整填写任务内容和时间", icon: "none" });
+      return;
+    }
+    this.setData({ savingTask: true });
+    updateStagePreviewTask({
+      previewId: preview.previewId,
+      revision: preview.revision,
+      mutationId: `edit_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+      slotId: this.data.editingSlotId,
+      task: { title, description, estimatedMinutes: minutes },
+    })
+      .then((result) => this.applyPreview(result))
+      .catch((error: Error & { code?: string }) => {
+        this.setData({ savingTask: false });
+        wx.showModal({
+          title: error.code === "STAGE_PREVIEW_CONFLICT" ? "计划已更新" : "任务保存失败",
+          content: error.message || "请稍后重试。",
+          showCancel: false,
+          success: () => {
+            if (error.code === "STAGE_PREVIEW_CONFLICT") {
+              this.restoreServerPreview(preview.previewId);
+            }
+          },
+        });
+      });
+  },
+
+  applyOptimization() {
+    const preview = this.data.preview;
+    if (!preview || preview.optimizationStatus !== "ready" || this.data.applying) return;
+    this.setData({ applying: true });
+    applyStageOptimization(preview.previewId, preview.revision)
+      .then((result) => {
+        this.applyPreview(result);
+        wx.showToast({ title: "已采用 AI 优化", icon: "success" });
+      })
+      .catch((error: Error & { code?: string }) => {
+        wx.showModal({
+          title: "暂时无法采用",
+          content: error.message || "请刷新后重试。",
+          showCancel: false,
+          success: () => {
+            if (error.code === "STAGE_PREVIEW_CONFLICT") {
+              this.restoreServerPreview(preview.previewId);
+            }
+          },
+        });
+      })
+      .then(() => this.setData({ applying: false }));
+  },
+
   editGoal() {
-    if (this.data.generating || this.data.confirming) return;
+    if (this.data.confirming || this.data.savingTask) return;
     wx.navigateBack({
       fail: () => wx.redirectTo({ url: "/pages/goal-create/index" }),
     });
   },
 
   goBack() {
-    if (!this.data.generating && !this.data.confirming) wx.navigateBack();
+    if (!this.data.confirming && !this.data.savingTask) wx.navigateBack();
   },
 
   confirmStage() {
     const preview = this.data.preview;
-    if (!preview || this.data.confirming) return;
+    if (!preview || this.data.confirming || this.data.savingTask) return;
     this.setData({ confirming: true });
-    confirmStagePlan(preview.previewId)
+    confirmStagePlan(preview.previewId, this.data.isV2Create ? preview.revision : undefined)
       .then(() => {
         clearLongTermGoalDraft();
         clearStagePreviewCache();
         wx.switchTab({
           url: "/pages/index/index",
           success: () =>
-            setTimeout(
-              () => wx.showToast({ title: "行动阶段已开始", icon: "success" }),
-              200,
-            ),
+            setTimeout(() => wx.showToast({ title: "行动计划已开始", icon: "success" }), 200),
         });
       })
       .catch((error: Error) => {

@@ -28,6 +28,7 @@ export interface TeamMemberSummary {
   isSelf: boolean;
   streakDays: number;
   todayCompleted: boolean;
+  todayRest: boolean;
   stageCompletionRate: number;
   encouragementCount: number;
   encouragedByMeToday: boolean;

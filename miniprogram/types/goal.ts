@@ -9,6 +9,7 @@ export type PlanDayStatus =
   | "completed"
   | "partial"
   | "missed"
+  | "rest"
   | "paused";
 export type PlanTaskState = "pending" | "completed" | "postponed" | "expired" | "paused";
 

@@ -100,17 +100,22 @@ async function getPlanPageData(openid) {
       .filter((task) => task.taskDate === date)
       .sort((left, right) => Number(left.order || 0) - Number(right.order || 0));
     const dayCompletedCount = dayTasks.filter((task) => task.status === "completed").length;
+    const withinPlan = date >= plan.startDate && date <= plan.endDate;
     return {
       day: dayNumber,
       date,
       isToday: date === businessDate,
-      status: getDayStatus(
-        plan.status,
-        date,
-        businessDate,
-        dayCompletedCount,
-        dayTasks.length,
-      ),
+      status: withinPlan
+        ? getDayStatus(
+            plan.status,
+            date,
+            businessDate,
+            dayCompletedCount,
+            dayTasks.length,
+          )
+        : date > businessDate
+          ? "future"
+          : "completed",
       completedCount: dayCompletedCount,
       totalCount: dayTasks.length,
       tasks: dayTasks.map((task) => ({

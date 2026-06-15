@@ -80,6 +80,7 @@ async function buildMemberSummary(team, membership, currentUserKey, businessDate
   const memberOpenid = user && user._openid;
 
   let todayCompleted = false;
+  let todayRest = false;
   let stageCompletionRate = 0;
   if (memberOpenid) {
     const [checkin, tasks] = await Promise.all([
@@ -94,6 +95,10 @@ async function buildMemberSummary(team, membership, currentUserKey, businessDate
       }),
     ]);
     todayCompleted = Boolean(checkin);
+    todayRest =
+      !tasks.some((task) => task.taskDate === businessDate) &&
+      businessDate >= String(team.stageStartDate) &&
+      businessDate <= String(team.stageEndDate);
     const completed = tasks.filter((task) => task.status === "completed").length;
     stageCompletionRate =
       tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0;
@@ -115,6 +120,7 @@ async function buildMemberSummary(team, membership, currentUserKey, businessDate
     isSelf: membership.userKey === currentUserKey,
     streakDays: Math.max(Number((user && user.streakDays) || 0), 0),
     todayCompleted,
+    todayRest,
     stageCompletionRate,
     encouragementCount,
     encouragedByMeToday: Boolean(encouragedRecord && encouragedRecord.data),

@@ -30,7 +30,15 @@ function splitMinutes(total) {
 function buildStageFallback(input) {
   const template =
     CATEGORY_TEMPLATES[input.category] || CATEGORY_TEMPLATES.default;
-  const actionMinutes = Math.max(10, Math.min(input.dailyMinutes, 180));
+  const actionMinutes = Math.max(
+    10,
+    Math.min(
+      input.intensity === "light"
+        ? Math.round((input.dailyMinutes * 0.75) / 5) * 5
+        : input.dailyMinutes,
+      180,
+    ),
+  );
   return {
     stage: {
       title: template.title,
@@ -39,8 +47,21 @@ function buildStageFallback(input) {
       durationDays: input.durationDays,
     },
     days: Array.from({ length: input.durationDays }, (_, index) => {
+      const weekDay = (index % 7) + 1;
+      const activeDays = {
+        3: [1, 3, 5],
+        5: [1, 2, 3, 5, 6],
+        7: [1, 2, 3, 4, 5, 6, 7],
+      }[input.weeklyDays || 7];
+      if (!activeDays.includes(weekDay)) {
+        return {
+          dayIndex: index + 1,
+          theme: "休息与整理",
+          actions: [],
+        };
+      }
       const theme = template.themes[index % template.themes.length];
-      const parts = splitMinutes(actionMinutes);
+      const parts = input.templateId ? [actionMinutes] : splitMinutes(actionMinutes);
       return {
         dayIndex: index + 1,
         theme,

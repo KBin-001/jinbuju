@@ -11,7 +11,7 @@ const GOAL_CATEGORIES = [
   "other",
 ];
 const TARGET_DURATIONS = ["1_month", "3_months", "6_months", "long_term"];
-const STAGE_DURATIONS = [7, 10, 14];
+const STAGE_DURATIONS = [7, 10, 14, 21, 30];
 const DIFFICULTIES = ["easy", "suitable", "hard"];
 const NEXT_PREFERENCES = ["lighter", "same", "stronger", "change_focus"];
 const VAGUE_ACTION =
@@ -103,6 +103,11 @@ function validateStageGenerationInput(input, allowNextStage = false) {
     "targetDuration",
     "stageNumber",
     "durationDays",
+    "templateId",
+    "currentLevel",
+    "weeklyDays",
+    "intensity",
+    "deadline",
   ];
   if (allowNextStage) allowed.push("previousReview");
   if (Object.keys(input).some((key) => !allowed.includes(key))) {
@@ -145,6 +150,18 @@ function validateStageGenerationInput(input, allowNextStage = false) {
     targetDuration: input.targetDuration,
     stageNumber: input.stageNumber,
     durationDays: input.durationDays,
+    templateId: typeof input.templateId === "string" ? input.templateId : "",
+    currentLevel: ["zero", "basic", "intermediate"].includes(input.currentLevel)
+      ? input.currentLevel
+      : "zero",
+    weeklyDays: [3, 5, 7].includes(input.weeklyDays) ? input.weeklyDays : 7,
+    intensity: ["light", "normal", "intensive"].includes(input.intensity)
+      ? input.intensity
+      : "normal",
+    deadline:
+      typeof input.deadline === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input.deadline)
+        ? input.deadline
+        : "",
   };
   if (allowNextStage) {
     result.previousReview = validatePreviousReview(input.previousReview);
@@ -221,7 +238,21 @@ function validateStagePlan(input, generationInput) {
     if (!safeText(day.theme, 2, 40)) {
       fail("AI_RESPONSE_SCHEMA_INVALID", "每日主题无效。");
     }
-    if (!Array.isArray(day.actions) || day.actions.length < 1 || day.actions.length > 4) {
+    const weekDay = ((day.dayIndex - 1) % 7) + 1;
+    const activeDays = {
+      3: [1, 3, 5],
+      5: [1, 2, 3, 5, 6],
+      7: [1, 2, 3, 4, 5, 6, 7],
+    }[generationInput.weeklyDays || 7];
+    const shouldRest = !activeDays.includes(weekDay);
+    const minimumActions = generationInput.templateId ? 1 : 1;
+    const maximumActions = generationInput.templateId ? 1 : 4;
+    if (
+      !Array.isArray(day.actions) ||
+      (shouldRest
+        ? day.actions.length !== 0
+        : day.actions.length < minimumActions || day.actions.length > maximumActions)
+    ) {
       fail("AI_RESPONSE_SCHEMA_INVALID", "每天需包含 1～4 个行动。");
     }
 
@@ -262,7 +293,7 @@ function validateStagePlan(input, generationInput) {
         estimatedMinutes: action.estimatedMinutes,
       };
     });
-    if (totalMinutes > Math.ceil(generationInput.dailyMinutes * 1.2)) {
+    if (totalMinutes > generationInput.dailyMinutes) {
       fail("AI_RESPONSE_SCHEMA_INVALID", "每日行动总时长超出设置。");
     }
     return {

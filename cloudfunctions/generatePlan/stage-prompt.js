@@ -32,12 +32,15 @@ function buildStagePrompt(input) {
 - 长期周期：${DURATION_LABELS[input.targetDuration]}
 - 当前阶段：第 ${input.stageNumber} 阶段
 - 阶段天数：${input.durationDays} 天
+- 每周执行：${input.weeklyDays || 7} 天
+- 当前水平：${input.currentLevel || "zero"}
+- 计划强度：${input.intensity || "normal"}
 - 阶段背景：${review}
 
 必须遵守：
 1. 阶段持续 durationDays 天，days 数量必须完全一致。
-2. 每天生成 1～4 个具体、可执行、可验证的行动。
-3. 每天行动总时间不得超过 ${Math.ceil(input.dailyMinutes * 1.2)} 分钟，并尽量接近 ${input.dailyMinutes} 分钟。
+2. 按每周执行天数均匀安排任务：3 天使用每周第 1、3、5 天，5 天使用第 1、2、3、5、6 天，7 天每天执行；休息日 actions 必须为空，${input.templateId ? "每个执行日只生成 1 个具体行动" : "执行日生成 1～4 个具体行动"}。
+3. 每天行动总时间不得超过 ${input.dailyMinutes} 分钟；轻松强度使用约 75% 时间，普通和挑战强度不超过可投入时间，挑战强度提高任务难度而不是增加时长。
 4. 第一个阶段优先降低启动难度，围绕长期目标的第一个合理步骤建立节奏。
 5. 禁止用“努力学习”“坚持下去”“提升自己”等空泛鼓励代替行动。
 6. 不承诺结果，不输出医学诊断、投资保证或高风险建议。

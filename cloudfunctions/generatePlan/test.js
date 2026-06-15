@@ -16,6 +16,14 @@ const {
   validateStagePlan,
   validateStageRequestId,
 } = require("./stage-validate");
+const {
+  GOAL_TEMPLATES,
+  buildBaseStagePlan,
+  isExecutionDay,
+  mergeOptimizationPlan,
+  validateCreateStagePreviewInput,
+  validateOptimizedPlan,
+} = require("./stage-v2");
 
 const categories = ["exam", "skill", "career"];
 const weeklyDaysOptions = [3, 5, 7];
@@ -60,6 +68,7 @@ assert.throws(
 );
 
 assert.strictEqual(getDayStatus("active", "2026-06-15", "2026-06-15", 0, 2), "today");
+assert.strictEqual(getDayStatus("active", "2026-06-15", "2026-06-15", 0, 0), "rest");
 assert.strictEqual(getDayStatus("active", "2026-06-14", "2026-06-15", 1, 2), "partial");
 assert.strictEqual(getDayStatus("paused", "2026-06-16", "2026-06-15", 0, 2), "paused");
 assert.strictEqual(
@@ -150,7 +159,7 @@ const longTermCategories = [
   "other",
 ];
 for (const category of longTermCategories) {
-  for (const durationDays of [7, 10, 14]) {
+  for (const durationDays of [7, 10, 14, 21, 30]) {
     const input = validateStageGenerationInput({
       goalTitle: "建立长期成长能力",
       category,
@@ -170,6 +179,117 @@ for (const category of longTermCategories) {
     });
   }
 }
+
+const templateIds = Object.keys(GOAL_TEMPLATES);
+assert.strictEqual(templateIds.length, 8);
+for (const templateId of templateIds) {
+  for (const currentLevel of ["zero", "basic", "intermediate"]) {
+    for (const dailyMinutes of [15, 30, 45, 60, 90]) {
+      for (const weeklyDays of [3, 5, 7]) {
+        for (const intensity of ["light", "normal", "intensive"]) {
+          for (const durationDays of [7, 21, 30]) {
+            const input = validateCreateStagePreviewInput({
+              templateId,
+              customGoalTitle: templateId === "custom" ? "学习基础摄影" : undefined,
+              currentLevel,
+              dailyMinutes,
+              weeklyDays,
+              intensity,
+              durationDays,
+              deadline: "2099-12-31",
+            });
+            const plan = buildBaseStagePlan(input);
+            assert.strictEqual(plan.days.length, durationDays);
+            plan.days.forEach((day) => {
+              const active = isExecutionDay(day.dayIndex, weeklyDays);
+              assert.strictEqual(day.actions.length, active ? 1 : 0);
+              if (active) {
+                assert.strictEqual(day.actions[0].slotId, `slot_day_${day.dayIndex}`);
+                assert.ok(day.actions[0].estimatedMinutes <= dailyMinutes);
+              }
+            });
+          }
+        }
+      }
+    }
+  }
+}
+
+const v2Input = validateCreateStagePreviewInput({
+  templateId: "python",
+  currentLevel: "zero",
+  dailyMinutes: 30,
+  weeklyDays: 5,
+  intensity: "normal",
+  durationDays: 30,
+  deadline: "2099-12-31",
+});
+const v2BasePlan = buildBaseStagePlan(v2Input);
+assert.strictEqual(v2BasePlan.days[28].actions.length, 1);
+assert.strictEqual(v2BasePlan.days[29].actions.length, 1);
+assert.deepStrictEqual(
+  validateOptimizedPlan(JSON.parse(JSON.stringify(v2BasePlan)), v2Input, v2BasePlan),
+  v2BasePlan,
+);
+const changedExecutionDay = JSON.parse(JSON.stringify(v2BasePlan));
+changedExecutionDay.days[3].actions = [
+  {
+    slotId: "slot_day_4",
+    title: "不应出现的任务",
+    description: "AI 不得在休息日增加任务",
+    estimatedMinutes: 30,
+  },
+];
+assert.throws(
+  () => validateOptimizedPlan(changedExecutionDay, v2Input, v2BasePlan),
+  /执行日/,
+);
+const changedSlot = JSON.parse(JSON.stringify(v2BasePlan));
+changedSlot.days[0].actions[0].slotId = "slot_day_2";
+assert.throws(
+  () => validateOptimizedPlan(changedSlot, v2Input, v2BasePlan),
+  /任务内容/,
+);
+const editedBase = JSON.parse(JSON.stringify(v2BasePlan));
+editedBase.days[0].actions[0].title = "用户手工编辑的任务";
+const optimizedCandidate = JSON.parse(JSON.stringify(v2BasePlan));
+optimizedCandidate.stage.title = "AI 优化后的计划";
+optimizedCandidate.days[0].actions[0].title = "AI 修改的第一天";
+optimizedCandidate.days[1].actions[0].title = "AI 修改的第二天";
+const mergedCandidate = mergeOptimizationPlan(
+  editedBase,
+  optimizedCandidate,
+  ["slot_day_1"],
+);
+assert.strictEqual(mergedCandidate.stage.title, "AI 优化后的计划");
+assert.strictEqual(mergedCandidate.days[0].actions[0].title, "用户手工编辑的任务");
+assert.strictEqual(mergedCandidate.days[1].actions[0].title, "AI 修改的第二天");
+assert.throws(
+  () =>
+    validateCreateStagePreviewInput({
+      templateId: "custom",
+      customGoalTitle: "",
+      currentLevel: "zero",
+      dailyMinutes: 30,
+      weeklyDays: 5,
+      intensity: "normal",
+      durationDays: 7,
+    }),
+  /自定义目标/,
+);
+assert.throws(
+  () =>
+    validateCreateStagePreviewInput({
+      templateId: "python",
+      currentLevel: "zero",
+      dailyMinutes: 30,
+      weeklyDays: 5,
+      intensity: "normal",
+      durationDays: 7,
+      deadline: "2026-99-99",
+    }),
+  /截止日期/,
+);
 
 const stageInput = validateStageGenerationInput({
   goalTitle: "通过英语四级",

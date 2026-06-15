@@ -47,6 +47,12 @@ const {
   getStageReview,
   submitStageReview,
 } = require("./stage-management");
+const {
+  applyStageOptimization,
+  createStagePreview,
+  optimizeStagePreview,
+  updateStagePreviewTask,
+} = require("./stage-v2");
 
 function success(data) {
   return { success: true, data };
@@ -93,6 +99,10 @@ function failure(error) {
     "ACTIVE_GOAL_ALREADY_EXISTS",
     "STAGE_REVIEW_NOT_ALLOWED",
     "STAGE_REVIEW_ALREADY_EXISTS",
+    "STAGE_OPTIMIZATION_IN_PROGRESS",
+    "STAGE_OPTIMIZATION_LIMIT_REACHED",
+    "STAGE_OPTIMIZATION_NOT_READY",
+    "STAGE_PREVIEW_CONFLICT",
   ];
   const code = allowedCodes.includes(error.code) ? error.code : "INTERNAL_ERROR";
   const messages = {
@@ -135,6 +145,10 @@ function failure(error) {
     ACTIVE_GOAL_ALREADY_EXISTS: error.message,
     STAGE_REVIEW_NOT_ALLOWED: error.message,
     STAGE_REVIEW_ALREADY_EXISTS: error.message,
+    STAGE_OPTIMIZATION_IN_PROGRESS: error.message,
+    STAGE_OPTIMIZATION_LIMIT_REACHED: error.message,
+    STAGE_OPTIMIZATION_NOT_READY: error.message,
+    STAGE_PREVIEW_CONFLICT: error.message,
     INTERNAL_ERROR: "服务暂时不可用，请稍后重试。",
   };
   return {
@@ -392,6 +406,18 @@ exports.main = async (event) => {
     }
     if (event.action === "generateStagePlan") {
       return success(await generateStagePlan(context.OPENID, event));
+    }
+    if (event.action === "createStagePreview") {
+      return success(await createStagePreview(context.OPENID, event));
+    }
+    if (event.action === "optimizeStagePreview") {
+      return success(await optimizeStagePreview(context.OPENID, event));
+    }
+    if (event.action === "updateStagePreviewTask") {
+      return success(await updateStagePreviewTask(context.OPENID, event));
+    }
+    if (event.action === "applyStageOptimization") {
+      return success(await applyStageOptimization(context.OPENID, event));
     }
     if (event.action === "getStagePreview") {
       return success(await getStagePreview(context.OPENID, event));

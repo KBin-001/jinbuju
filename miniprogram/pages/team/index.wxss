@@ -175,6 +175,11 @@
   color: #626a63;
 }
 
+.today-rest {
+  background: #eef2ec;
+  color: #58675d;
+}
+
 .member-progress-row {
   justify-content: flex-start;
   gap: 80rpx;

@@ -67,6 +67,7 @@ const DAY_STATUS_LABELS: Record<PlanDayStatus, string> = {
   completed: "已完成",
   partial: "部分完成",
   missed: "未完成",
+  rest: "休息日",
   paused: "已暂停",
 };
 

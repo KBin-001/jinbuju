@@ -5,6 +5,8 @@ import {
   ConfirmStageResult,
   StageReviewData,
   StageReviewInput,
+  CreateStagePreviewInput,
+  UpdateStagePreviewTaskInput,
 } from "../types/stage";
 
 interface CloudCallResponse<T> {
@@ -79,6 +81,46 @@ export function createStageRequestId(): string {
   return `stage_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
+export function createStagePreview(
+  input: CreateStagePreviewInput,
+  requestId: string,
+): Promise<StageGenerationResult> {
+  return callStageFunction<StageGenerationResult>({
+    action: "createStagePreview",
+    input,
+    requestId,
+  }, 20000);
+}
+
+export function optimizeStagePreview(
+  previewId: string,
+): Promise<StageGenerationResult> {
+  return callStageFunction<StageGenerationResult>({
+    action: "optimizeStagePreview",
+    previewId,
+  });
+}
+
+export function updateStagePreviewTask(
+  input: UpdateStagePreviewTaskInput,
+): Promise<StageGenerationResult> {
+  return callStageFunction<StageGenerationResult>({
+    action: "updateStagePreviewTask",
+    ...input,
+  }, 15000);
+}
+
+export function applyStageOptimization(
+  previewId: string,
+  revision: number,
+): Promise<StageGenerationResult> {
+  return callStageFunction<StageGenerationResult>({
+    action: "applyStageOptimization",
+    previewId,
+    revision,
+  }, 15000);
+}
+
 export function generateStagePlan(
   input: StagePlanGenerationInput,
   requestId: string,
@@ -101,10 +143,14 @@ export function getStagePreview(previewId: string): Promise<StageGenerationResul
   }, 12000);
 }
 
-export function confirmStagePlan(previewId: string): Promise<ConfirmStageResult> {
+export function confirmStagePlan(
+  previewId: string,
+  revision?: number,
+): Promise<ConfirmStageResult> {
   return callStageFunction<ConfirmStageResult>({
     action: "confirmStagePlan",
     previewId,
+    ...(revision === undefined ? {} : { revision }),
   }, 20000);
 }
 

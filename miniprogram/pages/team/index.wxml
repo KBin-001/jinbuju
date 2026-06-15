@@ -95,7 +95,7 @@
             </view>
             <view class="member-streak">连续行动 {{item.streakDays}} 天</view>
           </view>
-          <view class="today-tag {{item.todayCompleted ? 'today-done' : 'today-pending'}}">
+          <view class="today-tag {{item.todayRest ? 'today-rest' : (item.todayCompleted ? 'today-done' : 'today-pending')}}">
             {{item.todayStatusText}}
           </view>
         </view>

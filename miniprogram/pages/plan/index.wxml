@@ -153,7 +153,7 @@
       <view wx:if="{{selectedDay.tasks.length === 0}}" class="card empty-tasks">
         <view class="state-mark small-mark">0</view>
         <view class="empty-task-title">这一天没有安排行动</view>
-        <view class="state-description">留一点空白，也是在为下一步积蓄精力。</view>
+          <view class="state-description">{{selectedDay.status === 'rest' ? '今天是计划休息日，休息不会计为未完成。' : '留一点空白，也是在为下一步积蓄精力。'}}</view>
       </view>
 
       <view

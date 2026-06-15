@@ -58,6 +58,7 @@ async function getHomeData(openid) {
       totalCount: 0,
       completionRate: 0,
       checkedInToday: false,
+      todayRest: false,
     };
   }
 
@@ -83,7 +84,7 @@ async function getHomeData(openid) {
         currentDay: 1,
         totalDays: 7,
         stageTitle: "",
-        weeklyCompletionRate: 0,
+        planCompletionRate: 0,
         planStatus: "active",
       },
       todayTasks: [],
@@ -91,6 +92,7 @@ async function getHomeData(openid) {
       totalCount: 0,
       completionRate: 0,
       checkedInToday: false,
+      todayRest: false,
     };
   }
 
@@ -118,12 +120,12 @@ async function getHomeData(openid) {
   const totalCount = todayTasks.length;
   const completionRate =
     totalCount > 0 ? clampPercentage((completedCount / totalCount) * 100) : 0;
-  const weeklyCompleted = planTaskRecords.filter(
+  const planCompleted = planTaskRecords.filter(
     (task) => task.status === "completed",
   ).length;
-  const weeklyCompletionRate =
+  const planCompletionRate =
     planTaskRecords.length > 0
-      ? clampPercentage((weeklyCompleted / planTaskRecords.length) * 100)
+      ? clampPercentage((planCompleted / planTaskRecords.length) * 100)
       : 0;
   const durationDays = Math.max(Number(plan.durationDays || plan.totalDays || 7), 1);
 
@@ -138,7 +140,7 @@ async function getHomeData(openid) {
       currentDay: calculateCurrentDay(plan.startDate, businessDate, durationDays),
       totalDays: durationDays,
       stageTitle: String(plan.stageTitle || plan.title || plan.weeklyGoal || "当前行动阶段"),
-      weeklyCompletionRate,
+      planCompletionRate,
       planStatus: plan.status,
     },
     todayTasks,
@@ -146,6 +148,7 @@ async function getHomeData(openid) {
     totalCount,
     completionRate,
     checkedInToday: checkinRecords.length > 0,
+    todayRest: totalCount === 0 && businessDate >= plan.startDate && businessDate <= plan.endDate,
   };
 }
 

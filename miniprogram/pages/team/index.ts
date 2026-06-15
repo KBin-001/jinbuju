@@ -91,7 +91,11 @@ Page({
         const members = data.members.map((member) => ({
           ...member,
           avatarDisplay: member.avatarUrl || DEFAULT_AVATAR,
-          todayStatusText: member.todayCompleted ? "今天已完成" : "今天未记录",
+          todayStatusText: member.todayRest
+            ? "今日休息"
+            : member.todayCompleted
+              ? "今天已完成"
+              : "今天未记录",
         }));
         this.setData({
           status: "ready",

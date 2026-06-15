@@ -226,7 +226,8 @@
 }
 
 .recent-completed,
-.recent-today {
+.recent-today,
+.recent-rest {
   background: var(--color-primary-light);
 }
 
@@ -305,6 +306,10 @@
 
 .day-completed {
   background: #f4f8f5;
+}
+
+.day-rest {
+  background: #f4f7f3;
 }
 
 .day-missed,

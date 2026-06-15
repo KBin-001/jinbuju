@@ -17,7 +17,7 @@ export interface GoalSummary {
   category: string;
   currentDay: number;
   totalDays: number;
-  weeklyCompletionRate: number;
+  planCompletionRate: number;
   planStatus: PlanStatus;
   stageTitle: string;
 }
@@ -39,6 +39,7 @@ export interface HomeData {
   totalCount: number;
   completionRate: number;
   checkedInToday: boolean;
+  todayRest: boolean;
 }
 
 export interface TodayCheckinDraft {
