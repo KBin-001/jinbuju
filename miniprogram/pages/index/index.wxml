@@ -27,10 +27,10 @@
       <view class="greeting">继续向目标靠近一点</view>
     </view>
 
-    <view wx:if="{{!goal}}" class="card empty-goal-card">
+    <view wx:if="{{!goal && totalCount === 0}}" class="card empty-goal-card">
       <view class="section-eyebrow">你的第一个目标</view>
-      <view class="empty-goal-title">创建一个目标，把想做的事变成今天可以完成的一小步。</view>
-      <view class="empty-goal-description">把想做的事拆成每天可以完成的小步骤。</view>
+      <view class="empty-goal-title">先安排今天，也可以稍后再创建长期目标。</view>
+      <view class="empty-goal-description">从一件 10 秒能写下来的小任务开始。</view>
       <button
         class="primary-button create-button"
         loading="{{navigating}}"
@@ -41,7 +41,7 @@
       </button>
     </view>
 
-    <block wx:else>
+    <block wx:if="{{goal}}">
       <view wx:if="{{planPaused}}" class="paused-notice">
         <view class="paused-notice-title">当前阶段已暂停</view>
         <view>行动仍然保留，恢复后可以继续完成和记录。</view>
@@ -70,78 +70,171 @@
           </view>
         </view>
       </view>
+    </block>
 
-      <view class="card progress-card">
-        <view class="card-heading-row">
-          <view>
-            <view class="section-eyebrow">今日进度</view>
-            <view class="progress-count">
-              <text class="progress-count-strong">{{completedCount}}</text>
-              <text> / {{totalCount}} 项完成</text>
-            </view>
+    <view class="card quick-task-card">
+      <view class="section-title-row">
+        <view class="section-title">快速添加</view>
+        <button class="more-settings-button" bindtap="toggleMoreSettings">
+          {{showMoreSettings ? '收起' : '更多设置'}}
+        </button>
+      </view>
+      <input
+        class="quick-task-input"
+        value="{{quickTitle}}"
+        placeholder="今天要完成什么？"
+        maxlength="40"
+        confirm-type="done"
+        bindinput="onQuickTitleInput"
+      />
+      <view class="quick-options">
+        <button
+          class="quick-chip {{quickTimePeriod === 'morning' ? 'quick-chip-active' : ''}}"
+          data-id="morning"
+          bindtap="selectTimePeriod"
+        >上午</button>
+        <button
+          class="quick-chip {{quickTimePeriod === 'afternoon' ? 'quick-chip-active' : ''}}"
+          data-id="afternoon"
+          bindtap="selectTimePeriod"
+        >下午</button>
+        <button
+          class="quick-chip {{quickTimePeriod === 'evening' ? 'quick-chip-active' : ''}}"
+          data-id="evening"
+          bindtap="selectTimePeriod"
+        >晚上</button>
+        <button
+          class="quick-chip {{quickTimePeriod === 'anytime' ? 'quick-chip-active' : ''}}"
+          data-id="anytime"
+          bindtap="selectTimePeriod"
+        >随时</button>
+      </view>
+      <view class="quick-options">
+        <button
+          class="quick-chip {{quickEstimatedMinutes === 15 ? 'quick-chip-active' : ''}}"
+          data-id="15"
+          bindtap="selectDuration"
+        >15 分钟</button>
+        <button
+          class="quick-chip {{quickEstimatedMinutes === 30 ? 'quick-chip-active' : ''}}"
+          data-id="30"
+          bindtap="selectDuration"
+        >30 分钟</button>
+        <button
+          class="quick-chip {{quickEstimatedMinutes === 45 ? 'quick-chip-active' : ''}}"
+          data-id="45"
+          bindtap="selectDuration"
+        >45 分钟</button>
+        <button
+          class="quick-chip {{quickEstimatedMinutes === 60 ? 'quick-chip-active' : ''}}"
+          data-id="60"
+          bindtap="selectDuration"
+        >60 分钟</button>
+      </view>
+      <view wx:if="{{showMoreSettings}}" class="more-settings">
+        <view class="field-label">标签</view>
+        <input
+          class="quick-task-input small-input"
+          value="{{quickTagName}}"
+          placeholder="例如：英语、阅读、工作"
+          maxlength="20"
+          bindinput="onQuickTagInput"
+        />
+      </view>
+      <button
+        class="primary-button add-task-button"
+        loading="{{creatingTask}}"
+        disabled="{{creatingTask}}"
+        bindtap="createTodayTask"
+      >
+        添加到今日
+      </button>
+    </view>
+
+    <view class="card progress-card">
+      <view class="card-heading-row">
+        <view>
+          <view class="section-eyebrow">今日进度</view>
+          <view class="progress-count">
+            <text class="progress-count-strong">{{completedCount}}</text>
+            <text> / {{totalCount}} 项完成</text>
           </view>
-          <view class="progress-rate">{{completionRate}}%</view>
         </view>
-        <view
-          class="progress-track"
-          aria-role="progressbar"
-          aria-label="今日行动完成 {{completionRate}}%"
-          aria-valuemin="0"
-          aria-valuemax="100"
-          aria-valuenow="{{completionRate}}"
-        >
-          <view class="progress-fill" style="width: {{completionRate}}%;"></view>
-        </view>
-        <view class="progress-status">{{progressText}}</view>
+        <view class="progress-rate">{{completionRate}}%</view>
+      </view>
+      <view
+        class="progress-track"
+        aria-role="progressbar"
+        aria-label="今日行动完成 {{completionRate}}%"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="{{completionRate}}"
+      >
+        <view class="progress-fill" style="width: {{completionRate}}%;"></view>
+      </view>
+      <view class="progress-status">{{progressText}}</view>
+    </view>
+
+    <view class="task-section">
+      <view class="section-title-row">
+        <view class="section-title">今日行动</view>
+        <view class="section-count">{{totalCount}} 项</view>
       </view>
 
-      <view class="task-section">
-        <view class="section-title-row">
-          <view class="section-title">今日行动</view>
-          <view class="section-count">{{totalCount}} 项</view>
-        </view>
+      <view wx:if="{{totalCount === 0}}" class="card no-task-card">
+        <view class="state-mark small-mark">0</view>
+        <view class="no-task-title">{{todayRest ? '今天是计划休息日' : '今天还没有任务'}}</view>
+        <view class="state-description">{{todayRest ? '休息也是计划的一部分，可以轻松整理前面的成果。' : '在上方添加一件今天想完成的小事。'}}</view>
+      </view>
 
-        <view wx:if="{{totalCount === 0}}" class="card no-task-card">
-          <view class="state-mark small-mark">0</view>
-          <view class="no-task-title">{{todayRest ? '今天是计划休息日' : (goal.planId ? '今天暂时没有安排行动' : '计划正在准备')}}</view>
-          <view class="state-description">{{todayRest ? '休息也是计划的一部分，可以轻松整理前面的成果。' : (goal.planId ? '可以前往进度页查看当前计划。' : '完成后会在这里展示今天可以开始的一小步。')}}</view>
-        </view>
-
+      <view wx:for="{{taskGroups}}" wx:key="key" class="period-group">
+        <view class="period-title">{{item.title}}</view>
         <view
-          wx:for="{{tasks}}"
+          wx:for="{{item.tasks}}"
+          wx:for-item="task"
           wx:key="id"
-          class="card task-card {{item.completed ? 'task-card-completed' : ''}}"
+          class="card task-card {{task.completed ? 'task-card-completed' : ''}}"
         >
           <view class="task-content">
-            <view class="task-title {{item.completed ? 'task-title-completed' : ''}}">
-              {{item.title}}
+            <view class="task-title {{task.completed ? 'task-title-completed' : ''}}">
+              {{task.title}}
             </view>
-            <view wx:if="{{item.description}}" class="task-description">{{item.description}}</view>
-            <view class="task-duration">预计 {{item.estimatedMinutes}} 分钟</view>
+            <view wx:if="{{task.description}}" class="task-description">{{task.description}}</view>
+            <view class="task-meta-row">
+              <text class="task-duration">预计 {{task.estimatedMinutes}} 分钟</text>
+              <text class="task-source">{{task.sourceLabel}}</text>
+            </view>
           </view>
           <button
-            class="task-toggle {{item.completed ? 'task-toggle-completed' : ''}}"
-            data-id="{{item.id}}"
-            disabled="{{item.toggling || planReadOnly}}"
-            aria-label="{{item.completed ? '标记为未完成：' : '标记为完成：'}}{{item.title}}"
+            class="task-toggle {{task.completed ? 'task-toggle-completed' : ''}}"
+            data-id="{{task.id}}"
+            disabled="{{task.toggling || (task.planId && planReadOnly)}}"
+            aria-label="{{task.completed ? '标记为未完成：' : '标记为完成：'}}{{task.title}}"
             bindtap="toggleTask"
           >
-            <text class="task-toggle-icon">{{item.completed ? '✓' : ''}}</text>
-            <text>{{item.completed ? '已完成' : '完成'}}</text>
+            <text class="task-toggle-icon">{{task.completed ? '✓' : ''}}</text>
+            <text>{{task.completed ? '已完成' : '完成'}}</text>
           </button>
         </view>
       </view>
 
-      <view class="bottom-action">
-        <button
-          class="checkin-button {{checkedInToday ? 'checkin-button-done' : ''}}"
-          disabled="{{completedCount === 0 || navigating || !goal.planId || checkedInToday || planReadOnly}}"
-          loading="{{navigating}}"
-          bindtap="prepareCheckin"
-        >
-          {{checkinButtonText}}
-        </button>
+      <view wx:if="{{sourceSummary.length > 0}}" class="source-summary">
+        <view wx:for="{{sourceSummary}}" wx:key="key" class="source-summary-item">
+          <text>{{item.label}}</text>
+          <text>{{item.count}} 项</text>
+        </view>
       </view>
-    </block>
+    </view>
+
+    <view class="bottom-action">
+      <button
+        class="checkin-button {{checkedInToday ? 'checkin-button-done' : ''}}"
+        disabled="{{completedCount === 0 || navigating || !goal || !goal.planId || checkedInToday || planReadOnly}}"
+        loading="{{navigating}}"
+        bindtap="prepareCheckin"
+      >
+        {{checkinButtonText}}
+      </button>
+    </view>
   </block>
 </view>

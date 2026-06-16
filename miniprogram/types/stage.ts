@@ -14,7 +14,7 @@ export type GoalTemplateId =
   | "custom";
 export type GoalLevel = "zero" | "basic" | "intermediate";
 export type GoalIntensity = "light" | "normal" | "intensive";
-export type PlanDurationDays = 7 | 21 | 30;
+export type PlanDurationDays = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 export type LongTermGoalCategory =
   | "exam"
   | "skill"

@@ -27,7 +27,24 @@ export interface TodayTask {
   title: string;
   description: string;
   estimatedMinutes: number;
+  timePeriod: "morning" | "afternoon" | "evening" | "anytime";
+  source: "manual" | "ai" | "template" | "carry_over";
+  sourceLabel: string;
+  planId: string;
+  planTitle: string;
   completed: boolean;
+}
+
+export interface TodayTaskGroup {
+  key: "morning" | "afternoon" | "evening" | "anytime";
+  title: string;
+  tasks: TodayTask[];
+}
+
+export interface TaskSourceSummary {
+  key: string;
+  label: string;
+  count: number;
 }
 
 export interface HomeData {
@@ -35,6 +52,8 @@ export interface HomeData {
   user: UserProgress;
   goal: GoalSummary | null;
   todayTasks: TodayTask[];
+  taskGroups: TodayTaskGroup[];
+  sourceSummary: TaskSourceSummary[];
   completedCount: number;
   totalCount: number;
   completionRate: number;

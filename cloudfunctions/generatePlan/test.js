@@ -159,7 +159,7 @@ const longTermCategories = [
   "other",
 ];
 for (const category of longTermCategories) {
-  for (const durationDays of [7, 10, 14, 21, 30]) {
+  for (const durationDays of [1, 2, 3, 4, 5, 6, 7]) {
     const input = validateStageGenerationInput({
       goalTitle: "建立长期成长能力",
       category,
@@ -187,7 +187,7 @@ for (const templateId of templateIds) {
     for (const dailyMinutes of [15, 30, 45, 60, 90]) {
       for (const weeklyDays of [3, 5, 7]) {
         for (const intensity of ["light", "normal", "intensive"]) {
-          for (const durationDays of [7, 21, 30]) {
+          for (const durationDays of [1, 2, 3, 4, 5, 6, 7]) {
             const input = validateCreateStagePreviewInput({
               templateId,
               customGoalTitle: templateId === "custom" ? "学习基础摄影" : undefined,
@@ -201,7 +201,7 @@ for (const templateId of templateIds) {
             const plan = buildBaseStagePlan(input);
             assert.strictEqual(plan.days.length, durationDays);
             plan.days.forEach((day) => {
-              const active = isExecutionDay(day.dayIndex, weeklyDays);
+              const active = isExecutionDay(day.dayIndex, weeklyDays, durationDays);
               assert.strictEqual(day.actions.length, active ? 1 : 0);
               if (active) {
                 assert.strictEqual(day.actions[0].slotId, `slot_day_${day.dayIndex}`);
@@ -221,12 +221,12 @@ const v2Input = validateCreateStagePreviewInput({
   dailyMinutes: 30,
   weeklyDays: 5,
   intensity: "normal",
-  durationDays: 30,
+  durationDays: 7,
   deadline: "2099-12-31",
 });
 const v2BasePlan = buildBaseStagePlan(v2Input);
-assert.strictEqual(v2BasePlan.days[28].actions.length, 1);
-assert.strictEqual(v2BasePlan.days[29].actions.length, 1);
+assert.strictEqual(v2BasePlan.days[5].actions.length, 1);
+assert.strictEqual(v2BasePlan.days[6].actions.length, 1);
 assert.deepStrictEqual(
   validateOptimizedPlan(JSON.parse(JSON.stringify(v2BasePlan)), v2Input, v2BasePlan),
   v2BasePlan,
@@ -236,8 +236,14 @@ changedExecutionDay.days[3].actions = [
   {
     slotId: "slot_day_4",
     title: "不应出现的任务",
-    description: "AI 不得在休息日增加任务",
+    description: "AI 不得改变执行日任务数量",
     estimatedMinutes: 30,
+  },
+  {
+    slotId: "slot_day_4_extra",
+    title: "多余的任务",
+    description: "AI 不得增加任务数量",
+    estimatedMinutes: 15,
   },
 ];
 assert.throws(

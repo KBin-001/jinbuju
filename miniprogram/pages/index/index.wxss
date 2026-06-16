@@ -80,7 +80,8 @@
 }
 
 .goal-card,
-.progress-card {
+.progress-card,
+.quick-task-card {
   margin-bottom: 24rpx;
 }
 
@@ -184,6 +185,75 @@
   font-size: 24rpx;
 }
 
+.quick-task-card {
+  margin-top: 24rpx;
+}
+
+.more-settings-button {
+  padding: 10rpx 0 10rpx 24rpx;
+  color: var(--color-primary);
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.quick-task-input {
+  width: 100%;
+  min-height: 92rpx;
+  margin-top: 24rpx;
+  padding: 0 24rpx;
+  border: 1rpx solid var(--color-border);
+  border-radius: 20rpx;
+  background: #fbfcfa;
+  color: var(--color-text);
+  font-size: 30rpx;
+}
+
+.quick-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 18rpx;
+}
+
+.quick-chip {
+  min-width: 124rpx;
+  padding: 14rpx 20rpx;
+  border: 1rpx solid var(--color-border);
+  border-radius: 999rpx;
+  background: #fbfcfa;
+  color: var(--color-text-secondary);
+  font-size: 24rpx;
+  text-align: center;
+}
+
+.quick-chip-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 650;
+}
+
+.more-settings {
+  margin-top: 22rpx;
+  padding-top: 22rpx;
+  border-top: 1rpx solid var(--color-border);
+}
+
+.field-label {
+  color: var(--color-text-secondary);
+  font-size: 24rpx;
+}
+
+.small-input {
+  min-height: 80rpx;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+}
+
+.add-task-button {
+  width: 100%;
+}
+
 .task-section {
   margin-top: 34rpx;
 }
@@ -233,10 +303,39 @@
   line-height: 1.55;
 }
 
-.task-duration {
+.task-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  align-items: center;
   margin-top: 12rpx;
+}
+
+.task-duration,
+.task-source {
   color: #879087;
   font-size: 22rpx;
+}
+
+.task-source {
+  max-width: 280rpx;
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+  background: #eef2ec;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.period-group {
+  margin-top: 24rpx;
+}
+
+.period-title {
+  padding-left: 6rpx;
+  color: var(--color-text-secondary);
+  font-size: 24rpx;
+  font-weight: 650;
 }
 
 .task-toggle {
@@ -283,6 +382,23 @@
   margin-top: 20rpx;
   font-size: 30rpx;
   font-weight: 650;
+}
+
+.source-summary {
+  margin-top: 26rpx;
+  padding: 20rpx 24rpx;
+  border: 1rpx solid var(--color-border);
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.source-summary-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8rpx 0;
+  color: var(--color-text-secondary);
+  font-size: 24rpx;
 }
 
 .bottom-action {

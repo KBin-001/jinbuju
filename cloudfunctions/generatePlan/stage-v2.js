@@ -9,7 +9,7 @@ const { DANGEROUS_CONTENT } = require("./constants");
 const { validateStageRequestId } = require("./stage-validate");
 
 const db = cloud.database();
-const PLAN_DURATIONS = [7, 21, 30];
+const PLAN_DURATIONS = [1, 2, 3, 4, 5, 6, 7];
 const WEEKLY_DAYS = [3, 5, 7];
 const DAILY_MINUTES = [15, 30, 45, 60, 90];
 const LEVELS = ["zero", "basic", "intermediate"];
@@ -174,7 +174,8 @@ function validateCreateStagePreviewInput(value) {
   };
 }
 
-function isExecutionDay(dayIndex, weeklyDays) {
+function isExecutionDay(dayIndex, weeklyDays, durationDays) {
+  if (durationDays <= 7) return true;
   const weekDay = ((dayIndex - 1) % 7) + 1;
   return ACTIVE_WEEK_DAYS[weeklyDays].includes(weekDay);
 }
@@ -200,7 +201,7 @@ function buildBaseStagePlan(input) {
     input.intensity === "intensive" ? "完成一项带成果的进阶练习" : "完成一项可验证的小练习";
   const days = Array.from({ length: input.durationDays }, (_, index) => {
     const dayIndex = index + 1;
-    if (!isExecutionDay(dayIndex, input.weeklyDays)) {
+    if (!isExecutionDay(dayIndex, input.weeklyDays, input.durationDays)) {
       return {
         dayIndex,
         theme: "休息与整理",
@@ -226,7 +227,9 @@ function buildBaseStagePlan(input) {
   return {
     stage: {
       title: `${input.goalTitle} ${input.durationDays} 天行动计划`,
-      summary: `按每周 ${input.weeklyDays} 天、每天约 ${minutes} 分钟推进，先从容易开始的小行动建立节奏。`,
+      summary: input.durationDays <= 7
+        ? `每天约 ${minutes} 分钟推进，先从容易开始的小行动建立节奏。`
+        : `按每周 ${input.weeklyDays} 天、每天约 ${minutes} 分钟推进，先从容易开始的小行动建立节奏。`,
       focus: input.desiredResult.slice(0, 50),
       durationDays: input.durationDays,
     },

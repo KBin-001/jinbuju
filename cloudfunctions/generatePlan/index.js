@@ -6,7 +6,7 @@ const { generateText } = require("./ai");
 const { submitCheckin, getCheckinStatus } = require("./checkin");
 const { formatBusinessDate } = require("./date");
 const { buildFallbackPlan } = require("./fallback");
-const { getHomeData, toggleTask } = require("./home");
+const { createManualTask, getHomeData, toggleTask } = require("./home");
 const { buildPrompt, buildRepairPrompt } = require("./prompt");
 const {
   adoptPlan,
@@ -74,6 +74,7 @@ function failure(error) {
     "TASK_NOT_ELIGIBLE",
     "TASK_ALREADY_POSTPONED",
     "PLAN_DATE_EXCEEDED",
+    "TASK_ALREADY_EXISTS",
     "STAGE_NOT_FOUND",
     "TEAM_NOT_FOUND",
     "NOT_TEAM_MEMBER",
@@ -114,6 +115,7 @@ function failure(error) {
     GOAL_NOT_FOUND: "当前目标不存在，请重新进入小程序。",
     PLAN_NOT_FOUND: "当前计划不存在，请重新进入小程序。",
     TASK_NOT_FOUND: "今日暂无任务安排。",
+    TASK_ALREADY_EXISTS: "任务已创建，请勿重复提交。",
     CHECKIN_ALREADY_EXISTS: "今天已经打过卡了，明天继续加油。",
     PLAN_PAUSED: error.message,
     PLAN_STATUS_INVALID: error.message,
@@ -319,6 +321,10 @@ async function handleToggleTask(event, openid) {
   return success(await toggleTask(openid, event));
 }
 
+async function handleCreateManualTask(event, openid) {
+  return success(await createManualTask(openid, event));
+}
+
 async function handleSubmitCheckin(event, openid) {
   return success(await submitCheckin(openid, event));
 }
@@ -364,6 +370,9 @@ exports.main = async (event) => {
     }
     if (event.action === "toggleTask") {
       return await handleToggleTask(event, context.OPENID);
+    }
+    if (event.action === "createManualTask") {
+      return await handleCreateManualTask(event, context.OPENID);
     }
     if (event.action === "getPlanPageData") {
       return success(await getPlanPageData(context.OPENID));

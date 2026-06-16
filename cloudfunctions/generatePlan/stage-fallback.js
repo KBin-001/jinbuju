@@ -48,11 +48,14 @@ function buildStageFallback(input) {
     },
     days: Array.from({ length: input.durationDays }, (_, index) => {
       const weekDay = (index % 7) + 1;
-      const activeDays = {
-        3: [1, 3, 5],
-        5: [1, 2, 3, 5, 6],
-        7: [1, 2, 3, 4, 5, 6, 7],
-      }[input.weeklyDays || 7];
+      const activeDays =
+        input.durationDays <= 7
+          ? [1, 2, 3, 4, 5, 6, 7]
+          : {
+              3: [1, 3, 5],
+              5: [1, 2, 3, 5, 6],
+              7: [1, 2, 3, 4, 5, 6, 7],
+            }[input.weeklyDays || 7];
       if (!activeDays.includes(weekDay)) {
         return {
           dayIndex: index + 1,

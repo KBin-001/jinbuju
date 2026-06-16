@@ -39,9 +39,13 @@ const LEVEL_OPTIONS = [
 const MINUTE_OPTIONS = [15, 30, 45, 60, 90];
 const WEEKLY_OPTIONS = [3, 5, 7];
 const DURATION_OPTIONS = [
-  { value: 7, label: "7 天体验" },
-  { value: 21, label: "21 天习惯" },
-  { value: 30, label: "30 天成长" },
+  { value: 1, label: "1 天" },
+  { value: 2, label: "2 天" },
+  { value: 3, label: "3 天" },
+  { value: 4, label: "4 天" },
+  { value: 5, label: "5 天" },
+  { value: 6, label: "6 天" },
+  { value: 7, label: "7 天" },
 ];
 const INTENSITY_OPTIONS = [
   { value: "light", label: "轻松", description: "使用约 75% 的可投入时间" },

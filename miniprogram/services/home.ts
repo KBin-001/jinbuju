@@ -94,6 +94,57 @@ interface ToggleTaskResult {
   status: string;
 }
 
+export interface CreateManualTaskParams {
+  requestId: string;
+  title: string;
+  description?: string;
+  taskDate?: string;
+  timePeriod: "morning" | "afternoon" | "evening" | "anytime";
+  estimatedMinutes: number;
+  tagName?: string;
+  planId?: string;
+  repeatType: "none" | "daily" | "weekly" | "custom";
+  priority: "normal" | "important";
+  taskType: "required" | "optional";
+}
+
+interface CreateManualTaskResult {
+  taskId: string;
+  created: boolean;
+}
+
+export function createManualTask(params: CreateManualTaskParams): Promise<CreateManualTaskResult> {
+  return callHomeFunction<CreateManualTaskResult>(
+    { action: "createManualTask", ...params },
+    8000,
+  )
+    .then((response) => {
+      const result = response.result;
+      if (!result || !result.success || !result.data) {
+        throw createServiceError(
+          result?.error?.code || "INTERNAL_ERROR",
+          result?.error?.message || "任务创建失败，请稍后重试。",
+        );
+      }
+      return result.data;
+    })
+    .catch((rawError: unknown) => {
+      if (rawError instanceof Error && (rawError as HomeServiceError).code) {
+        throw rawError;
+      }
+
+      const rawMessage = getRawErrorMessage(rawError);
+      if (
+        rawMessage.includes("TIMEOUT") ||
+        rawMessage.includes("time limit") ||
+        rawMessage.includes("超时")
+      ) {
+        throw createServiceError("REQUEST_TIMEOUT", "任务创建超时，请稍后重试。");
+      }
+      throw createServiceError("NETWORK_ERROR", "网络连接不稳定，任务暂时未创建。");
+    });
+}
+
 export function toggleTaskStatus(taskId: string, completed: boolean): Promise<ToggleTaskResult> {
   return callHomeFunction<ToggleTaskResult>(
     { action: "toggleTask", taskId, completed },

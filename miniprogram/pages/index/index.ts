@@ -1,5 +1,13 @@
-import { getHomeData, toggleTaskStatus } from "../../services/home";
-import { GoalSummary, HomeData, TodayCheckinDraft, TodayTask, UserProgress } from "../../types/home";
+import { createManualTask, getHomeData, toggleTaskStatus } from "../../services/home";
+import {
+  GoalSummary,
+  HomeData,
+  TaskSourceSummary,
+  TodayCheckinDraft,
+  TodayTask,
+  TodayTaskGroup,
+  UserProgress,
+} from "../../types/home";
 import { saveTodayCheckinDraft } from "../../utils/checkin-draft";
 
 type PageStatus = "loading" | "success" | "error";
@@ -7,13 +15,23 @@ type PageStatus = "loading" | "success" | "error";
 interface TaskToggleEvent {
   currentTarget: {
     dataset: {
-      id?: string;
+      id?: string | number;
     };
+  };
+}
+
+interface InputEvent {
+  detail: {
+    value?: string;
   };
 }
 
 interface TodayViewTask extends TodayTask {
   toggling: boolean;
+}
+
+interface TodayViewTaskGroup extends Omit<TodayTaskGroup, "tasks"> {
+  tasks: TodayViewTask[];
 }
 
 const EMPTY_USER: UserProgress = {
@@ -83,6 +101,27 @@ function getCheckinButtonText(
   return "记录今日行动";
 }
 
+function buildTaskGroups(tasks: TodayViewTask[]): TodayViewTaskGroup[] {
+  const labels: Record<TodayTask["timePeriod"], string> = {
+    morning: "上午",
+    afternoon: "下午",
+    evening: "晚上",
+    anytime: "随时",
+  };
+  const keys: TodayTask["timePeriod"][] = ["morning", "afternoon", "evening", "anytime"];
+  return keys
+    .map((key) => ({
+      key,
+      title: labels[key],
+      tasks: tasks.filter((task) => task.timePeriod === key),
+    }))
+    .filter((group) => group.tasks.length > 0);
+}
+
+function createRequestId(): string {
+  return `manual_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 Page({
   data: {
     status: "loading" as PageStatus,
@@ -94,6 +133,8 @@ Page({
     goal: null as GoalSummary | null,
     categoryLabel: "",
     tasks: [] as TodayViewTask[],
+    taskGroups: [] as TodayViewTaskGroup[],
+    sourceSummary: [] as TaskSourceSummary[],
     completedCount: 0,
     totalCount: 0,
     completionRate: 0,
@@ -105,6 +146,12 @@ Page({
     planReviewing: false,
     planReadOnly: false,
     navigating: false,
+    quickTitle: "",
+    quickTimePeriod: "anytime" as TodayTask["timePeriod"],
+    quickEstimatedMinutes: 30,
+    quickTagName: "",
+    showMoreSettings: false,
+    creatingTask: false,
   },
 
   onShow() {
@@ -149,6 +196,8 @@ Page({
       goal,
       categoryLabel: goal ? CATEGORY_LABELS[goal.category] || "成长目标" : "",
       tasks,
+      taskGroups: buildTaskGroups(tasks),
+      sourceSummary: homeData.sourceSummary || [],
       navigating: false,
       checkedInToday,
       todayRest: homeData.todayRest || false,
@@ -165,6 +214,7 @@ Page({
     const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
     this.setData({
       tasks,
+      taskGroups: buildTaskGroups(tasks),
       completedCount,
       totalCount,
       completionRate,
@@ -182,7 +232,12 @@ Page({
   toggleTask(event: TaskToggleEvent) {
     const taskId = String(event.currentTarget.dataset.id || "");
     const currentTask = this.data.tasks.find((task: TodayViewTask) => task.id === taskId);
-    if (!taskId || !currentTask || currentTask.toggling || this.data.planReadOnly) {
+    if (
+      !taskId ||
+      !currentTask ||
+      currentTask.toggling ||
+      (Boolean(currentTask.planId) && this.data.planReadOnly)
+    ) {
       return;
     }
 
@@ -213,6 +268,88 @@ Page({
         this.updateProgress(revertedTasks);
         wx.showToast({
           title: "行动状态未保存，请重试",
+          icon: "none",
+          duration: 2000,
+        });
+      });
+  },
+
+  onQuickTitleInput(event: InputEvent) {
+    this.setData({ quickTitle: String(event.detail.value || "") });
+  },
+
+  onQuickTagInput(event: InputEvent) {
+    this.setData({ quickTagName: String(event.detail.value || "") });
+  },
+
+  selectTimePeriod(event: TaskToggleEvent) {
+    const value = String(event.currentTarget.dataset.id || "");
+    if (!["morning", "afternoon", "evening", "anytime"].includes(value)) {
+      return;
+    }
+    this.setData({ quickTimePeriod: value as TodayTask["timePeriod"] });
+  },
+
+  selectDuration(event: TaskToggleEvent) {
+    const value = Number(event.currentTarget.dataset.id);
+    if (![15, 30, 45, 60].includes(value)) {
+      return;
+    }
+    this.setData({ quickEstimatedMinutes: value });
+  },
+
+  toggleMoreSettings() {
+    this.setData({ showMoreSettings: !this.data.showMoreSettings });
+  },
+
+  createTodayTask() {
+    const title = this.data.quickTitle.trim();
+    if (!title) {
+      wx.showToast({
+        title: "先写下今天要完成什么",
+        icon: "none",
+      });
+      return;
+    }
+    if (this.data.creatingTask) {
+      return;
+    }
+
+    this.setData({ creatingTask: true });
+    const finishCreating = () => {
+      this.setData({ creatingTask: false });
+    };
+
+    createManualTask({
+      requestId: createRequestId(),
+      title,
+      taskDate: this.data.businessDate,
+      timePeriod: this.data.quickTimePeriod,
+      estimatedMinutes: this.data.quickEstimatedMinutes,
+      tagName: this.data.quickTagName.trim(),
+      repeatType: "none",
+      priority: "normal",
+      taskType: "required",
+    })
+      .then(() => {
+        finishCreating();
+        this.setData({
+          quickTitle: "",
+          quickTagName: "",
+          quickTimePeriod: "anytime",
+          quickEstimatedMinutes: 30,
+          showMoreSettings: false,
+        });
+        wx.showToast({
+          title: "已添加到今日",
+          icon: "success",
+          duration: 1200,
+        });
+        this.loadToday();
+      }, (error: Error) => {
+        finishCreating();
+        wx.showToast({
+          title: error.message || "任务创建失败，请重试",
           icon: "none",
           duration: 2000,
         });

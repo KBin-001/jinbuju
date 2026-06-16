@@ -1,8 +1,29 @@
 const cloud = require("wx-server-sdk");
 const { businessDateDiff, formatBusinessDate } = require("./date");
+const { stableId } = require("./repository");
 
 const db = cloud.database();
 const command = db.command;
+
+const TIME_PERIODS = ["morning", "afternoon", "evening", "anytime"];
+const TIME_PERIOD_ORDER = {
+  morning: 1,
+  afternoon: 2,
+  evening: 3,
+  anytime: 4,
+};
+const SOURCE_LABELS = {
+  manual: "自定义任务",
+  ai: "AI 计划",
+  template: "计划任务",
+  carry_over: "顺延任务",
+};
+
+function createError(code, message) {
+  const error = new Error(message);
+  error.code = code;
+  return error;
+}
 
 function clampPercentage(value) {
   return Math.min(Math.max(Math.round(value), 0), 100);
@@ -24,8 +45,39 @@ function buildTask(task) {
     title: String(task.title || "今日任务"),
     description: String(task.description || task.dayTitle || ""),
     estimatedMinutes: Math.max(Number(task.estimatedMinutes) || 0, 0),
+    timePeriod: TIME_PERIODS.includes(task.timePeriod) ? task.timePeriod : "anytime",
+    source: task.source || "template",
+    sourceLabel: task.planTitle || SOURCE_LABELS[task.source] || SOURCE_LABELS.template,
+    planId: String(task.planId || ""),
+    planTitle: String(task.planTitle || ""),
     completed: task.status === "completed",
   };
+}
+
+function buildTaskGroups(tasks) {
+  const titles = {
+    morning: "上午",
+    afternoon: "下午",
+    evening: "晚上",
+    anytime: "随时",
+  };
+  return TIME_PERIODS.map((key) => ({
+    key,
+    title: titles[key],
+    tasks: tasks.filter((task) => task.timePeriod === key),
+  })).filter((group) => group.tasks.length > 0);
+}
+
+function buildSourceSummary(tasks) {
+  const summary = new Map();
+  tasks.forEach((task) => {
+    const key = task.planId || task.source;
+    const label = task.planTitle || task.sourceLabel;
+    const current = summary.get(key) || { key, label, count: 0 };
+    current.count += 1;
+    summary.set(key, current);
+  });
+  return Array.from(summary.values());
 }
 
 function calculateCurrentDay(startDate, businessDate, durationDays) {
@@ -48,16 +100,62 @@ async function getHomeData(openid) {
     ),
   };
 
+  const todayTaskRecords = await getMany("tasks", {
+    _openid: openid,
+    taskDate: businessDate,
+  });
+  const planIds = Array.from(new Set(todayTaskRecords.map((task) => task.planId).filter(Boolean)));
+  const planTitles = new Map();
+  if (planIds.length) {
+    const planRecords = await Promise.all(
+      planIds.map((planId) => db.collection("plans").doc(planId).get().catch(() => null)),
+    );
+    planRecords.forEach((record) => {
+      const planRecord = record && record.data;
+      if (planRecord && planRecord._openid === openid) {
+        planTitles.set(
+          planRecord._id,
+          String(planRecord.title || planRecord.stageTitle || planRecord.weeklyGoal || "计划任务"),
+        );
+      }
+    });
+  }
+
+  todayTaskRecords.forEach((task) => {
+    if (task.planId && planTitles.has(task.planId)) {
+      task.planTitle = planTitles.get(task.planId);
+    }
+  });
+  todayTaskRecords.sort((left, right) => {
+    const periodDiff =
+      (TIME_PERIOD_ORDER[left.timePeriod] || TIME_PERIOD_ORDER.anytime) -
+      (TIME_PERIOD_ORDER[right.timePeriod] || TIME_PERIOD_ORDER.anytime);
+    if (periodDiff !== 0) return periodDiff;
+    return Number(left.order || 0) - Number(right.order || 0);
+  });
+
+  const todayTasks = todayTaskRecords.map(buildTask);
+  const completedCount = todayTasks.filter((task) => task.completed).length;
+  const totalCount = todayTasks.length;
+  const completionRate =
+    totalCount > 0 ? clampPercentage((completedCount / totalCount) * 100) : 0;
+  const checkinRecords = await getMany("checkins", {
+    _openid: openid,
+    businessDate,
+  }, 1);
+
   if (!goal) {
     return {
       businessDate,
       user: userProgress,
       goal: null,
-      todayTasks: [],
-      completedCount: 0,
-      totalCount: 0,
-      completionRate: 0,
-      checkedInToday: false,
+      todayTasks,
+      taskGroups: buildTaskGroups(todayTasks),
+      sourceSummary: buildSourceSummary(todayTasks),
+      completedCount,
+      totalCount,
+      completionRate,
+      checkedInToday: checkinRecords.length > 0,
       todayRest: false,
     };
   }
@@ -87,39 +185,24 @@ async function getHomeData(openid) {
         planCompletionRate: 0,
         planStatus: "active",
       },
-      todayTasks: [],
-      completedCount: 0,
-      totalCount: 0,
-      completionRate: 0,
-      checkedInToday: false,
+      todayTasks,
+      taskGroups: buildTaskGroups(todayTasks),
+      sourceSummary: buildSourceSummary(todayTasks),
+      completedCount,
+      totalCount,
+      completionRate,
+      checkedInToday: checkinRecords.length > 0,
       todayRest: false,
     };
   }
 
-  const [todayTaskRecords, planTaskRecords, checkinRecords] = await Promise.all([
-    getMany("tasks", {
-      _openid: openid,
-      planId: plan._id,
-      taskDate: businessDate,
-    }),
+  const [planTaskRecords] = await Promise.all([
     getMany("tasks", {
       _openid: openid,
       planId: plan._id,
     }),
-    getMany("checkins", {
-      _openid: openid,
-      businessDate,
-    }, 1),
   ]);
-  todayTaskRecords.sort(
-    (left, right) => Number(left.order || 0) - Number(right.order || 0),
-  );
 
-  const todayTasks = todayTaskRecords.map(buildTask);
-  const completedCount = todayTasks.filter((task) => task.completed).length;
-  const totalCount = todayTasks.length;
-  const completionRate =
-    totalCount > 0 ? clampPercentage((completedCount / totalCount) * 100) : 0;
   const planCompleted = planTaskRecords.filter(
     (task) => task.status === "completed",
   ).length;
@@ -144,6 +227,8 @@ async function getHomeData(openid) {
       planStatus: plan.status,
     },
     todayTasks,
+    taskGroups: buildTaskGroups(todayTasks),
+    sourceSummary: buildSourceSummary(todayTasks),
     completedCount,
     totalCount,
     completionRate,
@@ -154,23 +239,17 @@ async function getHomeData(openid) {
 
 async function toggleTask(openid, event) {
   if (!event || typeof event !== "object") {
-    const error = new Error("任务信息不完整。");
-    error.code = "INVALID_ARGUMENT";
-    throw error;
+    throw createError("INVALID_ARGUMENT", "任务信息不完整。");
   }
 
   const { taskId, completed } = event;
 
   if (typeof taskId !== "string" || !taskId.trim()) {
-    const error = new Error("任务 ID 无效。");
-    error.code = "INVALID_ARGUMENT";
-    throw error;
+    throw createError("INVALID_ARGUMENT", "任务 ID 无效。");
   }
 
   if (typeof completed !== "boolean") {
-    const error = new Error("任务状态无效。");
-    error.code = "INVALID_ARGUMENT";
-    throw error;
+    throw createError("INVALID_ARGUMENT", "任务状态无效。");
   }
 
   const newStatus = completed ? "completed" : "pending";
@@ -178,34 +257,29 @@ async function toggleTask(openid, event) {
   // Verify the task belongs to the current user before updating.
   const task = await db.collection("tasks").doc(taskId).get().catch(() => null);
   if (!task || !task.data) {
-    const error = new Error("任务不存在。");
-    error.code = "TASK_NOT_FOUND";
-    throw error;
+    throw createError("TASK_NOT_FOUND", "任务不存在。");
   }
 
   if (task.data._openid !== openid) {
-    const error = new Error("无权操作此任务。");
-    error.code = "UNAUTHORIZED";
-    throw error;
+    throw createError("UNAUTHORIZED", "无权操作此任务。");
   }
 
-  const plan = await getFirst("plans", {
-    _openid: openid,
-    _id: task.data.planId,
-  });
-  if (!plan || plan.status !== "active") {
-    const error = new Error(
-      plan && plan.status === "paused"
-        ? "计划暂停期间不能修改任务。"
-        : "当前计划状态不支持修改任务。",
-    );
-    error.code = plan && plan.status === "paused" ? "PLAN_PAUSED" : "PLAN_STATUS_INVALID";
-    throw error;
+  if (task.data.planId) {
+    const plan = await getFirst("plans", {
+      _openid: openid,
+      _id: task.data.planId,
+    });
+    if (!plan || plan.status !== "active") {
+      throw createError(
+        plan && plan.status === "paused" ? "PLAN_PAUSED" : "PLAN_STATUS_INVALID",
+        plan && plan.status === "paused"
+          ? "计划暂停期间不能修改任务。"
+          : "当前计划状态不支持修改任务。",
+      );
+    }
   }
   if (task.data.taskDate !== formatBusinessDate()) {
-    const error = new Error("只能在今日页修改当天任务。");
-    error.code = "TASK_NOT_ELIGIBLE";
-    throw error;
+    throw createError("TASK_NOT_ELIGIBLE", "只能在今日页修改当天任务。");
   }
 
   await db.collection("tasks").doc(taskId).update({
@@ -219,7 +293,100 @@ async function toggleTask(openid, event) {
   return { taskId, completed, status: newStatus };
 }
 
+function normalizeManualTask(event) {
+  const title = String(event.title || "").trim();
+  if (!title) {
+    throw createError("INVALID_ARGUMENT", "请填写任务名称。");
+  }
+  if (title.length > 40) {
+    throw createError("INVALID_ARGUMENT", "任务名称请控制在 40 个字以内。");
+  }
+
+  const description = String(event.description || "").trim();
+  if (description.length > 120) {
+    throw createError("INVALID_ARGUMENT", "任务说明请控制在 120 个字以内。");
+  }
+
+  const requestId = String(event.requestId || "").trim();
+  if (!/^[A-Za-z0-9_-]{8,64}$/.test(requestId)) {
+    throw createError("INVALID_ARGUMENT", "任务请求无效，请重试。");
+  }
+
+  const taskDate = event.taskDate || formatBusinessDate();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(taskDate)) {
+    throw createError("INVALID_ARGUMENT", "任务日期无效。");
+  }
+
+  const timePeriod = TIME_PERIODS.includes(event.timePeriod) ? event.timePeriod : "anytime";
+  const estimatedMinutes = Math.round(Number(event.estimatedMinutes) || 30);
+  if (estimatedMinutes < 1 || estimatedMinutes > 480) {
+    throw createError("INVALID_ARGUMENT", "预计时长需在 1 到 480 分钟之间。");
+  }
+
+  const repeatType = ["none", "daily", "weekly", "custom"].includes(event.repeatType)
+    ? event.repeatType
+    : "none";
+  const priority = event.priority === "important" ? "important" : "normal";
+  const taskType = event.taskType === "optional" ? "optional" : "required";
+
+  return {
+    requestId,
+    title,
+    description,
+    taskDate,
+    timePeriod,
+    estimatedMinutes,
+    repeatType,
+    priority,
+    taskType,
+    tagName: String(event.tagName || "").trim().slice(0, 20),
+    planId: String(event.planId || "").trim(),
+  };
+}
+
+async function createManualTask(openid, event) {
+  const taskInput = normalizeManualTask(event);
+  const taskId = stableId("task_manual", `${openid}:${taskInput.requestId}`);
+  const existing = await db.collection("tasks").doc(taskId).get().catch(() => null);
+  if (existing && existing.data) {
+    return { taskId, created: false };
+  }
+
+  if (taskInput.planId) {
+    const plan = await getFirst("plans", { _openid: openid, _id: taskInput.planId });
+    if (!plan || plan.status !== "active") {
+      throw createError("PLAN_STATUS_INVALID", "所属计划暂时不可用。");
+    }
+  }
+
+  const now = db.serverDate();
+  await db.collection("tasks").doc(taskId).set({
+    data: {
+      _openid: openid,
+      title: taskInput.title,
+      description: taskInput.description,
+      taskDate: taskInput.taskDate,
+      timePeriod: taskInput.timePeriod,
+      estimatedMinutes: taskInput.estimatedMinutes,
+      tagName: taskInput.tagName,
+      tagId: null,
+      planId: taskInput.planId || null,
+      source: "manual",
+      taskType: taskInput.taskType,
+      priority: taskInput.priority,
+      repeatType: taskInput.repeatType,
+      status: "pending",
+      completedAt: null,
+      createdAt: now,
+      updatedAt: now,
+    },
+  });
+
+  return { taskId, created: true };
+}
+
 module.exports = {
+  createManualTask,
   getHomeData,
   toggleTask,
 };

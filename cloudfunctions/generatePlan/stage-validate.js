@@ -11,7 +11,7 @@ const GOAL_CATEGORIES = [
   "other",
 ];
 const TARGET_DURATIONS = ["1_month", "3_months", "6_months", "long_term"];
-const STAGE_DURATIONS = [7, 10, 14, 21, 30];
+const STAGE_DURATIONS = [1, 2, 3, 4, 5, 6, 7];
 const DIFFICULTIES = ["easy", "suitable", "hard"];
 const NEXT_PREFERENCES = ["lighter", "same", "stronger", "change_focus"];
 const VAGUE_ACTION =
@@ -140,7 +140,7 @@ function validateStageGenerationInput(input, allowNextStage = false) {
     fail("INVALID_ARGUMENT", "阶段编号无效。");
   }
   if (!STAGE_DURATIONS.includes(input.durationDays)) {
-    fail("INVALID_ARGUMENT", "阶段周期暂只支持 7、10 或 14 天。");
+    fail("INVALID_ARGUMENT", "阶段周期需为 1～7 天。");
   }
   const result = {
     goalTitle: input.goalTitle.trim(),
@@ -239,11 +239,14 @@ function validateStagePlan(input, generationInput) {
       fail("AI_RESPONSE_SCHEMA_INVALID", "每日主题无效。");
     }
     const weekDay = ((day.dayIndex - 1) % 7) + 1;
-    const activeDays = {
-      3: [1, 3, 5],
-      5: [1, 2, 3, 5, 6],
-      7: [1, 2, 3, 4, 5, 6, 7],
-    }[generationInput.weeklyDays || 7];
+    const activeDays =
+      generationInput.durationDays <= 7
+        ? [1, 2, 3, 4, 5, 6, 7]
+        : {
+            3: [1, 3, 5],
+            5: [1, 2, 3, 5, 6],
+            7: [1, 2, 3, 4, 5, 6, 7],
+          }[generationInput.weeklyDays || 7];
     const shouldRest = !activeDays.includes(weekDay);
     const minimumActions = generationInput.templateId ? 1 : 1;
     const maximumActions = generationInput.templateId ? 1 : 4;
