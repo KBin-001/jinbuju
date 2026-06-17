@@ -17,6 +17,7 @@ const REQUIRED_COLLECTIONS = [
   "stage_generation_requests",
   "stage_previews",
   "stage_reviews",
+  "goal_analysis_drafts",
 ];
 let collectionsReady = false;
 

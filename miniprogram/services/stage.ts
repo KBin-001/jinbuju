@@ -7,6 +7,9 @@ import {
   StageReviewInput,
   CreateStagePreviewInput,
   UpdateStagePreviewTaskInput,
+  AnalyzeGoalInput,
+  ClarificationAnswer,
+  GoalAnalysisResult,
 } from "../types/stage";
 
 interface CloudCallResponse<T> {
@@ -81,15 +84,42 @@ export function createStageRequestId(): string {
   return `stage_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function createStagePreview(
-  input: CreateStagePreviewInput,
+export function createAnalysisRequestId(): string {
+  return `analysis_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export function analyzeGoal(
+  input: AnalyzeGoalInput,
   requestId: string,
+): Promise<GoalAnalysisResult> {
+  return callStageFunction<GoalAnalysisResult>({
+    action: "analyzeGoal",
+    input,
+    requestId,
+  }, 35000);
+}
+
+export function submitGoalClarification(
+  analysisId: string,
+  answers: ClarificationAnswer[],
+): Promise<GoalAnalysisResult> {
+  return callStageFunction<GoalAnalysisResult>({
+    action: "submitGoalClarification",
+    analysisId,
+    answers,
+  }, 20000);
+}
+
+export function createStagePreview(
+  input: CreateStagePreviewInput | null,
+  requestId: string,
+  analysisId?: string,
 ): Promise<StageGenerationResult> {
   return callStageFunction<StageGenerationResult>({
     action: "createStagePreview",
-    input,
+    ...(analysisId ? { analysisId } : { input }),
     requestId,
-  }, 20000);
+  }, 60000);
 }
 
 export function optimizeStagePreview(

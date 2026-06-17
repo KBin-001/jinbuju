@@ -1,5 +1,13 @@
 import { checkActiveGoal } from "../../services/plan";
 import {
+  analyzeGoal,
+  createAnalysisRequestId,
+  submitGoalClarification,
+} from "../../services/stage";
+import {
+  ClarificationAnswer,
+  ClarificationQuestion,
+  GoalAnalysisResult,
   GoalIntensity,
   GoalLevel,
   GoalTemplateId,
@@ -8,7 +16,12 @@ import {
 } from "../../types/stage";
 import {
   clearStagePreviewCache,
+  clearGoalAnalysisCache,
+  getClarificationAnswers,
+  getGoalAnalysisCache,
   getLongTermGoalDraft,
+  saveClarificationAnswers,
+  saveGoalAnalysisCache,
   saveLongTermGoalDraft,
 } from "../../utils/storage";
 import { addDays, formatDate } from "../../utils/date";
@@ -17,6 +30,7 @@ interface DatasetEvent {
   currentTarget: {
     dataset: {
       value?: string | number;
+      questionId?: string;
     };
   };
 }
@@ -71,8 +85,12 @@ Page({
   data: {
     pageStatus: "loading" as "loading" | "form" | "error",
     pageError: "",
-    currentStep: 1,
+  currentStep: 1,
+    totalSteps: 3,
     submitting: false,
+    analyzing: false,
+    analysis: null as GoalAnalysisResult | null,
+    answers: {} as Record<string, ClarificationAnswer["value"]>,
     advancedOpen: false,
     draft: defaultDraft(),
     templateOptions: TEMPLATE_OPTIONS,
@@ -106,9 +124,13 @@ Page({
           });
           return;
         }
+        const analysis = getGoalAnalysisCache();
         this.setData({
           pageStatus: "form",
           draft: getLongTermGoalDraft() || defaultDraft(),
+          analysis,
+          answers: getClarificationAnswers(),
+          currentStep: analysis?.needsClarification ? 3 : 1,
         });
       })
       .catch((error: Error) => {
@@ -124,12 +146,19 @@ Page({
     this.initialize();
   },
 
+  resetAnalysisState() {
+    clearGoalAnalysisCache();
+    this.setData({ analysis: null, answers: {} });
+  },
+
   selectTemplate(event: DatasetEvent) {
     const templateId = String(event.currentTarget.dataset.value || "") as GoalTemplateId;
+    this.resetAnalysisState();
     this.setData({ draft: { ...this.data.draft, templateId } });
   },
 
   inputCustomGoal(event: { detail: { value?: string } }) {
+    this.resetAnalysisState();
     this.setData({
       draft: {
         ...this.data.draft,
@@ -139,6 +168,7 @@ Page({
   },
 
   selectLevel(event: DatasetEvent) {
+    this.resetAnalysisState();
     this.setData({
       draft: {
         ...this.data.draft,
@@ -148,6 +178,7 @@ Page({
   },
 
   selectMinutes(event: DatasetEvent) {
+    this.resetAnalysisState();
     this.setData({
       draft: {
         ...this.data.draft,
@@ -157,6 +188,7 @@ Page({
   },
 
   selectWeeklyDays(event: DatasetEvent) {
+    this.resetAnalysisState();
     this.setData({
       draft: {
         ...this.data.draft,
@@ -170,6 +202,7 @@ Page({
   },
 
   selectDuration(event: DatasetEvent) {
+    this.resetAnalysisState();
     const durationDays = Number(event.currentTarget.dataset.value) as PlanDurationDays;
     const minimumDeadline = formatDate(addDays(new Date(), durationDays - 1));
     const deadline =
@@ -183,6 +216,7 @@ Page({
   },
 
   selectIntensity(event: DatasetEvent) {
+    this.resetAnalysisState();
     this.setData({
       draft: {
         ...this.data.draft,
@@ -192,12 +226,14 @@ Page({
   },
 
   changeDeadline(event: { detail: { value?: string } }) {
+    this.resetAnalysisState();
     this.setData({
       draft: { ...this.data.draft, deadline: String(event.detail.value || "") },
     });
   },
 
   clearDeadline() {
+    this.resetAnalysisState();
     this.setData({ draft: { ...this.data.draft, deadline: "" } });
   },
 
@@ -206,7 +242,141 @@ Page({
       wx.navigateBack();
       return;
     }
-    this.setData({ currentStep: 1 });
+    this.setData({ currentStep: this.data.currentStep === 3 ? 2 : 1 });
+  },
+
+  buildAnalyzeInput() {
+    const template = TEMPLATE_OPTIONS.find((item) => item.value === this.data.draft.templateId);
+    return {
+      title:
+        this.data.draft.templateId === "custom"
+          ? this.data.draft.customGoalTitle!.trim()
+          : template?.label || "成长目标",
+      dailyMinutes: this.data.draft.dailyMinutes,
+      durationDays: this.data.draft.durationDays,
+      currentLevel: this.data.draft.currentLevel,
+      intensity: this.data.draft.intensity,
+      deadline: this.data.draft.deadline || undefined,
+    };
+  },
+
+  startAnalysis() {
+    if (this.data.submitting) return;
+    const draft = {
+      ...this.data.draft,
+      customGoalTitle: this.data.draft.customGoalTitle?.trim() || "",
+    };
+    saveLongTermGoalDraft(draft);
+    clearStagePreviewCache();
+    this.setData({ submitting: true, analyzing: true });
+    analyzeGoal(this.buildAnalyzeInput(), createAnalysisRequestId())
+      .then((analysis) => {
+        if (analysis.status === "analyzing") {
+          wx.showToast({ title: "正在理解你的目标，请稍后重试", icon: "none" });
+          this.setData({ submitting: false, analyzing: false });
+          return;
+        }
+        saveGoalAnalysisCache(analysis);
+        this.setData({ analysis, answers: {}, analyzing: false });
+        if (analysis.needsClarification) {
+          this.setData({ currentStep: 3, submitting: false });
+          return;
+        }
+        this.goToPreview();
+      })
+      .catch((error: Error) => {
+        this.setData({ submitting: false, analyzing: false });
+        wx.showModal({
+          title: "目标分析失败",
+          content: error.message || "请稍后重试。",
+          showCancel: false,
+        });
+      });
+  },
+
+  goToPreview() {
+    wx.navigateTo({
+      url: "/pages/plan-preview/index?create=1",
+      complete: () => this.setData({ submitting: false }),
+    });
+  },
+
+  setAnswer(questionId: string, value: ClarificationAnswer["value"]) {
+    const answers = { ...this.data.answers, [questionId]: value };
+    saveClarificationAnswers(answers);
+    this.setData({ answers });
+  },
+
+  selectAnswer(event: DatasetEvent) {
+    const questionId = String(event.currentTarget.dataset.questionId || "");
+    const rawValue = event.currentTarget.dataset.value;
+    const value =
+      rawValue === "true" ? true : rawValue === "false" ? false : String(rawValue || "");
+    this.setAnswer(questionId, value);
+  },
+
+  toggleMultiAnswer(event: DatasetEvent) {
+    const questionId = String(event.currentTarget.dataset.questionId || "");
+    const value = String(event.currentTarget.dataset.value || "");
+    const current = Array.isArray(this.data.answers[questionId])
+      ? this.data.answers[questionId] as string[]
+      : [];
+    this.setAnswer(
+      questionId,
+      current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value],
+    );
+  },
+
+  inputAnswer(event: { currentTarget: { dataset: { questionId?: string } }; detail: { value?: string } }) {
+    const questionId = String(event.currentTarget.dataset.questionId || "");
+    this.setAnswer(questionId, String(event.detail.value || ""));
+  },
+
+  inputNumberAnswer(event: { currentTarget: { dataset: { questionId?: string } }; detail: { value?: string } }) {
+    const questionId = String(event.currentTarget.dataset.questionId || "");
+    this.setAnswer(questionId, Number(event.detail.value || 0));
+  },
+
+  validateClarification(): ClarificationAnswer[] | null {
+    const analysis = this.data.analysis;
+    if (!analysis) return null;
+    const answers: ClarificationAnswer[] = [];
+    for (const question of analysis.questions as ClarificationQuestion[]) {
+      const value = this.data.answers[question.id];
+      const empty =
+        value === undefined ||
+        value === "" ||
+        (Array.isArray(value) && value.length === 0);
+      if (question.required && empty) {
+        wx.showToast({ title: "请先回答必填问题", icon: "none" });
+        return null;
+      }
+      if (!empty) answers.push({ questionId: question.id, value });
+    }
+    return answers;
+  },
+
+  submitClarification() {
+    const analysis = this.data.analysis;
+    const answers = this.validateClarification();
+    if (!analysis || !answers || this.data.submitting) return;
+    this.setData({ submitting: true });
+    submitGoalClarification(analysis.analysisId, answers)
+      .then((result) => {
+        saveGoalAnalysisCache(result);
+        this.setData({ analysis: result });
+        this.goToPreview();
+      })
+      .catch((error: Error) => {
+        this.setData({ submitting: false });
+        wx.showModal({
+          title: "补充信息提交失败",
+          content: error.message || "请稍后重试。",
+          showCancel: false,
+        });
+      });
   },
 
   nextStep() {
@@ -221,17 +391,10 @@ Page({
       this.setData({ currentStep: 2 });
       return;
     }
-    if (this.data.submitting) return;
-    const draft = {
-      ...this.data.draft,
-      customGoalTitle: this.data.draft.customGoalTitle?.trim() || "",
-    };
-    saveLongTermGoalDraft(draft);
-    clearStagePreviewCache();
-    this.setData({ submitting: true });
-    wx.navigateTo({
-      url: "/pages/plan-preview/index?create=1",
-      complete: () => this.setData({ submitting: false }),
-    });
+    if (this.data.currentStep === 2) {
+      this.startAnalysis();
+      return;
+    }
+    this.submitClarification();
   },
 });

@@ -11,7 +11,15 @@ const {
 const { buildBadges, isCommunityUnlocked } = require("./profile-rules");
 const { buildStageFallback } = require("./stage-fallback");
 const {
+  fallbackAnalysis,
+  buildGoalProfile: buildClarifiedGoalProfile,
+  validateAnswers,
+  validateGoalAnalysisResult,
+} = require("./goal-analysis");
+const {
+  evaluateStagePlanQuality,
   parseStageAiJson,
+  validateGeneratedStagePlan,
   validateStageGenerationInput,
   validateStagePlan,
   validateStageRequestId,
@@ -19,6 +27,7 @@ const {
 const {
   GOAL_TEMPLATES,
   buildBaseStagePlan,
+  buildGoalProfile,
   isExecutionDay,
   mergeOptimizationPlan,
   validateCreateStagePreviewInput,
@@ -362,6 +371,183 @@ assert.strictEqual(
   validateStageRequestId("stage_12345678_test"),
   "stage_12345678_test",
 );
+
+const combatAnalysis = fallbackAnalysis({
+  title: "练出搏击",
+  description: "",
+  dailyMinutes: 30,
+  durationDays: 7,
+  currentLevel: "",
+  intensity: "normal",
+  deadline: "",
+});
+assert.strictEqual(combatAnalysis.needsClarification, true);
+assert.ok(combatAnalysis.questions.length >= 3 && combatAnalysis.questions.length <= 5);
+assert.ok(combatAnalysis.questions.some((question) => /什么结果/.test(question.question)));
+assert.ok(combatAnalysis.questions.some((question) => /训练经验|水平/.test(question.question)));
+assert.ok(combatAnalysis.questions.some((question) => /正规场馆|教练/.test(question.question)));
+assert.strictEqual(combatAnalysis.safetyContext.requiresProfessionalGuidance, true);
+assert.ok(!combatAnalysis.questions.some((question) => /攻击|打败|伤害/.test(question.question)));
+
+const analysisCandidate = validateGoalAnalysisResult(
+  {
+    normalizedGoal: "每天睡前阅读20分钟，坚持30天",
+    categoryGroup: "habit",
+    domainLabel: "阅读习惯",
+    goalType: "habit",
+    ambiguityScore: 0.1,
+    confidenceScore: 0.9,
+    needsClarification: false,
+    missingDimensions: [],
+    questions: [],
+    safetyContext: {
+      riskLevel: "low",
+      requiresProfessionalGuidance: false,
+      boundaries: [],
+    },
+  },
+  {
+    title: "每天睡前阅读20分钟，坚持30天",
+    description: "主要想培养稳定阅读习惯",
+    dailyMinutes: 20,
+    durationDays: 7,
+  },
+);
+assert.strictEqual(analysisCandidate.needsClarification, false);
+assert.strictEqual(analysisCandidate.questions.length, 0);
+
+const combatAnswers = validateAnswers(combatAnalysis.questions, [
+  { questionId: "q_desired_outcome", value: "提升体能和协调性" },
+  { questionId: "q_current_level", value: "零基础" },
+  { questionId: "q_weekly_frequency", value: 3 },
+  { questionId: "q_resources", value: true },
+]);
+const combatProfile = buildClarifiedGoalProfile(
+  {
+    title: "练出搏击",
+    description: "",
+    dailyMinutes: 30,
+    durationDays: 7,
+    currentLevel: "",
+    intensity: "normal",
+    deadline: "",
+  },
+  combatAnalysis,
+  combatAnswers,
+);
+assert.match(combatProfile.title, /正规指导|搏击/);
+assert.strictEqual(combatProfile.categoryGroup, "health");
+assert.strictEqual(combatProfile.weeklyFrequency, 3);
+assert.strictEqual(combatProfile.safetyContext.requiresProfessionalGuidance, true);
+assert.throws(
+  () => validateAnswers(combatAnalysis.questions, [
+    { questionId: "q_desired_outcome", value: "无效选项" },
+  ]),
+  /有效选项|必填/,
+);
+
+function buildGeneratedCandidate(profile) {
+  return {
+    stage: {
+      title: `${profile.title.slice(0, 18)}起步阶段`,
+      objective: profile.desiredOutcome,
+      focus: "完成可验证的低压力起步行动",
+      durationDays: profile.durationDays,
+      successMetrics: ["完成每日行动并留下可检查结果"],
+      assumptions: ["用户每天按设置时间投入"],
+    },
+    days: Array.from({ length: profile.durationDays }, (_, index) => ({
+      dayIndex: index + 1,
+      theme: `第${index + 1}天推进`,
+      isRestDay: false,
+      actions: [
+        {
+          title: `完成第${index + 1}个实践行动`,
+          actionType: profile.categoryGroup === "health" ? "preparation" : "practice",
+          description:
+            profile.categoryGroup === "health"
+              ? "完成安全筛选、基础体能或正规指导相关准备，避免自行高风险训练。"
+              : "完成一个能看见结果的小步骤，并保存当天产出。",
+          completionCriteria:
+            profile.categoryGroup === "health"
+              ? "写下完成内容、身体反馈和下一步正规指导安排。"
+              : "留下作品、练习结果、清单或复盘记录。",
+          estimatedMinutes: Math.min(30, profile.dailyMinutes),
+          requiredResources:
+            profile.categoryGroup === "health" ? ["正规场馆信息", "舒适运动装备"] : ["纸笔或手机"],
+          safetyNotes:
+            profile.categoryGroup === "health"
+              ? ["涉及专业训练应在正规场馆和合格教练指导下进行"]
+              : [],
+        },
+      ],
+    })),
+  };
+}
+
+const directGoalTitles = [
+  "通过英语四级",
+  "零基础学习摄影",
+  "完成个人博客",
+  "准备第一次求职",
+  "建立阅读习惯",
+  "学习家庭烹饪基础",
+  "改善作息",
+  "在正规指导下学习搏击运动基础",
+  "制作一个微信小程序",
+  "学习 Android 驱动开发",
+];
+for (const title of directGoalTitles) {
+  const input = validateCreateStagePreviewInput({
+    templateId: "custom",
+    customGoalTitle: title,
+    currentLevel: "zero",
+    dailyMinutes: 45,
+    weeklyDays: 5,
+    intensity: "normal",
+    durationDays: 7,
+  });
+  const profile = buildGoalProfile(input);
+  const plan = validateGeneratedStagePlan(buildGeneratedCandidate(profile), profile);
+  const quality = evaluateStagePlanQuality(plan, profile);
+  assert.strictEqual(plan.days.length, 7);
+  assert.strictEqual(quality.shouldRepair, false, `${title}: ${quality.problems.join(",")}`);
+  assert.ok(plan.days.every((day) => day.totalMinutes <= Math.ceil(profile.dailyMinutes * 1.2)));
+  assert.ok(plan.days.every((day) => day.actions[0].completionCriteria));
+}
+
+const boxingInput = validateCreateStagePreviewInput({
+  templateId: "custom",
+  customGoalTitle: "在正规指导下学习搏击运动基础",
+  currentLevel: "zero",
+  dailyMinutes: 45,
+  weeklyDays: 5,
+  intensity: "normal",
+  durationDays: 7,
+});
+const boxingProfile = buildGoalProfile(boxingInput);
+const boxingPlan = validateGeneratedStagePlan(buildGeneratedCandidate(boxingProfile), boxingProfile);
+const boxingQuality = evaluateStagePlanQuality(boxingPlan, boxingProfile);
+assert.strictEqual(boxingQuality.shouldRepair, false);
+assert.ok(
+  boxingPlan.days.some((day) =>
+    day.actions.some((action) => /正规|教练|场馆/.test(action.description + action.safetyNotes.join(""))),
+  ),
+);
+
+const passivePlan = buildGeneratedCandidate(boxingProfile);
+passivePlan.days.forEach((day, index) => {
+  day.actions[0].title = `观看搏击资料${index + 1}`;
+  day.actions[0].actionType = "learning";
+  day.actions[0].description = "观看搏击视频并记录相关知识。";
+  day.actions[0].completionCriteria = "写下三条知识点。";
+  day.actions[0].safetyNotes = [];
+});
+const passiveQuality = evaluateStagePlanQuality(
+  validateGeneratedStagePlan(passivePlan, boxingProfile),
+  boxingProfile,
+);
+assert.strictEqual(passiveQuality.shouldRepair, true);
 
 const invalidExtraField = buildStageFallback(stageInput);
 invalidExtraField.stage.extra = "not allowed";

@@ -39,7 +39,16 @@ function withTimeout(promise, timeoutMilliseconds) {
   );
 }
 
-async function generateText(prompt, timeoutMilliseconds = 18000) {
+function buildGenerationMetadata(provider, modelName, startedAt, result) {
+  return {
+    providerGroup: provider,
+    modelId: modelName,
+    generationDurationMs: Date.now() - startedAt,
+    totalTokens: result && result.usage && result.usage.totalTokens,
+  };
+}
+
+async function generateTextWithMetadata(prompt, timeoutMilliseconds = 18000, logContext = {}) {
   if (process.env.CLOUDBASE_AI_ENABLED === "false") {
     const error = new Error("AI_DISABLED");
     error.code = "AI_DISABLED";
@@ -50,6 +59,7 @@ async function generateText(prompt, timeoutMilliseconds = 18000) {
   const provider = process.env.CLOUDBASE_AI_PROVIDER || "cloudbase";
   const modelName = process.env.CLOUDBASE_AI_MODEL || "hy3-preview";
   const model = ai.createModel(provider);
+  const startedAt = Date.now();
   const result = await withTimeout(
     model.generateText({
       model: modelName,
@@ -58,11 +68,35 @@ async function generateText(prompt, timeoutMilliseconds = 18000) {
     timeoutMilliseconds,
   );
   console.info("CloudBase AI generation completed", {
+    action: logContext.action,
     provider,
+    providerGroup: provider,
     model: modelName,
+    modelId: modelName,
+    promptVersion: logContext.promptVersion,
+    schemaVersion: logContext.schemaVersion,
+    promptLength: typeof prompt === "string" ? prompt.length : 0,
+    inputFieldNames: logContext.inputFieldNames,
+    durationDays: logContext.durationDays,
+    dailyMinutes: logContext.dailyMinutes,
+    generationDurationMs: Date.now() - startedAt,
+    parseSucceeded: logContext.parseSucceeded,
+    schemaSucceeded: logContext.schemaSucceeded,
+    qualityPassed: logContext.qualityPassed,
+    repairAttempted: logContext.repairAttempted,
+    generationSource: logContext.generationSource,
+    fallbackReason: logContext.fallbackReason,
     totalTokens: result.usage && result.usage.totalTokens,
   });
+  return {
+    text: result.text,
+    metadata: buildGenerationMetadata(provider, modelName, startedAt, result),
+  };
+}
+
+async function generateText(prompt, timeoutMilliseconds = 18000, logContext = {}) {
+  const result = await generateTextWithMetadata(prompt, timeoutMilliseconds, logContext);
   return result.text;
 }
 
-module.exports = { generateText };
+module.exports = { generateText, generateTextWithMetadata };

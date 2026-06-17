@@ -47,17 +47,22 @@ async function getPreviewRecord(openid, previewId) {
 }
 
 function publicPreview(preview) {
+  const generatedBy = ["ai", "ai_repaired", "template"].includes(preview.generatedBy)
+    ? preview.generatedBy
+    : "template";
   return {
     previewId: String(preview._id),
     requestId: String(preview.requestId),
     stageNumber: Number(preview.stageNumber),
-    generatedBy: preview.generatedBy === "template" ? "template" : "ai",
+    generatedBy,
+    generationSource: generatedBy,
     stagePlan: preview.stagePlan,
     reused: true,
     revision: Number(preview.revision || 1),
     editedSlotIds: Array.isArray(preview.editedSlotIds) ? preview.editedSlotIds : [],
     optimizationStatus: preview.optimizationStatus || "idle",
     optimizationAttempts: Number(preview.optimizationAttempts || 0),
+    fallbackReason: preview.fallbackReason || "",
   };
 }
 
@@ -246,6 +251,10 @@ async function confirmStagePlan(openid, event) {
             dayTitle: day.theme,
             title: action.title,
             description: action.description,
+            actionType: action.actionType || "",
+            completionCriteria: action.completionCriteria || "",
+            requiredResources: Array.isArray(action.requiredResources) ? action.requiredResources : [],
+            safetyNotes: Array.isArray(action.safetyNotes) ? action.safetyNotes : [],
             estimatedMinutes: action.estimatedMinutes,
             slotId: action.slotId || `slot_day_${day.dayIndex}_${index + 1}`,
             order: index + 1,

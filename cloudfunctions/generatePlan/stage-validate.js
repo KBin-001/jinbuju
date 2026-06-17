@@ -16,6 +16,19 @@ const DIFFICULTIES = ["easy", "suitable", "hard"];
 const NEXT_PREFERENCES = ["lighter", "same", "stronger", "change_focus"];
 const VAGUE_ACTION =
   /^(努力|努力学习|坚持|加油|继续努力|认真学习|保持坚持|提升自己|了解相关内容|学习一下)$/;
+const GENERATED_STAGE_SCHEMA_VERSION = "generated-stage-v1";
+const ACTION_TYPES = [
+  "practice",
+  "learning",
+  "preparation",
+  "reflection",
+  "recovery",
+  "creation",
+  "execution",
+];
+const PASSIVE_ACTION_WORDS = /了解|学习|观看|阅读|记录|整理笔记|查资料/;
+const PRACTICE_ACTION_WORDS = /练习|完成|制作|执行|尝试|参加|筛选|联系|搭建|写出|做出|拍摄|烹饪|调整|准备|复盘/;
+const DANGER_ACTION_WORDS = /伤害|击打要害|偷袭|无保护对练|实战攻击|致伤|制服他人|危险动作/;
 
 function fail(code, message) {
   const error = new Error(message);
@@ -38,6 +51,33 @@ function safeText(value, minimum, maximum) {
     value.trim().length <= maximum &&
     !DANGEROUS_CONTENT.test(value)
   );
+}
+
+function normalizeText(value, minimum, maximum, label) {
+  if (typeof value !== "string") fail("AI_RESPONSE_SCHEMA_INVALID", `${label}无效。`);
+  const text = value.trim().replace(/\s+/g, " ");
+  if (text.length < minimum) fail("AI_RESPONSE_SCHEMA_INVALID", `${label}不能为空。`);
+  if (DANGEROUS_CONTENT.test(text)) fail("AI_RESPONSE_SCHEMA_INVALID", `${label}包含不支持内容。`);
+  return text.slice(0, maximum);
+}
+
+function normalizeStringArray(value, maximumItems, maximumLength) {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) fail("AI_RESPONSE_SCHEMA_INVALID", "数组字段无效。");
+  const items = [];
+  for (const item of value) {
+    if (typeof item !== "string") fail("AI_RESPONSE_SCHEMA_INVALID", "数组字段只能包含文本。");
+    const text = item.trim().replace(/\s+/g, " ");
+    if (text && !DANGEROUS_CONTENT.test(text) && !items.includes(text)) {
+      items.push(text.slice(0, maximumLength));
+    }
+    if (items.length >= maximumItems) break;
+  }
+  return items;
+}
+
+function hasOnlyKeys(value, allowedKeys) {
+  return Object.keys(value).every((key) => allowedKeys.includes(key));
 }
 
 function validatePreviousReview(input) {
@@ -318,6 +358,196 @@ function validateStagePlan(input, generationInput) {
   };
 }
 
+function validateGeneratedStagePlan(input, goalProfile) {
+  if (!input || typeof input !== "object" || !hasOnlyKeys(input, ["stage", "days"])) {
+    fail("AI_RESPONSE_SCHEMA_INVALID", "阶段方案结构无效。");
+  }
+  if (!input.stage || typeof input.stage !== "object") {
+    fail("AI_RESPONSE_SCHEMA_INVALID", "阶段信息结构无效。");
+  }
+  if (
+    !hasOnlyKeys(input.stage, [
+      "title",
+      "objective",
+      "focus",
+      "durationDays",
+      "successMetrics",
+      "assumptions",
+    ])
+  ) {
+    fail("AI_RESPONSE_SCHEMA_INVALID", "阶段信息包含不支持字段。");
+  }
+  if (input.stage.durationDays !== goalProfile.durationDays) {
+    fail("AI_RESPONSE_SCHEMA_INVALID", "阶段周期与请求不一致。");
+  }
+  if (!Array.isArray(input.days) || input.days.length !== goalProfile.durationDays) {
+    fail("AI_RESPONSE_SCHEMA_INVALID", "每日行动数量与阶段周期不一致。");
+  }
+
+  const titleCounts = new Map();
+  const days = input.days.map((day, index) => {
+    if (
+      !day ||
+      typeof day !== "object" ||
+      !hasOnlyKeys(day, ["dayIndex", "theme", "isRestDay", "actions"])
+    ) {
+      fail("AI_RESPONSE_SCHEMA_INVALID", "每日行动结构无效。");
+    }
+    if (day.dayIndex !== index + 1) {
+      fail("AI_RESPONSE_SCHEMA_INVALID", "日期序号必须从 1 连续递增。");
+    }
+    const isRestDay = day.isRestDay === true;
+    if (!Array.isArray(day.actions)) {
+      fail("AI_RESPONSE_SCHEMA_INVALID", "每日行动列表无效。");
+    }
+    if (isRestDay && day.actions.length !== 0) {
+      fail("AI_RESPONSE_SCHEMA_INVALID", "休息日不能包含行动。");
+    }
+    if (!isRestDay && (day.actions.length < 1 || day.actions.length > 4)) {
+      fail("AI_RESPONSE_SCHEMA_INVALID", "普通日需包含 1～4 个行动。");
+    }
+
+    let totalMinutes = 0;
+    const actions = day.actions.map((action, actionIndex) => {
+      if (
+        !action ||
+        typeof action !== "object" ||
+        !hasOnlyKeys(action, [
+          "title",
+          "actionType",
+          "description",
+          "completionCriteria",
+          "estimatedMinutes",
+          "requiredResources",
+          "safetyNotes",
+        ])
+      ) {
+        fail("AI_RESPONSE_SCHEMA_INVALID", "行动结构无效。");
+      }
+      const estimatedMinutes = Math.round(Number(action.estimatedMinutes));
+      if (
+        !Number.isInteger(estimatedMinutes) ||
+        estimatedMinutes < 5 ||
+        estimatedMinutes > 180
+      ) {
+        fail("AI_RESPONSE_SCHEMA_INVALID", "行动时长无效。");
+      }
+      const title = normalizeText(action.title, 2, 50, "行动标题");
+      const normalizedTitle = title.replace(/\s+/g, "");
+      titleCounts.set(normalizedTitle, (titleCounts.get(normalizedTitle) || 0) + 1);
+      totalMinutes += estimatedMinutes;
+      return {
+        slotId: `slot_day_${day.dayIndex}_${actionIndex + 1}`,
+        title,
+        actionType: ACTION_TYPES.includes(action.actionType) ? action.actionType : "practice",
+        description: normalizeText(action.description, 5, 200, "执行说明"),
+        completionCriteria: normalizeText(action.completionCriteria, 3, 150, "完成标准"),
+        estimatedMinutes,
+        requiredResources: normalizeStringArray(action.requiredResources, 5, 40),
+        safetyNotes: normalizeStringArray(action.safetyNotes, 5, 80),
+      };
+    });
+    if (totalMinutes > Math.ceil(goalProfile.dailyMinutes * 1.2)) {
+      fail("AI_RESPONSE_SCHEMA_INVALID", "每日行动总时长超出设置。");
+    }
+    return {
+      dayIndex: day.dayIndex,
+      theme: normalizeText(day.theme, 2, 40, "每日主题"),
+      isRestDay,
+      totalMinutes,
+      actions,
+    };
+  });
+
+  const repeatedTitles = Array.from(titleCounts.values()).filter((count) => count > 1).length;
+  if (repeatedTitles > 1) {
+    fail("AI_RESPONSE_SCHEMA_INVALID", "阶段中存在大量重复行动。");
+  }
+
+  const stage = {
+    title: normalizeText(input.stage.title, 2, 40, "阶段标题"),
+    objective: normalizeText(input.stage.objective, 5, 200, "阶段目标"),
+    focus: normalizeText(input.stage.focus, 2, 80, "阶段重点"),
+    durationDays: input.stage.durationDays,
+    successMetrics: normalizeStringArray(input.stage.successMetrics, 5, 80),
+    assumptions: normalizeStringArray(input.stage.assumptions, 5, 80),
+  };
+  return {
+    stage: {
+      title: stage.title,
+      summary: stage.objective,
+      objective: stage.objective,
+      focus: stage.focus,
+      durationDays: stage.durationDays,
+      successMetrics: stage.successMetrics,
+      assumptions: stage.assumptions,
+    },
+    days,
+  };
+}
+
+function evaluateStagePlanQuality(plan, goalProfile) {
+  const problems = [];
+  const actions = plan.days.flatMap((day) => day.actions);
+  const passiveCount = actions.filter((action) =>
+    PASSIVE_ACTION_WORDS.test(`${action.title}${action.description}`),
+  ).length;
+  const practiceCount = actions.filter((action) =>
+    PRACTICE_ACTION_WORDS.test(`${action.title}${action.description}${action.completionCriteria}`),
+  ).length;
+  const uniqueTitles = new Set(actions.map((action) => action.title.replace(/\s+/g, ""))).size;
+  const dangerCount = actions.filter((action) =>
+    DANGER_ACTION_WORDS.test(`${action.title}${action.description}${action.safetyNotes.join("")}`),
+  ).length;
+  const overBudgetDays = plan.days.filter(
+    (day) => day.totalMinutes > Math.ceil(goalProfile.dailyMinutes * 1.2),
+  ).length;
+  const practicalGoal = ["skill", "project", "outcome"].includes(goalProfile.goalType) ||
+    ["health", "creative", "project", "life"].includes(goalProfile.categoryGroup);
+
+  if (actions.length === 0) problems.push("阶段缺少可执行行动。");
+  if (passiveCount >= Math.ceil(actions.length * 0.65)) {
+    problems.push("行动过于笔记化，实践行动不足。");
+  }
+  if (practicalGoal && practiceCount < Math.ceil(actions.length * 0.4)) {
+    problems.push("实践型目标缺少实践或执行类行动。");
+  }
+  if (uniqueTitles < Math.ceil(actions.length * 0.75)) {
+    problems.push("多天行动高度重复。");
+  }
+  if (overBudgetDays > 0) problems.push("存在每日时间明显超标。");
+  if (dangerCount > 0) problems.push("存在不安全行为或危险指导。");
+  if (
+    /搏击|格斗|拳击|散打|武术|防身/.test(goalProfile.title) &&
+    !actions.some((action) => /正规|教练|场馆|安全/.test(`${action.description}${action.safetyNotes.join("")}`))
+  ) {
+    problems.push("搏击类目标缺少正规指导和安全提醒。");
+  }
+  if (!plan.stage.successMetrics || plan.stage.successMetrics.length === 0) {
+    problems.push("阶段缺少成功指标。");
+  }
+
+  const specificityScore = Math.max(0, 100 - passiveCount * 15 - problems.length * 5);
+  const feasibilityScore = Math.max(0, 100 - overBudgetDays * 30);
+  const diversityScore = actions.length ? Math.round((uniqueTitles / actions.length) * 100) : 0;
+  const progressionScore = plan.days.length > 1 && uniqueTitles > 1 ? 80 : 50;
+  const safetyScore = dangerCount > 0 ? 20 : 100;
+  return {
+    specificityScore,
+    feasibilityScore,
+    diversityScore,
+    progressionScore,
+    safetyScore,
+    problems,
+    shouldRepair:
+      problems.length > 0 ||
+      specificityScore < 65 ||
+      feasibilityScore < 80 ||
+      diversityScore < 70 ||
+      safetyScore < 80,
+  };
+}
+
 function validateStageRequestId(value) {
   if (typeof value !== "string" || !/^stage_[a-zA-Z0-9_]{8,80}$/.test(value)) {
     fail("INVALID_ARGUMENT", "阶段生成请求标识无效。");
@@ -337,7 +567,10 @@ module.exports = {
   STAGE_DURATIONS,
   TARGET_DURATIONS,
   fingerprintStageInput,
+  GENERATED_STAGE_SCHEMA_VERSION,
   parseStageAiJson,
+  evaluateStagePlanQuality,
+  validateGeneratedStagePlan,
   validateStageGenerationInput,
   validateStagePlan,
   validateStageRequestId,

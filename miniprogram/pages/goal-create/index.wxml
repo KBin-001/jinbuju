@@ -3,12 +3,12 @@
     <button class="back-button" disabled="{{submitting}}" bindtap="previousStep">‹</button>
     <view class="header-center">
       <view class="header-title">创建行动计划</view>
-      <view class="step-text">{{currentStep}} / 2</view>
+      <view class="step-text">{{currentStep}} / {{totalSteps}}</view>
     </view>
     <view class="header-placeholder"></view>
   </view>
   <view class="progress-track">
-    <view class="progress-value" style="width: {{pageStatus === 'form' ? currentStep * 50 : 0}}%;"></view>
+    <view class="progress-value" style="width: {{pageStatus === 'form' ? currentStep * 33.34 : 0}}%;"></view>
   </view>
 
   <view wx:if="{{pageStatus === 'loading'}}" class="goal-state">
@@ -49,7 +49,7 @@
       </view>
     </view>
 
-    <view wx:else class="step-section">
+    <view wx:elif="{{currentStep === 2}}" class="step-section">
       <view class="step-title">选择一个能坚持的节奏</view>
       <view class="step-subtitle">默认设置已经适合多数人，确认后会立即看到基础计划。</view>
 
@@ -125,6 +125,90 @@
       </view>
       <view class="scroll-spacer"></view>
     </view>
+
+    <view wx:else class="step-section">
+      <view class="step-title">让行动方案更适合你</view>
+      <view class="step-subtitle">再确认几个关键问题，AI 会根据你的实际情况制定方案。</view>
+      <view wx:if="{{analysis}}" class="analysis-card">
+        <view class="field-label">规范后的目标</view>
+        <view class="analysis-goal">{{analysis.normalizedGoal}}</view>
+        <view wx:if="{{analysis.analysisSource === 'fallback'}}" class="fallback-copy">
+          目标分析暂时不可用，先用基础问题帮你补齐关键信息。
+        </view>
+      </view>
+
+      <view
+        wx:for="{{analysis.questions}}"
+        wx:key="id"
+        wx:for-item="question"
+        class="question-card"
+      >
+        <view class="question-title">
+          <text>{{index + 1}}. {{question.question}}</text>
+          <text wx:if="{{question.required}}" class="required-mark">必填</text>
+        </view>
+
+        <view wx:if="{{question.type === 'single_choice'}}" class="answer-options">
+          <button
+            wx:for="{{question.options}}"
+            wx:key="*this"
+            wx:for-item="option"
+            class="answer-chip {{answers[question.id] === option ? 'choice-chip-active' : ''}}"
+            data-question-id="{{question.id}}"
+            data-value="{{option}}"
+            bindtap="selectAnswer"
+          >{{option}}</button>
+        </view>
+
+        <view wx:elif="{{question.type === 'multiple_choice'}}" class="answer-options">
+          <button
+            wx:for="{{question.options}}"
+            wx:key="*this"
+            wx:for-item="option"
+            class="answer-chip"
+            data-question-id="{{question.id}}"
+            data-value="{{option}}"
+            bindtap="toggleMultiAnswer"
+          >{{option}}</button>
+        </view>
+
+        <view wx:elif="{{question.type === 'boolean'}}" class="answer-options">
+          <button
+            class="answer-chip {{answers[question.id] === true ? 'choice-chip-active' : ''}}"
+            data-question-id="{{question.id}}"
+            data-value="true"
+            bindtap="selectAnswer"
+          >可以</button>
+          <button
+            class="answer-chip {{answers[question.id] === false ? 'choice-chip-active' : ''}}"
+            data-question-id="{{question.id}}"
+            data-value="false"
+            bindtap="selectAnswer"
+          >暂时不行</button>
+        </view>
+
+        <input
+          wx:elif="{{question.type === 'number'}}"
+          class="answer-input"
+          type="number"
+          value="{{answers[question.id]}}"
+          placeholder="{{question.min}}～{{question.max}}"
+          data-question-id="{{question.id}}"
+          bindinput="inputNumberAnswer"
+        />
+
+        <textarea
+          wx:else
+          class="answer-textarea"
+          maxlength="{{question.maxLength || 100}}"
+          value="{{answers[question.id]}}"
+          placeholder="{{question.placeholder || '简单说明即可'}}"
+          data-question-id="{{question.id}}"
+          bindinput="inputAnswer"
+        />
+      </view>
+      <view class="scroll-spacer"></view>
+    </view>
   </scroll-view>
 
   <view wx:if="{{pageStatus === 'form'}}" class="bottom-actions">
@@ -132,7 +216,7 @@
       {{currentStep === 1 ? '返回' : '上一步'}}
     </button>
     <button class="next-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="nextStep">
-      {{currentStep === 1 ? '下一步' : '立即生成基础计划'}}
+      {{currentStep === 1 ? '下一步' : (currentStep === 2 ? (analyzing ? '正在理解你的目标' : '分析目标') : '确认并生成方案')}}
     </button>
   </view>
 </view>

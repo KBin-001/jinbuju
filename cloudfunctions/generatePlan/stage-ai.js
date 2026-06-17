@@ -1,8 +1,12 @@
-const { generateText } = require("./ai");
+const { generateText, generateTextWithMetadata } = require("./ai");
 
 class CloudBaseStagePlanProvider {
   generateStagePlan(prompt, timeoutMilliseconds) {
     return generateText(prompt, timeoutMilliseconds);
+  }
+
+  generateStagePlanWithMetadata(prompt, timeoutMilliseconds, logContext) {
+    return generateTextWithMetadata(prompt, timeoutMilliseconds, logContext);
   }
 }
 

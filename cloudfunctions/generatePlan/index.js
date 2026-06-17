@@ -48,6 +48,10 @@ const {
   submitStageReview,
 } = require("./stage-management");
 const {
+  analyzeGoal,
+  submitGoalClarification,
+} = require("./goal-analysis");
+const {
   applyStageOptimization,
   createStagePreview,
   optimizeStagePreview,
@@ -104,6 +108,8 @@ function failure(error) {
     "STAGE_OPTIMIZATION_LIMIT_REACHED",
     "STAGE_OPTIMIZATION_NOT_READY",
     "STAGE_PREVIEW_CONFLICT",
+    "GOAL_ANALYSIS_NOT_FOUND",
+    "GOAL_ANALYSIS_EXPIRED",
   ];
   const code = allowedCodes.includes(error.code) ? error.code : "INTERNAL_ERROR";
   const messages = {
@@ -151,6 +157,8 @@ function failure(error) {
     STAGE_OPTIMIZATION_LIMIT_REACHED: error.message,
     STAGE_OPTIMIZATION_NOT_READY: error.message,
     STAGE_PREVIEW_CONFLICT: error.message,
+    GOAL_ANALYSIS_NOT_FOUND: error.message,
+    GOAL_ANALYSIS_EXPIRED: error.message,
     INTERNAL_ERROR: "服务暂时不可用，请稍后重试。",
   };
   return {
@@ -415,6 +423,12 @@ exports.main = async (event) => {
     }
     if (event.action === "generateStagePlan") {
       return success(await generateStagePlan(context.OPENID, event));
+    }
+    if (event.action === "analyzeGoal") {
+      return success(await analyzeGoal(context.OPENID, event));
+    }
+    if (event.action === "submitGoalClarification") {
+      return success(await submitGoalClarification(context.OPENID, event));
     }
     if (event.action === "createStagePreview") {
       return success(await createStagePreview(context.OPENID, event));

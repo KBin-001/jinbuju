@@ -44,11 +44,15 @@ async function getPreview(openid, previewId) {
 }
 
 function publicPreview(preview, reused) {
+  const generatedBy = ["ai", "ai_repaired", "template"].includes(preview.generatedBy)
+    ? preview.generatedBy
+    : "template";
   return {
     previewId: String(preview._id),
     requestId: String(preview.requestId),
     stageNumber: Number(preview.stageNumber),
-    generatedBy: preview.generatedBy === "template" ? "template" : "ai",
+    generatedBy,
+    generationSource: generatedBy,
     stagePlan: preview.stagePlan,
     reused,
   };

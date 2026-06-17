@@ -33,7 +33,11 @@
 .task-row { display: flex; align-items: flex-start; gap: 18rpx; margin-top: 22rpx; padding-top: 22rpx; border-top: 1rpx solid var(--color-border); }
 .task-main { flex: 1; min-width: 0; }
 .task-name { font-weight: 650; line-height: 1.5; }
+.task-type { display: inline-flex; margin-top: 10rpx; padding: 5rpx 12rpx; border-radius: 999rpx; background: var(--color-primary-light); color: var(--color-primary); font-size: 21rpx; font-weight: 650; }
 .task-time { margin-top: 8rpx; color: var(--color-text-secondary); font-size: 22rpx; }
+.task-extra { margin-top: 12rpx; color: var(--color-text-secondary); font-size: 23rpx; line-height: 1.55; }
+.task-extra-label { margin-right: 12rpx; color: var(--color-text); font-weight: 650; }
+.safety-extra { color: #7a5b24; }
 .edit-button { flex-shrink: 0; color: var(--color-primary); }
 .edit-form { width: 100%; }
 .edit-label { margin: 18rpx 0 10rpx; font-size: 24rpx; font-weight: 650; }

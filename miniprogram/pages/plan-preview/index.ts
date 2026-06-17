@@ -1,10 +1,8 @@
 import {
-  applyStageOptimization,
   confirmStagePlan,
   createStagePreview,
   createStageRequestId,
   getStagePreview,
-  optimizeStagePreview,
   updateStagePreviewTask,
 } from "../../services/stage";
 import {
@@ -15,6 +13,8 @@ import {
 } from "../../types/stage";
 import {
   clearLongTermGoalDraft,
+  clearGoalAnalysisCache,
+  getGoalAnalysisCache,
   clearStagePreviewCache,
   getLongTermGoalDraft,
   getStagePreviewCache,
@@ -53,15 +53,37 @@ function toCreateInput(): CreateStagePreviewInput | null {
   };
 }
 
+function getCreateAnalysisId(): string {
+  return getGoalAnalysisCache()?.analysisId || "";
+}
+
 function buildWeeks(days: AIStageDay[], current: WeekView[] = []): WeekView[] {
+  const actionTypeLabels: Record<string, string> = {
+    practice: "练习",
+    learning: "学习",
+    preparation: "准备",
+    reflection: "复盘",
+    recovery: "恢复",
+    creation: "创作",
+    execution: "执行",
+  };
   const expanded = new Map(current.map((week) => [week.number, week.expanded]));
+  const viewDays = days.map((day) => ({
+    ...day,
+    actions: day.actions.map((action) => ({
+      ...action,
+      actionTypeLabel: action.actionType ? actionTypeLabels[action.actionType] || "" : "",
+      resourceText: action.requiredResources?.join("、") || "",
+      safetyText: action.safetyNotes?.join("；") || "",
+    })),
+  }));
   const weeks: WeekView[] = [];
-  for (let index = 0; index < days.length; index += 7) {
+  for (let index = 0; index < viewDays.length; index += 7) {
     const number = Math.floor(index / 7) + 1;
     weeks.push({
       number,
       expanded: expanded.has(number) ? Boolean(expanded.get(number)) : number === 1,
-      days: days.slice(index, index + 7),
+      days: viewDays.slice(index, index + 7),
     });
   }
   return weeks;
@@ -111,9 +133,6 @@ Page({
         ),
       });
       this.applyPreview(cached.result);
-      if (this.data.isV2Create && cached.result.optimizationStatus === "idle") {
-        this.startOptimization();
-      }
       return;
     }
     this.setData({
@@ -135,11 +154,11 @@ Page({
       errorMessage: "",
       createRequestId: requestId,
     });
-    createStagePreview(input, requestId)
+    const analysisId = getCreateAnalysisId();
+    createStagePreview(analysisId ? null : input, requestId, analysisId || undefined)
       .then((result) => {
-        saveStagePreviewCache({ input, result, generatedAt: Date.now() });
+        saveStagePreviewCache({ input, analysisId, result, generatedAt: Date.now() });
         this.applyPreview(result);
-        this.startOptimization();
       })
       .catch((error: Error) => {
         this.setData({
@@ -154,9 +173,6 @@ Page({
     getStagePreview(previewId)
       .then((preview) => {
         this.applyPreview(preview);
-        if (this.data.isV2Create && preview.optimizationStatus === "idle") {
-          this.startOptimization();
-        }
       })
       .catch((error: Error) => {
         this.setData({
@@ -187,44 +203,6 @@ Page({
           ? this.data.optimizationPollCount
           : 0,
     });
-    if (this.data.isV2Create && preview.optimizationStatus === "processing") {
-      this.scheduleOptimizationPoll(preview.previewId);
-    }
-  },
-
-  scheduleOptimizationPoll(previewId: string) {
-    if (this.data.optimizationPollCount >= 30) return;
-    const optimizationPollCount = this.data.optimizationPollCount + 1;
-    this.setData({ optimizationPollCount });
-    setTimeout(() => {
-      if (this.data.preview?.previewId !== previewId || this.data.confirming) return;
-      getStagePreview(previewId)
-        .then((result) => this.applyPreview(result))
-        .catch(() => undefined);
-    }, 2000);
-  },
-
-  startOptimization() {
-    const preview = this.data.preview;
-    if (
-      !this.data.isV2Create ||
-      !preview ||
-      preview.optimizationStatus === "ready" ||
-      preview.optimizationStatus === "processing" ||
-      preview.optimizationAttempts >= 2
-    ) {
-      return;
-    }
-    this.setData({ optimizing: true });
-    optimizeStagePreview(preview.previewId)
-      .then((result) => this.applyPreview(result))
-      .catch((error: Error & { code?: string }) => {
-        if (error.code === "STAGE_OPTIMIZATION_IN_PROGRESS") {
-          setTimeout(() => this.restoreServerPreview(preview.previewId), 1500);
-          return;
-        }
-        this.setData({ optimizing: false });
-      });
   },
 
   retry() {
@@ -236,19 +214,11 @@ Page({
   },
 
   retryOptimization() {
-    if (!this.data.optimizing) this.startOptimization();
+    wx.showToast({ title: "重新生成会在后续版本开放", icon: "none" });
   },
 
   recoverOptimization() {
-    const preview = this.data.preview;
-    if (!preview || this.data.optimizing) return;
-    this.setData({ optimizing: true });
-    optimizeStagePreview(preview.previewId)
-      .then((result) => this.applyPreview(result))
-      .catch((error: Error) => {
-        this.setData({ optimizing: false });
-        wx.showToast({ title: error.message || "AI 优化仍在处理中", icon: "none" });
-      });
+    this.retryOptimization();
   },
 
   toggleWeek(event: DatasetEvent) {
@@ -327,27 +297,7 @@ Page({
   },
 
   applyOptimization() {
-    const preview = this.data.preview;
-    if (!preview || preview.optimizationStatus !== "ready" || this.data.applying) return;
-    this.setData({ applying: true });
-    applyStageOptimization(preview.previewId, preview.revision)
-      .then((result) => {
-        this.applyPreview(result);
-        wx.showToast({ title: "已采用 AI 优化", icon: "success" });
-      })
-      .catch((error: Error & { code?: string }) => {
-        wx.showModal({
-          title: "暂时无法采用",
-          content: error.message || "请刷新后重试。",
-          showCancel: false,
-          success: () => {
-            if (error.code === "STAGE_PREVIEW_CONFLICT") {
-              this.restoreServerPreview(preview.previewId);
-            }
-          },
-        });
-      })
-      .then(() => this.setData({ applying: false }));
+    this.retryOptimization();
   },
 
   editGoal() {
@@ -368,6 +318,7 @@ Page({
     confirmStagePlan(preview.previewId, this.data.isV2Create ? preview.revision : undefined)
       .then(() => {
         clearLongTermGoalDraft();
+        clearGoalAnalysisCache();
         clearStagePreviewCache();
         wx.switchTab({
           url: "/pages/index/index",

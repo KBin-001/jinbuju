@@ -35,6 +35,16 @@
 .deadline-row picker { flex: 1; }
 .deadline-picker { padding: 24rpx; border: 2rpx solid var(--color-border); border-radius: 18rpx; background: #fff; }
 .clear-button { color: #a04b4b; }
+.analysis-card, .question-card { margin-bottom: 22rpx; padding: 26rpx; border: 2rpx solid var(--color-border); border-radius: 22rpx; background: var(--color-surface); }
+.analysis-goal { font-size: 32rpx; font-weight: 700; line-height: 1.45; }
+.fallback-copy { margin-top: 14rpx; color: #80622b; font-size: 24rpx; line-height: 1.55; }
+.question-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 18rpx; font-weight: 650; line-height: 1.5; }
+.required-mark { flex-shrink: 0; padding: 4rpx 10rpx; border-radius: 999rpx; background: var(--color-primary-light); color: var(--color-primary); font-size: 20rpx; }
+.answer-options { display: flex; flex-wrap: wrap; gap: 14rpx; margin-top: 20rpx; }
+.answer-chip { padding: 18rpx 22rpx; border: 2rpx solid var(--color-border); border-radius: 999rpx; background: #fff; color: var(--color-text-secondary); font-size: 24rpx; }
+.answer-input, .answer-textarea { width: 100%; margin-top: 20rpx; padding: 20rpx; border: 2rpx solid var(--color-border); border-radius: 18rpx; background: #fff; }
+.answer-input { height: 82rpx; }
+.answer-textarea { height: 150rpx; box-sizing: border-box; }
 .scroll-spacer { height: 40rpx; }
 .bottom-actions { position: fixed; right: 0; bottom: 0; left: 0; display: flex; gap: 20rpx; padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid var(--color-border); background: rgba(255,255,255,.97); }
 .previous-button, .next-button { height: 94rpx; display: flex; align-items: center; justify-content: center; border-radius: 999rpx; font-weight: 650; }

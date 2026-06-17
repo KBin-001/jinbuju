@@ -7,8 +7,8 @@
 
   <view wx:if="{{status === 'loading'}}" class="preview-state">
     <view class="loading-dot"></view>
-    <view class="state-title">{{isV2Create ? '正在准备基础计划' : '正在读取行动计划'}}</view>
-    <view class="state-description">基础计划会先准备好，不需要等待 AI。</view>
+    <view class="state-title">{{isV2Create ? '正在生成行动方案' : '正在读取行动计划'}}</view>
+    <view class="state-description">会先尝试生成完整方案，失败时再提供基础行动方案。</view>
   </view>
 
   <view wx:elif="{{status === 'error'}}" class="preview-state">
@@ -22,32 +22,15 @@
   <block wx:else>
     <scroll-view class="plan-scroll" scroll-y enhanced show-scrollbar="{{false}}">
       <view class="plan-content">
-        <view wx:if="{{isV2Create && (optimizing || preview.optimizationStatus === 'processing')}}" class="optimization-notice">
-          <view class="notice-title">基础计划已可使用</view>
-          <view>AI 正在后台优化内容，你可以继续查看、编辑或直接开始。</view>
-          <button
-            wx:if="{{preview.optimizationStatus === 'processing' && optimizationPollCount >= 30}}"
-            class="notice-retry"
-            bindtap="recoverOptimization"
-          >重新尝试优化</button>
-        </view>
-        <view wx:elif="{{isV2Create && preview.optimizationStatus === 'ready'}}" class="optimization-ready">
+        <view wx:if="{{isV2Create && preview.generatedBy === 'template'}}" class="optimization-failed">
           <view>
-            <view class="notice-title">AI 优化方案已准备好</view>
-            <view>采用时只会替换你没有编辑过的任务。</view>
+            <view class="notice-title">已为你生成一份基础行动方案</view>
+            <view>AI 生成暂时不可用，你可以继续调整。</view>
           </view>
-          <button loading="{{applying}}" disabled="{{applying}}" bindtap="applyOptimization">采用优化</button>
         </view>
-        <view wx:elif="{{isV2Create && preview.optimizationStatus === 'failed'}}" class="optimization-failed">
-          <view>
-            <view class="notice-title">AI 优化暂时未完成</view>
-            <view>基础计划不受影响，可以直接开始。</view>
-          </view>
-          <button
-            wx:if="{{preview.optimizationAttempts < 2}}"
-            disabled="{{optimizing}}"
-            bindtap="retryOptimization"
-          >重试优化</button>
+        <view wx:elif="{{isV2Create && preview.generatedBy === 'ai_repaired'}}" class="optimization-notice">
+          <view class="notice-title">方案已完成自动修正</view>
+          <view>系统已根据校验结果整理为可执行的行动阶段。</view>
         </view>
 
         <view class="plan-hero">
@@ -105,7 +88,20 @@
                 <block wx:else>
                   <view class="task-main">
                     <view class="task-name">{{action.title}}</view>
+                    <view wx:if="{{action.actionTypeLabel}}" class="task-type">{{action.actionTypeLabel}}</view>
                     <view class="task-description">{{action.description}}</view>
+                    <view wx:if="{{action.completionCriteria}}" class="task-extra">
+                      <text class="task-extra-label">完成标准</text>
+                      <text>{{action.completionCriteria}}</text>
+                    </view>
+                    <view wx:if="{{action.resourceText}}" class="task-extra">
+                      <text class="task-extra-label">所需资源</text>
+                      <text>{{action.resourceText}}</text>
+                    </view>
+                    <view wx:if="{{action.safetyText}}" class="task-extra safety-extra">
+                      <text class="task-extra-label">安全提醒</text>
+                      <text>{{action.safetyText}}</text>
+                    </view>
                     <view class="task-time">预计 {{action.estimatedMinutes}} 分钟</view>
                   </view>
                   <button

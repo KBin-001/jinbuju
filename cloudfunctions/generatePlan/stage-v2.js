@@ -6,7 +6,18 @@ const { createStagePlanProvider } = require("./stage-ai");
 const { addBusinessDays, formatBusinessDate } = require("./date");
 const { stableId } = require("./repository");
 const { DANGEROUS_CONTENT } = require("./constants");
-const { validateStageRequestId } = require("./stage-validate");
+const { getOwnedAnalysis } = require("./goal-analysis");
+const {
+  GENERATED_STAGE_SCHEMA_VERSION,
+  evaluateStagePlanQuality,
+  validateGeneratedStagePlan,
+  validateStageRequestId,
+} = require("./stage-validate");
+const {
+  DIRECT_STAGE_PROMPT_VERSION,
+  buildDirectStageGenerationPrompt,
+  buildDirectStageRepairPrompt,
+} = require("./stage-prompt");
 
 const db = cloud.database();
 const PLAN_DURATIONS = [1, 2, 3, 4, 5, 6, 7];
@@ -21,6 +32,8 @@ const ACTIVE_WEEK_DAYS = {
 };
 const PREVIEW_LIFETIME_MILLISECONDS = 24 * 60 * 60 * 1000;
 const MAX_OPTIMIZATION_ATTEMPTS = 2;
+const DEFAULT_MODEL_ID = process.env.CLOUDBASE_AI_MODEL || "hy3-preview";
+const DEFAULT_PROVIDER_GROUP = process.env.CLOUDBASE_AI_PROVIDER || "cloudbase";
 
 const GOAL_TEMPLATES = {
   cet4: {
@@ -161,7 +174,7 @@ function validateCreateStagePreviewInput(value) {
     category: template.category,
     desiredResult:
       value.templateId === "custom"
-        ? `围绕“${customGoalTitle}”建立稳定行动节奏并形成阶段成果`
+        ? `根据用户目标“${customGoalTitle}”完成第一个可验证的行动阶段`
         : template.desiredResult,
     currentLevel: value.currentLevel,
     dailyMinutes: value.dailyMinutes,
@@ -169,6 +182,73 @@ function validateCreateStagePreviewInput(value) {
     intensity: value.intensity,
     durationDays: value.durationDays,
     deadline,
+    targetDuration: "long_term",
+    stageNumber: 1,
+  };
+}
+
+function goalTypeFromInput(input) {
+  if (["python", "ai_tools", "video_editing"].includes(input.templateId)) return "skill";
+  if (["resume", "interview"].includes(input.templateId)) return "project";
+  if (["cet4", "teacher_exam"].includes(input.templateId)) return "outcome";
+  if (/习惯|作息|阅读/.test(input.goalTitle)) return "habit";
+  if (/博客|小程序|项目|制作|完成/.test(input.goalTitle)) return "project";
+  if (/学|练|摄影|烹饪|驱动|搏击|技能/.test(input.goalTitle)) return "skill";
+  return "outcome";
+}
+
+function categoryGroupFromInput(input) {
+  const title = input.goalTitle;
+  if (input.category === "exam" || /四级|考试|备考|教师资格|考研/.test(title)) return "learning";
+  if (input.category === "career" || /求职|简历|面试|岗位/.test(title)) return "career";
+  if (/作息|健康|运动|搏击|体能|睡眠/.test(title)) return "health";
+  if (/习惯|阅读/.test(title)) return "habit";
+  if (/摄影|写作|视频|创作/.test(title)) return "creative";
+  if (/博客|小程序|项目|Android|驱动/.test(title)) return "project";
+  if (/烹饪|生活|整理/.test(title)) return "life";
+  if (input.category === "skill") return "learning";
+  return "other";
+}
+
+function buildGoalProfile(input) {
+  return {
+    title: input.goalTitle,
+    desiredOutcome: input.desiredResult,
+    domainLabel: GOAL_TEMPLATES[input.templateId]?.title || input.goalTitle,
+    goalType: goalTypeFromInput(input),
+    categoryGroup: categoryGroupFromInput(input),
+    currentLevel: input.currentLevel,
+    intensity: input.intensity,
+    dailyMinutes: input.dailyMinutes,
+    durationDays: input.durationDays,
+    deadline: input.deadline || "",
+    weeklyFrequency: input.weeklyDays,
+    constraints: [],
+    availableResources: [],
+    preferences: [],
+  };
+}
+
+function inputFromGoalProfile(profile) {
+  return {
+    templateId: "",
+    customGoalTitle: profile.title,
+    goalTitle: profile.title,
+    category:
+      profile.categoryGroup === "career"
+        ? "career"
+        : profile.categoryGroup === "health"
+          ? "fitness"
+          : profile.categoryGroup === "habit"
+            ? "habit"
+            : "skill",
+    desiredResult: profile.desiredOutcome || profile.title,
+    currentLevel: profile.currentLevel || "zero",
+    dailyMinutes: Number(profile.dailyMinutes || 30),
+    weeklyDays: Number(profile.weeklyFrequency || 5),
+    intensity: profile.intensity || "normal",
+    durationDays: Number(profile.durationDays || 7),
+    deadline: profile.deadline || "",
     targetDuration: "long_term",
     stageNumber: 1,
   };
@@ -238,17 +318,22 @@ function buildBaseStagePlan(input) {
 }
 
 function publicPreview(preview, reused = true) {
+  const generatedBy = ["ai", "ai_repaired", "template"].includes(preview.generatedBy)
+    ? preview.generatedBy
+    : "template";
   return {
     previewId: String(preview._id),
     requestId: String(preview.requestId),
     stageNumber: Number(preview.stageNumber || 1),
-    generatedBy: preview.generatedBy === "ai" ? "ai" : "template",
+    generatedBy,
+    generationSource: generatedBy,
     stagePlan: preview.stagePlan,
     reused,
     revision: Number(preview.revision || 1),
     editedSlotIds: Array.isArray(preview.editedSlotIds) ? preview.editedSlotIds : [],
     optimizationStatus: preview.optimizationStatus || "idle",
     optimizationAttempts: Number(preview.optimizationAttempts || 0),
+    fallbackReason: preview.fallbackReason || "",
   };
 }
 
@@ -275,10 +360,35 @@ async function getOwnedPreview(openid, previewId) {
 
 async function createStagePreview(openid, event) {
   const requestId = validateStageRequestId(event && event.requestId);
-  const input = validateCreateStagePreviewInput(event && event.input);
+  let analysisRecord = null;
+  let input;
+  let goalProfile;
+  if (event && event.analysisId) {
+    analysisRecord = await getOwnedAnalysis(openid, event.analysisId);
+    if (analysisRecord.status === "consumed" && analysisRecord.previewId) {
+      const existingPreview = await getOwnedPreview(openid, analysisRecord.previewId).catch(() => null);
+      if (existingPreview) return publicPreview(existingPreview, true);
+    }
+    if (analysisRecord.status !== "ready" || !analysisRecord.goalProfile) {
+      fail("INVALID_ARGUMENT", "请先完成目标澄清。");
+    }
+    goalProfile = analysisRecord.goalProfile;
+    input = inputFromGoalProfile(goalProfile);
+  } else {
+    input = validateCreateStagePreviewInput(event && event.input);
+    goalProfile = buildGoalProfile(input);
+  }
   const previewId = stableId("stage_preview", `${openid}:${requestId}`);
-  const existing = await getOwnedPreview(openid, previewId).catch(() => null);
-  if (existing) return publicPreview(existing, true);
+  const existingRecord = await db.collection("stage_previews").doc(previewId).get().catch(() => null);
+  const existing = existingRecord && existingRecord.data;
+  if (existing && existing._openid === openid) {
+    if (existing.status === "generating") {
+      fail("STAGE_GENERATION_IN_PROGRESS", "AI 正在生成当前阶段。");
+    }
+    if (existing.status === "preview" || existing.status === "confirmed") {
+      return publicPreview(existing, true);
+    }
+  }
 
   const activeGoalResult = await db
     .collection("goals")
@@ -289,16 +399,14 @@ async function createStagePreview(openid, event) {
     fail("ACTIVE_GOAL_ALREADY_EXISTS", "你已经有一个进行中的目标。");
   }
 
-  const stagePlan = buildBaseStagePlan(input);
   await db.collection("stage_previews").doc(previewId).set({
     data: {
       _openid: openid,
       requestId,
       stageNumber: 1,
       generationInput: input,
-      stagePlan,
-      generatedBy: "template",
-      status: "preview",
+      status: "generating",
+      generationStatus: "generating",
       revision: 1,
       editedSlotIds: [],
       lastMutationId: "",
@@ -310,6 +418,168 @@ async function createStagePreview(openid, event) {
       updatedAt: db.serverDate(),
     },
   });
+
+  const generationStartedAt = Date.now();
+  let stagePlan = null;
+  let generatedBy = "template";
+  let repairAttempted = false;
+  let fallbackReason = "";
+  let modelId = DEFAULT_MODEL_ID;
+  let providerGroup = DEFAULT_PROVIDER_GROUP;
+  let totalTokens = 0;
+  if (!event.forceFallback) {
+    const provider = createStagePlanProvider();
+    const inputFieldNames = Object.keys(goalProfile);
+    let firstOutput = "";
+    let firstProblems = [];
+    try {
+      const prompt = buildDirectStageGenerationPrompt(goalProfile);
+      const result = await provider.generateStagePlanWithMetadata(
+        prompt,
+        22000,
+        {
+          action: "createStagePreview",
+          promptVersion: DIRECT_STAGE_PROMPT_VERSION,
+          schemaVersion: GENERATED_STAGE_SCHEMA_VERSION,
+          inputFieldNames,
+          durationDays: input.durationDays,
+          dailyMinutes: input.dailyMinutes,
+          repairAttempted: false,
+        },
+      );
+      firstOutput = result.text;
+      modelId = result.metadata.modelId || modelId;
+      providerGroup = result.metadata.providerGroup || providerGroup;
+      totalTokens += Number(result.metadata.totalTokens || 0);
+      const parsed = parseAiJson(firstOutput);
+      const candidate = validateGeneratedStagePlan(parsed, goalProfile);
+      const quality = evaluateStagePlanQuality(candidate, goalProfile);
+      if (quality.shouldRepair) {
+        firstProblems = quality.problems;
+        const error = new Error("QUALITY_REPAIR_REQUIRED");
+        error.code = "QUALITY_REPAIR_REQUIRED";
+        throw error;
+      }
+      stagePlan = candidate;
+      generatedBy = "ai";
+      console.info("stage direct generation accepted", {
+        action: "createStagePreview",
+        providerGroup,
+        modelId,
+        promptVersion: DIRECT_STAGE_PROMPT_VERSION,
+        schemaVersion: GENERATED_STAGE_SCHEMA_VERSION,
+        durationDays: input.durationDays,
+        dailyMinutes: input.dailyMinutes,
+        generationDurationMs: Date.now() - generationStartedAt,
+        parseSucceeded: true,
+        schemaSucceeded: true,
+        qualityPassed: true,
+        repairAttempted: false,
+        generationSource: "ai",
+        totalTokens,
+      });
+    } catch (firstError) {
+      fallbackReason = firstError.code || "AI_REQUEST_FAILED";
+      firstProblems = firstProblems.length ? firstProblems : [fallbackReason];
+      console.warn("stage direct generation needs repair", {
+        action: "createStagePreview",
+        code: fallbackReason,
+        promptVersion: DIRECT_STAGE_PROMPT_VERSION,
+        schemaVersion: GENERATED_STAGE_SCHEMA_VERSION,
+        durationDays: input.durationDays,
+        dailyMinutes: input.dailyMinutes,
+      });
+      try {
+        repairAttempted = true;
+        const repairPrompt = buildDirectStageRepairPrompt(goalProfile, firstOutput, firstProblems);
+        const repaired = await provider.generateStagePlanWithMetadata(
+          repairPrompt,
+          18000,
+          {
+            action: "createStagePreviewRepair",
+            promptVersion: DIRECT_STAGE_PROMPT_VERSION,
+            schemaVersion: GENERATED_STAGE_SCHEMA_VERSION,
+            inputFieldNames,
+            durationDays: input.durationDays,
+            dailyMinutes: input.dailyMinutes,
+            repairAttempted: true,
+          },
+        );
+        modelId = repaired.metadata.modelId || modelId;
+        providerGroup = repaired.metadata.providerGroup || providerGroup;
+        totalTokens += Number(repaired.metadata.totalTokens || 0);
+        const repairedPlan = validateGeneratedStagePlan(parseAiJson(repaired.text), goalProfile);
+        const repairedQuality = evaluateStagePlanQuality(repairedPlan, goalProfile);
+        if (repairedQuality.shouldRepair) {
+          const error = new Error("QUALITY_REPAIR_FAILED");
+          error.code = "QUALITY_REPAIR_FAILED";
+          throw error;
+        }
+        stagePlan = repairedPlan;
+        generatedBy = "ai_repaired";
+        fallbackReason = "";
+      } catch (repairError) {
+        fallbackReason = repairError.code || fallbackReason || "AI_REQUEST_FAILED";
+        console.warn("stage direct generation using template fallback", {
+          action: "createStagePreview",
+          code: fallbackReason,
+          promptVersion: DIRECT_STAGE_PROMPT_VERSION,
+          schemaVersion: GENERATED_STAGE_SCHEMA_VERSION,
+          durationDays: input.durationDays,
+          dailyMinutes: input.dailyMinutes,
+          repairAttempted,
+          generationSource: "template",
+        });
+      }
+    }
+  } else {
+    fallbackReason = "FORCE_FALLBACK";
+  }
+
+  if (!stagePlan) {
+    stagePlan = buildBaseStagePlan(input);
+    generatedBy = "template";
+  }
+
+  await db.collection("stage_previews").doc(previewId).set({
+    data: {
+      _openid: openid,
+      requestId,
+      stageNumber: 1,
+      generationInput: input,
+      stagePlan,
+      goalProfile,
+      analysisId: analysisRecord ? analysisRecord._id : "",
+      generatedBy,
+      status: "preview",
+      generationStatus: "ready",
+      modelId,
+      providerGroup,
+      promptVersion: DIRECT_STAGE_PROMPT_VERSION,
+      schemaVersion: GENERATED_STAGE_SCHEMA_VERSION,
+      generationDurationMs: Date.now() - generationStartedAt,
+      repairAttempted,
+      fallbackReason,
+      revision: 1,
+      editedSlotIds: [],
+      lastMutationId: "",
+      optimizationStatus: "idle",
+      optimizationAttempts: 0,
+      optimizationPlan: null,
+      expiresAt: new Date(Date.now() + PREVIEW_LIFETIME_MILLISECONDS),
+      createdAt: db.serverDate(),
+      updatedAt: db.serverDate(),
+    },
+  });
+  if (analysisRecord) {
+    await db.collection("goal_analysis_drafts").doc(analysisRecord._id).update({
+      data: {
+        status: "consumed",
+        previewId,
+        updatedAt: db.serverDate(),
+      },
+    });
+  }
   return publicPreview(await getOwnedPreview(openid, previewId), false);
 }
 
@@ -554,7 +824,7 @@ function validateTaskUpdate(event, preview) {
   const slotId = String((event && event.slotId) || "");
   const task = event && event.task;
   if (
-    !/^slot_day_\d{1,2}$/.test(slotId) ||
+    !/^slot_day_\d{1,2}(?:_\d{1,2})?$/.test(slotId) ||
     !task ||
     typeof task !== "object" ||
     !hasOnlyKeys(task, ["title", "description", "estimatedMinutes"]) ||
@@ -714,6 +984,7 @@ module.exports = {
   PLAN_DURATIONS,
   applyStageOptimization,
   buildBaseStagePlan,
+  buildGoalProfile,
   createStagePreview,
   isExecutionDay,
   mergeOptimizationPlan,
