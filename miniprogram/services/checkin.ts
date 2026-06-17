@@ -81,14 +81,22 @@ function handleCloudError(rawError: unknown): never {
 }
 
 export function submitCheckin(params: SubmitCheckinParams): Promise<SubmitCheckinResult> {
+  // Build completedTaskIds from taskResults for backward compatibility.
+  const completedTaskIds = params.taskResults
+    .filter((r) => r.status === "completed")
+    .map((r) => r.taskId);
+
   return callCheckinFunction<SubmitCheckinResult>(
     {
       action: "submitCheckin",
       goalId: params.goalId,
       planId: params.planId,
-      completedTaskIds: params.completedTaskIds,
+      taskResults: params.taskResults,
+      completedTaskIds,
       feeling: params.feeling,
       note: params.note || "",
+      skipReason: params.skipReason || "",
+      overallStatus: params.overallStatus || "",
     },
     SUBMIT_TIMEOUT,
   )

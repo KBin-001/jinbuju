@@ -183,22 +183,29 @@
 
     <view class="preview-actions">
       <block wx:if="{{isV2Create && !showFeedbackPanel && !regenerating}}">
-        <button class="adopt-button" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
-          适合，开始行动
-        </button>
-        <button class="adjust-button" disabled="{{confirming || (preview.maxRegenerationCount - preview.regenerationCount) <= 0}}" bindtap="openFeedbackPanel">
-          需要调整
-        </button>
+        <view class="actions-row">
+          <button class="confirm-button" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
+            确认并开始
+          </button>
+          <button class="adjust-button" disabled="{{confirming || (preview.maxRegenerationCount - preview.regenerationCount) <= 0}}" bindtap="openFeedbackPanel">
+            需要调整
+          </button>
+        </view>
+        <button wx:if="{{!showFeedbackPanel}}" class="text-action" disabled="{{confirming || regenerating}}" bindtap="editGoal">调整目标设置</button>
       </block>
       <block wx:elif="{{!isV2Create}}">
-        <button class="adopt-button" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
-          确认并开始
-        </button>
+        <view class="actions-row">
+          <button class="confirm-button" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
+            确认并开始
+          </button>
+        </view>
       </block>
       <block wx:else>
-        <button class="adopt-button" disabled="{{true}}">调整中...</button>
+        <view class="actions-row">
+          <button class="confirm-button" disabled="{{true}}">调整中...</button>
+        </view>
+        <button wx:if="{{!showFeedbackPanel}}" class="text-action" disabled="{{confirming || regenerating}}" bindtap="editGoal">调整目标设置</button>
       </block>
-      <button wx:if="{{isV2Create && !showFeedbackPanel}}" class="text-action" disabled="{{confirming || regenerating}}" bindtap="editGoal">调整目标设置</button>
     </view>
   </block>
 </view>

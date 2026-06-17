@@ -25,7 +25,7 @@
           <text class="stat-label">今日完成率</text>
           <text class="stat-value">{{resultData.completionRate}}%</text>
         </view>
-        <view class="stat-row">
+        <view wx:if="{{resultData.streakDays > 0}}" class="stat-row">
           <text class="stat-label">连续行动</text>
           <text class="stat-value">{{resultData.streakDays}} 天</text>
         </view>
@@ -43,7 +43,7 @@
     <!-- Summary card -->
     <view class="card summary-card">
       <view class="section-eyebrow">记录今日行动</view>
-      <view class="summary-subtitle">记录今天已经完成的行动。</view>
+      <view class="summary-subtitle">为每项行动选择今天的完成情况。</view>
       <view class="summary-date">{{dateDisplay}}</view>
       <view class="summary-progress">
         <view class="progress-count">
@@ -64,31 +64,62 @@
       </view>
     </view>
 
-    <!-- Completed tasks list -->
-    <view class="completed-section">
+    <!-- Task list with status selectors -->
+    <view class="task-status-section">
       <view class="section-title-row">
-        <view class="section-title">已完成的行动</view>
-        <view class="section-count">{{completedCount}} 项</view>
+        <view class="section-title">今日行动</view>
+        <view class="section-count">{{totalCount}} 项</view>
       </view>
 
-      <view wx:if="{{completedCount === 0}}" class="card no-task-card">
+      <view wx:if="{{totalCount === 0}}" class="card no-task-card">
         <view class="state-mark small-mark">0</view>
-        <view class="no-task-title">还没有完成任何行动</view>
-        <view class="state-description">返回今日页完成一项行动后再记录。</view>
+        <view class="no-task-title">今天没有安排行动</view>
+        <view class="state-description">返回今日页查看任务安排。</view>
         <button class="primary-button" bindtap="goBackToToday">返回今日页</button>
       </view>
 
       <view
-        wx:for="{{mergedTasks}}"
-        wx:if="{{item.completed}}"
+        wx:for="{{taskItems}}"
         wx:key="id"
-        class="card task-done-card"
+        class="card task-status-card {{item.currentStatus !== '' ? 'task-status-selected' : ''}}"
       >
-        <text class="done-icon">✓</text>
-        <view class="done-content">
-          <view class="done-title">{{item.title}}</view>
-          <view wx:if="{{item.description}}" class="done-description">{{item.description}}</view>
+        <view class="task-status-header">
+          <view class="task-status-title">{{item.title}}</view>
         </view>
+        <view wx:if="{{item.description}}" class="task-status-desc">{{item.description}}</view>
+        <view class="task-status-options">
+          <button
+            wx:for="{{item.statusOptions}}"
+            wx:for-item="opt"
+            wx:key="value"
+            class="status-btn status-btn-{{opt.value}} {{item.currentStatus === opt.value ? 'status-active' : ''}}"
+            data-task-id="{{item.id}}"
+            data-status="{{opt.value}}"
+            bindtap="selectTaskStatus"
+            aria-label="{{opt.label}}"
+          >
+            <text class="status-btn-icon">{{opt.icon}}</text>
+            <text class="status-btn-label">{{opt.label}}</text>
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <!-- Skip reason selector (shown when overallStatus is not completed) -->
+    <view wx:if="{{showSkipReason}}" class="card reason-card">
+      <view class="section-title">今天的主要原因</view>
+      <view class="reason-hint">可选，帮助改进后续计划</view>
+      <view class="reason-options">
+        <button
+          wx:for="{{skipReasonOptions}}"
+          wx:key="value"
+          class="reason-btn {{skipReason === item.value ? 'reason-active' : ''}}"
+          data-value="{{item.value}}"
+          bindtap="selectSkipReason"
+          aria-label="选择原因：{{item.label}}"
+        >
+          <text>{{item.label}}</text>
+        </button>
       </view>
     </view>
 
@@ -130,11 +161,11 @@
     <view class="bottom-action">
       <button
         class="checkin-button"
-        disabled="{{submitting || completedCount === 0}}"
+        disabled="{{submitting || !canSubmit}}"
         loading="{{submitting}}"
         bindtap="doSubmitCheckin"
       >
-        记录今日行动
+        {{submitButtonText}}
       </button>
     </view>
 

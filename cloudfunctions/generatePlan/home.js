@@ -39,7 +39,11 @@ async function getMany(collectionName, where, limit = 100) {
   return result.data || [];
 }
 
+const VALID_RESULT_STATUSES = ["completed", "partially_completed", "skipped", "rescheduled"];
+
 function buildTask(task) {
+  const status = task.status || "pending";
+  const resultStatus = VALID_RESULT_STATUSES.includes(status) ? status : undefined;
   return {
     id: String(task._id || ""),
     title: String(task.title || "今日任务"),
@@ -50,7 +54,8 @@ function buildTask(task) {
     sourceLabel: task.planTitle || SOURCE_LABELS[task.source] || SOURCE_LABELS.template,
     planId: String(task.planId || ""),
     planTitle: String(task.planTitle || ""),
-    completed: task.status === "completed",
+    completed: status === "completed",
+    resultStatus,
   };
 }
 

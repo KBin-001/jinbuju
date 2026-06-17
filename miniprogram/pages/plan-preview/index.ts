@@ -61,6 +61,11 @@ function getCreateAnalysisId(): string {
   return getGoalAnalysisCache()?.analysisId || "";
 }
 
+function cleanText(text: string): string {
+  // Strip Unicode noncharacters that cause display garbled characters
+  return text.replace(/[\ufdd0-\ufdef\ufffe\uffff]/g, "");
+}
+
 function buildWeeks(days: AIStageDay[], current: WeekView[] = []): WeekView[] {
   const actionTypeLabels: Record<string, string> = {
     practice: "练习",
@@ -76,7 +81,10 @@ function buildWeeks(days: AIStageDay[], current: WeekView[] = []): WeekView[] {
     ...day,
     actions: day.actions.map((action) => ({
       ...action,
+      title: cleanText(action.title),
+      description: cleanText(action.description),
       actionTypeLabel: action.actionType ? actionTypeLabels[action.actionType] || "" : "",
+      completionCriteria: action.completionCriteria ? cleanText(action.completionCriteria) : "",
       resourceText: action.requiredResources?.join("、") || "",
       safetyText: action.safetyNotes?.join("；") || "",
     })),
@@ -219,6 +227,13 @@ Page({
         result: preview,
         generatedAt: Date.now(),
       });
+    }
+    // Sanitize stage-level text
+    if (preview.stagePlan?.stage) {
+      const stage = preview.stagePlan.stage;
+      stage.title = cleanText(stage.title || "");
+      stage.summary = cleanText(stage.summary || "");
+      stage.focus = cleanText(stage.focus || "");
     }
     const remaining = Math.max(
       0,

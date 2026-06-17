@@ -6,6 +6,16 @@ const { stableId } = require("./repository");
 const db = cloud.database();
 
 const VALID_FEELINGS = ["easy", "normal", "challenging", "rewarding"];
+const VALID_STATUSES = ["completed", "partially_completed", "skipped", "rescheduled"];
+const VALID_SKIP_REASONS = [
+  "not_enough_time",
+  "too_difficult",
+  "insufficient_resources",
+  "not_feeling_well",
+  "unexpected_event",
+  "task_not_realistic",
+  "other",
+];
 
 function fail(code, message) {
   const error = new Error(message);
@@ -27,12 +37,24 @@ async function getMany(collectionName, where, limit = 100) {
   return result.data || [];
 }
 
+function computeOverallStatus(taskResults) {
+  const statuses = taskResults.map((r) => r.status);
+  const completedCount = statuses.filter((s) => s === "completed").length;
+  const partialCount = statuses.filter((s) => s === "partially_completed").length;
+  const rescheduledCount = statuses.filter((s) => s === "rescheduled").length;
+
+  if (completedCount === statuses.length) return "completed";
+  if (completedCount + partialCount > 0) return "partially_completed";
+  if (rescheduledCount === statuses.length) return "rescheduled";
+  return "skipped";
+}
+
 function validateCheckinInput(event) {
   if (!event || typeof event !== "object") {
     fail("INVALID_ARGUMENT", "打卡信息不完整。");
   }
 
-  const { goalId, planId, completedTaskIds, feeling } = event;
+  const { goalId, planId, feeling } = event;
 
   if (typeof goalId !== "string" || !goalId.trim()) {
     fail("INVALID_ARGUMENT", "目标 ID 无效。");
@@ -40,16 +62,49 @@ function validateCheckinInput(event) {
   if (typeof planId !== "string" || !planId.trim()) {
     fail("INVALID_ARGUMENT", "计划 ID 无效。");
   }
-  if (!Array.isArray(completedTaskIds) || completedTaskIds.length === 0) {
-    fail("INVALID_ARGUMENT", "请至少完成一项任务后再打卡。");
-  }
-  for (const id of completedTaskIds) {
-    if (typeof id !== "string" || !id.trim()) {
-      fail("INVALID_ARGUMENT", "任务 ID 格式无效。");
+
+  // Validate taskResults (new format) or fall back to completedTaskIds (legacy).
+  let taskResults = [];
+
+  if (Array.isArray(event.taskResults) && event.taskResults.length > 0) {
+    for (const item of event.taskResults) {
+      if (!item || typeof item !== "object") {
+        fail("INVALID_ARGUMENT", "任务结果格式无效。");
+      }
+      if (typeof item.taskId !== "string" || !item.taskId.trim()) {
+        fail("INVALID_ARGUMENT", "任务 ID 格式无效。");
+      }
+      if (!VALID_STATUSES.includes(item.status)) {
+        fail("INVALID_ARGUMENT", "任务状态无效。");
+      }
+      taskResults.push({
+        taskId: item.taskId.trim(),
+        status: item.status,
+      });
     }
+  } else if (Array.isArray(event.completedTaskIds) && event.completedTaskIds.length > 0) {
+    // Legacy format: convert to taskResults with all completed.
+    for (const id of event.completedTaskIds) {
+      if (typeof id !== "string" || !id.trim()) {
+        fail("INVALID_ARGUMENT", "任务 ID 格式无效。");
+      }
+      taskResults.push({ taskId: String(id).trim(), status: "completed" });
+    }
+  } else {
+    fail("INVALID_ARGUMENT", "请至少为一项任务选择执行状态。");
   }
+
   if (!VALID_FEELINGS.includes(feeling)) {
     fail("INVALID_ARGUMENT", "感受选项无效。");
+  }
+
+  // Validate skipReason (optional).
+  let skipReason = "";
+  if (event.skipReason !== undefined && event.skipReason !== null && event.skipReason !== "") {
+    if (!VALID_SKIP_REASONS.includes(event.skipReason)) {
+      fail("INVALID_ARGUMENT", "原因选项无效。");
+    }
+    skipReason = event.skipReason;
   }
 
   let note = "";
@@ -69,9 +124,10 @@ function validateCheckinInput(event) {
   return {
     goalId: goalId.trim(),
     planId: planId.trim(),
-    completedTaskIds: completedTaskIds.map((id) => String(id).trim()),
+    taskResults,
     feeling,
     note,
+    skipReason,
   };
 }
 
@@ -118,17 +174,30 @@ async function submitCheckin(openid, event) {
   }
 
   const validTaskIds = new Set(todayTasks.map((task) => String(task._id)));
-  const validCompletedIds = input.completedTaskIds.filter((id) =>
-    validTaskIds.has(id),
-  );
+  const validTaskResults = input.taskResults.filter((r) => validTaskIds.has(r.taskId));
 
-  if (validCompletedIds.length === 0) {
-    fail("INVALID_ARGUMENT", "至少需要完成一项有效任务。");
+  if (validTaskResults.length === 0) {
+    fail("INVALID_ARGUMENT", "至少需要一项有效任务。");
   }
 
+  // Compute statistics from taskResults.
   const totalCount = todayTasks.length;
-  const completedCount = validCompletedIds.length;
+  const completedCount = validTaskResults.filter((r) => r.status === "completed").length;
+  const partiallyCompletedCount = validTaskResults.filter(
+    (r) => r.status === "partially_completed",
+  ).length;
+  const skippedCount = validTaskResults.filter((r) => r.status === "skipped").length;
+  const rescheduledCount = validTaskResults.filter(
+    (r) => r.status === "rescheduled",
+  ).length;
   const completionRate = clampPercentage((completedCount / totalCount) * 100);
+  const overallStatus = computeOverallStatus(validTaskResults);
+
+  // Legacy: extract completedTaskIds for backward compatibility.
+  const completedTaskIds = validTaskResults
+    .filter((r) => r.status === "completed")
+    .map((r) => r.taskId);
+
   const userId = stableId("user", openid);
 
   return db.runTransaction(async (transaction) => {
@@ -150,10 +219,25 @@ async function submitCheckin(openid, event) {
       .doc(yesterdayCheckinId)
       .get()
       .catch(() => null);
-    const streakDays =
-      yesterdayRecord && yesterdayRecord.data
+
+    let streakDays;
+    if (yesterdayRecord && yesterdayRecord.data) {
+      const yesterdayOverallStatus = yesterdayRecord.data.overallStatus;
+      // Backward compat: old records without overallStatus count as active.
+      const yesterdayActive =
+        !yesterdayOverallStatus ||
+        ["completed", "partially_completed"].includes(yesterdayOverallStatus);
+      streakDays = yesterdayActive
         ? Number(yesterdayRecord.data.streakDays || 0) + 1
         : 1;
+    } else {
+      streakDays = 1;
+    }
+
+    // If today is skipped/rescheduled, streak resets.
+    const effectiveStreakDays = ["completed", "partially_completed"].includes(overallStatus)
+      ? streakDays
+      : 0;
 
     const now = db.serverDate();
 
@@ -164,13 +248,20 @@ async function submitCheckin(openid, event) {
         goalId: input.goalId,
         planId: input.planId,
         businessDate,
-        completedTaskIds: validCompletedIds,
+        taskResults: validTaskResults,
+        overallStatus,
+        skipReason: input.skipReason,
+        // Legacy fields for backward compatibility.
+        completedTaskIds,
         completedCount,
+        partiallyCompletedCount,
+        skippedCount,
+        rescheduledCount,
         totalCount,
         completionRate,
         feeling: input.feeling,
         note: input.note,
-        streakDays,
+        streakDays: effectiveStreakDays,
         createdAt: now,
         updatedAt: now,
       },
@@ -185,7 +276,7 @@ async function submitCheckin(openid, event) {
     if (existingUser && existingUser.data) {
       await transaction.collection("users").doc(userId).update({
         data: {
-          streakDays,
+          streakDays: effectiveStreakDays,
           updatedAt: now,
         },
       });
@@ -193,7 +284,7 @@ async function submitCheckin(openid, event) {
       await transaction.collection("users").doc(userId).set({
         data: {
           _openid: openid,
-          streakDays,
+          streakDays: effectiveStreakDays,
           createdAt: now,
           updatedAt: now,
         },
@@ -205,7 +296,8 @@ async function submitCheckin(openid, event) {
       completedCount,
       totalCount,
       completionRate,
-      streakDays,
+      streakDays: effectiveStreakDays,
+      overallStatus,
       isFirstCheckinToday: true,
     };
   });
@@ -264,23 +356,45 @@ async function getCheckinStatus(openid) {
     (left, right) => Number(left.order || 0) - Number(right.order || 0),
   );
 
-  const tasks = todayTaskRecords.map((task) => ({
-    id: String(task._id || ""),
-    title: String(task.title || "今日任务"),
-    description: String(task.description || task.dayTitle || ""),
-    estimatedMinutes: Math.max(Number(task.estimatedMinutes) || 0, 0),
-    completed: task.status === "completed",
-  }));
+  // If there's a checkin record today, use its taskResults for status mapping.
+  const todayCheckin = checkedInToday ? checkinRecords.data[0] : null;
+  const checkinResultMap = {};
+  if (todayCheckin && Array.isArray(todayCheckin.taskResults)) {
+    for (const r of todayCheckin.taskResults) {
+      checkinResultMap[r.taskId] = r.status;
+    }
+  }
+
+  const tasks = todayTaskRecords.map((task) => {
+    const taskId = String(task._id || "");
+    const completed = task.status === "completed";
+    const resultStatus = checkinResultMap[taskId] || (completed ? "completed" : undefined);
+    return {
+      id: taskId,
+      title: String(task.title || "今日任务"),
+      description: String(task.description || task.dayTitle || ""),
+      estimatedMinutes: Math.max(Number(task.estimatedMinutes) || 0, 0),
+      completed,
+      resultStatus,
+    };
+  });
 
   const completedCount = tasks.filter((task) => task.completed).length;
 
-  return {
+  // Include taskResults in response if checkin exists.
+  const response = {
     checkedInToday,
     tasks,
     completedCount,
     totalCount: tasks.length,
     planStatus: plan.status,
   };
+
+  if (todayCheckin && Array.isArray(todayCheckin.taskResults)) {
+    response.taskResults = todayCheckin.taskResults;
+  }
+
+  return response;
 }
 
 module.exports = {

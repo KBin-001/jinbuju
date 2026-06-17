@@ -229,7 +229,7 @@
     <view class="bottom-action">
       <button
         class="checkin-button {{checkedInToday ? 'checkin-button-done' : ''}}"
-        disabled="{{completedCount === 0 || navigating || !goal || !goal.planId || checkedInToday || planReadOnly}}"
+        disabled="{{navigating || !goal || !goal.planId || checkedInToday || planReadOnly}}"
         loading="{{navigating}}"
         bindtap="prepareCheckin"
       >

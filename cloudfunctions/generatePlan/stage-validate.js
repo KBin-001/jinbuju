@@ -45,17 +45,23 @@ function hasExactKeys(value, allowedKeys) {
 }
 
 function safeText(value, minimum, maximum) {
+  if (typeof value !== "string") return false;
+  const cleaned = stripUnicodeNonCharacters(value);
   return (
-    typeof value === "string" &&
-    value.trim().length >= minimum &&
-    value.trim().length <= maximum &&
-    !DANGEROUS_CONTENT.test(value)
+    cleaned.trim().length >= minimum &&
+    cleaned.trim().length <= maximum &&
+    !DANGEROUS_CONTENT.test(cleaned)
   );
+}
+
+function stripUnicodeNonCharacters(text) {
+  // Remove Unicode noncharacters: U+FFFE, U+FFFF, and ranges U+FDD0-U+FDEF
+  return text.replace(/[\ufdd0-\ufdef\ufffe\uffff]/g, "");
 }
 
 function normalizeText(value, minimum, maximum, label) {
   if (typeof value !== "string") fail("AI_RESPONSE_SCHEMA_INVALID", `${label}无效。`);
-  const text = value.trim().replace(/\s+/g, " ");
+  const text = stripUnicodeNonCharacters(value).trim().replace(/\s+/g, " ");
   if (text.length < minimum) fail("AI_RESPONSE_SCHEMA_INVALID", `${label}不能为空。`);
   if (DANGEROUS_CONTENT.test(text)) fail("AI_RESPONSE_SCHEMA_INVALID", `${label}包含不支持内容。`);
   return text.slice(0, maximum);
@@ -67,7 +73,7 @@ function normalizeStringArray(value, maximumItems, maximumLength) {
   const items = [];
   for (const item of value) {
     if (typeof item !== "string") fail("AI_RESPONSE_SCHEMA_INVALID", "数组字段只能包含文本。");
-    const text = item.trim().replace(/\s+/g, " ");
+    const text = stripUnicodeNonCharacters(item).trim().replace(/\s+/g, " ");
     if (text && !DANGEROUS_CONTENT.test(text) && !items.includes(text)) {
       items.push(text.slice(0, maximumLength));
     }
@@ -331,8 +337,8 @@ function validateStagePlan(input, generationInput) {
       actionTitles.add(normalizedTitle);
       totalMinutes += action.estimatedMinutes;
       return {
-        title: action.title.trim(),
-        description: action.description.trim(),
+        title: stripUnicodeNonCharacters(action.title).trim(),
+        description: stripUnicodeNonCharacters(action.description).trim(),
         estimatedMinutes: action.estimatedMinutes,
       };
     });
@@ -341,7 +347,7 @@ function validateStagePlan(input, generationInput) {
     }
     return {
       dayIndex: day.dayIndex,
-      theme: day.theme.trim(),
+      theme: stripUnicodeNonCharacters(day.theme).trim(),
       totalMinutes,
       actions,
     };
@@ -349,9 +355,9 @@ function validateStagePlan(input, generationInput) {
 
   return {
     stage: {
-      title: input.stage.title.trim(),
-      summary: input.stage.summary.trim(),
-      focus: input.stage.focus.trim(),
+      title: stripUnicodeNonCharacters(input.stage.title).trim(),
+      summary: stripUnicodeNonCharacters(input.stage.summary).trim(),
+      focus: stripUnicodeNonCharacters(input.stage.focus).trim(),
       durationDays: input.stage.durationDays,
     },
     days,

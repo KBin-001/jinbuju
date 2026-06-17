@@ -92,12 +92,6 @@ function getCheckinButtonText(
   if (checkedInToday) {
     return "今日已打卡";
   }
-  if (completedCount === 0) {
-    return "完成行动后再记录";
-  }
-  if (completedCount < totalCount) {
-    return "记录今日行动";
-  }
   return "记录今日行动";
 }
 
@@ -380,7 +374,6 @@ Page({
     const goal = this.data.goal;
     if (
       this.data.navigating ||
-      this.data.completedCount === 0 ||
       !goal ||
       !goal.planId ||
       this.data.planReadOnly
@@ -389,6 +382,13 @@ Page({
     }
 
     this.setData({ navigating: true });
+
+    // Build taskResults from current toggle state.
+    const taskResults = this.data.tasks.map((task: TodayViewTask) => ({
+      taskId: task.id,
+      status: task.completed ? "completed" as const : "" as const,
+    })).filter((r: { taskId: string; status: string }) => r.status !== "");
+
     const draft: TodayCheckinDraft = {
       goalId: goal.id,
       planId: goal.planId,
@@ -400,6 +400,7 @@ Page({
       completedCount: this.data.completedCount,
       totalCount: this.data.totalCount,
       preparedAt: Date.now(),
+      taskResults: taskResults.length > 0 ? taskResults : undefined,
     };
     saveTodayCheckinDraft(draft);
 
