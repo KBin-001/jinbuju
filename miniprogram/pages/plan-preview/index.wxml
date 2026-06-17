@@ -1,6 +1,6 @@
 <view class="preview-page">
   <view class="preview-header">
-    <button class="preview-back" disabled="{{confirming || savingTask}}" bindtap="goBack">‹</button>
+    <button class="preview-back" disabled="{{confirming || savingTask || regenerating}}" bindtap="goBack">‹</button>
     <view class="preview-header-title">行动计划预览</view>
     <view class="preview-header-space"></view>
   </view>
@@ -22,6 +22,13 @@
   <block wx:else>
     <scroll-view class="plan-scroll" scroll-y enhanced show-scrollbar="{{false}}">
       <view class="plan-content">
+        <!-- Regenerating overlay -->
+        <view wx:if="{{regenerating}}" class="regen-overlay">
+          <view class="loading-dot"></view>
+          <view class="regen-title">正在根据你的反馈调整行动方案</view>
+          <view class="regen-subtitle">我们会重新检查任务量、难度、行动方式和时间安排。</view>
+        </view>
+
         <view wx:if="{{isV2Create && preview.generatedBy === 'template'}}" class="optimization-failed">
           <view>
             <view class="notice-title">已为你生成一份基础行动方案</view>
@@ -31,6 +38,10 @@
         <view wx:elif="{{isV2Create && preview.generatedBy === 'ai_repaired'}}" class="optimization-notice">
           <view class="notice-title">方案已完成自动修正</view>
           <view>系统已根据校验结果整理为可执行的行动阶段。</view>
+        </view>
+        <view wx:elif="{{isV2Create && (preview.generatedBy === 'regenerated_ai' || preview.generatedBy === 'regenerated_ai_repaired')}}" class="optimization-notice regen-success">
+          <view class="notice-title">方案已根据你的反馈重新生成</view>
+          <view>这是第 {{preview.currentVersion}} 版方案。</view>
         </view>
 
         <view class="plan-hero">
@@ -105,7 +116,7 @@
                     <view class="task-time">预计 {{action.estimatedMinutes}} 分钟</view>
                   </view>
                   <button
-                    wx:if="{{isV2Create}}"
+                    wx:if="{{isV2Create && !regenerating}}"
                     class="edit-button"
                     data-slot-id="{{action.slotId}}"
                     bindtap="beginEdit"
@@ -115,15 +126,79 @@
             </view>
           </block>
         </view>
+
+        <!-- Feedback suitability section -->
+        <view wx:if="{{isV2Create && !regenerating}}" class="feedback-section">
+          <view class="feedback-question">这个方案适合你吗？</view>
+
+          <view wx:if="{{regenerationError}}" class="regen-error">
+            <view>{{regenerationError}}</view>
+          </view>
+
+          <view wx:if="{{showFeedbackPanel}}" class="feedback-panel">
+            <view class="feedback-hint">告诉我们哪里不合适，AI 会重新设计整个阶段，而不是只修改几句话。</view>
+
+            <view class="feedback-options">
+              <button
+                wx:for="{{feedbackOptions}}"
+                wx:key="type"
+                wx:for-item="option"
+                class="feedback-chip {{feedbackTypeSet[option.type] ? 'selected' : ''}}"
+                data-type="{{option.type}}"
+                bindtap="toggleFeedbackType"
+              >{{option.label}}</button>
+            </view>
+
+            <view wx:if="{{hasOtherFeedback || selectedFeedbackTypes.length > 0}}" class="feedback-note-section">
+              <view class="edit-label">补充说明（可选，最多 200 字）</view>
+              <textarea
+                class="feedback-note-input"
+                maxlength="200"
+                placeholder="例如：我暂时无法去付费场馆"
+                value="{{feedbackNote}}"
+                bindinput="inputFeedbackNote"
+              />
+              <view class="note-counter">{{feedbackNote.length}}/200</view>
+            </view>
+
+            <view class="feedback-remaining">
+              剩余重新生成次数：{{preview.maxRegenerationCount - preview.regenerationCount}}
+            </view>
+
+            <view class="feedback-actions">
+              <button class="feedback-cancel" disabled="{{regenerating}}" bindtap="closeFeedbackPanel">取消</button>
+              <button
+                class="feedback-submit"
+                loading="{{regenerating}}"
+                disabled="{{regenerating || selectedFeedbackTypes.length === 0}}"
+                bindtap="submitRegeneration"
+              >重新生成方案</button>
+            </view>
+          </view>
+        </view>
+
         <view class="plan-bottom-spacer"></view>
       </view>
     </scroll-view>
 
     <view class="preview-actions">
-      <button class="adopt-button" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
-        确认并开始
-      </button>
-      <button wx:if="{{isV2Create}}" class="text-action" disabled="{{confirming}}" bindtap="editGoal">调整目标设置</button>
+      <block wx:if="{{isV2Create && !showFeedbackPanel && !regenerating}}">
+        <button class="adopt-button" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
+          适合，开始行动
+        </button>
+        <button class="adjust-button" disabled="{{confirming || (preview.maxRegenerationCount - preview.regenerationCount) <= 0}}" bindtap="openFeedbackPanel">
+          需要调整
+        </button>
+      </block>
+      <block wx:elif="{{!isV2Create}}">
+        <button class="adopt-button" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
+          确认并开始
+        </button>
+      </block>
+      <block wx:else>
+        <button class="adopt-button" disabled="{{true}}">调整中...</button>
+      </block>
+      <button wx:if="{{isV2Create && !showFeedbackPanel}}" class="text-action" disabled="{{confirming || regenerating}}" bindtap="editGoal">调整目标设置</button>
     </view>
   </block>
 </view>

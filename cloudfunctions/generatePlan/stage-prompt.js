@@ -15,6 +15,7 @@ const DURATION_LABELS = {
 };
 const DIRECT_STAGE_PROMPT_VERSION = "stage-direct-v1";
 const GOAL_ANALYSIS_PROMPT_VERSION = "goal-analysis-v1";
+const STAGE_REGENERATION_PROMPT_VERSION = "stage-regeneration-v1";
 
 function buildStagePrompt(input) {
   const review = input.previousReview
@@ -263,13 +264,224 @@ function buildGoalAnalysisRepairPrompt(input, invalidText) {
 ${String(invalidText || "").slice(0, 4000)}`;
 }
 
+const FEEDBACK_TYPE_LABELS = {
+  too_many_tasks: "任务太多",
+  too_few_tasks: "任务太少",
+  too_difficult: "难度太高",
+  too_easy: "难度太低",
+  too_theoretical: "太偏理论",
+  not_enough_practice: "缺少实践",
+  time_unreasonable: "时间安排不合理",
+  resource_unavailable: "需要的资源我没有",
+  direction_mismatch: "方向不符合预期",
+  too_repetitive: "任务内容太重复",
+  other: "其他",
+};
+
+const FEEDBACK_RESOLUTION_RULES = {
+  too_many_tasks: "减少每天行动数量或缩短总时间，确保每日行动数明显少于上一版。",
+  too_few_tasks: "在不超过时间预算的前提下增加合理行动。",
+  too_difficult: "降低起步难度，拆小行动，减少复杂资源依赖。",
+  too_easy: "在用户能力范围内增加挑战和可验证成果。",
+  too_theoretical: "减少阅读、观看、记录类行动，增加实践性行动。",
+  not_enough_practice: "增加 practice、execution、creation 类行动的比例。",
+  time_unreasonable: "重新分配每天时间，使其符合 dailyMinutes 限制且分布合理。",
+  resource_unavailable: "移除依赖用户没有的设备、场地、软件或服务，只使用用户已声明的资源。",
+  direction_mismatch: "重新围绕 desiredOutcome 和用户说明确定阶段重点。",
+  too_repetitive: "增加行动形式差异，但不能为了多样而偏离目标。",
+  other: "根据用户补充说明实质调整方案。",
+};
+
+function buildFeedbackInstructions(feedbackTypes, feedbackNote) {
+  const lines = feedbackTypes.map(
+    (type) => `- ${FEEDBACK_TYPE_LABELS[type] || type}：${FEEDBACK_RESOLUTION_RULES[type] || "根据反馈调整。"}`,
+  );
+  if (feedbackNote) {
+    lines.push(`- 用户补充说明：${feedbackNote}`);
+  }
+  return lines.join("\n");
+}
+
+function buildCurrentPlanSummary(currentPlan) {
+  const actions = currentPlan.days.flatMap((day) => day.actions);
+  const actionTypeDistribution = {};
+  actions.forEach((action) => {
+    const type = action.actionType || "practice";
+    actionTypeDistribution[type] = (actionTypeDistribution[type] || 0) + 1;
+  });
+  const totalMinutes = actions.reduce((sum, a) => sum + (a.estimatedMinutes || 0), 0);
+  const activeDays = currentPlan.days.filter((d) => !d.isRestDay && d.actions.length > 0);
+  const requiredResources = Array.from(
+    new Set(actions.flatMap((a) => a.requiredResources || [])),
+  );
+  return {
+    stageTitle: currentPlan.stage.title,
+    objective: currentPlan.stage.objective || currentPlan.stage.summary || "",
+    focus: currentPlan.stage.focus,
+    durationDays: currentPlan.stage.durationDays,
+    totalActionCount: actions.length,
+    averageDailyMinutes: activeDays.length ? Math.round(totalMinutes / activeDays.length) : 0,
+    actionTypeDistribution,
+    requiredResources,
+  };
+}
+
+function buildStageRegenerationPrompt(context) {
+  const profile = context.goalProfile;
+  const summary = context.currentPlanSummary;
+  const feedback = context.feedback;
+
+  const safetyRule =
+    /搏击|格斗|拳击|散打|武术|防身|对练|实战/.test(profile.title)
+      ? `
+安全附加要求：
+- 只能生成安全、合法、循序渐进的体能准备、基础训练安排和正规教学建议。
+- 涉及专业动作、实战训练或对练时，应建议在正规场馆和合格教练指导下进行。
+- 不得生成用于伤害他人的技术指导，不得鼓励无保护对练或高风险自行训练。`
+      : "";
+
+  return `你是一名长期目标行动规划助手。
+
+用户已经查看了上一版行动阶段，并反馈该方案不适合。
+
+你需要根据：
+1. 用户完整 GoalProfile
+2. 上一版方案摘要
+3. 用户选择的结构化反馈
+4. 上一版质量问题
+5. 用户时间和资源限制
+
+重新设计完整阶段方案。
+
+这不是修改文案任务。
+
+你可以重新决定：
+- 阶段标题
+- 阶段目标
+- 阶段重点
+- 每天主题
+- 每天行动数量
+- 行动类型
+- 行动顺序
+- 时间分配
+- 完成标准
+- 所需资源
+- 安全提示
+
+不得只对原方案换词。必须实质解决用户反馈的问题。
+
+用户目标资料：
+- 目标名称：${profile.title}
+- 期望结果：${profile.desiredOutcome}
+- 领域标签：${profile.domainLabel}
+- 目标类型：${profile.goalType}
+- 分类组：${profile.categoryGroup}
+- 当前水平：${profile.currentLevel}
+- 计划强度：${profile.intensity}
+- 每日可投入：${profile.dailyMinutes} 分钟
+- 阶段天数：${profile.durationDays} 天
+- 截止日期：${profile.deadline || "未设置"}
+- 每周执行频率：${profile.weeklyFrequency || profile.durationDays} 天
+- 限制条件：
+${listItems(profile.constraints)}
+- 可用资源：
+${listItems(profile.availableResources)}
+- 用户偏好：
+${listItems(profile.preferences)}
+${safetyRule}
+
+上一版方案摘要：
+- 阶段标题：${summary.stageTitle}
+- 阶段目标：${summary.objective}
+- 阶段重点：${summary.focus}
+- 阶段天数：${summary.durationDays}
+- 总行动数：${summary.totalActionCount}
+- 日均时间：${summary.averageDailyMinutes} 分钟
+- 行动类型分布：${JSON.stringify(summary.actionTypeDistribution)}
+- 所需资源：${summary.requiredResources.join("、") || "无"}
+
+用户结构化反馈：
+${buildFeedbackInstructions(feedback.types, feedback.note)}
+
+${context.previousQualityProblems.length ? `上一版质量问题：\n${listItems(context.previousQualityProblems)}` : ""}
+
+这是第 ${context.regenerationAttempt} 次重新生成。
+
+每项行动必须包括：
+1. 明确动作
+2. 执行说明
+3. 可验证的完成标准
+4. 预计时间
+5. 所需资源
+6. 必要安全提示
+
+要求：
+- 每天 1～4 个行动，休息日 actions 为空。
+- 每天总时间不得明显超过 dailyMinutes。
+- 行动内容必须适合用户当前水平。
+- 行动应循序渐进。
+- 不得假设用户拥有没有提供的设备、场馆、软件或付费服务。
+- 不得生成大量重复行动。
+- 不得使用"努力学习""坚持练习""了解相关知识"等空泛表达代替行动。
+- 只能输出规定 JSON。
+- 不输出 Markdown。
+- 不输出解释文字。
+
+只允许输出以下 JSON 结构：
+{
+  "stage": {
+    "title": "2～40字",
+    "objective": "5～200字",
+    "focus": "2～80字",
+    "durationDays": ${profile.durationDays},
+    "successMetrics": ["3～80字"],
+    "assumptions": ["3～80字"]
+  },
+  "days": [
+    {
+      "dayIndex": 1,
+      "theme": "2～40字",
+      "isRestDay": false,
+      "actions": [
+        {
+          "title": "2～50字的具体行动",
+          "actionType": "practice",
+          "description": "5～200字的执行说明",
+          "completionCriteria": "3～150字的完成标准",
+          "estimatedMinutes": 30,
+          "requiredResources": ["资源名称"],
+          "safetyNotes": ["必要安全提示"]
+        }
+      ]
+    }
+  ]
+}`;
+}
+
+function buildStageRegenerationRepairPrompt(context, invalidText, problems) {
+  return `${buildStageRegenerationPrompt(context)}
+
+上一份输出未通过校验或质量检查。请只返回修复后的完整 JSON，不要解释原因。
+
+需要修复的问题：
+${listItems(problems)}
+
+上一份输出仅用于识别问题：
+${String(invalidText || "").slice(0, 4000)}`;
+}
+
 module.exports = {
   DIRECT_STAGE_PROMPT_VERSION,
   GOAL_ANALYSIS_PROMPT_VERSION,
+  STAGE_REGENERATION_PROMPT_VERSION,
+  buildCurrentPlanSummary,
   buildDirectStageGenerationPrompt,
   buildDirectStageRepairPrompt,
   buildGoalAnalysisPrompt,
   buildGoalAnalysisRepairPrompt,
   buildStagePrompt,
+  buildStageRegenerationPrompt,
+  buildStageRegenerationRepairPrompt,
   buildStageRepairPrompt,
+  FEEDBACK_TYPE_LABELS,
 };

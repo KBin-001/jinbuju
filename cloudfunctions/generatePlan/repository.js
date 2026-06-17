@@ -18,6 +18,7 @@ const REQUIRED_COLLECTIONS = [
   "stage_previews",
   "stage_reviews",
   "goal_analysis_drafts",
+  "stage_preview_versions",
 ];
 let collectionsReady = false;
 

@@ -3,13 +3,16 @@ import {
   createStagePreview,
   createStageRequestId,
   getStagePreview,
+  regenerateStagePreview,
   updateStagePreviewTask,
 } from "../../services/stage";
 import {
   AIStageAction,
   AIStageDay,
   CreateStagePreviewInput,
+  StageFeedbackType,
   StageGenerationResult,
+  STAGE_FEEDBACK_OPTIONS,
 } from "../../types/stage";
 import {
   clearLongTermGoalDraft,
@@ -34,6 +37,7 @@ interface DatasetEvent {
     dataset: {
       week?: number;
       slotId?: string;
+      type?: string;
     };
   };
 }
@@ -89,6 +93,9 @@ function buildWeeks(days: AIStageDay[], current: WeekView[] = []): WeekView[] {
   return weeks;
 }
 
+const REGEN_POLL_INTERVAL = 3000;
+const REGEN_MAX_POLLS = 30;
+
 Page({
   data: {
     status: "loading" as PreviewStatus,
@@ -107,6 +114,14 @@ Page({
     savingTask: false,
     createRequestId: "",
     optimizationPollCount: 0,
+    showFeedbackPanel: false,
+    selectedFeedbackTypes: [] as StageFeedbackType[],
+    feedbackTypeSet: {} as Record<string, boolean>,
+    hasOtherFeedback: false,
+    feedbackNote: "",
+    regenerating: false,
+    regenerationError: "",
+    feedbackOptions: STAGE_FEEDBACK_OPTIONS,
   },
 
   onLoad(options: { create?: string; previewId?: string }) {
@@ -157,6 +172,14 @@ Page({
     const analysisId = getCreateAnalysisId();
     createStagePreview(analysisId ? null : input, requestId, analysisId || undefined)
       .then((result) => {
+        if (result.generatedBy === "template") {
+          console.warn("[plan-preview] stage preview used template fallback", {
+            fallbackReason: result.fallbackReason || "",
+            modelId: result.modelId || "",
+            providerGroup: result.providerGroup || "",
+            analysisIdSuffix: analysisId ? analysisId.slice(-8) : "",
+          });
+        }
         saveStagePreviewCache({ input, analysisId, result, generatedAt: Date.now() });
         this.applyPreview(result);
       })
@@ -172,6 +195,12 @@ Page({
     this.setData({ status: "loading", errorMessage: "" });
     getStagePreview(previewId)
       .then((preview) => {
+        if (preview.generationStatus === "regenerating") {
+          this.setData({ regenerating: true });
+          this.applyPreview(preview);
+          this.pollRegenerationStatus(preview.previewId, 0);
+          return;
+        }
         this.applyPreview(preview);
       })
       .catch((error: Error) => {
@@ -191,6 +220,10 @@ Page({
         generatedAt: Date.now(),
       });
     }
+    const remaining = Math.max(
+      0,
+      (preview.maxRegenerationCount || 2) - (preview.regenerationCount || 0),
+    );
     this.setData({
       status: "ready",
       preview,
@@ -202,6 +235,9 @@ Page({
         preview.optimizationStatus === "processing"
           ? this.data.optimizationPollCount
           : 0,
+      showFeedbackPanel: false,
+      regenerating: preview.generationStatus === "regenerating",
+      regenerationError: "",
     });
   },
 
@@ -231,7 +267,7 @@ Page({
   },
 
   beginEdit(event: DatasetEvent) {
-    if (!this.data.isV2Create || this.data.savingTask) return;
+    if (!this.data.isV2Create || this.data.savingTask || this.data.regenerating) return;
     const slotId = String(event.currentTarget.dataset.slotId || "");
     let action: AIStageAction | null = null;
     this.data.preview?.stagePlan.days.forEach((day: AIStageDay) => {
@@ -301,21 +337,27 @@ Page({
   },
 
   editGoal() {
-    if (this.data.confirming || this.data.savingTask) return;
+    if (this.data.confirming || this.data.savingTask || this.data.regenerating) return;
     wx.navigateBack({
       fail: () => wx.redirectTo({ url: "/pages/goal-create/index" }),
     });
   },
 
   goBack() {
-    if (!this.data.confirming && !this.data.savingTask) wx.navigateBack();
+    if (!this.data.confirming && !this.data.savingTask && !this.data.regenerating) {
+      wx.navigateBack();
+    }
   },
 
   confirmStage() {
     const preview = this.data.preview;
-    if (!preview || this.data.confirming || this.data.savingTask) return;
+    if (!preview || this.data.confirming || this.data.savingTask || this.data.regenerating) return;
     this.setData({ confirming: true });
-    confirmStagePlan(preview.previewId, this.data.isV2Create ? preview.revision : undefined)
+    confirmStagePlan(
+      preview.previewId,
+      this.data.isV2Create ? preview.revision : undefined,
+      this.data.isV2Create ? preview.currentVersion : undefined,
+    )
       .then(() => {
         clearLongTermGoalDraft();
         clearGoalAnalysisCache();
@@ -334,5 +376,123 @@ Page({
         });
       })
       .then(() => this.setData({ confirming: false }));
+  },
+
+  // ─── Feedback & Regeneration ────────────────────────────────────────
+
+  openFeedbackPanel() {
+    if (this.data.regenerating || this.data.confirming) return;
+    const preview = this.data.preview;
+    if (!preview) return;
+    const remaining = Math.max(
+      0,
+      (preview.maxRegenerationCount || 2) - (preview.regenerationCount || 0),
+    );
+    if (remaining <= 0) {
+      wx.showToast({ title: "重新生成次数已用完", icon: "none" });
+      return;
+    }
+    this.setData({
+      showFeedbackPanel: true,
+      selectedFeedbackTypes: [],
+      feedbackTypeSet: {},
+      hasOtherFeedback: false,
+      feedbackNote: "",
+      regenerationError: "",
+    });
+  },
+
+  closeFeedbackPanel() {
+    if (!this.data.regenerating) {
+      this.setData({ showFeedbackPanel: false });
+    }
+  },
+
+  toggleFeedbackType(event: DatasetEvent) {
+    const type = event.currentTarget.dataset.type as StageFeedbackType;
+    if (!type) return;
+    const current = this.data.selectedFeedbackTypes;
+    const index = current.indexOf(type);
+    let newTypes: StageFeedbackType[];
+    if (index >= 0) {
+      newTypes = current.filter((t) => t !== type);
+    } else if (current.length < 3) {
+      newTypes = [...current, type];
+    } else {
+      wx.showToast({ title: "最多选择 3 个问题类型", icon: "none" });
+      return;
+    }
+    const newSet: Record<string, boolean> = {};
+    newTypes.forEach((t) => { newSet[t] = true; });
+    this.setData({
+      selectedFeedbackTypes: newTypes,
+      feedbackTypeSet: newSet,
+      hasOtherFeedback: newTypes.indexOf("other") >= 0,
+    });
+  },
+
+  inputFeedbackNote(event: { detail: { value?: string } }) {
+    this.setData({ feedbackNote: String(event.detail.value || "").slice(0, 200) });
+  },
+
+  submitRegeneration() {
+    const preview = this.data.preview;
+    if (!preview || this.data.regenerating) return;
+    const types = this.data.selectedFeedbackTypes;
+    if (types.length === 0) {
+      wx.showToast({ title: "请至少选择一个问题类型", icon: "none" });
+      return;
+    }
+    const note = this.data.feedbackNote.trim();
+    this.setData({ regenerating: true, regenerationError: "" });
+
+    regenerateStagePreview({
+      previewId: preview.previewId,
+      feedbackTypes: types,
+      feedbackNote: note || undefined,
+      requestId: createStageRequestId(),
+    })
+      .then((result) => {
+        this.applyPreview(result);
+        wx.showToast({ title: "方案已重新生成", icon: "success" });
+      })
+      .catch((error: Error & { code?: string }) => {
+        const code = error.code || "";
+        let message = error.message || "暂时没有生成新的方案，当前方案已经保留。";
+        if (code === "STAGE_REGENERATION_LIMIT_REACHED") {
+          message = "重新生成次数已用完。";
+        } else if (code === "PREVIEW_REGENERATION_IN_PROGRESS") {
+          message = "AI 正在重新生成方案，请稍后。";
+        }
+        this.setData({
+          regenerating: false,
+          regenerationError: message,
+        });
+      });
+  },
+
+  pollRegenerationStatus(previewId: string, attempt: number) {
+    if (attempt >= REGEN_MAX_POLLS) {
+      this.setData({ regenerating: false });
+      return;
+    }
+    setTimeout(() => {
+      getStagePreview(previewId)
+        .then((preview) => {
+          if (preview.generationStatus === "regenerating") {
+            this.pollRegenerationStatus(previewId, attempt + 1);
+            return;
+          }
+          this.applyPreview(preview);
+          if (preview.generationStatus === "failed") {
+            this.setData({
+              regenerationError: "暂时没有生成新的方案，当前方案已经保留。",
+            });
+          }
+        })
+        .catch(() => {
+          this.setData({ regenerating: false });
+        });
+    }, REGEN_POLL_INTERVAL);
   },
 });

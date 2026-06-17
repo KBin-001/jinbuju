@@ -47,7 +47,7 @@ async function getPreviewRecord(openid, previewId) {
 }
 
 function publicPreview(preview) {
-  const generatedBy = ["ai", "ai_repaired", "template"].includes(preview.generatedBy)
+  const generatedBy = ["ai", "ai_repaired", "template", "regenerated_ai", "regenerated_ai_repaired"].includes(preview.generatedBy)
     ? preview.generatedBy
     : "template";
   return {
@@ -63,6 +63,11 @@ function publicPreview(preview) {
     optimizationStatus: preview.optimizationStatus || "idle",
     optimizationAttempts: Number(preview.optimizationAttempts || 0),
     fallbackReason: preview.fallbackReason || "",
+    currentVersion: Number(preview.currentVersion || 1),
+    regenerationCount: Number(preview.regenerationCount || 0),
+    maxRegenerationCount: Number(preview.maxRegenerationCount || 2),
+    generationStatus: preview.generationStatus || "ready",
+    lastFeedback: preview.lastFeedback || null,
   };
 }
 
@@ -81,6 +86,11 @@ async function confirmStagePlan(openid, event) {
   }
   if (preview.status !== "preview") {
     fail("STAGE_ALREADY_CONFIRMED", "阶段已经确认。");
+  }
+  const clientVersion = event && event.version !== undefined ? Number(event.version) : undefined;
+  const currentVersion = Number(preview.currentVersion || 1);
+  if (clientVersion !== undefined && clientVersion !== currentVersion) {
+    fail("PREVIEW_VERSION_MISMATCH", "方案版本不匹配，请刷新后重试。");
   }
   if (
     event &&
@@ -120,6 +130,10 @@ async function confirmStagePlan(openid, event) {
         };
       }
       fail("STAGE_ALREADY_CONFIRMED", "阶段已经确认。");
+    }
+    const currentVersionInner = Number(currentPreview.currentVersion || 1);
+    if (clientVersion !== undefined && clientVersion !== currentVersionInner) {
+      fail("PREVIEW_VERSION_MISMATCH", "方案版本不匹配，请刷新后重试。");
     }
     if (
       event &&
@@ -281,7 +295,14 @@ async function confirmStagePlan(openid, event) {
       });
     }
     await transaction.collection("stage_previews").doc(preview._id).update({
-      data: { status: "confirmed", goalId, stageId, confirmedAt: now, updatedAt: now },
+      data: {
+        status: "confirmed",
+        goalId,
+        stageId,
+        confirmedVersion: currentVersion,
+        confirmedAt: now,
+        updatedAt: now,
+      },
     });
     return { goalId, stageId, confirmed: true };
   });

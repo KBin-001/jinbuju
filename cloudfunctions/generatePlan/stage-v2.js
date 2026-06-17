@@ -9,14 +9,21 @@ const { DANGEROUS_CONTENT } = require("./constants");
 const { getOwnedAnalysis } = require("./goal-analysis");
 const {
   GENERATED_STAGE_SCHEMA_VERSION,
+  evaluateFeedbackResolution,
   evaluateStagePlanQuality,
+  validateFeedbackNote,
+  validateFeedbackTypes,
   validateGeneratedStagePlan,
   validateStageRequestId,
 } = require("./stage-validate");
 const {
   DIRECT_STAGE_PROMPT_VERSION,
+  STAGE_REGENERATION_PROMPT_VERSION,
+  buildCurrentPlanSummary,
   buildDirectStageGenerationPrompt,
   buildDirectStageRepairPrompt,
+  buildStageRegenerationPrompt,
+  buildStageRegenerationRepairPrompt,
 } = require("./stage-prompt");
 
 const db = cloud.database();
@@ -32,8 +39,20 @@ const ACTIVE_WEEK_DAYS = {
 };
 const PREVIEW_LIFETIME_MILLISECONDS = 24 * 60 * 60 * 1000;
 const MAX_OPTIMIZATION_ATTEMPTS = 2;
+const MAX_STAGE_REGENERATIONS = 2;
+const STAGE_GENERATION_TIMEOUT_MS = 45000;
+const STAGE_REPAIR_TIMEOUT_MS = 30000;
 const DEFAULT_MODEL_ID = process.env.CLOUDBASE_AI_MODEL || "hy3-preview";
 const DEFAULT_PROVIDER_GROUP = process.env.CLOUDBASE_AI_PROVIDER || "cloudbase";
+
+function shortError(error) {
+  return {
+    code: error && error.code ? String(error.code).slice(0, 80) : "UNKNOWN",
+    errCode: error && error.errCode !== undefined ? String(error.errCode).slice(0, 80) : "",
+    errMsg: error && error.errMsg ? String(error.errMsg).slice(0, 200) : "",
+    message: error && error.message ? String(error.message).slice(0, 200) : "",
+  };
+}
 
 const GOAL_TEMPLATES = {
   cet4: {
@@ -318,7 +337,7 @@ function buildBaseStagePlan(input) {
 }
 
 function publicPreview(preview, reused = true) {
-  const generatedBy = ["ai", "ai_repaired", "template"].includes(preview.generatedBy)
+  const generatedBy = ["ai", "ai_repaired", "template", "regenerated_ai", "regenerated_ai_repaired"].includes(preview.generatedBy)
     ? preview.generatedBy
     : "template";
   return {
@@ -334,6 +353,11 @@ function publicPreview(preview, reused = true) {
     optimizationStatus: preview.optimizationStatus || "idle",
     optimizationAttempts: Number(preview.optimizationAttempts || 0),
     fallbackReason: preview.fallbackReason || "",
+    currentVersion: Number(preview.currentVersion || 1),
+    regenerationCount: Number(preview.regenerationCount || 0),
+    maxRegenerationCount: Number(preview.maxRegenerationCount || MAX_STAGE_REGENERATIONS),
+    generationStatus: preview.generationStatus || "ready",
+    lastFeedback: preview.lastFeedback || null,
   };
 }
 
@@ -413,6 +437,10 @@ async function createStagePreview(openid, event) {
       optimizationStatus: "idle",
       optimizationAttempts: 0,
       optimizationPlan: null,
+      currentVersion: 1,
+      regenerationCount: 0,
+      maxRegenerationCount: MAX_STAGE_REGENERATIONS,
+      lastFeedback: null,
       expiresAt: new Date(Date.now() + PREVIEW_LIFETIME_MILLISECONDS),
       createdAt: db.serverDate(),
       updatedAt: db.serverDate(),
@@ -436,7 +464,7 @@ async function createStagePreview(openid, event) {
       const prompt = buildDirectStageGenerationPrompt(goalProfile);
       const result = await provider.generateStagePlanWithMetadata(
         prompt,
-        22000,
+        STAGE_GENERATION_TIMEOUT_MS,
         {
           action: "createStagePreview",
           promptVersion: DIRECT_STAGE_PROMPT_VERSION,
@@ -484,17 +512,24 @@ async function createStagePreview(openid, event) {
       console.warn("stage direct generation needs repair", {
         action: "createStagePreview",
         code: fallbackReason,
+        error: shortError(firstError),
+        firstProblems,
         promptVersion: DIRECT_STAGE_PROMPT_VERSION,
         schemaVersion: GENERATED_STAGE_SCHEMA_VERSION,
         durationDays: input.durationDays,
         dailyMinutes: input.dailyMinutes,
       });
       try {
+        if (firstError.code === "AI_REQUEST_TIMEOUT" && !firstOutput) {
+          const timeoutError = new Error("AI_REQUEST_TIMEOUT");
+          timeoutError.code = "AI_REQUEST_TIMEOUT";
+          throw timeoutError;
+        }
         repairAttempted = true;
         const repairPrompt = buildDirectStageRepairPrompt(goalProfile, firstOutput, firstProblems);
         const repaired = await provider.generateStagePlanWithMetadata(
           repairPrompt,
-          18000,
+          STAGE_REPAIR_TIMEOUT_MS,
           {
             action: "createStagePreviewRepair",
             promptVersion: DIRECT_STAGE_PROMPT_VERSION,
@@ -523,6 +558,9 @@ async function createStagePreview(openid, event) {
         console.warn("stage direct generation using template fallback", {
           action: "createStagePreview",
           code: fallbackReason,
+          firstFailure: shortError(firstError),
+          repairFailure: shortError(repairError),
+          firstProblems,
           promptVersion: DIRECT_STAGE_PROMPT_VERSION,
           schemaVersion: GENERATED_STAGE_SCHEMA_VERSION,
           durationDays: input.durationDays,
@@ -566,6 +604,10 @@ async function createStagePreview(openid, event) {
       optimizationStatus: "idle",
       optimizationAttempts: 0,
       optimizationPlan: null,
+      currentVersion: 1,
+      regenerationCount: 0,
+      maxRegenerationCount: MAX_STAGE_REGENERATIONS,
+      lastFeedback: null,
       expiresAt: new Date(Date.now() + PREVIEW_LIFETIME_MILLISECONDS),
       createdAt: db.serverDate(),
       updatedAt: db.serverDate(),
@@ -578,6 +620,13 @@ async function createStagePreview(openid, event) {
         previewId,
         updatedAt: db.serverDate(),
       },
+    }).catch((error) => {
+      console.warn("goal analysis consume mark failed", {
+        analysisIdSuffix: String(analysisRecord._id || "").slice(-8),
+        code: error && error.code ? String(error.code).slice(0, 80) : "UNKNOWN",
+        errCode: error && error.errCode !== undefined ? String(error.errCode).slice(0, 80) : "",
+        errMsg: error && error.errMsg ? String(error.errMsg).slice(0, 160) : "",
+      });
     });
   }
   return publicPreview(await getOwnedPreview(openid, previewId), false);
@@ -978,9 +1027,224 @@ async function applyStageOptimization(openid, event) {
   return publicPreview(result);
 }
 
+async function regenerateStagePreview(openid, event) {
+  const previewId = String((event && event.previewId) || "");
+  const feedbackTypes = validateFeedbackTypes(event && event.feedbackTypes);
+  const feedbackNote = validateFeedbackNote(event && event.feedbackNote);
+  validateStageRequestId(event && event.requestId);
+
+  const preview = await getOwnedPreview(openid, previewId);
+
+  if (preview.status !== "preview") {
+    fail("PREVIEW_ALREADY_CONFIRMED", "当前计划已经确认。");
+  }
+
+  if (preview.generationStatus === "regenerating") {
+    const updatedAt =
+      preview.updatedAt instanceof Date
+        ? preview.updatedAt.getTime()
+        : preview.updatedAt && preview.updatedAt.$date
+          ? new Date(preview.updatedAt.$date).getTime()
+          : new Date(preview.updatedAt || 0).getTime();
+    if (!Number.isFinite(updatedAt) || Date.now() - updatedAt < 2 * 60 * 1000) {
+      fail("PREVIEW_REGENERATION_IN_PROGRESS", "AI 正在重新生成方案。");
+    }
+  }
+
+  const currentCount = Number(preview.regenerationCount || 0);
+  if (currentCount >= MAX_STAGE_REGENERATIONS) {
+    fail("STAGE_REGENERATION_LIMIT_REACHED", "重新生成次数已用完。");
+  }
+
+  const goalProfile = preview.goalProfile;
+  if (!goalProfile) {
+    fail("INTERNAL_ERROR", "目标资料不存在。");
+  }
+  const currentPlan = preview.stagePlan;
+  if (!currentPlan) {
+    fail("INTERNAL_ERROR", "当前方案不存在。");
+  }
+
+  await db.collection("stage_previews").doc(previewId).update({
+    data: {
+      generationStatus: "regenerating",
+      updatedAt: db.serverDate(),
+    },
+  });
+
+  const currentPlanSummary = buildCurrentPlanSummary(currentPlan);
+  const previousQualityProblems = [];
+  const context = {
+    goalProfile,
+    currentPlanSummary,
+    feedback: { types: feedbackTypes, note: feedbackNote },
+    previousQualityProblems,
+    regenerationAttempt: currentCount + 1,
+  };
+
+  const generationStartedAt = Date.now();
+  let newStagePlan = null;
+  let generatedBy = "template";
+  let modelId = preview.modelId || DEFAULT_MODEL_ID;
+  let providerGroup = preview.providerGroup || DEFAULT_PROVIDER_GROUP;
+  let totalTokens = 0;
+  let firstOutput = "";
+  let firstProblems = [];
+
+  try {
+    const provider = createStagePlanProvider();
+    const prompt = buildStageRegenerationPrompt(context);
+    const result = await provider.generateStagePlanWithMetadata(prompt, 22000, {
+      action: "regenerateStagePreview",
+      promptVersion: STAGE_REGENERATION_PROMPT_VERSION,
+      schemaVersion: GENERATED_STAGE_SCHEMA_VERSION,
+      durationDays: goalProfile.durationDays,
+      dailyMinutes: goalProfile.dailyMinutes,
+      repairAttempted: false,
+    });
+    firstOutput = result.text;
+    modelId = result.metadata.modelId || modelId;
+    providerGroup = result.metadata.providerGroup || providerGroup;
+    totalTokens += Number(result.metadata.totalTokens || 0);
+
+    const parsed = parseAiJson(firstOutput);
+    const candidate = validateGeneratedStagePlan(parsed, goalProfile);
+    const quality = evaluateStagePlanQuality(candidate, goalProfile);
+    if (quality.shouldRepair) {
+      firstProblems = quality.problems;
+      const error = new Error("QUALITY_REPAIR_REQUIRED");
+      error.code = "QUALITY_REPAIR_REQUIRED";
+      throw error;
+    }
+
+    const resolution = evaluateFeedbackResolution(candidate, currentPlan, feedbackTypes, goalProfile);
+    if (!resolution.resolved) {
+      firstProblems.push(...resolution.problems);
+      const error = new Error("FEEDBACK_NOT_RESOLVED");
+      error.code = "FEEDBACK_NOT_RESOLVED";
+      throw error;
+    }
+
+    newStagePlan = candidate;
+    generatedBy = "regenerated_ai";
+    console.info("stage regeneration accepted", {
+      action: "regenerateStagePreview",
+      providerGroup,
+      modelId,
+      promptVersion: STAGE_REGENERATION_PROMPT_VERSION,
+      durationDays: goalProfile.durationDays,
+      dailyMinutes: goalProfile.dailyMinutes,
+      generationDurationMs: Date.now() - generationStartedAt,
+      generationSource: "regenerated_ai",
+      feedbackTypes,
+      totalTokens,
+    });
+  } catch (firstError) {
+    firstProblems = firstProblems.length ? firstProblems : [firstError.code || "AI_REQUEST_FAILED"];
+    console.warn("stage regeneration needs repair", {
+      action: "regenerateStagePreview",
+      code: firstError.code || "AI_REQUEST_FAILED",
+      promptVersion: STAGE_REGENERATION_PROMPT_VERSION,
+    });
+    try {
+      const provider = createStagePlanProvider();
+      const repairPrompt = buildStageRegenerationRepairPrompt(context, firstOutput, firstProblems);
+      const repaired = await provider.generateStagePlanWithMetadata(repairPrompt, 18000, {
+        action: "regenerateStagePreviewRepair",
+        promptVersion: STAGE_REGENERATION_PROMPT_VERSION,
+        schemaVersion: GENERATED_STAGE_SCHEMA_VERSION,
+        durationDays: goalProfile.durationDays,
+        dailyMinutes: goalProfile.dailyMinutes,
+        repairAttempted: true,
+      });
+      modelId = repaired.metadata.modelId || modelId;
+      providerGroup = repaired.metadata.providerGroup || providerGroup;
+      totalTokens += Number(repaired.metadata.totalTokens || 0);
+
+      const repairedPlan = validateGeneratedStagePlan(parseAiJson(repaired.text), goalProfile);
+      const repairedQuality = evaluateStagePlanQuality(repairedPlan, goalProfile);
+      if (repairedQuality.shouldRepair) {
+        const error = new Error("QUALITY_REPAIR_FAILED");
+        error.code = "QUALITY_REPAIR_FAILED";
+        throw error;
+      }
+
+      const repairedResolution = evaluateFeedbackResolution(
+        repairedPlan, currentPlan, feedbackTypes, goalProfile,
+      );
+      if (!repairedResolution.resolved) {
+        console.warn("regeneration repair passed quality but not all feedback resolved", {
+          unresolvedTypes: repairedResolution.unresolvedFeedbackTypes,
+        });
+      }
+
+      newStagePlan = repairedPlan;
+      generatedBy = "regenerated_ai_repaired";
+    } catch (repairError) {
+      console.warn("stage regeneration failed, keeping old plan", {
+        code: repairError.code || "AI_REQUEST_FAILED",
+      });
+    }
+  }
+
+  const aiCompleted = Boolean(newStagePlan);
+  const newRegenerationCount = aiCompleted ? currentCount + 1 : currentCount;
+  const newVersion = aiCompleted
+    ? Number(preview.currentVersion || 1) + 1
+    : Number(preview.currentVersion || 1);
+
+  if (aiCompleted) {
+    const versionDocId = `${previewId}_v${newVersion}`;
+    await db
+      .collection("stage_preview_versions")
+      .doc(versionDocId)
+      .set({
+        data: {
+          _openid: openid,
+          previewId,
+          version: newVersion,
+          source: generatedBy,
+          plan: newStagePlan,
+          feedback: { types: feedbackTypes, note: feedbackNote },
+          promptVersion: STAGE_REGENERATION_PROMPT_VERSION,
+          schemaVersion: GENERATED_STAGE_SCHEMA_VERSION,
+          modelId,
+          providerGroup,
+          generationDurationMs: Date.now() - generationStartedAt,
+          totalTokens,
+          createdAt: db.serverDate(),
+        },
+      });
+  }
+
+  const updateData = {
+    generationStatus: aiCompleted ? "ready" : "failed",
+    regenerationCount: newRegenerationCount,
+    updatedAt: db.serverDate(),
+  };
+  if (aiCompleted) {
+    updateData.stagePlan = newStagePlan;
+    updateData.generatedBy = generatedBy;
+    updateData.currentVersion = newVersion;
+    updateData.modelId = modelId;
+    updateData.providerGroup = providerGroup;
+    updateData.generationDurationMs = Date.now() - generationStartedAt;
+    updateData.revision = Number(preview.revision || 1) + 1;
+    updateData.editedSlotIds = [];
+    updateData.lastFeedback = { types: feedbackTypes, note: feedbackNote };
+    updateData.optimizationStatus = "idle";
+    updateData.optimizationPlan = null;
+  }
+  await db.collection("stage_previews").doc(previewId).update({ data: updateData });
+
+  const updatedPreview = await getOwnedPreview(openid, previewId);
+  return publicPreview(updatedPreview, false);
+}
+
 module.exports = {
   ACTIVE_WEEK_DAYS,
   GOAL_TEMPLATES,
+  MAX_STAGE_REGENERATIONS,
   PLAN_DURATIONS,
   applyStageOptimization,
   buildBaseStagePlan,
@@ -990,6 +1254,7 @@ module.exports = {
   mergeOptimizationPlan,
   optimizeStagePreview,
   publicPreview,
+  regenerateStagePreview,
   updateStagePreviewTask,
   validateCreateStagePreviewInput,
   validateOptimizedPlan,

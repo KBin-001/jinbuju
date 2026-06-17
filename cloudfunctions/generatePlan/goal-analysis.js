@@ -42,6 +42,25 @@ function fail(code, message) {
   throw error;
 }
 
+function shortError(error) {
+  return {
+    code: error && error.code ? String(error.code).slice(0, 80) : "UNKNOWN",
+    errCode: error && error.errCode !== undefined ? String(error.errCode).slice(0, 80) : "",
+    errMsg: error && error.errMsg ? String(error.errMsg).slice(0, 200) : "",
+    message: error && error.message ? String(error.message).slice(0, 200) : "",
+  };
+}
+
+function toPlainJson(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function omitDocumentId(record) {
+  const plain = toPlainJson(record || {});
+  delete plain._id;
+  return plain;
+}
+
 function text(value, min, max, label) {
   const normalized = String(value || "").trim().replace(/\s+/g, " ");
   if (normalized.length < min || normalized.length > max) fail("INVALID_ARGUMENT", `${label}无效。`);
@@ -272,9 +291,10 @@ function buildGoalProfile(input, analysis, answers = []) {
 }
 
 function publicAnalysis(record) {
+  const analysisId = String(record._id || record.analysisId || "");
   if (record.status === "analyzing" || !record.analysis) {
     return {
-      analysisId: String(record._id),
+      analysisId,
       normalizedGoal: "",
       categoryGroup: "other",
       domainLabel: "",
@@ -295,7 +315,7 @@ function publicAnalysis(record) {
     };
   }
   return {
-    analysisId: String(record._id),
+    analysisId,
     normalizedGoal: record.analysis.normalizedGoal,
     categoryGroup: record.analysis.categoryGroup,
     domainLabel: record.analysis.domainLabel,
@@ -387,11 +407,13 @@ async function analyzeGoal(openid, event) {
   }
   const status = analysis.needsClarification ? "needs_clarification" : "ready";
   const goalProfile = status === "ready" ? buildGoalProfile(input, analysis, []) : null;
+  const cleanAnalysis = toPlainJson(analysis);
+  const cleanGoalProfile = goalProfile ? toPlainJson(goalProfile) : null;
   await db.collection("goal_analysis_drafts").doc(analysisId).update({
     data: {
-      analysis,
+      analysis: cleanAnalysis,
       answers: [],
-      goalProfile,
+      goalProfile: cleanGoalProfile,
       status,
       analysisSource: source,
       promptVersion: GOAL_ANALYSIS_PROMPT_VERSION,
@@ -414,25 +436,26 @@ async function analyzeGoal(openid, event) {
     inputFieldNames: Object.keys(input),
     titleLength: input.title.length,
     descriptionLength: input.description.length,
-    ambiguityScore: analysis.ambiguityScore,
-    confidenceScore: analysis.confidenceScore,
-    needsClarification: analysis.needsClarification,
-    questionCount: analysis.questions.length,
+    ambiguityScore: cleanAnalysis.ambiguityScore,
+    confidenceScore: cleanAnalysis.confidenceScore,
+    needsClarification: cleanAnalysis.needsClarification,
+    questionCount: cleanAnalysis.questions.length,
     analysisSource: source,
     repairAttempted,
     analysisDurationMs: Date.now() - startedAt,
   });
   const saved = await db.collection("goal_analysis_drafts").doc(analysisId).get();
-  return publicAnalysis(saved.data);
+  return publicAnalysis({ ...saved.data, _id: saved.data._id || analysisId });
 }
 
 async function getOwnedAnalysis(openid, analysisId) {
   const db = getDb();
-  const result = await db.collection("goal_analysis_drafts").doc(String(analysisId || "")).get().catch(() => null);
+  const normalizedAnalysisId = String(analysisId || "");
+  const result = await db.collection("goal_analysis_drafts").doc(normalizedAnalysisId).get().catch(() => null);
   const record = result && result.data;
   if (!record || record._openid !== openid) fail("GOAL_ANALYSIS_NOT_FOUND", "目标分析已失效，请重新填写。");
   if (new Date(record.expiresAt || 0).getTime() <= Date.now()) fail("GOAL_ANALYSIS_EXPIRED", "目标分析已过期，请重新填写。");
-  return record;
+  return { ...record, _id: record._id || normalizedAnalysisId };
 }
 
 function validateAnswers(questions, answers) {
@@ -474,18 +497,78 @@ async function submitGoalClarification(openid, event) {
   const record = await getOwnedAnalysis(openid, analysisId);
   if (record.status === "ready" || record.status === "consumed") return publicAnalysis(record);
   if (record.status !== "needs_clarification") fail("INVALID_ARGUMENT", "当前目标不需要补充信息。");
+  if (!record.analysis || !Array.isArray(record.analysis.questions)) {
+    fail("GOAL_ANALYSIS_SCHEMA_INVALID", "目标分析已失效，请重新填写。");
+  }
+  if (!record.originalInput || typeof record.originalInput !== "object") {
+    fail("GOAL_ANALYSIS_SCHEMA_INVALID", "目标分析信息不完整，请重新填写。");
+  }
   const answers = validateAnswers(record.analysis.questions, event && event.answers);
-  const goalProfile = buildGoalProfile(record.originalInput, record.analysis, answers);
-  await db.collection("goal_analysis_drafts").doc(record._id).update({
-    data: {
-      answers,
-      goalProfile,
-      status: "ready",
-      updatedAt: db.serverDate(),
-    },
+  let goalProfile;
+  try {
+    goalProfile = buildGoalProfile(record.originalInput, record.analysis, answers);
+  } catch (error) {
+    console.error("goal clarification profile build failed", {
+      analysisIdSuffix: (record._id || analysisId).slice(-8),
+      ...shortError(error),
+    });
+    fail("GOAL_ANALYSIS_SCHEMA_INVALID", "目标分析信息不完整，请重新填写。");
+  }
+  const docId = record._id || analysisId;
+  const cleanAnswers = toPlainJson(answers);
+  const cleanGoalProfile = toPlainJson(goalProfile);
+  console.info("goal clarification submit validated", {
+    analysisIdSuffix: docId.slice(-8),
+    questionCount: record.analysis.questions.length,
+    answerCount: cleanAnswers.length,
+    goalProfileFields: Object.keys(cleanGoalProfile),
   });
-  const updated = await db.collection("goal_analysis_drafts").doc(record._id).get();
-  return publicAnalysis(updated.data);
+  try {
+    await db.collection("goal_analysis_drafts").doc(docId).update({
+      data: {
+        answers: cleanAnswers,
+        goalProfile: cleanGoalProfile,
+        status: "ready",
+        updatedAt: db.serverDate(),
+      },
+    });
+  } catch (error) {
+    console.error("goal clarification save failed", {
+      analysisIdSuffix: docId.slice(-8),
+      ...shortError(error),
+    });
+    try {
+      await db.collection("goal_analysis_drafts").doc(docId).set({
+        data: {
+          ...omitDocumentId(record),
+          answers: cleanAnswers,
+          goalProfile: cleanGoalProfile,
+          status: "ready",
+          updatedAt: db.serverDate(),
+        },
+      });
+      console.info("goal clarification save fallback succeeded", {
+        analysisIdSuffix: docId.slice(-8),
+      });
+    } catch (fallbackError) {
+      console.error("goal clarification save fallback failed", {
+        analysisIdSuffix: docId.slice(-8),
+        ...shortError(fallbackError),
+      });
+      fail("GOAL_ANALYSIS_SAVE_FAILED", "补充信息暂时无法保存，请稍后重试。");
+    }
+  }
+  let updated;
+  try {
+    updated = await db.collection("goal_analysis_drafts").doc(docId).get();
+  } catch (error) {
+    console.error("goal clarification reload failed", {
+      analysisIdSuffix: docId.slice(-8),
+      ...shortError(error),
+    });
+    fail("GOAL_ANALYSIS_RELOAD_FAILED", "补充信息已提交，但结果暂时无法读取，请返回后重试。");
+  }
+  return publicAnalysis({ ...updated.data, _id: updated.data._id || docId });
 }
 
 module.exports = {

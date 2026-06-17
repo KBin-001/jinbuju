@@ -1,7 +1,7 @@
 import { CloudFunctionResult as SharedCloudFunctionResult } from "./goal";
 
 export type CloudFunctionResult<T> = SharedCloudFunctionResult<T>;
-export type StageGeneratedBy = "ai" | "ai_repaired" | "template";
+export type StageGeneratedBy = "ai" | "ai_repaired" | "template" | "regenerated_ai" | "regenerated_ai_repaired";
 export type StageOptimizationStatus = "idle" | "processing" | "ready" | "failed";
 export type GoalTemplateId =
   | "cet4"
@@ -165,6 +165,13 @@ export interface StageGenerationResult {
   optimizationStatus: StageOptimizationStatus;
   optimizationAttempts: number;
   fallbackReason?: string;
+  modelId?: string;
+  providerGroup?: string;
+  currentVersion: number;
+  regenerationCount: number;
+  maxRegenerationCount: number;
+  generationStatus: "ready" | "regenerating" | "failed" | "confirmed";
+  lastFeedback: StageFeedback | null;
 }
 
 export interface StagePreviewCache {
@@ -210,3 +217,45 @@ export interface StageReviewData {
   reviewed: boolean;
   previewId: string;
 }
+
+export type StageFeedbackType =
+  | "too_many_tasks"
+  | "too_few_tasks"
+  | "too_difficult"
+  | "too_easy"
+  | "too_theoretical"
+  | "not_enough_practice"
+  | "time_unreasonable"
+  | "resource_unavailable"
+  | "direction_mismatch"
+  | "too_repetitive"
+  | "other";
+
+export interface StageFeedback {
+  types: StageFeedbackType[];
+  note?: string;
+}
+
+export interface RegenerateStagePreviewInput {
+  previewId: string;
+  feedbackTypes: StageFeedbackType[];
+  feedbackNote?: string;
+  requestId: string;
+}
+
+export const STAGE_FEEDBACK_OPTIONS: {
+  type: StageFeedbackType;
+  label: string;
+}[] = [
+  { type: "too_many_tasks", label: "任务太多" },
+  { type: "too_few_tasks", label: "任务太少" },
+  { type: "too_difficult", label: "难度太高" },
+  { type: "too_easy", label: "难度太低" },
+  { type: "too_theoretical", label: "太偏理论" },
+  { type: "not_enough_practice", label: "缺少实践" },
+  { type: "time_unreasonable", label: "时间安排不合理" },
+  { type: "resource_unavailable", label: "需要的资源我没有" },
+  { type: "direction_mismatch", label: "方向不符合预期" },
+  { type: "too_repetitive", label: "任务内容太重复" },
+  { type: "other", label: "其他" },
+];

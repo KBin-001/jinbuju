@@ -413,10 +413,20 @@ Page({
         this.goToPreview();
       })
       .catch((error: Error) => {
+        const serviceError = error as Error & { code?: string };
+        console.warn("[goal-create] submit clarification failed", {
+          code: serviceError.code || "UNKNOWN",
+          message: serviceError.message || "",
+          analysisIdSuffix: analysis.analysisId.slice(-8),
+          questionCount: analysis.questions.length,
+          answerCount: answers.length,
+        });
         this.setData({ submitting: false });
         wx.showModal({
           title: "补充信息提交失败",
-          content: error.message || "请稍后重试。",
+          content: serviceError.code
+            ? `${serviceError.message || "请稍后重试。"}\n\n错误码：${serviceError.code}`
+            : error.message || "请稍后重试。",
           showCancel: false,
         });
       });

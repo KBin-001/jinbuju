@@ -55,6 +55,7 @@ const {
   applyStageOptimization,
   createStagePreview,
   optimizeStagePreview,
+  regenerateStagePreview,
   updateStagePreviewTask,
 } = require("./stage-v2");
 
@@ -110,8 +111,30 @@ function failure(error) {
     "STAGE_PREVIEW_CONFLICT",
     "GOAL_ANALYSIS_NOT_FOUND",
     "GOAL_ANALYSIS_EXPIRED",
+    "GOAL_ANALYSIS_SCHEMA_INVALID",
+    "GOAL_ANALYSIS_SAVE_FAILED",
+    "GOAL_ANALYSIS_RELOAD_FAILED",
+    "PREVIEW_NOT_FOUND",
+    "PREVIEW_EXPIRED",
+    "PREVIEW_ALREADY_CONFIRMED",
+    "PREVIEW_NOT_READY",
+    "PREVIEW_REGENERATION_IN_PROGRESS",
+    "INVALID_FEEDBACK_TYPE",
+    "INVALID_FEEDBACK_NOTE",
+    "STAGE_REGENERATION_LIMIT_REACHED",
+    "STAGE_REGENERATION_FAILED",
+    "STAGE_REGENERATION_SCHEMA_INVALID",
+    "STAGE_REGENERATION_QUALITY_FAILED",
+    "STAGE_FEEDBACK_NOT_RESOLVED",
+    "PREVIEW_VERSION_MISMATCH",
   ];
   const code = allowedCodes.includes(error.code) ? error.code : "INTERNAL_ERROR";
+  if (code === "INTERNAL_ERROR") {
+    console.error("generatePlan internal error sanitized", {
+      originalCode: error && error.code ? String(error.code).slice(0, 80) : "UNKNOWN",
+      message: error && error.message ? String(error.message).slice(0, 200) : "",
+    });
+  }
   const messages = {
     INVALID_ARGUMENT: error.message,
     UNAUTHORIZED: "用户身份无效，请重新进入小程序。",
@@ -159,6 +182,22 @@ function failure(error) {
     STAGE_PREVIEW_CONFLICT: error.message,
     GOAL_ANALYSIS_NOT_FOUND: error.message,
     GOAL_ANALYSIS_EXPIRED: error.message,
+    GOAL_ANALYSIS_SCHEMA_INVALID: error.message,
+    GOAL_ANALYSIS_SAVE_FAILED: error.message,
+    GOAL_ANALYSIS_RELOAD_FAILED: error.message,
+    PREVIEW_NOT_FOUND: "计划预览已失效，请重新生成。",
+    PREVIEW_EXPIRED: "计划预览已过期，请重新生成。",
+    PREVIEW_ALREADY_CONFIRMED: "当前计划已经确认。",
+    PREVIEW_NOT_READY: "方案尚未准备好，请稍后重试。",
+    PREVIEW_REGENERATION_IN_PROGRESS: "AI 正在重新生成方案，请稍后。",
+    INVALID_FEEDBACK_TYPE: error.message,
+    INVALID_FEEDBACK_NOTE: error.message,
+    STAGE_REGENERATION_LIMIT_REACHED: "重新生成次数已用完。",
+    STAGE_REGENERATION_FAILED: "暂时没有生成新的方案，当前方案已经保留。",
+    STAGE_REGENERATION_SCHEMA_INVALID: "重新生成方案未通过安全校验，请重试。",
+    STAGE_REGENERATION_QUALITY_FAILED: "重新生成方案未通过质量检查，请重试。",
+    STAGE_FEEDBACK_NOT_RESOLVED: error.message,
+    PREVIEW_VERSION_MISMATCH: error.message,
     INTERNAL_ERROR: "服务暂时不可用，请稍后重试。",
   };
   return {
@@ -442,6 +481,9 @@ exports.main = async (event) => {
     if (event.action === "applyStageOptimization") {
       return success(await applyStageOptimization(context.OPENID, event));
     }
+    if (event.action === "regenerateStagePreview") {
+      return success(await regenerateStagePreview(context.OPENID, event));
+    }
     if (event.action === "getStagePreview") {
       return success(await getStagePreview(context.OPENID, event));
     }
@@ -462,6 +504,9 @@ exports.main = async (event) => {
     console.error("generatePlan failed", {
       action: event && event.action,
       code: error.code || "INTERNAL_ERROR",
+      message: error && error.message ? String(error.message).slice(0, 160) : "",
+      analysisIdSuffix: event && event.analysisId ? String(event.analysisId).slice(-8) : "",
+      answerCount: Array.isArray(event && event.answers) ? event.answers.length : undefined,
     });
     return failure(error);
   }

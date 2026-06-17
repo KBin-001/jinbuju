@@ -562,14 +562,180 @@ function fingerprintStageInput(input) {
     .digest("hex");
 }
 
+const VALID_FEEDBACK_TYPES = [
+  "too_many_tasks",
+  "too_few_tasks",
+  "too_difficult",
+  "too_easy",
+  "too_theoretical",
+  "not_enough_practice",
+  "time_unreasonable",
+  "resource_unavailable",
+  "direction_mismatch",
+  "too_repetitive",
+  "other",
+];
+const MAX_FEEDBACK_TYPES = 3;
+const MAX_FEEDBACK_NOTE_LENGTH = 200;
+const PASSIVE_ACTION_TYPES = new Set(["learning", "preparation", "reflection"]);
+const PRACTICE_ACTION_TYPES = new Set(["practice", "execution", "creation"]);
+
+function validateFeedbackTypes(value) {
+  if (!Array.isArray(value) || value.length === 0) {
+    fail("INVALID_FEEDBACK_TYPE", "请选择至少一个问题类型。");
+  }
+  if (value.length > MAX_FEEDBACK_TYPES) {
+    fail("INVALID_FEEDBACK_TYPE", `最多选择 ${MAX_FEEDBACK_TYPES} 个问题类型。`);
+  }
+  const seen = new Set();
+  const types = [];
+  for (const item of value) {
+    const type = String(item || "");
+    if (!VALID_FEEDBACK_TYPES.includes(type)) {
+      fail("INVALID_FEEDBACK_TYPE", "包含不支持的反馈类型。");
+    }
+    if (!seen.has(type)) {
+      seen.add(type);
+      types.push(type);
+    }
+  }
+  return types;
+}
+
+function validateFeedbackNote(value) {
+  if (value === undefined || value === null || value === "") return "";
+  const note = String(value).trim();
+  if (note.length > MAX_FEEDBACK_NOTE_LENGTH) {
+    fail("INVALID_FEEDBACK_NOTE", `补充说明不能超过 ${MAX_FEEDBACK_NOTE_LENGTH} 个字符。`);
+  }
+  if (DANGEROUS_CONTENT.test(note)) {
+    fail("INVALID_FEEDBACK_NOTE", "补充说明包含不支持的内容。");
+  }
+  return note;
+}
+
+function evaluateFeedbackResolution(newPlan, oldPlan, feedbackTypes, goalProfile) {
+  const resolvedTypes = [];
+  const unresolvedTypes = [];
+  const problems = [];
+
+  const newActions = newPlan.days.flatMap((day) => day.actions);
+  const oldActions = oldPlan.days.flatMap((day) => day.actions);
+
+  const newPassiveCount = newActions.filter(
+    (a) => PASSIVE_ACTION_TYPES.has(a.actionType) || PASSIVE_ACTION_WORDS.test(`${a.title}${a.description}`),
+  ).length;
+  const oldPassiveCount = oldActions.filter(
+    (a) => PASSIVE_ACTION_TYPES.has(a.actionType) || PASSIVE_ACTION_WORDS.test(`${a.title}${a.description}`),
+  ).length;
+  const newPracticeCount = newActions.filter(
+    (a) => PRACTICE_ACTION_TYPES.has(a.actionType) || PRACTICE_ACTION_WORDS.test(`${a.title}${a.description}${a.completionCriteria || ""}`),
+  ).length;
+  const oldPracticeCount = oldActions.filter(
+    (a) => PRACTICE_ACTION_TYPES.has(a.actionType) || PRACTICE_ACTION_WORDS.test(`${a.title}${a.description}${a.completionCriteria || ""}`),
+  ).length;
+
+  const newActiveDays = newPlan.days.filter((d) => !d.isRestDay && d.actions.length > 0);
+  const oldActiveDays = oldPlan.days.filter((d) => !d.isRestDay && d.actions.length > 0);
+  const newAvgActionsPerDay = newActiveDays.length ? newActions.length / newActiveDays.length : 0;
+  const oldAvgActionsPerDay = oldActiveDays.length ? oldActions.length / oldActiveDays.length : 0;
+  const newAvgMinutes = newActiveDays.length
+    ? Math.round(newActions.reduce((s, a) => s + a.estimatedMinutes, 0) / newActiveDays.length)
+    : 0;
+  const oldAvgMinutes = oldActiveDays.length
+    ? Math.round(oldActions.reduce((s, a) => s + (a.estimatedMinutes || 0), 0) / oldActiveDays.length)
+    : 0;
+
+  for (const type of feedbackTypes) {
+    let resolved = false;
+    switch (type) {
+      case "too_many_tasks":
+        resolved = newAvgActionsPerDay < oldAvgActionsPerDay || newAvgMinutes < oldAvgMinutes;
+        if (!resolved) problems.push("任务数量或时间未减少。");
+        break;
+      case "too_few_tasks":
+        resolved = newActions.length >= oldActions.length;
+        if (!resolved) problems.push("行动数量未增加。");
+        break;
+      case "too_difficult":
+        resolved = newAvgMinutes <= oldAvgMinutes || newActions.length <= oldActions.length;
+        break;
+      case "too_easy":
+        resolved = newPracticeCount >= oldPracticeCount;
+        break;
+      case "too_theoretical":
+        resolved = newPassiveCount < oldPassiveCount || newPracticeCount > oldPracticeCount;
+        if (!resolved) problems.push("实践行动比例未提高。");
+        break;
+      case "not_enough_practice":
+        resolved = newPracticeCount > oldPracticeCount;
+        if (!resolved) problems.push("实践类行动未增加。");
+        break;
+      case "time_unreasonable": {
+        const dailyLimit = goalProfile.dailyMinutes || 60;
+        const overBudgetDays = newPlan.days.filter(
+          (d) => d.totalMinutes > Math.ceil(dailyLimit * 1.2),
+        ).length;
+        resolved = overBudgetDays === 0;
+        if (!resolved) problems.push("仍存在每日时间超标。");
+        break;
+      }
+      case "resource_unavailable": {
+        const oldResources = new Set(oldActions.flatMap((a) => a.requiredResources || []));
+        const newResources = new Set(newActions.flatMap((a) => a.requiredResources || []));
+        const userResources = new Set((goalProfile.availableResources || []).map((r) => String(r)));
+        const unresolvedResources = [];
+        for (const res of newResources) {
+          if (!userResources.has(res) && oldResources.has(res)) {
+            unresolvedResources.push(res);
+          }
+        }
+        resolved = unresolvedResources.length === 0;
+        if (!resolved) problems.push(`仍依赖不可用资源：${unresolvedResources.slice(0, 3).join("、")}`);
+        break;
+      }
+      case "direction_mismatch":
+        resolved = newPlan.stage.focus !== oldPlan.stage.focus || newPlan.stage.title !== oldPlan.stage.title;
+        break;
+      case "too_repetitive": {
+        const newUniqueTitles = new Set(newActions.map((a) => a.title.replace(/\s+/g, ""))).size;
+        const oldUniqueTitles = new Set(oldActions.map((a) => a.title.replace(/\s+/g, ""))).size;
+        resolved = newUniqueTitles >= oldUniqueTitles;
+        break;
+      }
+      case "other":
+        resolved = true;
+        break;
+      default:
+        resolved = true;
+    }
+    if (resolved) {
+      resolvedTypes.push(type);
+    } else {
+      unresolvedTypes.push(type);
+    }
+  }
+
+  return {
+    resolved: unresolvedTypes.length === 0,
+    resolvedFeedbackTypes: resolvedTypes,
+    unresolvedFeedbackTypes: unresolvedTypes,
+    problems,
+  };
+}
+
 module.exports = {
   GOAL_CATEGORIES,
   STAGE_DURATIONS,
   TARGET_DURATIONS,
+  VALID_FEEDBACK_TYPES,
   fingerprintStageInput,
   GENERATED_STAGE_SCHEMA_VERSION,
+  evaluateFeedbackResolution,
   parseStageAiJson,
   evaluateStagePlanQuality,
+  validateFeedbackNote,
+  validateFeedbackTypes,
   validateGeneratedStagePlan,
   validateStageGenerationInput,
   validateStagePlan,

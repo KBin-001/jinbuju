@@ -10,6 +10,7 @@ import {
   AnalyzeGoalInput,
   ClarificationAnswer,
   GoalAnalysisResult,
+  RegenerateStagePreviewInput,
 } from "../types/stage";
 
 interface CloudCallResponse<T> {
@@ -58,6 +59,11 @@ function callStageFunction<T>(
     .then((response) => {
       const result = response.result;
       if (!result || !result.success || result.data === undefined) {
+        console.warn("[generatePlan] cloud function returned failure", {
+          action: String(data.action || ""),
+          code: result?.error?.code || "INTERNAL_ERROR",
+          message: result?.error?.message || "",
+        });
         throw serviceError(
           result?.error?.code || "INTERNAL_ERROR",
           result?.error?.message || "行动阶段暂时无法生成。",
@@ -76,6 +82,10 @@ function callStageFunction<T>(
       if (message.includes("Environment not found")) {
         throw serviceError("ENVIRONMENT_NOT_FOUND", "未找到云开发环境。");
       }
+      console.warn("[generatePlan] cloud function call failed", {
+        action: String(data.action || ""),
+        message,
+      });
       throw serviceError("NETWORK_ERROR", "网络连接不稳定，请检查后重试。");
     });
 }
@@ -119,7 +129,7 @@ export function createStagePreview(
     action: "createStagePreview",
     ...(analysisId ? { analysisId } : { input }),
     requestId,
-  }, 60000);
+  }, 100000);
 }
 
 export function optimizeStagePreview(
@@ -176,11 +186,13 @@ export function getStagePreview(previewId: string): Promise<StageGenerationResul
 export function confirmStagePlan(
   previewId: string,
   revision?: number,
+  version?: number,
 ): Promise<ConfirmStageResult> {
   return callStageFunction<ConfirmStageResult>({
     action: "confirmStagePlan",
     previewId,
     ...(revision === undefined ? {} : { revision }),
+    ...(version === undefined ? {} : { version }),
   }, 20000);
 }
 
@@ -200,4 +212,16 @@ export function submitStageReview(
     ...input,
     requestId,
   });
+}
+
+export function regenerateStagePreview(
+  input: RegenerateStagePreviewInput,
+): Promise<StageGenerationResult> {
+  return callStageFunction<StageGenerationResult>({
+    action: "regenerateStagePreview",
+    previewId: input.previewId,
+    feedbackTypes: input.feedbackTypes,
+    ...(input.feedbackNote ? { feedbackNote: input.feedbackNote } : {}),
+    requestId: input.requestId,
+  }, 90000);
 }
