@@ -10,7 +10,8 @@ export type PlanDayStatus =
   | "partial"
   | "missed"
   | "rest"
-  | "paused";
+  | "paused"
+  | "not_started";
 export type PlanTaskState = "pending" | "completed" | "postponed" | "expired" | "paused";
 
 export interface GoalDraft {

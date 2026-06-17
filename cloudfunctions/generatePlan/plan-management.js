@@ -113,9 +113,9 @@ async function getPlanPageData(openid) {
             dayCompletedCount,
             dayTasks.length,
           )
-        : date > businessDate
-          ? "future"
-          : "completed",
+        : date < plan.startDate
+          ? "not_started"
+          : "future",
       completedCount: dayCompletedCount,
       totalCount: dayTasks.length,
       tasks: dayTasks.map((task) => ({

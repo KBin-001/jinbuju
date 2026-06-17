@@ -69,6 +69,7 @@ const DAY_STATUS_LABELS: Record<PlanDayStatus, string> = {
   missed: "未完成",
   rest: "休息日",
   paused: "已暂停",
+  not_started: "未开始",
 };
 
 function formatDay(dateValue: string): { monthDay: string; weekday: string } {
