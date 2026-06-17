@@ -35,6 +35,16 @@ interface DatasetEvent {
   };
 }
 
+interface ClarificationOptionView {
+  value: string;
+  selected: boolean;
+}
+
+interface ClarificationQuestionView extends ClarificationQuestion {
+  optionViews: ClarificationOptionView[];
+  answerValue: ClarificationAnswer["value"] | "";
+}
+
 const TEMPLATE_OPTIONS = [
   { value: "cet4", label: "英语四级", description: "词汇、听力、阅读与写作" },
   { value: "teacher_exam", label: "教师资格证", description: "考情、知识点与练习" },
@@ -81,16 +91,36 @@ function defaultDraft(): LongTermGoalDraft {
   };
 }
 
+function buildClarificationQuestions(
+  analysis: GoalAnalysisResult | null,
+  answers: Record<string, ClarificationAnswer["value"]>,
+): ClarificationQuestionView[] {
+  if (!analysis) return [];
+  return analysis.questions.map((question) => {
+    const answerValue = answers[question.id] ?? "";
+    const selectedValues = Array.isArray(answerValue) ? answerValue : [answerValue];
+    return {
+      ...question,
+      answerValue,
+      optionViews: (question.options || []).map((option) => ({
+        value: option,
+        selected: selectedValues.includes(option),
+      })),
+    };
+  });
+}
+
 Page({
   data: {
     pageStatus: "loading" as "loading" | "form" | "error",
     pageError: "",
-  currentStep: 1,
+    currentStep: 1,
     totalSteps: 3,
     submitting: false,
     analyzing: false,
     analysis: null as GoalAnalysisResult | null,
     answers: {} as Record<string, ClarificationAnswer["value"]>,
+    clarificationQuestions: [] as ClarificationQuestionView[],
     advancedOpen: false,
     draft: defaultDraft(),
     templateOptions: TEMPLATE_OPTIONS,
@@ -125,11 +155,13 @@ Page({
           return;
         }
         const analysis = getGoalAnalysisCache();
+        const answers = getClarificationAnswers();
         this.setData({
           pageStatus: "form",
           draft: getLongTermGoalDraft() || defaultDraft(),
           analysis,
-          answers: getClarificationAnswers(),
+          answers,
+          clarificationQuestions: buildClarificationQuestions(analysis, answers),
           currentStep: analysis?.needsClarification ? 3 : 1,
         });
       })
@@ -148,7 +180,7 @@ Page({
 
   resetAnalysisState() {
     clearGoalAnalysisCache();
-    this.setData({ analysis: null, answers: {} });
+    this.setData({ analysis: null, answers: {}, clarificationQuestions: [] });
   },
 
   selectTemplate(event: DatasetEvent) {
@@ -277,7 +309,12 @@ Page({
           return;
         }
         saveGoalAnalysisCache(analysis);
-        this.setData({ analysis, answers: {}, analyzing: false });
+        this.setData({
+          analysis,
+          answers: {},
+          clarificationQuestions: buildClarificationQuestions(analysis, {}),
+          analyzing: false,
+        });
         if (analysis.needsClarification) {
           this.setData({ currentStep: 3, submitting: false });
           return;
@@ -304,7 +341,10 @@ Page({
   setAnswer(questionId: string, value: ClarificationAnswer["value"]) {
     const answers = { ...this.data.answers, [questionId]: value };
     saveClarificationAnswers(answers);
-    this.setData({ answers });
+    this.setData({
+      answers,
+      clarificationQuestions: buildClarificationQuestions(this.data.analysis, answers),
+    });
   },
 
   selectAnswer(event: DatasetEvent) {
@@ -366,7 +406,10 @@ Page({
     submitGoalClarification(analysis.analysisId, answers)
       .then((result) => {
         saveGoalAnalysisCache(result);
-        this.setData({ analysis: result });
+        this.setData({
+          analysis: result,
+          clarificationQuestions: buildClarificationQuestions(result, this.data.answers),
+        });
         this.goToPreview();
       })
       .catch((error: Error) => {

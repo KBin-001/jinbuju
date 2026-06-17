@@ -138,7 +138,7 @@
       </view>
 
       <view
-        wx:for="{{analysis.questions}}"
+        wx:for="{{clarificationQuestions}}"
         wx:key="id"
         wx:for-item="question"
         class="question-card"
@@ -150,26 +150,26 @@
 
         <view wx:if="{{question.type === 'single_choice'}}" class="answer-options">
           <button
-            wx:for="{{question.options}}"
-            wx:key="*this"
+            wx:for="{{question.optionViews}}"
+            wx:key="value"
             wx:for-item="option"
-            class="answer-chip {{answers[question.id] === option ? 'choice-chip-active' : ''}}"
+            class="answer-chip {{option.selected ? 'choice-chip-active' : ''}}"
             data-question-id="{{question.id}}"
-            data-value="{{option}}"
+            data-value="{{option.value}}"
             bindtap="selectAnswer"
-          >{{option}}</button>
+          >{{option.value}}</button>
         </view>
 
         <view wx:elif="{{question.type === 'multiple_choice'}}" class="answer-options">
           <button
-            wx:for="{{question.options}}"
-            wx:key="*this"
+            wx:for="{{question.optionViews}}"
+            wx:key="value"
             wx:for-item="option"
-            class="answer-chip"
+            class="answer-chip {{option.selected ? 'choice-chip-active' : ''}}"
             data-question-id="{{question.id}}"
-            data-value="{{option}}"
+            data-value="{{option.value}}"
             bindtap="toggleMultiAnswer"
-          >{{option}}</button>
+          >{{option.value}}</button>
         </view>
 
         <view wx:elif="{{question.type === 'boolean'}}" class="answer-options">
