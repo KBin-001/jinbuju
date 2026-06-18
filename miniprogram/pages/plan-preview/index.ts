@@ -144,6 +144,19 @@ Page({
       return;
     }
     if (options.create === "1") {
+      // Prefer cached result from goal-create Step 3 generation
+      const cached = getStagePreviewCache();
+      const cachedInput = cached?.input as CreateStagePreviewInput | null;
+      if (cached?.result?.previewId) {
+        this.setData({
+          isV2Create: Boolean(
+            cachedInput && "templateId" in cachedInput && !("goalTitle" in cachedInput),
+          ),
+        });
+        this.applyPreview(cached.result);
+        return;
+      }
+      // Fallback: generate if no cached result
       this.createBasePreview();
       return;
     }
@@ -220,6 +233,16 @@ Page({
   },
 
   applyPreview(preview: StageGenerationResult) {
+    if (preview.generatedBy === "template") {
+      console.warn("[plan-preview] stage preview used template fallback", {
+        previewId: preview.previewId,
+        stageNumber: preview.stageNumber,
+        fallbackReason: preview.fallbackReason || "",
+        modelId: preview.modelId || "",
+        providerGroup: preview.providerGroup || "",
+        isV2Create: this.data.isV2Create,
+      });
+    }
     const cached = getStagePreviewCache();
     if (this.data.isV2Create || cached?.input) {
       saveStagePreviewCache({
@@ -353,6 +376,11 @@ Page({
 
   editGoal() {
     if (this.data.confirming || this.data.savingTask || this.data.regenerating) return;
+    const previousStageId = this.data.preview?.previousStageId || "";
+    if (this.data.isNextStage && previousStageId) {
+      wx.redirectTo({ url: `/pages/stage-review/index?stageId=${previousStageId}` });
+      return;
+    }
     wx.navigateBack({
       fail: () => wx.redirectTo({ url: "/pages/goal-create/index" }),
     });

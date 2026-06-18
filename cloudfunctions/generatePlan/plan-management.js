@@ -1,5 +1,5 @@
 const cloud = require("wx-server-sdk");
-const { addBusinessDays, businessDateDiff, formatBusinessDate } = require("./date");
+const { addBusinessDays, businessDateDiff, formatBusinessDate, formatReviewEligibleDate } = require("./date");
 const { getDayStatus, getTaskState } = require("./plan-rules");
 
 const db = cloud.database();
@@ -179,7 +179,7 @@ async function getPlanPageData(openid) {
       completionRate,
       nextWeekEligible: plan.status === "active" && businessDate >= plan.endDate,
       reviewEligible:
-        ["active", "reviewing"].includes(plan.status) && businessDate >= plan.endDate,
+        ["active", "reviewing"].includes(plan.status) && formatReviewEligibleDate() >= plan.endDate,
     },
     days,
     recentDays,

@@ -7,8 +7,8 @@
 
   <view wx:if="{{status === 'loading'}}" class="preview-state">
     <view class="loading-dot"></view>
-    <view class="state-title">{{isV2Create ? '正在生成行动方案' : '正在读取行动计划'}}</view>
-    <view class="state-description">会先尝试生成完整方案，失败时再提供基础行动方案。</view>
+    <view class="state-title">{{isV2Create ? '正在读取行动方案' : '正在读取行动计划'}}</view>
+    <view class="state-description">请稍等，正在加载方案内容。</view>
   </view>
 
   <view wx:elif="{{status === 'error'}}" class="preview-state">
@@ -29,11 +29,12 @@
           <view class="regen-subtitle">我们会重新检查任务量、难度、行动方式和时间安排。</view>
         </view>
 
-        <view wx:if="{{isV2Create && preview.generatedBy === 'template'}}" class="optimization-failed">
+        <view wx:if="{{preview.generatedBy === 'template'}}" class="optimization-failed">
           <view>
-            <view class="notice-title">已为你生成一份基础行动方案</view>
-            <view>AI 生成暂时不可用，你可以继续调整。</view>
+            <view class="notice-title">当前是基础兜底方案</view>
+            <view>AI 没有返回可用计划，已临时使用模板。原因：{{preview.fallbackReason || '暂未返回'}}</view>
           </view>
+          <button wx:if="{{isNextStage && preview.previousStageId}}" bindtap="editGoal">重新复盘生成</button>
         </view>
         <view wx:elif="{{isV2Create && preview.generatedBy === 'ai_repaired'}}" class="optimization-notice">
           <view class="notice-title">方案已完成自动修正</view>

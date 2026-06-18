@@ -1,6 +1,6 @@
 <view class="goal-page">
   <view class="goal-header">
-    <button class="back-button" disabled="{{submitting}}" bindtap="previousStep">‹</button>
+    <button class="back-button" disabled="{{submitting && currentStep !== 3}}" bindtap="previousStep">‹</button>
     <view class="header-center">
       <view class="header-title">创建行动计划</view>
       <view class="step-text">{{currentStep}} / {{totalSteps}}</view>
@@ -8,7 +8,7 @@
     <view class="header-placeholder"></view>
   </view>
   <view class="progress-track">
-    <view class="progress-value" style="width: {{pageStatus === 'form' ? currentStep * 33.34 : 0}}%;"></view>
+    <view class="progress-value" style="width: {{pageStatus === 'form' ? currentStep * 25 : 0}}%;"></view>
   </view>
 
   <view wx:if="{{pageStatus === 'loading'}}" class="goal-state">
@@ -23,6 +23,7 @@
   </view>
 
   <scroll-view wx:else class="form-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <!-- Step 1: 目标描述 -->
     <view wx:if="{{currentStep === 1}}" class="step-section">
       <view class="step-title">这次想进步什么？</view>
       <view class="step-subtitle">选一个最接近的目标，不需要先写很多信息。</view>
@@ -49,6 +50,7 @@
       </view>
     </view>
 
+    <!-- Step 2: 关键情况确认 -->
     <view wx:elif="{{currentStep === 2}}" class="step-section">
       <view class="step-title">选择一个能坚持的节奏</view>
       <view class="step-subtitle">默认设置已经适合多数人，确认后会立即看到基础计划。</view>
@@ -123,100 +125,175 @@
           <button wx:if="{{draft.deadline}}" class="clear-button" bindtap="clearDeadline">清除</button>
         </view>
       </view>
+
+      <!-- Clarification section (shown after analysis) -->
+      <view wx:if="{{showClarification && analysis}}" class="clarification-section">
+        <view class="section-divider"></view>
+        <view class="step-title-sm">再确认几个关键问题</view>
+        <view class="step-subtitle">AI 发现了几个需要确认的点，回答后方案会更贴合你的情况。</view>
+
+        <view class="analysis-card">
+          <view class="field-label">理解后的目标</view>
+          <view class="analysis-goal">{{analysis.normalizedGoal}}</view>
+          <view wx:if="{{analysis.analysisSource === 'fallback'}}" class="fallback-copy">
+            目标分析暂时不可用，先用基础问题帮你补齐关键信息。
+          </view>
+        </view>
+
+        <view
+          wx:for="{{clarificationQuestions}}"
+          wx:key="id"
+          wx:for-item="question"
+          class="question-card"
+        >
+          <view class="question-title">
+            <text>{{index + 1}}. {{question.question}}</text>
+            <text wx:if="{{question.required}}" class="required-mark">必填</text>
+          </view>
+
+          <view wx:if="{{question.type === 'single_choice'}}" class="answer-options">
+            <button
+              wx:for="{{question.optionViews}}"
+              wx:key="value"
+              wx:for-item="option"
+              class="answer-chip {{option.selected ? 'choice-chip-active' : ''}}"
+              data-question-id="{{question.id}}"
+              data-value="{{option.value}}"
+              bindtap="selectAnswer"
+            >{{option.value}}</button>
+          </view>
+
+          <view wx:elif="{{question.type === 'multiple_choice'}}" class="answer-options">
+            <button
+              wx:for="{{question.optionViews}}"
+              wx:key="value"
+              wx:for-item="option"
+              class="answer-chip {{option.selected ? 'choice-chip-active' : ''}}"
+              data-question-id="{{question.id}}"
+              data-value="{{option.value}}"
+              bindtap="toggleMultiAnswer"
+            >{{option.value}}</button>
+          </view>
+
+          <view wx:elif="{{question.type === 'boolean'}}" class="answer-options">
+            <button
+              class="answer-chip {{answers[question.id] === true ? 'choice-chip-active' : ''}}"
+              data-question-id="{{question.id}}"
+              data-value="true"
+              bindtap="selectAnswer"
+            >可以</button>
+            <button
+              class="answer-chip {{answers[question.id] === false ? 'choice-chip-active' : ''}}"
+              data-question-id="{{question.id}}"
+              data-value="false"
+              bindtap="selectAnswer"
+            >暂时不行</button>
+          </view>
+
+          <input
+            wx:elif="{{question.type === 'number'}}"
+            class="answer-input"
+            type="number"
+            value="{{answers[question.id]}}"
+            placeholder="{{question.min}}～{{question.max}}"
+            data-question-id="{{question.id}}"
+            bindinput="inputNumberAnswer"
+          />
+
+          <textarea
+            wx:else
+            class="answer-textarea"
+            maxlength="{{question.maxLength || 100}}"
+            value="{{answers[question.id]}}"
+            placeholder="{{question.placeholder || '简单说明即可'}}"
+            data-question-id="{{question.id}}"
+            bindinput="inputAnswer"
+          />
+        </view>
+      </view>
       <view class="scroll-spacer"></view>
     </view>
 
-    <view wx:else class="step-section">
-      <view class="step-title">让行动方案更适合你</view>
-      <view class="step-subtitle">再确认几个关键问题，AI 会根据你的实际情况制定方案。</view>
-      <view wx:if="{{analysis}}" class="analysis-card">
-        <view class="field-label">规范后的目标</view>
-        <view class="analysis-goal">{{analysis.normalizedGoal}}</view>
-        <view wx:if="{{analysis.analysisSource === 'fallback'}}" class="fallback-copy">
-          目标分析暂时不可用，先用基础问题帮你补齐关键信息。
+    <!-- Step 3: 行动方案生成 -->
+    <view wx:elif="{{currentStep === 3}}" class="step-section generation-step">
+      <!-- Generating state -->
+      <view wx:if="{{flowState === 'analyzing' || flowState === 'generating'}}" class="generation-panel">
+        <view class="loading-dot large-dot"></view>
+
+        <view class="phase-list">
+          <view class="phase-item {{generationPhase === 'understanding' ? 'phase-active' : ''}} {{generationPhase === 'organizing' || generationPhase === 'generating' || generationPhase === 'validating' || generationPhase === 'completed' ? 'phase-done' : ''}}">
+            <view class="phase-icon">
+              <text wx:if="{{generationPhase === 'organizing' || generationPhase === 'generating' || generationPhase === 'validating' || generationPhase === 'completed'}}">✓</text>
+              <text wx:else>1</text>
+            </view>
+            <view class="phase-text">理解你的目标</view>
+          </view>
+          <view class="phase-item {{generationPhase === 'organizing' ? 'phase-active' : ''}} {{generationPhase === 'generating' || generationPhase === 'validating' || generationPhase === 'completed' ? 'phase-done' : ''}}">
+            <view class="phase-icon">
+              <text wx:if="{{generationPhase === 'generating' || generationPhase === 'validating' || generationPhase === 'completed'}}">✓</text>
+              <text wx:else>2</text>
+            </view>
+            <view class="phase-text">整理行动重点</view>
+          </view>
+          <view class="phase-item {{generationPhase === 'generating' ? 'phase-active' : ''}} {{generationPhase === 'validating' || generationPhase === 'completed' ? 'phase-done' : ''}}">
+            <view class="phase-icon">
+              <text wx:if="{{generationPhase === 'validating' || generationPhase === 'completed'}}">✓</text>
+              <text wx:else>3</text>
+            </view>
+            <view class="phase-text">生成行动方案</view>
+          </view>
+          <view class="phase-item {{generationPhase === 'validating' ? 'phase-active' : ''}} {{generationPhase === 'completed' ? 'phase-done' : ''}}">
+            <view class="phase-icon">
+              <text wx:if="{{generationPhase === 'completed'}}">✓</text>
+              <text wx:else>4</text>
+            </view>
+            <view class="phase-text">检查方案可行性</view>
+          </view>
+        </view>
+
+        <view class="generation-message">{{generationMessage}}</view>
+
+        <view wx:if="{{showLongWaitHint}}" class="long-wait-hint">
+          {{longWaitMessage}}
         </view>
       </view>
 
-      <view
-        wx:for="{{clarificationQuestions}}"
-        wx:key="id"
-        wx:for-item="question"
-        class="question-card"
-      >
-        <view class="question-title">
-          <text>{{index + 1}}. {{question.question}}</text>
-          <text wx:if="{{question.required}}" class="required-mark">必填</text>
-        </view>
-
-        <view wx:if="{{question.type === 'single_choice'}}" class="answer-options">
-          <button
-            wx:for="{{question.optionViews}}"
-            wx:key="value"
-            wx:for-item="option"
-            class="answer-chip {{option.selected ? 'choice-chip-active' : ''}}"
-            data-question-id="{{question.id}}"
-            data-value="{{option.value}}"
-            bindtap="selectAnswer"
-          >{{option.value}}</button>
-        </view>
-
-        <view wx:elif="{{question.type === 'multiple_choice'}}" class="answer-options">
-          <button
-            wx:for="{{question.optionViews}}"
-            wx:key="value"
-            wx:for-item="option"
-            class="answer-chip {{option.selected ? 'choice-chip-active' : ''}}"
-            data-question-id="{{question.id}}"
-            data-value="{{option.value}}"
-            bindtap="toggleMultiAnswer"
-          >{{option.value}}</button>
-        </view>
-
-        <view wx:elif="{{question.type === 'boolean'}}" class="answer-options">
-          <button
-            class="answer-chip {{answers[question.id] === true ? 'choice-chip-active' : ''}}"
-            data-question-id="{{question.id}}"
-            data-value="true"
-            bindtap="selectAnswer"
-          >可以</button>
-          <button
-            class="answer-chip {{answers[question.id] === false ? 'choice-chip-active' : ''}}"
-            data-question-id="{{question.id}}"
-            data-value="false"
-            bindtap="selectAnswer"
-          >暂时不行</button>
-        </view>
-
-        <input
-          wx:elif="{{question.type === 'number'}}"
-          class="answer-input"
-          type="number"
-          value="{{answers[question.id]}}"
-          placeholder="{{question.min}}～{{question.max}}"
-          data-question-id="{{question.id}}"
-          bindinput="inputNumberAnswer"
-        />
-
-        <textarea
-          wx:else
-          class="answer-textarea"
-          maxlength="{{question.maxLength || 100}}"
-          value="{{answers[question.id]}}"
-          placeholder="{{question.placeholder || '简单说明即可'}}"
-          data-question-id="{{question.id}}"
-          bindinput="inputAnswer"
-        />
+      <!-- Completed state (brief flash before navigation) -->
+      <view wx:elif="{{flowState === 'completed'}}" class="generation-panel generation-complete">
+        <view class="complete-icon">✓</view>
+        <view class="generation-message">{{generationMessage}}</view>
+        <view class="complete-hint">即将跳转到方案预览</view>
       </view>
-      <view class="scroll-spacer"></view>
+
+      <!-- Error state -->
+      <view wx:elif="{{flowState === 'error'}}" class="generation-panel generation-error">
+        <view class="state-mark">!</view>
+        <view class="state-title">方案生成遇到问题</view>
+        <view class="state-description">{{pageError}}</view>
+        <view wx:if="{{retryCount >= 2}}" class="retry-hint">已重试 {{retryCount}} 次，建议稍后再试或返回修改目标。</view>
+      </view>
     </view>
   </scroll-view>
 
+  <!-- Bottom actions -->
   <view wx:if="{{pageStatus === 'form'}}" class="bottom-actions">
-    <button class="previous-button" disabled="{{submitting}}" bindtap="previousStep">
-      {{currentStep === 1 ? '返回' : '上一步'}}
-    </button>
-    <button class="next-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="nextStep">
-      {{currentStep === 1 ? '下一步' : (currentStep === 2 ? (analyzing ? '正在理解你的目标' : '分析目标') : '确认并生成方案')}}
-    </button>
+    <block wx:if="{{currentStep < 3}}">
+      <button class="previous-button" disabled="{{submitting}}" bindtap="previousStep">
+        {{currentStep === 1 ? '返回' : '上一步'}}
+      </button>
+      <button
+        class="next-button"
+        loading="{{submitting}}"
+        disabled="{{submitting}}"
+        bindtap="nextStep"
+      >
+        {{currentStep === 1 ? '下一步' : (analyzing ? '正在分析目标' : (showClarification ? '确认并生成方案' : '分析并生成方案'))}}
+      </button>
+    </block>
+    <block wx:elif="{{currentStep === 3 && flowState === 'error'}}">
+      <button class="previous-button" bindtap="backToStep2">返回修改</button>
+      <button class="next-button" disabled="{{submitting}}" bindtap="retryGeneration">重新生成</button>
+    </block>
+    <!-- Step 3 generating/completed: no buttons to prevent accidental interaction -->
   </view>
 </view>

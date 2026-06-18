@@ -1,5 +1,5 @@
 import { GoalDraft, NextWeekPreviewCache, PreviewCache } from "../types/goal";
-import { ClarificationAnswer, GoalAnalysisResult, LongTermGoalDraft, StagePreviewCache } from "../types/stage";
+import { ClarificationAnswer, GenerationProgress, GenerationState, GoalAnalysisResult, LongTermGoalDraft, StagePreviewCache } from "../types/stage";
 
 export const GOAL_DRAFT_KEY = "GOAL_DRAFT_V1";
 export const PLAN_PREVIEW_KEY = "PLAN_PREVIEW_V1";
@@ -141,4 +141,37 @@ export function getClarificationAnswers(): Record<string, ClarificationAnswer["v
 
 export function saveClarificationAnswers(value: Record<string, ClarificationAnswer["value"]>): void {
   wx.setStorageSync(GOAL_CLARIFICATION_ANSWERS_KEY, value);
+}
+
+// ─── Generation State ───────────────────────────────────────────────
+
+const GENERATION_STATE_KEY = "GENERATION_STATE_V1";
+const GENERATION_PROGRESS_KEY = "GENERATION_PROGRESS_V1";
+
+export function getGenerationState(): GenerationState | null {
+  const value = wx.getStorageSync(GENERATION_STATE_KEY) as GenerationState | undefined;
+  if (!value || typeof value !== "object" || !value.flowState) return null;
+  return value;
+}
+
+export function saveGenerationState(value: GenerationState): void {
+  wx.setStorageSync(GENERATION_STATE_KEY, value);
+}
+
+export function clearGenerationState(): void {
+  wx.removeStorageSync(GENERATION_STATE_KEY);
+}
+
+export function getGenerationProgress(): GenerationProgress | null {
+  const value = wx.getStorageSync(GENERATION_PROGRESS_KEY) as GenerationProgress | undefined;
+  if (!value || typeof value !== "object" || !value.phase) return null;
+  return value;
+}
+
+export function saveGenerationProgress(value: GenerationProgress): void {
+  wx.setStorageSync(GENERATION_PROGRESS_KEY, value);
+}
+
+export function clearGenerationProgress(): void {
+  wx.removeStorageSync(GENERATION_PROGRESS_KEY);
 }

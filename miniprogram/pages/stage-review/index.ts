@@ -23,6 +23,26 @@ interface InputEvent {
   };
 }
 
+const ACTION_TYPE_LABELS: Record<string, string> = {
+  practice: "实践练习",
+  learning: "学习认知",
+  preparation: "准备工作",
+  reflection: "反思总结",
+  recovery: "恢复调整",
+  creation: "创作产出",
+  execution: "执行落地",
+};
+
+const SKIP_REASON_LABELS: Record<string, string> = {
+  not_enough_time: "时间不够",
+  too_difficult: "任务太难",
+  insufficient_resources: "资源不足",
+  not_feeling_well: "状态不适",
+  unexpected_event: "临时有事",
+  task_not_realistic: "不符合实际",
+  other: "其他",
+};
+
 const DIFFICULTY_OPTIONS = [
   { value: "easy", label: "偏轻松", description: "多数行动都能从容完成" },
   { value: "suitable", label: "刚刚好", description: "有挑战，也能稳定推进" },
@@ -48,6 +68,10 @@ Page({
     difficultyOptions: DIFFICULTY_OPTIONS,
     preferenceOptions: PREFERENCE_OPTIONS,
     submitting: false,
+    actionTypeRates: [] as { type: string; label: string; rate: number }[],
+    skipReasonList: [] as { reason: string; label: string; count: number }[],
+    timeDeviation: 0,
+    hasDetailedSummary: false,
   },
 
   onLoad(options: Record<string, string | undefined>) {
@@ -68,7 +92,38 @@ Page({
     this.setData({ status: "loading", errorMessage: "" });
     getStageReview(this.data.stageId)
       .then((review) => {
-        this.setData({ status: "ready", review });
+        const summary = review.executionSummary;
+
+        const actionTypeRates = summary?.actionTypeCompletionRates
+          ? Object.entries(summary.actionTypeCompletionRates).map(([type, rate]) => ({
+              type,
+              label: ACTION_TYPE_LABELS[type] || type,
+              rate,
+            }))
+          : [];
+
+        const skipReasonList = summary?.skipReasons
+          ? Object.entries(summary.skipReasons)
+              .sort((a, b) => b[1] - a[1])
+              .map(([reason, count]) => ({
+                reason,
+                label: SKIP_REASON_LABELS[reason] || reason,
+                count,
+              }))
+          : [];
+
+        const timeDeviation = summary
+          ? summary.averageDailyMinutes - summary.plannedDailyMinutes
+          : 0;
+
+        this.setData({
+          status: "ready",
+          review,
+          actionTypeRates,
+          skipReasonList,
+          timeDeviation,
+          hasDetailedSummary: Boolean(summary && summary.totalActionCount > 0),
+        });
       })
       .catch((error: Error) => {
         this.setData({
@@ -95,7 +150,7 @@ Page({
   },
 
   updateFocus(event: InputEvent) {
-    this.setData({ focusAdjustment: String(event.detail.value || "").slice(0, 50) });
+    this.setData({ focusAdjustment: String(event.detail.value || "").slice(0, 200) });
   },
 
   continuePreview() {
@@ -115,9 +170,9 @@ Page({
     const focusAdjustment = this.data.focusAdjustment.trim();
     if (
       this.data.nextPreference === "change_focus" &&
-      (focusAdjustment.length < 2 || focusAdjustment.length > 50)
+      (focusAdjustment.length < 2 || focusAdjustment.length > 200)
     ) {
-      wx.showToast({ title: "请填写 2～50 个字的调整重点", icon: "none" });
+      wx.showToast({ title: "请填写 2～200 个字的调整重点", icon: "none" });
       return;
     }
 

@@ -13,18 +13,153 @@ const DURATION_LABELS = {
   "6_months": "6 个月",
   long_term: "长期",
 };
+const ACTION_TYPE_LABELS = {
+  practice: "实践练习",
+  learning: "学习认知",
+  preparation: "准备工作",
+  reflection: "反思总结",
+  recovery: "恢复调整",
+  creation: "创作产出",
+  execution: "执行落地",
+};
+const SKIP_REASON_LABELS = {
+  not_enough_time: "时间不够",
+  too_difficult: "任务太难",
+  insufficient_resources: "资源不足",
+  not_feeling_well: "状态不适",
+  unexpected_event: "临时有事",
+  task_not_realistic: "不符合实际",
+  other: "其他",
+};
+const FEELING_LABELS = {
+  easy: "轻松",
+  normal: "正常",
+  challenging: "有挑战",
+  rewarding: "有收获",
+};
 const DIRECT_STAGE_PROMPT_VERSION = "stage-direct-v1";
 const GOAL_ANALYSIS_PROMPT_VERSION = "goal-analysis-v1";
 const STAGE_REGENERATION_PROMPT_VERSION = "stage-regeneration-v1";
 
+function buildExecutionSummaryBlock(summary) {
+  const lines = [];
+
+  // 时间偏差分析
+  if (summary.plannedDailyMinutes > 0 && summary.averageDailyMinutes > 0) {
+    const ratio = summary.averageDailyMinutes / summary.plannedDailyMinutes;
+    lines.push(`- 计划日均 ${summary.plannedDailyMinutes} 分钟，实际日均约 ${summary.averageDailyMinutes} 分钟（${Math.round(ratio * 100)}%）。`);
+    if (ratio < 0.6) {
+      const adjustedMinutes = Math.min(summary.averageDailyMinutes + 5, summary.plannedDailyMinutes);
+      lines.push(`  → 用户实际投入远低于计划，下一阶段每日任务总时长应调整至约 ${adjustedMinutes} 分钟，不要继续按原计划时长安排。`);
+    } else if (ratio > 1.1) {
+      lines.push(`  → 用户实际投入超过计划，说明任务量可能偏大或效率偏低，适当精简。`);
+    }
+  } else if (summary.plannedDailyMinutes > 0 && summary.averageDailyMinutes === 0) {
+    lines.push(`- 计划日均 ${summary.plannedDailyMinutes} 分钟，但实际完成记录为 0 分钟。`);
+    lines.push(`  → 大幅减少每日任务量和时长，优先让用户建立连续行动习惯。`);
+  }
+
+  // 行动类型偏好
+  if (summary.frequentlySkippedActionTypes && summary.frequentlySkippedActionTypes.length > 0) {
+    const skippedLabels = summary.frequentlySkippedActionTypes.map((t) => ACTION_TYPE_LABELS[t] || t);
+    lines.push(`- 用户经常跳过的行动类型：${skippedLabels.join("、")}。`);
+    lines.push(`  → 减少这些类型的任务比例，用用户更倾向的行动类型替代。`);
+  }
+
+  if (summary.actionTypeCompletionRates && Object.keys(summary.actionTypeCompletionRates).length > 0) {
+    const highCompletion = Object.entries(summary.actionTypeCompletionRates)
+      .filter(([, rate]) => rate >= 70)
+      .map(([type]) => ACTION_TYPE_LABELS[type] || type);
+    if (highCompletion.length > 0) {
+      lines.push(`- 用户完成率较高的行动类型：${highCompletion.join("、")}。`);
+      lines.push(`  → 优先安排这些类型的行动作为核心任务。`);
+    }
+  }
+
+  // 跳过原因
+  if (summary.skipReasons && Object.keys(summary.skipReasons).length > 0) {
+    const sortedReasons = Object.entries(summary.skipReasons)
+      .sort((a, b) => b[1] - a[1]);
+    const reasonLabels = sortedReasons.map(([reason, count]) =>
+      `${SKIP_REASON_LABELS[reason] || reason}(${count}次)`
+    );
+    lines.push(`- 跳过原因分布：${reasonLabels.join("、")}。`);
+
+    for (const [reason, count] of sortedReasons) {
+      if (reason === "not_enough_time" && count >= 2) {
+        lines.push(`  → 时间不够是主要障碍，缩短每个行动的预计时间，或将大任务拆成更小的步骤。`);
+      } else if (reason === "too_difficult" && count >= 2) {
+        lines.push(`  → 任务难度偏高，降低起步门槛，增加引导性说明。`);
+      } else if (reason === "insufficient_resources" && count >= 2) {
+        lines.push(`  → 资源不足，避免依赖用户未使用的资源。用户实际使用的资源：${(summary.actualResourceUsage || []).join("、") || "无"}。`);
+      } else if (reason === "task_not_realistic" && count >= 2) {
+        lines.push(`  → 用户认为任务不切实际，需要更贴近用户日常的行动设计。`);
+      }
+    }
+  }
+
+  // 用户难度感受
+  if (summary.userDifficulty === "easy") {
+    lines.push(`- 用户觉得偏轻松，可在不增加时长的前提下适当提高任务深度或成果要求。`);
+  } else if (summary.userDifficulty === "hard") {
+    lines.push(`- 用户觉得偏吃力，减少每日任务数量或降低单次任务复杂度，优先保持连续行动习惯。`);
+  }
+
+  // 资源使用
+  if (summary.actualResourceUsage && summary.actualResourceUsage.length > 0) {
+    lines.push(`- 用户实际使用的资源：${summary.actualResourceUsage.join("、")}。新阶段任务应优先围绕这些资源设计。`);
+  }
+
+  // 打卡感受
+  if (summary.feelingDistribution && Object.keys(summary.feelingDistribution).length > 0) {
+    const feelingLabels = Object.entries(summary.feelingDistribution)
+      .map(([f, c]) => `${FEELING_LABELS[f] || f}(${c}次)`);
+    lines.push(`- 打卡感受分布：${feelingLabels.join("、")}。`);
+  }
+
+  return lines.join("\n");
+}
+
+function buildPreviousPlanSummaryBlock(summary) {
+  if (!summary) return "";
+  const lines = [];
+  if (summary.stageTitle) lines.push(`- 上一阶段标题：${summary.stageTitle}`);
+  if (summary.stageFocus) lines.push(`- 上一阶段重点：${summary.stageFocus}`);
+  if (summary.actionThemes && summary.actionThemes.length) {
+    lines.push(`- 上一阶段主题：${summary.actionThemes.join("、")}`);
+  }
+  if (summary.actionSamples && summary.actionSamples.length) {
+    lines.push(`- 上一阶段任务样例：${summary.actionSamples.join("、")}`);
+  }
+  if (summary.completedActionSamples && summary.completedActionSamples.length) {
+    lines.push(`- 用户完成过的任务：${summary.completedActionSamples.join("、")}`);
+  }
+  if (summary.skippedActionSamples && summary.skippedActionSamples.length) {
+    lines.push(`- 用户跳过的任务：${summary.skippedActionSamples.join("、")}`);
+  }
+  return lines.join("\n");
+}
+
 function buildStagePrompt(input) {
-  const review = input.previousReview
-    ? `上一阶段重点为“${input.previousReview.previousFocus}”，完成率 ${input.previousReview.completionRate}%，实际行动 ${input.previousReview.actionDays} 天，难度感受 ${input.previousReview.difficulty}，下一阶段偏好 ${input.previousReview.nextPreference}${
-        input.previousReview.focusAdjustment
-          ? `，希望调整重点为：${input.previousReview.focusAdjustment}`
-          : ""
-      }。完成率较低时减少每日行动数量或时长；感受偏轻松时可适当增加挑战；选择保持节奏时维持相近任务量。请据此调整任务量和重点，但不要改变长期目标。`
-    : "这是第一个行动阶段，优先降低启动难度并建立节奏。";
+  let review;
+  if (input.previousReview) {
+    const base = `上一阶段重点为"${input.previousReview.previousFocus}"，完成率 ${input.previousReview.completionRate}%，实际行动 ${input.previousReview.actionDays} 天，难度感受 ${input.previousReview.difficulty}，下一阶段偏好 ${input.previousReview.nextPreference}${
+      input.previousReview.focusAdjustment
+        ? `，希望调整重点为：${input.previousReview.focusAdjustment}`
+        : ""
+    }。`;
+
+    const adaptiveBlock = input.previousReview.executionSummary
+      ? `\n\n上一阶段执行详情（据此调整任务设计）：\n${buildExecutionSummaryBlock(input.previousReview.executionSummary)}`
+      : "";
+    const previousPlanBlock = input.previousReview.previousPlanSummary
+      ? `\n\n上一阶段计划内容（下一阶段必须承接，不要生成通用模板）：\n${buildPreviousPlanSummaryBlock(input.previousReview.previousPlanSummary)}`
+      : "";
+
+    review = `${base}${adaptiveBlock}${previousPlanBlock}\n\n基本调整规则：完成率较低时减少每日行动数量或时长；感受偏轻松时可适当增加挑战；选择保持节奏时维持相近任务量。请据此调整任务量和重点，但不要改变长期目标。`;
+  } else {
+    review = "这是第一个行动阶段，优先降低启动难度并建立节奏。";
+  }
   return `你是一名长期目标行动拆解助手。你不是聊天助手，只负责生成可执行的短期行动阶段。
 
 长期目标：
@@ -46,10 +181,11 @@ function buildStagePrompt(input) {
 3. 每天行动总时间不得超过 ${input.dailyMinutes} 分钟；轻松强度使用约 75% 时间，普通和挑战强度不超过可投入时间，挑战强度提高任务难度而不是增加时长。
 4. 第一个阶段优先降低启动难度，围绕长期目标的第一个合理步骤建立节奏。
 5. 禁止用“努力学习”“坚持下去”“提升自己”等空泛鼓励代替行动。
-6. 不承诺结果，不输出医学诊断、投资保证或高风险建议。
-7. 不推荐付费课程、购物或无关产品。
-8. 所有文本使用简体中文，不包含 HTML、链接或 Markdown。
-9. 只能返回一个符合下述结构的 JSON 对象，不返回解释文字。
+6. 如果阶段背景中包含用户希望使用的材料、场景或练习方式，下一阶段必须把这些信息转化为具体每日行动；不得退回“准备学习环境”“理解核心概念”“完成一个可验证的小步骤”等通用模板。
+7. 不承诺结果，不输出医学诊断、投资保证或高风险建议。
+8. 不推荐付费课程、购物或无关产品。
+9. 所有文本使用简体中文，不包含 HTML、链接或 Markdown。
+10. 只能返回一个符合下述结构的 JSON 对象，不返回解释文字。
 
 {
   "stage": {

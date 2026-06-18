@@ -16,6 +16,8 @@ const command = db.command;
 const MAX_GENERATIONS_PER_STAGE = 3;
 const RATE_LIMIT_MILLISECONDS = 60 * 1000;
 const PREVIEW_LIFETIME_MILLISECONDS = 24 * 60 * 60 * 1000;
+const STAGE_REVIEW_AI_TIMEOUT_MS = 32000;
+const STAGE_REVIEW_REPAIR_TIMEOUT_MS = 22000;
 
 function fail(code, message) {
   const error = new Error(message);
@@ -55,6 +57,9 @@ function publicPreview(preview, reused) {
     generationSource: generatedBy,
     stagePlan: preview.stagePlan,
     reused,
+    fallbackReason: preview.fallbackReason || "",
+    modelId: preview.modelId || "",
+    providerGroup: preview.providerGroup || "",
   };
 }
 
@@ -133,6 +138,7 @@ async function savePreview(
   fingerprint,
   stagePlan,
   generatedBy,
+  metadata = {},
 ) {
   const expiresAt = new Date(Date.now() + PREVIEW_LIFETIME_MILLISECONDS);
   await db.collection("stage_previews").doc(reservation.previewId).set({
@@ -144,6 +150,11 @@ async function savePreview(
       generationInput: input,
       stagePlan,
       generatedBy,
+      fallbackReason: metadata.fallbackReason || "",
+      modelId: metadata.modelId || "",
+      providerGroup: metadata.providerGroup || "",
+      generationDurationMs: Number(metadata.generationDurationMs || 0),
+      totalTokens: Number(metadata.totalTokens || 0),
       status: "preview",
       expiresAt,
       createdAt: db.serverDate(),
@@ -167,6 +178,7 @@ async function savePreview(
 async function generateWithInput(openid, event, input) {
   const requestId = validateStageRequestId(event && event.requestId);
   const fingerprint = fingerprintStageInput(input);
+  const generationStartedAt = Date.now();
   const reservation = await reserveGeneration(
     openid,
     requestId,
@@ -180,35 +192,99 @@ async function generateWithInput(openid, event, input) {
 
   let stagePlan;
   let generatedBy = "template";
+  let fallbackReason = "";
+  let modelId = "";
+  let providerGroup = "";
+  let totalTokens = 0;
   if (!event.forceFallback) {
     const provider = createStagePlanProvider();
     let firstOutput = "";
     try {
-      firstOutput = await provider.generateStagePlan(
+      const result = await provider.generateStagePlanWithMetadata(
         buildStagePrompt(input),
-        18000,
+        input.previousReview ? STAGE_REVIEW_AI_TIMEOUT_MS : 18000,
+        {
+          action: "submitStageReview",
+          promptVersion: "stage-review-next-v1",
+          schemaVersion: "stage-plan-v1",
+          stageNumber: input.stageNumber,
+          durationDays: input.durationDays,
+          dailyMinutes: input.dailyMinutes,
+          hasPreviousReview: Boolean(input.previousReview),
+          hasFocusAdjustment: Boolean(input.previousReview && input.previousReview.focusAdjustment),
+          hasPreviousPlanSummary: Boolean(input.previousReview && input.previousReview.previousPlanSummary),
+          repairAttempted: false,
+        },
       );
+      firstOutput = result.text;
+      modelId = result.metadata.modelId || "";
+      providerGroup = result.metadata.providerGroup || "";
+      totalTokens += Number(result.metadata.totalTokens || 0);
       stagePlan = validateStagePlan(parseStageAiJson(firstOutput), input);
       generatedBy = "ai";
-    } catch (firstError) {
-      console.warn("stage generation attempt failed", {
-        code: firstError.code || "AI_REQUEST_FAILED",
+      console.info("stage review next generation accepted", {
+        action: "submitStageReview",
         stageNumber: input.stageNumber,
+        generatedBy,
+        modelId,
+        providerGroup,
+        generationDurationMs: Date.now() - generationStartedAt,
+        totalTokens,
+      });
+    } catch (firstError) {
+      fallbackReason = firstError.code || "AI_REQUEST_FAILED";
+      console.warn("stage generation attempt failed", {
+        action: "submitStageReview",
+        code: fallbackReason,
+        stageNumber: input.stageNumber,
+        hasFocusAdjustment: Boolean(input.previousReview && input.previousReview.focusAdjustment),
+        hasPreviousPlanSummary: Boolean(input.previousReview && input.previousReview.previousPlanSummary),
       });
       try {
-        const repaired = await provider.generateStagePlan(
+        const repaired = await provider.generateStagePlanWithMetadata(
           buildStageRepairPrompt(input, firstOutput),
-          16000,
+          input.previousReview ? STAGE_REVIEW_REPAIR_TIMEOUT_MS : 16000,
+          {
+            action: "submitStageReviewRepair",
+            promptVersion: "stage-review-next-v1",
+            schemaVersion: "stage-plan-v1",
+            stageNumber: input.stageNumber,
+            durationDays: input.durationDays,
+            dailyMinutes: input.dailyMinutes,
+            hasPreviousReview: Boolean(input.previousReview),
+            hasFocusAdjustment: Boolean(input.previousReview && input.previousReview.focusAdjustment),
+            hasPreviousPlanSummary: Boolean(input.previousReview && input.previousReview.previousPlanSummary),
+            repairAttempted: true,
+            fallbackReason,
+          },
         );
-        stagePlan = validateStagePlan(parseStageAiJson(repaired), input);
-        generatedBy = "ai";
-      } catch (repairError) {
-        console.warn("stage generation using template", {
-          code: repairError.code || "AI_REQUEST_FAILED",
+        modelId = repaired.metadata.modelId || modelId;
+        providerGroup = repaired.metadata.providerGroup || providerGroup;
+        totalTokens += Number(repaired.metadata.totalTokens || 0);
+        stagePlan = validateStagePlan(parseStageAiJson(repaired.text), input);
+        generatedBy = "ai_repaired";
+        fallbackReason = "";
+        console.info("stage review next generation repaired", {
+          action: "submitStageReview",
           stageNumber: input.stageNumber,
+          generatedBy,
+          modelId,
+          providerGroup,
+          generationDurationMs: Date.now() - generationStartedAt,
+          totalTokens,
+        });
+      } catch (repairError) {
+        fallbackReason = repairError.code || fallbackReason || "AI_REQUEST_FAILED";
+        console.warn("stage generation using template", {
+          action: "submitStageReview",
+          code: fallbackReason,
+          stageNumber: input.stageNumber,
+          generationDurationMs: Date.now() - generationStartedAt,
         });
       }
     }
+  } else {
+    fallbackReason = "FORCE_FALLBACK";
   }
   if (!stagePlan) {
     stagePlan = validateStagePlan(buildStageFallback(input), input);
@@ -221,6 +297,13 @@ async function generateWithInput(openid, event, input) {
     fingerprint,
     stagePlan,
     generatedBy,
+    {
+      fallbackReason,
+      modelId,
+      providerGroup,
+      generationDurationMs: Date.now() - generationStartedAt,
+      totalTokens,
+    },
   );
 }
 

@@ -211,7 +211,7 @@ export function submitStageReview(
     action: "submitStageReview",
     ...input,
     requestId,
-  });
+  }, 100000);
 }
 
 export function regenerateStagePreview(

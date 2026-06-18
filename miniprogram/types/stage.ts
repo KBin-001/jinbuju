@@ -156,6 +156,7 @@ export interface StageGenerationResult {
   previewId: string;
   requestId: string;
   stageNumber: number;
+  previousStageId?: string;
   generatedBy: StageGeneratedBy;
   generationSource?: StageGeneratedBy;
   stagePlan: AIStagePlan;
@@ -206,6 +207,32 @@ export interface StageReviewInput {
   focusAdjustment?: string;
 }
 
+export interface StageExecutionSummary {
+  completionRate: number;
+  actionDays: number;
+  streakDays: number;
+  completedActionCount: number;
+  totalActionCount: number;
+  averageDailyMinutes: number;
+  plannedDailyMinutes: number;
+  completedActionTypes: string[];
+  frequentlySkippedActionTypes: string[];
+  skipReasons: Record<string, number>;
+  actualResourceUsage: string[];
+  userDifficulty: "easy" | "suitable" | "hard";
+  actionTypeCompletionRates: Record<string, number>;
+  feelingDistribution: Record<string, number>;
+}
+
+export interface StagePreviousPlanSummary {
+  stageTitle: string;
+  stageFocus: string;
+  actionThemes: string[];
+  actionSamples: string[];
+  completedActionSamples: string[];
+  skippedActionSamples: string[];
+}
+
 export interface StageReviewData {
   stageId: string;
   completionRate: number;
@@ -216,6 +243,8 @@ export interface StageReviewData {
   canReview: boolean;
   reviewed: boolean;
   previewId: string;
+  executionSummary: StageExecutionSummary;
+  previousPlanSummary?: StagePreviousPlanSummary;
 }
 
 export type StageFeedbackType =
@@ -259,3 +288,36 @@ export const STAGE_FEEDBACK_OPTIONS: {
   { type: "too_repetitive", label: "任务内容太重复" },
   { type: "other", label: "其他" },
 ];
+
+// ─── Generation Flow Types ──────────────────────────────────────────
+
+export type GenerationPhase =
+  | "understanding"
+  | "organizing"
+  | "generating"
+  | "validating"
+  | "completed"
+  | "error";
+
+export type FlowState =
+  | "idle"
+  | "analyzing"
+  | "generating"
+  | "completed"
+  | "error";
+
+export interface GenerationProgress {
+  phase: GenerationPhase;
+  phaseStartedAt: number;
+  totalStartedAt: number;
+  errorMessage?: string;
+  retryCount: number;
+}
+
+export interface GenerationState {
+  flowState: FlowState;
+  analysisId?: string;
+  stageRequestId?: string;
+  input?: CreateStagePreviewInput;
+  previewId?: string;
+}

@@ -86,6 +86,74 @@ function hasOnlyKeys(value, allowedKeys) {
   return Object.keys(value).every((key) => allowedKeys.includes(key));
 }
 
+function clampInt(value, min, max) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, Math.round(n)));
+}
+
+function validateStringArray(value, maxLength) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((v) => typeof v === "string" && v.trim())
+    .slice(0, maxLength)
+    .map((v) => v.trim().slice(0, 50));
+}
+
+function validateSkipReasonsMap(value) {
+  if (!value || typeof value !== "object") return {};
+  const result = {};
+  for (const [key, count] of Object.entries(value)) {
+    if (typeof key === "string" && Number.isFinite(Number(count))) {
+      result[key.slice(0, 30)] = clampInt(count, 0, 1000);
+    }
+  }
+  return result;
+}
+
+function validateRatesMap(value) {
+  if (!value || typeof value !== "object") return {};
+  const result = {};
+  for (const [key, rate] of Object.entries(value)) {
+    if (typeof key === "string" && Number.isFinite(Number(rate))) {
+      result[key.slice(0, 30)] = clampInt(rate, 0, 100);
+    }
+  }
+  return result;
+}
+
+function validateExecutionSummary(value) {
+  if (!value || typeof value !== "object") return null;
+  return {
+    completionRate: clampInt(value.completionRate, 0, 100),
+    actionDays: clampInt(value.actionDays, 0, 366),
+    streakDays: clampInt(value.streakDays, 0, 366),
+    completedActionCount: clampInt(value.completedActionCount, 0, 10000),
+    totalActionCount: clampInt(value.totalActionCount, 0, 10000),
+    averageDailyMinutes: clampInt(value.averageDailyMinutes, 0, 600),
+    plannedDailyMinutes: clampInt(value.plannedDailyMinutes, 0, 600),
+    completedActionTypes: validateStringArray(value.completedActionTypes, 20),
+    frequentlySkippedActionTypes: validateStringArray(value.frequentlySkippedActionTypes, 20),
+    skipReasons: validateSkipReasonsMap(value.skipReasons),
+    actualResourceUsage: validateStringArray(value.actualResourceUsage, 30),
+    userDifficulty: DIFFICULTIES.includes(value.userDifficulty) ? value.userDifficulty : "suitable",
+    actionTypeCompletionRates: validateRatesMap(value.actionTypeCompletionRates),
+    feelingDistribution: validateRatesMap(value.feelingDistribution),
+  };
+}
+
+function validatePreviousPlanSummary(value) {
+  if (!value || typeof value !== "object") return null;
+  return {
+    stageTitle: typeof value.stageTitle === "string" ? value.stageTitle.trim().slice(0, 40) : "",
+    stageFocus: typeof value.stageFocus === "string" ? value.stageFocus.trim().slice(0, 80) : "",
+    actionThemes: validateStringArray(value.actionThemes, 10),
+    actionSamples: validateStringArray(value.actionSamples, 12),
+    completedActionSamples: validateStringArray(value.completedActionSamples, 12),
+    skippedActionSamples: validateStringArray(value.skippedActionSamples, 12),
+  };
+}
+
 function validatePreviousReview(input) {
   if (!input || typeof input !== "object") {
     fail("INVALID_ARGUMENT", "阶段复盘信息无效。");
@@ -100,6 +168,8 @@ function validatePreviousReview(input) {
           "difficulty",
           "nextPreference",
           "focusAdjustment",
+          "executionSummary",
+          "previousPlanSummary",
         ].includes(key),
     )
   ) {
@@ -120,10 +190,14 @@ function validatePreviousReview(input) {
   }
   if (
     input.nextPreference === "change_focus" &&
-    !safeText(input.focusAdjustment, 2, 50)
+    !safeText(input.focusAdjustment, 2, 200)
   ) {
-    fail("INVALID_ARGUMENT", "重点调整需为 2～50 个字符。");
+    fail("INVALID_ARGUMENT", "重点调整需为 2～200 个字符。");
   }
+  const executionSummary = input.executionSummary !== undefined
+    ? validateExecutionSummary(input.executionSummary)
+    : null;
+  const previousPlanSummary = validatePreviousPlanSummary(input.previousPlanSummary);
   return {
     completionRate: input.completionRate,
     actionDays: input.actionDays,
@@ -134,6 +208,8 @@ function validatePreviousReview(input) {
       input.nextPreference === "change_focus"
         ? input.focusAdjustment.trim()
         : "",
+    executionSummary,
+    previousPlanSummary,
   };
 }
 

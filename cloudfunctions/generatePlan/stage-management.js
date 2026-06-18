@@ -1,5 +1,5 @@
 const cloud = require("wx-server-sdk");
-const { addBusinessDays, formatBusinessDate } = require("./date");
+const { addBusinessDays, formatBusinessDate, formatReviewEligibleDate } = require("./date");
 const { stableId } = require("./repository");
 const { generateTrustedStagePlan } = require("./stage-generation");
 const { validateStageRequestId } = require("./stage-validate");
@@ -19,6 +19,63 @@ function validateId(value, label) {
     fail("INVALID_ARGUMENT", `${label}无效。`);
   }
   return value.trim();
+}
+
+function compactText(value, maximum) {
+  if (typeof value !== "string") return "";
+  return value.trim().replace(/\s+/g, " ").slice(0, maximum);
+}
+
+function resolveGoalTitle(goal, stage) {
+  const candidates = [
+    goal.goalTitle,
+    goal.title,
+    stage.goalTitle,
+    stage.stageTitle,
+    stage.title,
+    stage.weeklyGoal,
+    goal.desiredResult,
+  ]
+    .map((value) => compactText(value, 80))
+    .filter(Boolean);
+  const validTitle = candidates.find((value) => value.length >= 2 && value.length <= 30);
+  if (validTitle) return validTitle;
+  const longTitle = candidates.find((value) => value.length > 30);
+  return longTitle ? longTitle.slice(0, 30) : "我的成长目标";
+}
+
+function resolveDesiredResult(goal, goalTitle) {
+  const desiredResult = compactText(goal.desiredResult, 200);
+  if (desiredResult.length >= 5) return desiredResult;
+  return `围绕“${goalTitle}”完成一个可验证的行动阶段`;
+}
+
+function summarizePreviousPlan(stage, tasks) {
+  const actionThemes = Array.from(
+    new Set(tasks.map((task) => compactText(task.theme || task.dayTitle, 40)).filter(Boolean)),
+  ).slice(0, 10);
+  const actionSamples = tasks
+    .map((task) => compactText(task.title, 50))
+    .filter(Boolean)
+    .slice(0, 12);
+  const completedActionSamples = tasks
+    .filter((task) => task.status === "completed")
+    .map((task) => compactText(task.title, 50))
+    .filter(Boolean)
+    .slice(0, 12);
+  const skippedActionSamples = tasks
+    .filter((task) => task.status === "skipped")
+    .map((task) => compactText(task.title, 50))
+    .filter(Boolean)
+    .slice(0, 12);
+  return {
+    stageTitle: compactText(stage.stageTitle || stage.title, 40),
+    stageFocus: compactText(stage.focus || stage.weeklyGoal, 80),
+    actionThemes,
+    actionSamples,
+    completedActionSamples,
+    skippedActionSamples,
+  };
 }
 
 async function getPreviewRecord(openid, previewId) {
@@ -54,6 +111,7 @@ function publicPreview(preview) {
     previewId: String(preview._id),
     requestId: String(preview.requestId),
     stageNumber: Number(preview.stageNumber),
+    previousStageId: String(preview.previousStageId || ""),
     generatedBy,
     generationSource: generatedBy,
     stagePlan: preview.stagePlan,
@@ -323,18 +381,140 @@ async function buildReviewData(openid, stage) {
   ]);
   const tasks = tasksResult.data || [];
   const checkins = checkinsResult.data || [];
-  const completedActionCount = tasks.filter((task) => task.status === "completed").length;
   const review = reviewResult && reviewResult.data;
-  return {
-    stageId: String(stage._id),
-    completionRate: tasks.length ? Math.round((completedActionCount / tasks.length) * 100) : 0,
-    actionDays: new Set(checkins.map((item) => item.businessDate)).size,
-    streakDays: Math.max(0, ...checkins.map((item) => Number(item.streakDays || 0))),
+  let reviewed = Boolean(review);
+  let previewId = String((review && review.previewId) || "");
+  if (previewId) {
+    const previewResult = await db.collection("stage_previews").doc(previewId).get().catch(() => null);
+    const preview = previewResult && previewResult.data;
+    if (preview && preview._openid === openid && preview.generatedBy === "template" && preview.status === "preview") {
+      reviewed = false;
+    }
+  }
+
+  // --- 基础统计 ---
+  const completedActionCount = tasks.filter((task) => task.status === "completed").length;
+  const completionRate = tasks.length ? Math.round((completedActionCount / tasks.length) * 100) : 0;
+  const actionDays = new Set(checkins.map((item) => item.businessDate)).size;
+  const streakDays = Math.max(0, ...checkins.map((item) => Number(item.streakDays || 0)));
+
+  // --- taskId → task 映射 ---
+  const taskMap = new Map(tasks.map((t) => [String(t._id), t]));
+
+  // --- 日均实际分钟数 ---
+  let totalActualMinutes = 0;
+  let actualDaysWithTasks = 0;
+  for (const checkin of checkins) {
+    if (!Array.isArray(checkin.taskResults)) continue;
+    const dayMinutes = checkin.taskResults
+      .filter((r) => r.status === "completed" || r.status === "partially_completed")
+      .reduce((sum, r) => {
+        const task = taskMap.get(String(r.taskId));
+        const minutes = task ? Number(task.estimatedMinutes || 0) : 0;
+        return sum + (r.status === "partially_completed" ? Math.round(minutes * 0.5) : minutes);
+      }, 0);
+    if (dayMinutes > 0) {
+      totalActualMinutes += dayMinutes;
+      actualDaysWithTasks += 1;
+    }
+  }
+  const averageDailyMinutes = actualDaysWithTasks ? Math.round(totalActualMinutes / actualDaysWithTasks) : 0;
+
+  // --- 计划日均分钟数 ---
+  const activeDaySet = new Set();
+  tasks.forEach((t) => activeDaySet.add(t.dayIndex));
+  const activeDayCount = activeDaySet.size || 1;
+  const plannedTotalMinutes = tasks.reduce((sum, t) => sum + Number(t.estimatedMinutes || 0), 0);
+  const plannedDailyMinutes = Math.round(plannedTotalMinutes / activeDayCount);
+
+  // --- 行动类型分析 ---
+  const completedActionTypesSet = new Set();
+  const skippedByActionType = {};
+  const actionTypeTotals = {};
+  const actionTypeCompleted = {};
+
+  for (const task of tasks) {
+    const type = task.actionType || "practice";
+    actionTypeTotals[type] = (actionTypeTotals[type] || 0) + 1;
+    if (task.status === "completed") {
+      completedActionTypesSet.add(type);
+      actionTypeCompleted[type] = (actionTypeCompleted[type] || 0) + 1;
+    }
+    if (task.status === "skipped") {
+      skippedByActionType[type] = (skippedByActionType[type] || 0) + 1;
+    }
+  }
+
+  const completedActionTypes = Array.from(completedActionTypesSet);
+  const frequentlySkippedActionTypes = Object.entries(skippedByActionType)
+    .filter(([type, count]) => {
+      const total = actionTypeTotals[type] || 1;
+      return count >= 2 || count / total >= 0.3;
+    })
+    .map(([type]) => type);
+
+  const actionTypeCompletionRates = {};
+  for (const [type, total] of Object.entries(actionTypeTotals)) {
+    const completed = actionTypeCompleted[type] || 0;
+    actionTypeCompletionRates[type] = Math.round((completed / total) * 100);
+  }
+
+  // --- 跳过原因统计 ---
+  const skipReasons = {};
+  for (const checkin of checkins) {
+    if (checkin.skipReason) {
+      skipReasons[checkin.skipReason] = (skipReasons[checkin.skipReason] || 0) + 1;
+    }
+  }
+
+  // --- 实际资源使用 ---
+  const actualResourceSet = new Set();
+  for (const task of tasks) {
+    if (task.status === "completed" && Array.isArray(task.requiredResources)) {
+      task.requiredResources.forEach((r) => actualResourceSet.add(r));
+    }
+  }
+  const actualResourceUsage = Array.from(actualResourceSet);
+
+  // --- 打卡感受分布 ---
+  const feelingDistribution = {};
+  for (const checkin of checkins) {
+    if (checkin.feeling) {
+      feelingDistribution[checkin.feeling] = (feelingDistribution[checkin.feeling] || 0) + 1;
+    }
+  }
+
+  // --- 组装执行摘要 ---
+  const executionSummary = {
+    completionRate,
+    actionDays,
+    streakDays,
     completedActionCount,
     totalActionCount: tasks.length,
-    canReview: formatBusinessDate() >= stage.endDate,
-    reviewed: Boolean(review),
-    previewId: String((review && review.previewId) || ""),
+    averageDailyMinutes,
+    plannedDailyMinutes,
+    completedActionTypes,
+    frequentlySkippedActionTypes,
+    skipReasons,
+    actualResourceUsage,
+    userDifficulty: "",
+    actionTypeCompletionRates,
+    feelingDistribution,
+  };
+  const previousPlanSummary = summarizePreviousPlan(stage, tasks);
+
+  return {
+    stageId: String(stage._id),
+    completionRate,
+    actionDays,
+    streakDays,
+    completedActionCount,
+    totalActionCount: tasks.length,
+    canReview: formatReviewEligibleDate() >= stage.endDate,
+    reviewed,
+    previewId,
+    executionSummary,
+    previousPlanSummary,
   };
 }
 
@@ -361,9 +541,9 @@ async function submitStageReview(openid, event) {
   }
   if (
     nextPreference === "change_focus" &&
-    (focusAdjustment.length < 2 || focusAdjustment.length > 50)
+    (focusAdjustment.length < 2 || focusAdjustment.length > 200)
   ) {
-    fail("INVALID_ARGUMENT", "重点调整需为 2～50 个字符。");
+    fail("INVALID_ARGUMENT", "重点调整需为 2～200 个字符。");
   }
   const goalResult = await db.collection("goals").doc(stage.goalId).get().catch(() => null);
   const goal = goalResult && goalResult.data;
@@ -378,13 +558,22 @@ async function submitStageReview(openid, event) {
   }
   const reviewId = stableId("stage_review", `${openid}:${stage._id}`);
   const requestId = validateStageRequestId(event.requestId);
+
+  // 注入 userDifficulty 到执行摘要
+  const executionSummary = data.executionSummary
+    ? { ...data.executionSummary, userDifficulty: difficulty }
+    : null;
+
+  const resolvedGoalTitle = resolveGoalTitle(goal, stage);
+  const resolvedDesiredResult = resolveDesiredResult(goal, resolvedGoalTitle);
+
   const result = await generateTrustedStagePlan(
     openid,
     { requestId, regenerate: false, forceFallback: event.forceFallback === true },
     {
-      goalTitle: goal.title || goal.goalTitle,
-      category: goal.category,
-      desiredResult: goal.desiredResult || goal.goalTitle,
+      goalTitle: resolvedGoalTitle,
+      category: goal.category || "other",
+      desiredResult: resolvedDesiredResult,
       dailyMinutes: Number(goal.dailyMinutes || 30),
       targetDuration: goal.targetDuration || "long_term",
       templateId: goal.templateId || "",
@@ -401,9 +590,21 @@ async function submitStageReview(openid, event) {
         difficulty,
         nextPreference,
         focusAdjustment,
+        executionSummary,
+        previousPlanSummary: data.previousPlanSummary,
       },
     },
   );
+  if (result.generatedBy === "template") {
+    console.warn("submitStageReview returned template fallback", {
+      action: "submitStageReview",
+      stageId: stage._id,
+      stageNumber: Number(stage.stageNumber || 1) + 1,
+      fallbackReason: result.fallbackReason || "",
+      hasFocusAdjustment: Boolean(focusAdjustment),
+      hasPreviousPlanSummary: Boolean(data.previousPlanSummary),
+    });
+  }
   await db.collection("stage_previews").doc(result.previewId).update({
     data: {
       goalId: goal._id,
@@ -425,6 +626,7 @@ async function submitStageReview(openid, event) {
       difficulty,
       nextPreference,
       focusAdjustment: nextPreference === "change_focus" ? focusAdjustment : "",
+      executionSummary,
       previewId: result.previewId,
       createdAt: db.serverDate(),
       updatedAt: db.serverDate(),

@@ -38,6 +38,46 @@
       <view class="stats-note">已完成 {{review.completedActionCount}} / {{review.totalActionCount}} 项行动</view>
     </view>
 
+    <!-- 详细执行摘要（仅在有数据时展示） -->
+    <view wx:if="{{hasDetailedSummary}}" class="card summary-card">
+      <view class="section-title">执行详情</view>
+
+      <!-- 时间对比 -->
+      <view class="summary-row">
+        <view class="summary-label">计划日均</view>
+        <view class="summary-value">{{review.executionSummary.plannedDailyMinutes}} 分钟</view>
+      </view>
+      <view class="summary-row">
+        <view class="summary-label">实际日均</view>
+        <view class="summary-value {{timeDeviation < -10 ? 'summary-warn' : ''}}">{{review.executionSummary.averageDailyMinutes}} 分钟</view>
+      </view>
+      <view wx:if="{{timeDeviation < -10}}" class="summary-hint">
+        实际投入比计划少了 {{-timeDeviation}} 分钟，AI 会在下一阶段据此调整
+      </view>
+
+      <!-- 行动类型完成率 -->
+      <view wx:if="{{actionTypeRates.length > 0}}" class="summary-section">
+        <view class="summary-subtitle">各类行动完成率</view>
+        <view wx:for="{{actionTypeRates}}" wx:key="type" class="summary-bar-row">
+          <view class="summary-bar-label">{{item.label}}</view>
+          <view class="summary-bar-track">
+            <view class="summary-bar-fill" style="width: {{item.rate}}%"></view>
+          </view>
+          <view class="summary-bar-rate">{{item.rate}}%</view>
+        </view>
+      </view>
+
+      <!-- 跳过原因 -->
+      <view wx:if="{{skipReasonList.length > 0}}" class="summary-section">
+        <view class="summary-subtitle">跳过原因</view>
+        <view class="summary-tags">
+          <view wx:for="{{skipReasonList}}" wx:key="reason" class="summary-tag">
+            {{item.label}} {{item.count}}次
+          </view>
+        </view>
+      </view>
+    </view>
+
     <view wx:if="{{review.reviewed}}" class="card reviewed-card">
       <view class="section-title">复盘已经完成</view>
       <view class="section-copy">下一阶段预览已经生成，可以继续查看并确认。</view>
@@ -79,9 +119,9 @@
         <textarea
           wx:if="{{nextPreference === 'change_focus'}}"
           class="focus-input"
-          maxlength="50"
+          maxlength="200"
           value="{{focusAdjustment}}"
-          placeholder="例如：减少理论阅读，多做两次模拟练习"
+          placeholder="例如：减少理论阅读，多做两次模拟练习；也可以写下想使用的材料、练习方式和时间安排"
           bindinput="updateFocus"
         />
       </view>
