@@ -24,7 +24,7 @@
           <text>天连续行动</text>
         </view>
       </view>
-      <view class="greeting">继续向目标靠近一点</view>
+      <view class="greeting">{{greetingText}}</view>
     </view>
 
     <view wx:if="{{!goal && totalCount === 0}}" class="card empty-goal-card">
@@ -72,88 +72,6 @@
       </view>
     </block>
 
-    <view class="card quick-task-card">
-      <view class="section-title-row">
-        <view>
-          <view class="section-title">临时行动</view>
-          <view class="quick-task-hint">有计划外的小事时再添加</view>
-        </view>
-        <button class="more-settings-button" bindtap="toggleMoreSettings">
-          {{showMoreSettings ? '收起' : '更多设置'}}
-        </button>
-      </view>
-      <input
-        class="quick-task-input"
-        value="{{quickTitle}}"
-        placeholder="今天要完成什么？"
-        maxlength="40"
-        confirm-type="done"
-        bindinput="onQuickTitleInput"
-      />
-      <view class="quick-options">
-        <button
-          class="quick-chip {{quickTimePeriod === 'morning' ? 'quick-chip-active' : ''}}"
-          data-id="morning"
-          bindtap="selectTimePeriod"
-        >上午</button>
-        <button
-          class="quick-chip {{quickTimePeriod === 'afternoon' ? 'quick-chip-active' : ''}}"
-          data-id="afternoon"
-          bindtap="selectTimePeriod"
-        >下午</button>
-        <button
-          class="quick-chip {{quickTimePeriod === 'evening' ? 'quick-chip-active' : ''}}"
-          data-id="evening"
-          bindtap="selectTimePeriod"
-        >晚上</button>
-        <button
-          class="quick-chip {{quickTimePeriod === 'anytime' ? 'quick-chip-active' : ''}}"
-          data-id="anytime"
-          bindtap="selectTimePeriod"
-        >随时</button>
-      </view>
-      <view class="quick-options">
-        <button
-          class="quick-chip {{quickEstimatedMinutes === 15 ? 'quick-chip-active' : ''}}"
-          data-id="15"
-          bindtap="selectDuration"
-        >15 分钟</button>
-        <button
-          class="quick-chip {{quickEstimatedMinutes === 30 ? 'quick-chip-active' : ''}}"
-          data-id="30"
-          bindtap="selectDuration"
-        >30 分钟</button>
-        <button
-          class="quick-chip {{quickEstimatedMinutes === 45 ? 'quick-chip-active' : ''}}"
-          data-id="45"
-          bindtap="selectDuration"
-        >45 分钟</button>
-        <button
-          class="quick-chip {{quickEstimatedMinutes === 60 ? 'quick-chip-active' : ''}}"
-          data-id="60"
-          bindtap="selectDuration"
-        >60 分钟</button>
-      </view>
-      <view wx:if="{{showMoreSettings}}" class="more-settings">
-        <view class="field-label">标签</view>
-        <input
-          class="quick-task-input small-input"
-          value="{{quickTagName}}"
-          placeholder="例如：英语、阅读、工作"
-          maxlength="20"
-          bindinput="onQuickTagInput"
-        />
-      </view>
-      <button
-        class="primary-button add-task-button"
-        loading="{{creatingTask}}"
-        disabled="{{creatingTask}}"
-        bindtap="createTodayTask"
-      >
-        添加一项行动
-      </button>
-    </view>
-
     <view class="card progress-card">
       <view class="card-heading-row">
         <view>
@@ -163,17 +81,19 @@
             <text> / {{totalCount}} 项完成</text>
           </view>
         </view>
-        <view class="progress-rate">{{completionRate}}%</view>
       </view>
-      <view
-        class="progress-track"
-        aria-role="progressbar"
-        aria-label="今日行动完成 {{completionRate}}%"
-        aria-valuemin="0"
-        aria-valuemax="100"
-        aria-valuenow="{{completionRate}}"
-      >
-        <view class="progress-fill" style="width: {{completionRate}}%;"></view>
+      <view class="progress-bar-row">
+        <view
+          class="progress-track"
+          aria-role="progressbar"
+          aria-label="今日行动完成 {{completionRate}}%"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="{{completionRate}}"
+        >
+          <view class="progress-fill" style="width: {{completionRate}}%;"></view>
+        </view>
+        <view class="progress-rate">{{completionRate}}%</view>
       </view>
       <view class="progress-status">{{progressText}}</view>
     </view>
@@ -181,13 +101,23 @@
     <view class="task-section">
       <view class="section-title-row">
         <view class="section-title">今日行动</view>
-        <view class="section-count">{{totalCount}} 项</view>
+        <view class="section-actions">
+          <view class="section-count">{{totalCount}} 项</view>
+          <button
+            class="add-task-trigger"
+            aria-label="添加计划外行动"
+            bindtap="openQuickTaskPanel"
+          >
+            <text class="add-task-trigger-icon">＋</text>
+            <text>添加</text>
+          </button>
+        </view>
       </view>
 
       <view wx:if="{{totalCount === 0}}" class="card no-task-card">
         <view class="state-mark small-mark">0</view>
         <view class="no-task-title">{{todayRest ? '今天是计划休息日' : '今天还没有行动'}}</view>
-        <view class="state-description">{{todayRest ? '休息也是计划的一部分，可以轻松整理前面的成果。' : '可以在下方添加一件今天想完成的小事。'}}</view>
+        <view class="state-description">{{todayRest ? '休息也是计划的一部分，可以轻松整理前面的成果。' : '点击右上角的加号，添加一件今天想完成的小事。'}}</view>
       </view>
 
       <view wx:for="{{taskGroups}}" wx:key="key" class="period-group">
@@ -206,6 +136,14 @@
             <view class="task-meta-row">
               <text class="task-duration">预计 {{task.estimatedMinutes}} 分钟</text>
             </view>
+            <button
+              class="task-detail-toggle"
+              data-id="{{task.id}}"
+              aria-label="{{task.expanded ? '收起行动详情：' : '展开行动详情：'}}{{task.title}}"
+              bindtap="toggleTaskDetail"
+            >
+              {{task.expanded ? '收起详情' : '查看怎么做'}}<text class="task-detail-arrow">{{task.expanded ? '⌃' : '⌄'}}</text>
+            </button>
           </view>
           <button
             class="task-toggle {{task.completed ? 'task-toggle-completed' : ''}}"
@@ -218,14 +156,6 @@
             <text>{{task.completed ? '已完成' : '完成'}}</text>
           </button>
         </view>
-          <button
-            class="task-detail-toggle"
-            data-id="{{task.id}}"
-            aria-label="{{task.expanded ? '收起行动详情：' : '展开行动详情：'}}{{task.title}}"
-            bindtap="toggleTaskDetail"
-          >
-            {{task.expanded ? '收起详情' : '查看怎么做'}}
-          </button>
           <view wx:if="{{task.expanded}}" class="task-detail-panel">
             <view wx:if="{{task.actionTypeLabel}}" class="task-detail-item">
               <view class="task-detail-label">行动类型</view>
@@ -268,6 +198,64 @@
           <text>{{item.label}}</text>
           <text>{{item.count}} 项</text>
         </view>
+      </view>
+    </view>
+
+    <view
+      wx:if="{{showQuickTaskPanel}}"
+      class="quick-task-overlay"
+      catchtap="closeQuickTaskPanel"
+    >
+      <view class="quick-task-sheet" catchtap="preventBubble">
+        <view class="quick-task-sheet-header">
+          <view>
+            <view class="quick-task-sheet-title">添加计划外行动</view>
+            <view class="quick-task-sheet-hint">只在今天需要额外做一件事时使用</view>
+          </view>
+          <button
+            class="sheet-close-button"
+            disabled="{{creatingTask}}"
+            aria-label="关闭添加行动面板"
+            bindtap="closeQuickTaskPanel"
+          >取消</button>
+        </view>
+        <input
+          class="quick-task-input"
+          value="{{quickTitle}}"
+          placeholder="例如：整理今天的会议记录"
+          maxlength="40"
+          focus="{{showQuickTaskPanel}}"
+          confirm-type="done"
+          bindinput="onQuickTitleInput"
+        />
+        <button class="more-settings-button" bindtap="toggleMoreSettings">
+          <text>时间与标签</text>
+          <text class="more-settings-value">{{showMoreSettings ? '收起' : '选填  ›'}}</text>
+        </button>
+        <view wx:if="{{showMoreSettings}}" class="more-settings">
+          <view class="field-label">安排在</view>
+          <view class="quick-options">
+            <button class="quick-chip {{quickTimePeriod === 'morning' ? 'quick-chip-active' : ''}}" data-id="morning" bindtap="selectTimePeriod">上午</button>
+            <button class="quick-chip {{quickTimePeriod === 'afternoon' ? 'quick-chip-active' : ''}}" data-id="afternoon" bindtap="selectTimePeriod">下午</button>
+            <button class="quick-chip {{quickTimePeriod === 'evening' ? 'quick-chip-active' : ''}}" data-id="evening" bindtap="selectTimePeriod">晚上</button>
+            <button class="quick-chip {{quickTimePeriod === 'anytime' ? 'quick-chip-active' : ''}}" data-id="anytime" bindtap="selectTimePeriod">随时</button>
+          </view>
+          <view class="field-label settings-field-label">预计用时</view>
+          <view class="quick-options">
+            <button class="quick-chip {{quickEstimatedMinutes === 15 ? 'quick-chip-active' : ''}}" data-id="15" bindtap="selectDuration">15 分钟</button>
+            <button class="quick-chip {{quickEstimatedMinutes === 30 ? 'quick-chip-active' : ''}}" data-id="30" bindtap="selectDuration">30 分钟</button>
+            <button class="quick-chip {{quickEstimatedMinutes === 45 ? 'quick-chip-active' : ''}}" data-id="45" bindtap="selectDuration">45 分钟</button>
+            <button class="quick-chip {{quickEstimatedMinutes === 60 ? 'quick-chip-active' : ''}}" data-id="60" bindtap="selectDuration">60 分钟</button>
+          </view>
+          <view class="field-label settings-field-label">标签（可选）</view>
+          <input class="quick-task-input small-input" value="{{quickTagName}}" placeholder="例如：工作" maxlength="20" bindinput="onQuickTagInput" />
+        </view>
+        <button
+          class="primary-button add-task-button"
+          loading="{{creatingTask}}"
+          disabled="{{creatingTask || !quickTitle}}"
+          bindtap="createTodayTask"
+        >{{creatingTask ? '正在添加' : '添加到今日'}}</button>
       </view>
     </view>
 

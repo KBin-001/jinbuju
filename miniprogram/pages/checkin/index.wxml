@@ -17,6 +17,13 @@
 
   <!-- Success state -->
   <view wx:elif="{{status === 'success'}}" class="success-view">
+    <view class="confetti-layer" aria-hidden="true">
+      <view class="confetti-piece confetti-1"></view><view class="confetti-piece confetti-2"></view>
+      <view class="confetti-piece confetti-3"></view><view class="confetti-piece confetti-4"></view>
+      <view class="confetti-piece confetti-5"></view><view class="confetti-piece confetti-6"></view>
+      <view class="confetti-piece confetti-7"></view><view class="confetti-piece confetti-8"></view>
+      <view class="confetti-piece confetti-9"></view><view class="confetti-piece confetti-10"></view>
+    </view>
     <view class="card success-card">
       <view class="success-mark" aria-label="打卡成功">✓</view>
       <view class="success-title">今天的行动已记录</view>
@@ -135,6 +142,7 @@
           bindtap="selectFeeling"
           aria-label="选择感受：{{item.label}}"
         >
+          <text class="feeling-emoji">{{item.emoji}}</text>
           <text class="feeling-label">{{item.label}}</text>
         </button>
       </view>

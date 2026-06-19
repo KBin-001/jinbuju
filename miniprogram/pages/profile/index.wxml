@@ -45,7 +45,6 @@
       <view class="goal-meta">
         第 {{profile.currentGoal.currentDay}} 天 / 共 {{profile.currentGoal.totalDays}} 天
         · {{profile.currentGoal.planStatus === 'paused' ? '已暂停' : profile.currentGoal.planStatus === 'reviewing' ? '待复盘' : '进行中'}}
-        · 连续行动 {{profile.user.streakDays}} 天
       </view>
       <view class="progress-row">
         <text>阶段完成率</text>
@@ -155,7 +154,9 @@
       >{{profile.community.unlocked ? '查看入口' : '查看条件'}}</button>
     </view>
 
-    <view class="menu-card">
+    <view class="menu-section">
+      <view class="menu-section-title">帮助与信息</view>
+      <view class="menu-card">
       <button class="menu-row" open-type="feedback">
         <text>问题反馈</text><text class="menu-arrow">›</text>
       </button>
@@ -165,12 +166,19 @@
       <button class="menu-row" bindtap="openTerms">
         <text>用户协议</text><text class="menu-arrow">›</text>
       </button>
-      <button class="menu-row danger-menu-row" bindtap="openDataManagement">
-        <text>清除我的数据</text><text class="menu-arrow">›</text>
-      </button>
       <button class="menu-row" bindtap="openAbout">
         <text>关于进步局</text><text class="menu-arrow">›</text>
       </button>
+      </view>
+    </view>
+
+    <view class="menu-section data-menu-section">
+      <view class="menu-section-title">数据管理</view>
+      <view class="menu-card danger-menu-card">
+        <button class="menu-row danger-menu-row" bindtap="openDataManagement">
+          <text>清除我的数据</text><text class="menu-arrow">›</text>
+        </button>
+      </view>
     </view>
   </block>
 </view>

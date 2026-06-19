@@ -30,26 +30,26 @@
       {
         "pagePath": "pages/index/index",
         "text": "今日",
-        "iconPath": "images/icons/home.png",
-        "selectedIconPath": "images/icons/home-active.png"
+        "iconPath": "images/icons/tab-today.png",
+        "selectedIconPath": "images/icons/tab-today-active.png"
       },
       {
         "pagePath": "pages/plan/index",
         "text": "进度",
-        "iconPath": "images/icons/goods.png",
-        "selectedIconPath": "images/icons/goods-active.png"
+        "iconPath": "images/icons/tab-progress.png",
+        "selectedIconPath": "images/icons/tab-progress-active.png"
       },
       {
         "pagePath": "pages/team/index",
         "text": "小队",
-        "iconPath": "images/icons/business.png",
-        "selectedIconPath": "images/icons/business-active.png"
+        "iconPath": "images/icons/tab-team.png",
+        "selectedIconPath": "images/icons/tab-team-active.png"
       },
       {
         "pagePath": "pages/profile/index",
         "text": "我的",
-        "iconPath": "images/icons/usercenter.png",
-        "selectedIconPath": "images/icons/usercenter-active.png"
+        "iconPath": "images/icons/tab-profile.png",
+        "selectedIconPath": "images/icons/tab-profile-active.png"
       }
     ]
   },

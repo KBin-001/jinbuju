@@ -272,6 +272,31 @@
   background: #ffffff;
 }
 
+.menu-section {
+  margin-top: 32rpx;
+}
+
+.menu-section-title {
+  margin-bottom: 14rpx;
+  padding-left: 8rpx;
+  color: var(--color-text-secondary);
+  font-size: 23rpx;
+  font-weight: 650;
+}
+
+.menu-section .menu-card {
+  margin-top: 0;
+}
+
+.data-menu-section {
+  margin-top: 40rpx;
+}
+
+.danger-menu-card {
+  border-color: #efd9d6;
+  box-shadow: none;
+}
+
 .menu-row {
   width: 100%;
   display: flex;

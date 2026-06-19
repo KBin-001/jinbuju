@@ -1,5 +1,214 @@
 .plan-page {
+  position: relative;
   padding-top: 40rpx;
+}
+
+.plan-header,
+.stage-row,
+.overview-progress,
+.management-menu-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plan-header {
+  align-items: flex-start;
+}
+
+.management-menu-trigger {
+  width: 80rpx !important;
+  min-width: 80rpx;
+  height: 68rpx;
+  flex: none;
+  margin-top: 8rpx;
+  border-radius: 999rpx;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 28rpx;
+  font-weight: 700;
+  letter-spacing: 3rpx;
+}
+
+.management-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(26, 34, 30, 0.18);
+}
+
+.management-menu {
+  position: absolute;
+  top: 150rpx;
+  right: 32rpx;
+  z-index: 31;
+  width: 430rpx;
+  overflow: hidden;
+  border: 1rpx solid var(--color-border);
+  border-radius: 26rpx;
+  background: #ffffff;
+  box-shadow: 0 20rpx 56rpx rgba(33, 48, 40, 0.18);
+  animation: menu-enter 160ms ease-out;
+}
+
+.management-menu-title {
+  padding: 24rpx 28rpx 12rpx;
+  color: var(--color-text-secondary);
+  font-size: 22rpx;
+  font-weight: 650;
+}
+
+.management-menu-row {
+  width: 100%;
+  min-height: 90rpx;
+  padding: 20rpx 28rpx;
+  border-bottom: 1rpx solid var(--color-border);
+  color: var(--color-text);
+  font-size: 26rpx;
+  text-align: left;
+}
+
+.management-menu-row:last-child {
+  border-bottom: 0;
+}
+
+.management-menu-label,
+.management-menu-hint {
+  color: var(--color-text-secondary);
+  font-size: 21rpx;
+}
+
+.management-menu-value {
+  margin-top: 4rpx;
+  font-weight: 650;
+}
+
+.management-menu-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 5rpx;
+}
+
+.menu-arrow {
+  color: #9aa19a;
+  font-size: 34rpx;
+}
+
+.menu-primary-row {
+  color: var(--color-primary);
+  font-weight: 650;
+}
+
+.menu-danger-row {
+  color: #ad4b4b;
+}
+
+.menu-row-disabled {
+  color: #8b928a;
+}
+
+.overview-card {
+  margin-bottom: 28rpx;
+}
+
+.stage-row {
+  gap: 24rpx;
+  margin-top: 24rpx;
+  padding-top: 22rpx;
+  border-top: 1rpx solid var(--color-border);
+}
+
+.stage-label {
+  color: var(--color-text-secondary);
+  font-size: 22rpx;
+}
+
+.stage-row .goal-summary {
+  margin-top: 6rpx;
+  color: var(--color-text);
+  font-weight: 650;
+}
+
+.overview-progress {
+  gap: 34rpx;
+  margin-top: 30rpx;
+}
+
+.progress-ring {
+  position: relative;
+  width: 190rpx;
+  height: 190rpx;
+  flex: none;
+  border-radius: 50%;
+  animation: ring-enter 520ms ease-out;
+}
+
+.progress-ring-center {
+  position: absolute;
+  inset: 18rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.progress-ring-value {
+  color: var(--color-primary);
+  font-size: 38rpx;
+  font-weight: 750;
+}
+
+.progress-ring-label {
+  margin-top: 4rpx;
+  color: var(--color-text-secondary);
+  font-size: 20rpx;
+}
+
+.overview-stats {
+  min-width: 0;
+  flex: 1;
+}
+
+.overview-stat {
+  padding: 12rpx 0;
+}
+
+.overview-stat + .overview-stat {
+  border-top: 1rpx solid var(--color-border);
+}
+
+.overview-stat-value {
+  color: var(--color-text);
+  font-size: 29rpx;
+  font-weight: 700;
+}
+
+.overview-stat-label {
+  margin-top: 4rpx;
+  color: var(--color-text-secondary);
+  font-size: 21rpx;
+}
+
+.streak-flip {
+  transform-origin: center bottom;
+  animation: number-flip 480ms ease-out;
+}
+
+@keyframes menu-enter {
+  from { opacity: 0; transform: translateY(-10rpx) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes ring-enter {
+  from { opacity: 0; transform: scale(0.88) rotate(-12deg); }
+  to { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes number-flip {
+  0% { opacity: 0; transform: rotateX(-70deg); }
+  100% { opacity: 1; transform: rotateX(0); }
 }
 
 .goal-card,
@@ -7,6 +216,35 @@
 .management-card,
 .next-week-card {
   margin-bottom: 24rpx;
+}
+
+@media (max-width: 340px) {
+  .management-menu {
+    right: 24rpx;
+    width: calc(100vw - 48rpx);
+  }
+
+  .overview-progress {
+    gap: 22rpx;
+  }
+
+  .progress-ring {
+    width: 164rpx;
+    height: 164rpx;
+  }
+
+  .progress-ring-center {
+    inset: 16rpx;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .management-menu,
+  .progress-ring,
+  .streak-flip,
+  .weekly-goal-content {
+    animation: none;
+  }
 }
 
 .goal-heading,
@@ -54,7 +292,7 @@
 
 .weekly-goal {
   margin-top: 20rpx;
-  padding: 22rpx;
+  padding: 0 22rpx;
   border-radius: 20rpx;
   background: var(--color-primary-light);
   color: var(--color-primary);
@@ -62,9 +300,33 @@
 }
 
 .weekly-goal-label {
-  margin-bottom: 6rpx;
   font-size: 22rpx;
   font-weight: 650;
+}
+
+.weekly-goal-toggle {
+  width: 100% !important;
+  min-height: 76rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--color-primary);
+  text-align: left;
+}
+
+.weekly-goal-action {
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.weekly-goal-content {
+  padding: 0 0 22rpx;
+  animation: focus-expand 180ms ease-out;
+}
+
+@keyframes focus-expand {
+  from { opacity: 0; transform: translateY(-6rpx); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .goal-grid {

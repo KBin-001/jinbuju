@@ -77,6 +77,19 @@ function getProgressText(completionRate: number): string {
   return "今天先完成一件小事";
 }
 
+function getGreetingText(completionRate: number, streakDays: number): string {
+  if (completionRate >= 100) {
+    return "今天的行动全部完成";
+  }
+  if (completionRate >= 50) {
+    return "已经过半了，继续推进";
+  }
+  if (streakDays >= 7) {
+    return `已经连续 ${streakDays} 天了，了不起`;
+  }
+  return "今天先完成一件小事";
+}
+
 function getCheckinButtonText(
   completedCount: number,
   totalCount: number,
@@ -154,6 +167,7 @@ Page({
     totalCount: 0,
     completionRate: 0,
     progressText: getProgressText(0),
+    greetingText: getGreetingText(0, 0),
     checkinButtonText: getCheckinButtonText(0, 0, false, false),
     checkedInToday: false,
     todayRest: false,
@@ -165,6 +179,7 @@ Page({
     quickTimePeriod: "anytime" as TodayTask["timePeriod"],
     quickEstimatedMinutes: 30,
     quickTagName: "",
+    showQuickTaskPanel: false,
     showMoreSettings: false,
     creatingTask: false,
   },
@@ -220,10 +235,10 @@ Page({
       planReviewing,
       planReadOnly: Boolean(goal?.planId) && goal?.planStatus !== "active",
     });
-    this.updateProgress(tasks);
+    this.updateProgress(tasks, (homeData.user || EMPTY_USER).streakDays);
   },
 
-  updateProgress(tasks: TodayViewTask[]) {
+  updateProgress(tasks: TodayViewTask[], streakDays = this.data.user.streakDays) {
     const totalCount = tasks.length;
     const completedCount = tasks.filter((task) => task.completed).length;
     const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
@@ -234,6 +249,7 @@ Page({
       totalCount,
       completionRate,
       progressText: getProgressText(completionRate),
+      greetingText: getGreetingText(completionRate, streakDays),
       checkinButtonText: getCheckinButtonText(
         completedCount,
         totalCount,
@@ -307,6 +323,22 @@ Page({
     this.setData({ quickTitle: String(event.detail.value || "") });
   },
 
+  openQuickTaskPanel() {
+    this.setData({ showQuickTaskPanel: true });
+  },
+
+  closeQuickTaskPanel() {
+    if (this.data.creatingTask) {
+      return;
+    }
+    this.setData({
+      showQuickTaskPanel: false,
+      showMoreSettings: false,
+    });
+  },
+
+  preventBubble() {},
+
   onQuickTagInput(event: InputEvent) {
     this.setData({ quickTagName: String(event.detail.value || "") });
   },
@@ -367,6 +399,7 @@ Page({
           quickTagName: "",
           quickTimePeriod: "anytime",
           quickEstimatedMinutes: 30,
+          showQuickTaskPanel: false,
           showMoreSettings: false,
         });
         wx.showToast({

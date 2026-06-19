@@ -116,6 +116,8 @@ Page({
     actionLoading: "",
     actionTaskId: "",
     deleting: false,
+    showManagementMenu: false,
+    showStageFocus: false,
   },
 
   onShow() {
@@ -153,6 +155,8 @@ Page({
           progressText: getProgressText(pageData.plan.completionRate),
           actionLoading: "",
           actionTaskId: "",
+          showManagementMenu: false,
+          showStageFocus: false,
         });
       })
       .catch((error: Error) => {
@@ -207,6 +211,7 @@ Page({
   },
 
   goToStageReview() {
+    this.closeManagementMenu();
     const stageId = this.data.pageData?.plan.id;
     if (stageId) {
       wx.navigateTo({ url: `/pages/stage-review/index?stageId=${stageId}` });
@@ -217,7 +222,7 @@ Page({
     const value = String(event.detail.value || "");
     const plan = this.data.pageData?.plan;
     if (!plan || this.data.actionLoading || value === plan.dailyReminderTime) return;
-    this.setData({ actionLoading: "time" });
+    this.setData({ actionLoading: "time", showManagementMenu: false });
     updatePlanTime(plan.id, value)
       .then(() => {
         wx.showToast({ title: "行动时间已更新", icon: "success" });
@@ -270,6 +275,7 @@ Page({
   confirmPause() {
     const plan = this.data.pageData?.plan;
     if (!plan || plan.status !== "active" || this.data.actionLoading) return;
+    this.closeManagementMenu();
     wx.showModal({
       title: "暂停当前阶段？",
       content: "暂停后，每日行动会保留，但暂停期间不会计入连续行动统计。是否继续？",
@@ -291,7 +297,7 @@ Page({
   resumePlan() {
     const plan = this.data.pageData?.plan;
     if (!plan || plan.status !== "paused" || this.data.actionLoading) return;
-    this.setData({ actionLoading: "status" });
+    this.setData({ actionLoading: "status", showManagementMenu: false });
     resumeCurrentPlan(plan.id)
       .then(() => {
         wx.showToast({ title: "阶段已恢复", icon: "success" });
@@ -311,6 +317,7 @@ Page({
 
   confirmDelete() {
     if (this.data.deleting) return;
+    this.closeManagementMenu();
     wx.showModal({
       title: "删除当前目标？",
       content: "长期目标、当前阶段和相关行动都会删除，此操作无法撤销。",
@@ -342,5 +349,19 @@ Page({
           showCancel: false,
         });
       });
+  },
+
+  toggleManagementMenu() {
+    this.setData({ showManagementMenu: !this.data.showManagementMenu });
+  },
+
+  closeManagementMenu() {
+    this.setData({ showManagementMenu: false });
+  },
+
+  preventBubble() {},
+
+  toggleStageFocus() {
+    this.setData({ showStageFocus: !this.data.showStageFocus });
   },
 });
