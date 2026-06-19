@@ -12,8 +12,7 @@
     "pages/legal/privacy/index",
     "pages/legal/terms/index",
     "pages/data-management/index",
-    "pages/about/index",
-    "pages/community-qrcode/index"
+    "pages/about/index"
   ],
   "window": {
     "backgroundColor": "#F5F7F2",

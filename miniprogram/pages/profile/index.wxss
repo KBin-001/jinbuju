@@ -319,3 +319,81 @@
 .danger-menu-row {
   color: #9b4b45;
 }
+
+/* 社群二维码浮窗样式 - 优化版 */
+.qrcode-popup-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qrcode-popup {
+  width: 560rpx;
+  max-width: 85vw;
+  background-color: #ffffff;
+  border-radius: 32rpx;
+  overflow: hidden;
+  box-shadow: 0 16rpx 48rpx rgba(53, 104, 89, 0.2);
+  position: relative;
+}
+
+.qrcode-popup-close {
+  position: absolute;
+  top: 24rpx;
+  right: 24rpx;
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.qrcode-popup-close-icon {
+  width: 32rpx;
+  height: 32rpx;
+  opacity: 0.6;
+}
+
+.qrcode-popup-content {
+  padding: 48rpx 40rpx 32rpx;
+  background-color: #F5F7F2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qrcode-popup-image {
+  width: 100%;
+  max-width: 400rpx;
+  border-radius: 16rpx;
+  background-color: #ffffff;
+}
+
+.qrcode-popup-footer {
+  padding: 32rpx 40rpx 40rpx;
+  text-align: center;
+  background-color: #ffffff;
+}
+
+.qrcode-popup-title {
+  color: #356859;
+  font-size: 36rpx;
+  font-weight: 700;
+  margin-bottom: 12rpx;
+}
+
+.qrcode-popup-desc {
+  color: #666;
+  font-size: 28rpx;
+  line-height: 1.5;
+}

@@ -43,6 +43,7 @@ Page({
     avatarDisplay: DEFAULT_AVATAR,
     actionDuration: "0 分钟",
     badges: [] as BadgeView[],
+    showQrcodePopup: false,
   },
 
   // ── In-memory cache metadata ──
@@ -140,7 +141,15 @@ Page({
   },
 
   openCommunity() {
-    wx.navigateTo({ url: "/pages/community-qrcode/index" });
+    this.setData({ showQrcodePopup: true });
+  },
+
+  closeQrcodePopup() {
+    this.setData({ showQrcodePopup: false });
+  },
+
+  preventClose() {
+    // 阻止点击浮窗内容区域时关闭浮窗
   },
 
   openPrivacy() {

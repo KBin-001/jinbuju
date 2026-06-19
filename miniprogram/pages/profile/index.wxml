@@ -4,6 +4,27 @@
     <view class="page-title">我的</view>
   </view>
 
+  <!-- 社群二维码浮窗 -->
+  <view wx:if="{{showQrcodePopup}}" class="qrcode-popup-mask" bindtap="closeQrcodePopup">
+    <view class="qrcode-popup" catchtap="preventClose">
+      <view class="qrcode-popup-close" bindtap="closeQrcodePopup">
+        <image class="qrcode-popup-close-icon" src="/images/icons/close.png" mode="aspectFit" />
+      </view>
+      <view class="qrcode-popup-content">
+        <image
+          class="qrcode-popup-image"
+          src="/images/community-qrcode.jpg.jpg"
+          mode="widthFix"
+          show-menu-by-longpress="{{true}}"
+        />
+      </view>
+      <view class="qrcode-popup-footer">
+        <view class="qrcode-popup-title">微信陪跑群</view>
+        <view class="qrcode-popup-desc">长按识别二维码，加入社群一起行动</view>
+      </view>
+    </view>
+  </view>
+
   <view wx:if="{{status === 'loading'}}" class="card state-card">
     <view class="loading-dot"></view>
     <view class="state-title">正在整理你的行动记录</view>
@@ -141,17 +162,15 @@
     </view>
 
     <view class="card community-card">
-      <view class="community-mark">{{profile.community.unlocked ? '群' : '锁'}}</view>
+      <view class="community-mark">群</view>
       <view class="community-main">
-        <view class="section-title">{{profile.community.title}}</view>
-        <view class="muted-copy">{{profile.community.description}}</view>
+        <view class="section-title">加入微信陪跑群</view>
+        <view class="muted-copy">扫码加入陪跑群，一起稳步行动</view>
       </view>
       <button
         class="community-button"
-        loading="{{loadingCommunity}}"
-        disabled="{{loadingCommunity}}"
         bindtap="openCommunity"
-      >{{profile.community.unlocked ? '查看入口' : '查看条件'}}</button>
+      >查看入口</button>
     </view>
 
     <view class="menu-section">
