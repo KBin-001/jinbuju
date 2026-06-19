@@ -8,7 +8,11 @@ const {
   isValidEncouragementType,
   publicMemberId,
 } = require("./team-rules");
-const { buildBadges, isCommunityUnlocked } = require("./profile-rules");
+const {
+  USER_OWNED_COLLECTIONS,
+  buildBadges,
+  isCommunityUnlocked,
+} = require("./profile-rules");
 const { buildStageFallback } = require("./stage-fallback");
 const { mapStageActionToTaskFields } = require("./stage-task");
 const {
@@ -67,6 +71,9 @@ assert.deepStrictEqual(
 const categories = ["exam", "skill", "career"];
 const weeklyDaysOptions = [3, 5, 7];
 const minuteOptions = [15, 45, 120];
+
+assert.ok(USER_OWNED_COLLECTIONS.includes("goal_analysis_drafts"));
+assert.ok(USER_OWNED_COLLECTIONS.includes("stage_preview_versions"));
 
 for (const category of categories) {
   for (const weeklyDays of weeklyDaysOptions) {

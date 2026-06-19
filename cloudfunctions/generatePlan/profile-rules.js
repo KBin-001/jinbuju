@@ -36,6 +36,19 @@ const BADGE_DEFINITIONS = [
   },
 ];
 
+const USER_OWNED_COLLECTIONS = [
+  "checkins",
+  "tasks",
+  "plans",
+  "goals",
+  "plan_generation_requests",
+  "stage_generation_requests",
+  "stage_previews",
+  "stage_reviews",
+  "goal_analysis_drafts",
+  "stage_preview_versions",
+];
+
 function clamp(value, minimum, maximum) {
   return Math.min(Math.max(Number(value) || 0, minimum), maximum);
 }
@@ -76,6 +89,7 @@ function isCommunityUnlocked(profile, requirements = {}) {
 
 module.exports = {
   BADGE_DEFINITIONS,
+  USER_OWNED_COLLECTIONS,
   buildBadges,
   isCommunityUnlocked,
 };

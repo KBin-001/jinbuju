@@ -1,6 +1,10 @@
 const cloud = require("wx-server-sdk");
 const { businessDateDiff, formatBusinessDate } = require("./date");
-const { buildBadges, isCommunityUnlocked } = require("./profile-rules");
+const {
+  USER_OWNED_COLLECTIONS,
+  buildBadges,
+  isCommunityUnlocked,
+} = require("./profile-rules");
 const { stableId } = require("./repository");
 
 const db = cloud.database();
@@ -308,14 +312,9 @@ async function deleteUserData(openid, event) {
     await Promise.all([
       db.collection("encouragements").where({ senderUserKey: userKey }).remove(),
       db.collection("encouragements").where({ receiverUserKey: userKey }).remove(),
-      db.collection("checkins").where({ _openid: openid }).remove(),
-      db.collection("tasks").where({ _openid: openid }).remove(),
-      db.collection("plans").where({ _openid: openid }).remove(),
-      db.collection("goals").where({ _openid: openid }).remove(),
-      db.collection("plan_generation_requests").where({ _openid: openid }).remove(),
-      db.collection("stage_generation_requests").where({ _openid: openid }).remove(),
-      db.collection("stage_previews").where({ _openid: openid }).remove(),
-      db.collection("stage_reviews").where({ _openid: openid }).remove(),
+      ...USER_OWNED_COLLECTIONS.map((collectionName) =>
+        db.collection(collectionName).where({ _openid: openid }).remove(),
+      ),
     ]);
     await db.collection("team_members").where({ userKey }).remove();
     await db.collection("users").where({ _openid: openid }).remove();
