@@ -113,14 +113,34 @@ function hasReviewFocus(input) {
   );
 }
 
+function getActiveDays(input) {
+  if (input.durationDays < 7) return [1, 2, 3, 4, 5, 6, 7];
+  return {
+    3: [1, 3, 5],
+    5: [1, 2, 3, 5, 6],
+    7: [1, 2, 3, 4, 5, 6, 7],
+  }[input.weeklyDays || 7];
+}
+
 function inferReviewTemplate(input) {
   const reviewText = cleanText(input.previousReview.focusAdjustment, 200);
   const goalText = cleanText(`${input.goalTitle} ${input.desiredResult} ${reviewText}`, 400);
-  const hasOralSignal = /英语|口语|跟读|镜子|镜前|模仿|美剧|无耻之徒/i.test(goalText);
-  if (hasOralSignal) return REVIEW_TEMPLATES.oralEnglish;
+  const oralPattern = /英语|口语|跟读|镜子|镜前|模仿|美剧|无耻之徒/i;
+  const videoEditingPattern = /视频剪辑|剪辑|粗剪|成片|素材|字幕|转场|音频|调色|导出|时间线|原创视频/i;
+  const oralNegated = /(?:不要|不再|避免|排除|停止)[^。；，]{0,24}(?:英语|口语|跟读|镜子|镜前|模仿|美剧|无耻之徒)/i.test(reviewText);
+  const videoEditingNegated = /(?:不要|不再|避免|排除|停止)[^。；，]{0,24}(?:视频剪辑|剪辑|粗剪|成片|素材|字幕|转场|音频|调色|导出|时间线|原创视频)/i.test(reviewText);
 
-  const hasVideoEditingSignal = /视频剪辑|剪辑|粗剪|成片|素材|字幕|转场|音频|调色|导出|时间线|原创视频/i.test(goalText);
+  const focusHasVideoEditing = videoEditingPattern.test(reviewText) && !videoEditingNegated;
+  const focusHasOral = oralPattern.test(reviewText) && !oralNegated;
+  if (focusHasVideoEditing && !focusHasOral) return REVIEW_TEMPLATES.videoEditing;
+  if (focusHasOral && !focusHasVideoEditing) return REVIEW_TEMPLATES.oralEnglish;
+  if (focusHasVideoEditing) return REVIEW_TEMPLATES.videoEditing;
+  if (focusHasOral) return REVIEW_TEMPLATES.oralEnglish;
+
+  const hasVideoEditingSignal = videoEditingPattern.test(goalText) && !videoEditingNegated;
   if (hasVideoEditingSignal) return REVIEW_TEMPLATES.videoEditing;
+  const hasOralSignal = oralPattern.test(goalText) && !oralNegated;
+  if (hasOralSignal) return REVIEW_TEMPLATES.oralEnglish;
 
   return null;
 }
@@ -130,6 +150,7 @@ function buildReviewFallback(input) {
   if (!reviewTemplate) return null;
   const actionMinutes = Math.max(10, Math.min(input.dailyMinutes, 180));
   const parts = splitMinutes(actionMinutes);
+  const activeDays = getActiveDays(input);
   return {
     stage: {
       title: reviewTemplate.title,
@@ -139,6 +160,14 @@ function buildReviewFallback(input) {
     },
     days: Array.from({ length: input.durationDays }, (_, index) => {
       const dayIndex = index + 1;
+      const weekDay = (index % 7) + 1;
+      if (!activeDays.includes(weekDay)) {
+        return {
+          dayIndex,
+          theme: "休息与整理",
+          actions: [],
+        };
+      }
       const theme = reviewTemplate.themes[index % reviewTemplate.themes.length];
       return {
         dayIndex,
@@ -183,14 +212,7 @@ function buildCategoryFallback(input) {
     },
     days: Array.from({ length: input.durationDays }, (_, index) => {
       const weekDay = (index % 7) + 1;
-      const activeDays =
-        input.durationDays <= 7
-          ? [1, 2, 3, 4, 5, 6, 7]
-          : {
-              3: [1, 3, 5],
-              5: [1, 2, 3, 5, 6],
-              7: [1, 2, 3, 4, 5, 6, 7],
-            }[input.weeklyDays || 7];
+      const activeDays = getActiveDays(input);
       if (!activeDays.includes(weekDay)) {
         return {
           dayIndex: index + 1,

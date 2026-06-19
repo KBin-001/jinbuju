@@ -28,9 +28,10 @@ function compactText(value, maximum) {
 }
 
 function resolveGoalTitle(goal, stage) {
+  const canonicalTitle = compactText(goal.title, 80);
+  if (canonicalTitle.length >= 2) return canonicalTitle.slice(0, 30);
   const candidates = [
     goal.goalTitle,
-    goal.title,
     stage.goalTitle,
     stage.stageTitle,
     stage.title,
@@ -122,6 +123,7 @@ function publicPreview(preview) {
     optimizationStatus: preview.optimizationStatus || "idle",
     optimizationAttempts: Number(preview.optimizationAttempts || 0),
     fallbackReason: preview.fallbackReason || "",
+    fallbackDetail: preview.fallbackDetail || "",
     currentVersion: Number(preview.currentVersion || 1),
     regenerationCount: Number(preview.regenerationCount || 0),
     maxRegenerationCount: Number(preview.maxRegenerationCount || 2),

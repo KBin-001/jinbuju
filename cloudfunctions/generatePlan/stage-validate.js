@@ -310,18 +310,23 @@ function validateStagePlan(input, generationInput) {
   if (
     !input ||
     typeof input !== "object" ||
-    !hasExactKeys(input, ["stage", "days"])
+    !hasOnlyKeys(input, ["stage", "days"]) ||
+    !Object.prototype.hasOwnProperty.call(input, "stage") ||
+    !Object.prototype.hasOwnProperty.call(input, "days")
   ) {
     fail("AI_RESPONSE_SCHEMA_INVALID", "阶段方案结构无效。");
   }
   if (
     !input.stage ||
     typeof input.stage !== "object" ||
-    !hasExactKeys(input.stage, [
+    !hasOnlyKeys(input.stage, [
       "title",
       "summary",
+      "objective",
       "focus",
       "durationDays",
+      "successMetrics",
+      "assumptions",
     ])
   ) {
     fail("AI_RESPONSE_SCHEMA_INVALID", "阶段信息结构无效。");
@@ -329,7 +334,8 @@ function validateStagePlan(input, generationInput) {
   if (!safeText(input.stage.title, 2, 30)) {
     fail("AI_RESPONSE_SCHEMA_INVALID", "阶段标题无效。");
   }
-  if (!safeText(input.stage.summary, 5, 150)) {
+  const stageSummary = input.stage.summary || input.stage.objective;
+  if (!safeText(stageSummary, 5, 150)) {
     fail("AI_RESPONSE_SCHEMA_INVALID", "阶段说明无效。");
   }
   if (!safeText(input.stage.focus, 2, 50)) {
@@ -350,7 +356,7 @@ function validateStagePlan(input, generationInput) {
     if (
       !day ||
       typeof day !== "object" ||
-      !hasExactKeys(day, ["dayIndex", "theme", "actions"])
+      !hasOnlyKeys(day, ["dayIndex", "theme", "actions", "totalMinutes", "isRestDay"])
     ) {
       fail("AI_RESPONSE_SCHEMA_INVALID", "每日行动结构无效。");
     }
@@ -362,7 +368,7 @@ function validateStagePlan(input, generationInput) {
     }
     const weekDay = ((day.dayIndex - 1) % 7) + 1;
     const activeDays =
-      generationInput.durationDays <= 7
+      generationInput.durationDays < 7
         ? [1, 2, 3, 4, 5, 6, 7]
         : {
             3: [1, 3, 5],
@@ -372,13 +378,23 @@ function validateStagePlan(input, generationInput) {
     const shouldRest = !activeDays.includes(weekDay);
     const minimumActions = generationInput.templateId ? 1 : 1;
     const maximumActions = generationInput.templateId ? 1 : 4;
-    if (
-      !Array.isArray(day.actions) ||
-      (shouldRest
-        ? day.actions.length !== 0
-        : day.actions.length < minimumActions || day.actions.length > maximumActions)
-    ) {
-      fail("AI_RESPONSE_SCHEMA_INVALID", "每天需包含 1～4 个行动。");
+    if (!Array.isArray(day.actions)) {
+      fail("AI_RESPONSE_SCHEMA_INVALID", `第 ${day.dayIndex} 天行动列表无效。`);
+    }
+    if (shouldRest) {
+      return {
+        dayIndex: day.dayIndex,
+        theme: "休息与整理",
+        totalMinutes: 0,
+        actions: [],
+      };
+    }
+    if (day.actions.length < minimumActions || day.actions.length > maximumActions) {
+      const actionCount = Array.isArray(day.actions) ? day.actions.length : -1;
+      fail(
+        "AI_RESPONSE_SCHEMA_INVALID",
+        `第 ${day.dayIndex} 天行动数量为 ${actionCount}，执行日应为 ${minimumActions}～${maximumActions}。`,
+      );
     }
 
     let totalMinutes = 0;
@@ -386,7 +402,16 @@ function validateStagePlan(input, generationInput) {
       if (
         !action ||
         typeof action !== "object" ||
-        !hasExactKeys(action, ["title", "description", "estimatedMinutes"])
+        !hasOnlyKeys(action, [
+          "title",
+          "description",
+          "estimatedMinutes",
+          "actionType",
+          "completionCriteria",
+          "requiredResources",
+          "safetyNotes",
+          "slotId",
+        ])
       ) {
         fail("AI_RESPONSE_SCHEMA_INVALID", "行动结构无效。");
       }
@@ -416,6 +441,16 @@ function validateStagePlan(input, generationInput) {
         title: stripUnicodeNonCharacters(action.title).trim(),
         description: stripUnicodeNonCharacters(action.description).trim(),
         estimatedMinutes: action.estimatedMinutes,
+        ...(ACTION_TYPES.includes(action.actionType) ? { actionType: action.actionType } : {}),
+        ...(safeText(action.completionCriteria, 3, 150)
+          ? { completionCriteria: stripUnicodeNonCharacters(action.completionCriteria).trim() }
+          : {}),
+        ...(Array.isArray(action.requiredResources)
+          ? { requiredResources: normalizeStringArray(action.requiredResources, 5, 40) }
+          : {}),
+        ...(Array.isArray(action.safetyNotes)
+          ? { safetyNotes: normalizeStringArray(action.safetyNotes, 5, 80) }
+          : {}),
       };
     });
     if (totalMinutes > generationInput.dailyMinutes) {
@@ -432,7 +467,7 @@ function validateStagePlan(input, generationInput) {
   return {
     stage: {
       title: stripUnicodeNonCharacters(input.stage.title).trim(),
-      summary: stripUnicodeNonCharacters(input.stage.summary).trim(),
+      summary: stripUnicodeNonCharacters(stageSummary).trim(),
       focus: stripUnicodeNonCharacters(input.stage.focus).trim(),
       durationDays: input.stage.durationDays,
     },

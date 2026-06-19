@@ -68,6 +68,8 @@ Page({
     difficultyOptions: DIFFICULTY_OPTIONS,
     preferenceOptions: PREFERENCE_OPTIONS,
     submitting: false,
+    submitErrorCode: "",
+    submitErrorMessage: "",
     actionTypeRates: [] as { type: string; label: string; rate: number }[],
     skipReasonList: [] as { reason: string; label: string; count: number }[],
     timeDeviation: 0,
@@ -176,7 +178,7 @@ Page({
       return;
     }
 
-    this.setData({ submitting: true });
+    this.setData({ submitting: true, submitErrorCode: "", submitErrorMessage: "" });
     submitStageReview(
       {
         stageId: this.data.stageId,
@@ -190,7 +192,11 @@ Page({
       .then((result) => {
         wx.navigateTo({ url: `/pages/plan-preview/index?previewId=${result.previewId}` });
       })
-      .catch((error: Error) => {
+      .catch((error: Error & { code?: string }) => {
+        this.setData({
+          submitErrorCode: error.code || "INTERNAL_ERROR",
+          submitErrorMessage: error.message || "下一阶段暂时无法生成",
+        });
         wx.showModal({
           title: "下一阶段暂时无法生成",
           content: error.message || "请稍后重试。",

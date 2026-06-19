@@ -14,6 +14,7 @@ const { stableId } = require("./repository");
 const db = cloud.database();
 const command = db.command;
 const MAX_GENERATIONS_PER_STAGE = 3;
+const MAX_TEMPLATE_RETRIES_PER_STAGE = 5;
 const RATE_LIMIT_MILLISECONDS = 60 * 1000;
 const PREVIEW_LIFETIME_MILLISECONDS = 24 * 60 * 60 * 1000;
 const STAGE_REVIEW_AI_TIMEOUT_MS = 32000;
@@ -23,6 +24,12 @@ function fail(code, message) {
   const error = new Error(message);
   error.code = code;
   throw error;
+}
+
+function safeFailureDetail(error) {
+  const code = String((error && error.code) || "AI_REQUEST_FAILED");
+  if (!code.startsWith("AI_RESPONSE_")) return code;
+  return String((error && error.message) || code).slice(0, 120);
 }
 
 async function getRequest(openid, requestId) {
@@ -58,6 +65,7 @@ function publicPreview(preview, reused) {
     stagePlan: preview.stagePlan,
     reused,
     fallbackReason: preview.fallbackReason || "",
+    fallbackDetail: preview.fallbackDetail || "",
     modelId: preview.modelId || "",
     providerGroup: preview.providerGroup || "",
   };
@@ -89,17 +97,28 @@ async function reserveGeneration(
       stageNumber: input.stageNumber,
       status: "generated",
     })
-    .limit(MAX_GENERATIONS_PER_STAGE)
+    .limit(MAX_GENERATIONS_PER_STAGE + MAX_TEMPLATE_RETRIES_PER_STAGE)
     .get();
-  if (!regenerate && generated.data.length > 0) {
-    for (const request of generated.data) {
-      if (!request.previewId) continue;
-      const preview = await getPreview(openid, request.previewId);
-      if (preview) return { existingPreview: preview };
-    }
+  const generatedPreviews = [];
+  for (const request of generated.data) {
+    if (!request.previewId) continue;
+    const preview = await getPreview(openid, request.previewId);
+    if (preview) generatedPreviews.push(preview);
   }
-  if (generated.data.length >= MAX_GENERATIONS_PER_STAGE) {
+  const successfulPreviews = generatedPreviews.filter(
+    (preview) => preview.generatedBy !== "template",
+  );
+  const templatePreviews = generatedPreviews.filter(
+    (preview) => preview.generatedBy === "template",
+  );
+  if (!regenerate && successfulPreviews.length > 0) {
+    return { existingPreview: successfulPreviews[0] };
+  }
+  if (successfulPreviews.length >= MAX_GENERATIONS_PER_STAGE) {
     fail("STAGE_GENERATION_LIMIT_REACHED", "当前阶段的调整次数已用完。");
+  }
+  if (templatePreviews.length >= MAX_TEMPLATE_RETRIES_PER_STAGE) {
+    fail("STAGE_GENERATION_LIMIT_REACHED", "当前阶段的生成重试次数已用完。");
   }
 
   const cutoff = new Date(Date.now() - RATE_LIMIT_MILLISECONDS);
@@ -151,6 +170,7 @@ async function savePreview(
       stagePlan,
       generatedBy,
       fallbackReason: metadata.fallbackReason || "",
+      fallbackDetail: metadata.fallbackDetail || "",
       modelId: metadata.modelId || "",
       providerGroup: metadata.providerGroup || "",
       generationDurationMs: Number(metadata.generationDurationMs || 0),
@@ -193,6 +213,7 @@ async function generateWithInput(openid, event, input) {
   let stagePlan;
   let generatedBy = "template";
   let fallbackReason = "";
+  let fallbackDetail = "";
   let modelId = "";
   let providerGroup = "";
   let totalTokens = 0;
@@ -233,6 +254,7 @@ async function generateWithInput(openid, event, input) {
       });
     } catch (firstError) {
       fallbackReason = firstError.code || "AI_REQUEST_FAILED";
+      fallbackDetail = safeFailureDetail(firstError);
       console.warn("stage generation attempt failed", {
         action: "submitStageReview",
         code: fallbackReason,
@@ -264,6 +286,7 @@ async function generateWithInput(openid, event, input) {
         stagePlan = validateStagePlan(parseStageAiJson(repaired.text), input);
         generatedBy = "ai_repaired";
         fallbackReason = "";
+        fallbackDetail = "";
         console.info("stage review next generation repaired", {
           action: "submitStageReview",
           stageNumber: input.stageNumber,
@@ -275,6 +298,7 @@ async function generateWithInput(openid, event, input) {
         });
       } catch (repairError) {
         fallbackReason = repairError.code || fallbackReason || "AI_REQUEST_FAILED";
+        fallbackDetail = safeFailureDetail(repairError);
         console.warn("stage generation using template", {
           action: "submitStageReview",
           code: fallbackReason,
@@ -299,6 +323,7 @@ async function generateWithInput(openid, event, input) {
     generatedBy,
     {
       fallbackReason,
+      fallbackDetail,
       modelId,
       providerGroup,
       generationDurationMs: Date.now() - generationStartedAt,

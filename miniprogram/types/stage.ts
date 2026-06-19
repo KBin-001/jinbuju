@@ -166,6 +166,7 @@ export interface StageGenerationResult {
   optimizationStatus: StageOptimizationStatus;
   optimizationAttempts: number;
   fallbackReason?: string;
+  fallbackDetail?: string;
   modelId?: string;
   providerGroup?: string;
   currentVersion: number;

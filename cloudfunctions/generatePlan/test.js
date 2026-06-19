@@ -635,4 +635,51 @@ assert.throws(
   /过于空泛/,
 );
 
+const videoEditingReviewInput = validateStageGenerationInput(
+  {
+    ...stageInput,
+    goalTitle: "剪映视频剪辑",
+    desiredResult: "完成一个完整的原创视频作品并掌握基础剪辑流程",
+    dailyMinutes: 60,
+    weeklyDays: 5,
+    stageNumber: 3,
+    previousReview: {
+      completionRate: 14,
+      actionDays: 1,
+      previousFocus: "视频跟读、镜前模仿和复盘",
+      difficulty: "suitable",
+      nextPreference: "change_focus",
+      focusAdjustment:
+        "下一阶段只做视频剪辑：整理素材、完成粗剪、补字幕和音频、导出小样。不要安排英语口语、跟读或镜前练习。",
+    },
+  },
+  true,
+);
+const videoEditingReviewFallback = validateStagePlan(
+  buildStageFallback(videoEditingReviewInput),
+  videoEditingReviewInput,
+);
+assert.match(videoEditingReviewFallback.stage.title, /视频剪辑/);
+assert.doesNotMatch(
+  JSON.stringify(videoEditingReviewFallback),
+  /口语跟读|镜前练习|美剧片段/,
+);
+assert.strictEqual(
+  videoEditingReviewFallback.days.filter((day) => day.actions.length > 0).length,
+  5,
+);
+const aiPlanWithRestDayAction = JSON.parse(JSON.stringify(videoEditingReviewFallback));
+aiPlanWithRestDayAction.days[3].actions = [
+  {
+    title: "AI 多生成的休息日任务",
+    description: "该行动应由可信服务端清空，保持每周五天执行设置。",
+    estimatedMinutes: 20,
+  },
+];
+const normalizedRestDayPlan = validateStagePlan(
+  aiPlanWithRestDayAction,
+  videoEditingReviewInput,
+);
+assert.strictEqual(normalizedRestDayPlan.days[3].actions.length, 0);
+
 console.log("generatePlan tests passed");
