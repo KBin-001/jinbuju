@@ -28,6 +28,7 @@ interface InputEvent {
 
 interface TodayViewTask extends TodayTask {
   toggling: boolean;
+  expanded: boolean;
 }
 
 interface TodayViewTaskGroup extends Omit<TodayTaskGroup, "tasks"> {
@@ -116,6 +117,26 @@ function createRequestId(): string {
   return `manual_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function normalizeTextList(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.map((item) => String(item || "").trim()).filter(Boolean);
+}
+
+function buildViewTask(task: TodayTask): TodayViewTask {
+  return {
+    ...task,
+    actionType: String(task.actionType || ""),
+    actionTypeLabel: String(task.actionTypeLabel || ""),
+    completionCriteria: String(task.completionCriteria || ""),
+    requiredResources: normalizeTextList(task.requiredResources),
+    safetyNotes: normalizeTextList(task.safetyNotes),
+    toggling: false,
+    expanded: false,
+  };
+}
+
 Page({
   data: {
     status: "loading" as PageStatus,
@@ -176,7 +197,7 @@ Page({
   },
 
   applyHomeData(homeData: HomeData) {
-    const tasks = homeData.todayTasks.map((task) => ({ ...task, toggling: false }));
+    const tasks = homeData.todayTasks.map(buildViewTask);
     const goal = homeData.goal;
     const checkedInToday = homeData.checkedInToday || false;
     const planPaused = goal?.planStatus === "paused";
@@ -250,7 +271,7 @@ Page({
         const unlockedTasks = this.data.tasks.map((task: TodayViewTask) =>
           task.id === taskId ? { ...task, toggling: false } : task,
         );
-        this.setData({ tasks: unlockedTasks });
+        this.updateProgress(unlockedTasks);
       })
       .catch(() => {
         // Revert on failure.
@@ -266,6 +287,20 @@ Page({
           duration: 2000,
         });
       });
+  },
+
+  toggleTaskDetail(event: TaskToggleEvent) {
+    const taskId = String(event.currentTarget.dataset.id || "");
+    if (!taskId) {
+      return;
+    }
+    const tasks = this.data.tasks.map((task: TodayViewTask) =>
+      task.id === taskId ? { ...task, expanded: !task.expanded } : task,
+    );
+    this.setData({
+      tasks,
+      taskGroups: buildTaskGroups(tasks),
+    });
   },
 
   onQuickTitleInput(event: InputEvent) {
@@ -393,7 +428,7 @@ Page({
       goalId: goal.id,
       planId: goal.planId,
       businessDate: this.data.businessDate,
-      tasks: this.data.tasks.map(({ toggling, ...task }: TodayViewTask) => ({ ...task })),
+      tasks: this.data.tasks.map(({ toggling, expanded, ...task }: TodayViewTask) => ({ ...task })),
       completedTaskIds: this.data.tasks
         .filter((task: TodayViewTask) => task.completed)
         .map((task: TodayViewTask) => task.id),

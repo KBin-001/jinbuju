@@ -2,6 +2,7 @@ const cloud = require("wx-server-sdk");
 const { addBusinessDays, formatBusinessDate, formatReviewEligibleDate } = require("./date");
 const { stableId } = require("./repository");
 const { generateTrustedStagePlan } = require("./stage-generation");
+const { mapStageActionToTaskFields } = require("./stage-task");
 const { validateStageRequestId } = require("./stage-validate");
 
 const db = cloud.database();
@@ -321,15 +322,7 @@ async function confirmStagePlan(openid, event) {
             taskDate: addBusinessDays(startDate, day.dayIndex - 1),
             theme: day.theme,
             dayTitle: day.theme,
-            title: action.title,
-            description: action.description,
-            actionType: action.actionType || "",
-            completionCriteria: action.completionCriteria || "",
-            requiredResources: Array.isArray(action.requiredResources) ? action.requiredResources : [],
-            safetyNotes: Array.isArray(action.safetyNotes) ? action.safetyNotes : [],
-            estimatedMinutes: action.estimatedMinutes,
-            slotId: action.slotId || `slot_day_${day.dayIndex}_${index + 1}`,
-            order: index + 1,
+            ...mapStageActionToTaskFields(action, day.dayIndex, index),
             status: "pending",
             createdAt: now,
             updatedAt: now,

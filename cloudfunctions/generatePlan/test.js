@@ -10,6 +10,7 @@ const {
 } = require("./team-rules");
 const { buildBadges, isCommunityUnlocked } = require("./profile-rules");
 const { buildStageFallback } = require("./stage-fallback");
+const { mapStageActionToTaskFields } = require("./stage-task");
 const {
   fallbackAnalysis,
   buildGoalProfile: buildClarifiedGoalProfile,
@@ -33,6 +34,35 @@ const {
   validateCreateStagePreviewInput,
   validateOptimizedPlan,
 } = require("./stage-v2");
+
+const persistedStageAction = mapStageActionToTaskFields(
+  {
+    slotId: "slot_day_2_1",
+    title: "完成一次针对性练习",
+    description: "按计划完成练习并记录结果。",
+    actionType: "practice",
+    completionCriteria: "完成 10 道题并订正错题。",
+    estimatedMinutes: 30,
+    requiredResources: ["练习册", "计时器"],
+    safetyNotes: ["感到不适时立即停止"],
+  },
+  2,
+  0,
+);
+assert.deepStrictEqual(
+  {
+    actionType: persistedStageAction.actionType,
+    completionCriteria: persistedStageAction.completionCriteria,
+    requiredResources: persistedStageAction.requiredResources,
+    safetyNotes: persistedStageAction.safetyNotes,
+  },
+  {
+    actionType: "practice",
+    completionCriteria: "完成 10 道题并订正错题。",
+    requiredResources: ["练习册", "计时器"],
+    safetyNotes: ["感到不适时立即停止"],
+  },
+);
 
 const categories = ["exam", "skill", "career"];
 const weeklyDaysOptions = [3, 5, 7];

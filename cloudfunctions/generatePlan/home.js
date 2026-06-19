@@ -19,6 +19,16 @@ const SOURCE_LABELS = {
   carry_over: "顺延任务",
 };
 
+const ACTION_TYPE_LABELS = {
+  practice: "练习",
+  learning: "学习",
+  preparation: "准备",
+  reflection: "复盘",
+  recovery: "恢复",
+  creation: "创作",
+  execution: "执行",
+};
+
 function createError(code, message) {
   const error = new Error(message);
   error.code = code;
@@ -41,13 +51,26 @@ async function getMany(collectionName, where, limit = 100) {
 
 const VALID_RESULT_STATUSES = ["completed", "partially_completed", "skipped", "rescheduled"];
 
+function normalizeTextList(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => String(item || "").trim())
+    .filter(Boolean);
+}
+
 function buildTask(task) {
   const status = task.status || "pending";
   const resultStatus = VALID_RESULT_STATUSES.includes(status) ? status : undefined;
+  const actionType = String(task.actionType || "").trim();
   return {
     id: String(task._id || ""),
     title: String(task.title || "今日任务"),
     description: String(task.description || task.dayTitle || ""),
+    actionType,
+    actionTypeLabel: actionType ? ACTION_TYPE_LABELS[actionType] || actionType : "",
+    completionCriteria: String(task.completionCriteria || ""),
+    requiredResources: normalizeTextList(task.requiredResources),
+    safetyNotes: normalizeTextList(task.safetyNotes),
     estimatedMinutes: Math.max(Number(task.estimatedMinutes) || 0, 0),
     timePeriod: TIME_PERIODS.includes(task.timePeriod) ? task.timePeriod : "anytime",
     source: task.source || "template",

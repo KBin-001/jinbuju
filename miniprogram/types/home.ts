@@ -48,10 +48,25 @@ export interface TaskActionResult {
   status: ActionResultStatus;
 }
 
+export type TodayActionType =
+  | "practice"
+  | "learning"
+  | "preparation"
+  | "reflection"
+  | "recovery"
+  | "creation"
+  | "execution"
+  | string;
+
 export interface TodayTask {
   id: string;
   title: string;
   description: string;
+  actionType: TodayActionType;
+  actionTypeLabel: string;
+  completionCriteria: string;
+  requiredResources: string[];
+  safetyNotes: string[];
   estimatedMinutes: number;
   timePeriod: "morning" | "afternoon" | "evening" | "anytime";
   source: "manual" | "ai" | "template" | "carry_over";

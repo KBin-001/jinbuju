@@ -195,14 +195,13 @@
           wx:key="id"
           class="card task-card {{task.completed ? 'task-card-completed' : ''}}"
         >
-          <view class="task-content">
+          <view class="task-main-row">
+            <view class="task-content">
             <view class="task-title {{task.completed ? 'task-title-completed' : ''}}">
               {{task.title}}
             </view>
-            <view wx:if="{{task.description}}" class="task-description">{{task.description}}</view>
             <view class="task-meta-row">
               <text class="task-duration">预计 {{task.estimatedMinutes}} 分钟</text>
-              <text class="task-source">{{task.sourceLabel}}</text>
             </view>
           </view>
           <button
@@ -215,6 +214,49 @@
             <text class="task-toggle-icon">{{task.completed ? '✓' : ''}}</text>
             <text>{{task.completed ? '已完成' : '完成'}}</text>
           </button>
+        </view>
+          <button
+            class="task-detail-toggle"
+            data-id="{{task.id}}"
+            aria-label="{{task.expanded ? '收起行动详情：' : '展开行动详情：'}}{{task.title}}"
+            bindtap="toggleTaskDetail"
+          >
+            {{task.expanded ? '收起详情' : '查看怎么做'}}
+          </button>
+          <view wx:if="{{task.expanded}}" class="task-detail-panel">
+            <view wx:if="{{task.actionTypeLabel}}" class="task-detail-item">
+              <view class="task-detail-label">行动类型</view>
+              <view class="task-detail-text">{{task.actionTypeLabel}}</view>
+            </view>
+            <view wx:if="{{task.description}}" class="task-detail-item">
+              <view class="task-detail-label">执行说明</view>
+              <view class="task-detail-text">{{task.description}}</view>
+            </view>
+            <view wx:if="{{task.completionCriteria}}" class="task-detail-item">
+              <view class="task-detail-label">完成标准</view>
+              <view class="task-detail-text">{{task.completionCriteria}}</view>
+            </view>
+            <view wx:if="{{task.requiredResources.length > 0}}" class="task-detail-item">
+              <view class="task-detail-label">所需资源</view>
+              <view class="task-chip-row">
+                <text
+                  wx:for="{{task.requiredResources}}"
+                  wx:key="*this"
+                  class="task-info-chip"
+                >{{item}}</text>
+              </view>
+            </view>
+            <view wx:if="{{task.safetyNotes.length > 0}}" class="task-detail-item">
+              <view class="task-detail-label">安全提醒</view>
+              <view class="task-note-list">
+                <view
+                  wx:for="{{task.safetyNotes}}"
+                  wx:key="*this"
+                  class="task-note-item"
+                >{{item}}</view>
+              </view>
+            </view>
+          </view>
         </view>
       </view>
 
