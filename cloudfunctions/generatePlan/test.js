@@ -586,6 +586,33 @@ const passiveQuality = evaluateStagePlanQuality(
 );
 assert.strictEqual(passiveQuality.shouldRepair, true);
 
+const indexLearningInput = validateCreateStagePreviewInput({
+  templateId: "custom",
+  customGoalTitle: "系统学习沪深300指数",
+  currentLevel: "basic",
+  dailyMinutes: 30,
+  weeklyDays: 7,
+  intensity: "normal",
+  durationDays: 7,
+});
+const indexLearningProfile = buildGoalProfile(indexLearningInput);
+const indexLearningPlan = buildGeneratedCandidate(indexLearningProfile);
+indexLearningPlan.days.forEach((day, index) => {
+  day.actions[0].title = `阅读第${index + 1}个指数主题并完成练习`;
+  day.actions[0].actionType = "learning";
+  day.actions[0].description = "阅读基础资料，完成一份对比表或计算练习并保存结果。";
+  day.actions[0].completionCriteria = "完成资料阅读，并留下可检查的表格或练习结果。";
+});
+const indexLearningQuality = evaluateStagePlanQuality(
+  validateGeneratedStagePlan(indexLearningPlan, indexLearningProfile),
+  indexLearningProfile,
+);
+assert.strictEqual(
+  indexLearningQuality.shouldRepair,
+  false,
+  indexLearningQuality.problems.join(","),
+);
+
 const invalidExtraField = buildStageFallback(stageInput);
 invalidExtraField.stage.extra = "not allowed";
 assert.throws(

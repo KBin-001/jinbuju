@@ -35,7 +35,7 @@
       class="confirmation-input"
       value="{{confirmation}}"
       placeholder="确认清除"
-      maxlength="4"
+      maxlength="20"
       disabled="{{deleting}}"
       bindinput="onConfirmationInput"
     />

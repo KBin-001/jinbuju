@@ -29,6 +29,7 @@ const ACTION_TYPES = [
 const PASSIVE_ACTION_WORDS = /了解|学习|观看|阅读|记录|整理笔记|查资料/;
 const PRACTICE_ACTION_WORDS = /练习|完成|制作|执行|尝试|参加|筛选|联系|搭建|写出|做出|拍摄|烹饪|调整|准备|复盘/;
 const DANGER_ACTION_WORDS = /伤害|击打要害|偷袭|无保护对练|实战攻击|致伤|制服他人|危险动作/;
+const QUALITY_PRACTICE_ACTION_TYPES = new Set(["practice", "execution", "creation"]);
 
 function fail(code, message) {
   const error = new Error(message);
@@ -606,12 +607,19 @@ function validateGeneratedStagePlan(input, goalProfile) {
 function evaluateStagePlanQuality(plan, goalProfile) {
   const problems = [];
   const actions = plan.days.flatMap((day) => day.actions);
-  const passiveCount = actions.filter((action) =>
-    PASSIVE_ACTION_WORDS.test(`${action.title}${action.description}`),
+  const isPracticeAction = (action) =>
+    QUALITY_PRACTICE_ACTION_TYPES.has(action.actionType) ||
+    PRACTICE_ACTION_WORDS.test(
+      `${action.title}${action.description}${action.completionCriteria || ""}`,
+    );
+  // Reading or learning can still be an executable action when it produces a
+  // verifiable exercise or artifact. Only count actions that remain purely passive.
+  const passiveCount = actions.filter(
+    (action) =>
+      PASSIVE_ACTION_WORDS.test(`${action.title}${action.description}`) &&
+      !isPracticeAction(action),
   ).length;
-  const practiceCount = actions.filter((action) =>
-    PRACTICE_ACTION_WORDS.test(`${action.title}${action.description}${action.completionCriteria}`),
-  ).length;
+  const practiceCount = actions.filter(isPracticeAction).length;
   const uniqueTitles = new Set(actions.map((action) => action.title.replace(/\s+/g, ""))).size;
   const dangerCount = actions.filter((action) =>
     DANGER_ACTION_WORDS.test(`${action.title}${action.description}${action.safetyNotes.join("")}`),

@@ -548,6 +548,7 @@ async function createStagePreview(openid, event) {
         if (repairedQuality.shouldRepair) {
           const error = new Error("QUALITY_REPAIR_FAILED");
           error.code = "QUALITY_REPAIR_FAILED";
+          error.problems = repairedQuality.problems;
           throw error;
         }
         stagePlan = repairedPlan;
@@ -560,6 +561,7 @@ async function createStagePreview(openid, event) {
           code: fallbackReason,
           firstFailure: shortError(firstError),
           repairFailure: shortError(repairError),
+          repairProblems: Array.isArray(repairError.problems) ? repairError.problems : [],
           firstProblems,
           promptVersion: DIRECT_STAGE_PROMPT_VERSION,
           schemaVersion: GENERATED_STAGE_SCHEMA_VERSION,
@@ -1166,6 +1168,7 @@ async function regenerateStagePreview(openid, event) {
       if (repairedQuality.shouldRepair) {
         const error = new Error("QUALITY_REPAIR_FAILED");
         error.code = "QUALITY_REPAIR_FAILED";
+        error.problems = repairedQuality.problems;
         throw error;
       }
 
@@ -1183,6 +1186,7 @@ async function regenerateStagePreview(openid, event) {
     } catch (repairError) {
       console.warn("stage regeneration failed, keeping old plan", {
         code: repairError.code || "AI_REQUEST_FAILED",
+        repairProblems: Array.isArray(repairError.problems) ? repairError.problems : [],
       });
     }
   }
