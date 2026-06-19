@@ -13,6 +13,9 @@ import { formatActionMinutes } from "../../utils/format";
 
 type PageStatus = "loading" | "error" | "ready";
 
+/** Cache TTL in ms – data within this window is considered fresh. */
+const CACHE_TTL = 30_000;
+
 interface BadgeView extends BadgeSummary {
   mark: string;
 }
@@ -45,17 +48,38 @@ Page({
     loadingCommunity: false,
   },
 
+  // ── In-memory cache metadata ──
+  _lastFetchTime: 0,
+  _loading: false,
+
   onShow() {
     this.loadProfile();
   },
 
-  loadProfile() {
-    this.setData({
-      status: "loading",
-      errorMessage: "",
-    });
+  /**
+   * @param force  true = always refetch (after mutations); false = use cache if fresh.
+   */
+  loadProfile(force = false) {
+    if (this._loading) return;
+
+    const now = Date.now();
+    const hasFreshCache = !force && this._lastFetchTime > 0 && (now - this._lastFetchTime < CACHE_TTL);
+    if (hasFreshCache) return;
+
+    const silent = this._lastFetchTime > 0;
+    this._loading = true;
+
+    if (!silent) {
+      this.setData({
+        status: "loading",
+        errorMessage: "",
+      });
+    }
+
     getProfileData()
       .then((profile) => {
+        this._lastFetchTime = Date.now();
+        this._loading = false;
         this.setData({
           status: "ready",
           profile,
@@ -70,17 +94,22 @@ Page({
         });
       })
       .catch((error: Error) => {
-        const serviceError = error as ProfileServiceError;
-        this.setData({
-          status: "error",
-          errorMessage:
-            serviceError.message || "个人数据加载失败，请稍后重试。",
-        });
+        this._loading = false;
+        if (!silent) {
+          const serviceError = error as ProfileServiceError;
+          this.setData({
+            status: "error",
+            errorMessage:
+              serviceError.message || "个人数据加载失败，请稍后重试。",
+          });
+        }
       });
   },
 
   retry() {
-    if (this.data.status !== "loading") this.loadProfile();
+    if (this._loading) return;
+    this._lastFetchTime = 0;
+    this.loadProfile(true);
   },
 
   goToPlan() {

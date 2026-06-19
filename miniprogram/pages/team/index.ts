@@ -13,6 +13,9 @@ import {
 
 type PageStatus = "loading" | "empty" | "error" | "ready";
 
+/** Cache TTL in ms – data within this window is considered fresh. */
+const CACHE_TTL = 30_000;
+
 interface MemberActionEvent {
   currentTarget: {
     dataset: {
@@ -68,18 +71,40 @@ Page({
     encouragingMemberId: "",
   },
 
+  // ── In-memory cache metadata ──
+  _lastFetchTime: 0,
+  _loading: false,
+
   onShow() {
     this.loadTeam();
   },
 
-  loadTeam() {
-    this.setData({
-      status: "loading",
-      errorMessage: "",
-      errorCode: "",
-    });
+  /**
+   * @param force  true = always refetch (after mutations); false = use cache if fresh.
+   */
+  loadTeam(force = false) {
+    if (this._loading) return;
+
+    const now = Date.now();
+    const hasFreshCache = !force && this._lastFetchTime > 0 && (now - this._lastFetchTime < CACHE_TTL);
+    if (hasFreshCache) return;
+
+    const silent = this._lastFetchTime > 0;
+    this._loading = true;
+
+    if (!silent) {
+      this.setData({
+        status: "loading",
+        errorMessage: "",
+        errorCode: "",
+      });
+    }
+
     getMyTeam()
       .then((data: TeamPageData) => {
+        this._lastFetchTime = Date.now();
+        this._loading = false;
+
         if (!data.team) {
           this.setData({
             status: "empty",
@@ -111,19 +136,24 @@ Page({
         });
       })
       .catch((error: Error) => {
-        const serviceError = error as TeamServiceError;
-        this.setData({
-          status: "error",
-          errorCode: serviceError.code || "INTERNAL_ERROR",
-          errorMessage: serviceError.message || "小队信息加载失败，请稍后重试。",
-          joining: false,
-          encouragingMemberId: "",
-        });
+        this._loading = false;
+        if (!silent) {
+          const serviceError = error as TeamServiceError;
+          this.setData({
+            status: "error",
+            errorCode: serviceError.code || "INTERNAL_ERROR",
+            errorMessage: serviceError.message || "小队信息加载失败，请稍后重试。",
+            joining: false,
+            encouragingMemberId: "",
+          });
+        }
       });
   },
 
   retry() {
-    if (this.data.status !== "loading") this.loadTeam();
+    if (this._loading) return;
+    this._lastFetchTime = 0;
+    this.loadTeam(true);
   },
 
   joinTeam() {
@@ -135,7 +165,7 @@ Page({
           title: "已加入行动小队",
           icon: "success",
         });
-        this.loadTeam();
+        this.loadTeam(true);
       })
       .catch((error: Error) => {
         const serviceError = error as TeamServiceError;
@@ -180,7 +210,7 @@ Page({
           title: "鼓励已送达",
           icon: "none",
         });
-        this.loadTeam();
+        this.loadTeam(true);
       })
       .catch((error: Error) => {
         const serviceError = error as TeamServiceError;
@@ -189,7 +219,7 @@ Page({
             title: "今天已经鼓励过了",
             icon: "none",
           });
-          this.loadTeam();
+          this.loadTeam(true);
           return;
         }
         this.setData({ encouragingMemberId: "" });

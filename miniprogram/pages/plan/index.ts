@@ -23,6 +23,9 @@ import {
 
 type PageStatus = "loading" | "empty" | "error" | "preview" | "ready";
 
+/** Cache TTL in ms – data within this window is considered fresh. */
+const CACHE_TTL = 30_000;
+
 interface PlanDayView extends PlanDaySummary {
   monthDay: string;
   weekday: string;
@@ -120,14 +123,39 @@ Page({
     showStageFocus: false,
   },
 
+  // ── In-memory cache metadata ──
+  _lastFetchTime: 0,
+  _loading: false,
+  _forceNextShow: false,
+
   onShow() {
-    this.loadPlan();
+    const force = this._forceNextShow;
+    this._forceNextShow = false;
+    this.loadPlan(force);
   },
 
-  loadPlan() {
-    this.setData({ status: "loading", errorMessage: "" });
+  /**
+   * @param force  true = always refetch (after mutations); false = use cache if fresh.
+   */
+  loadPlan(force = false) {
+    if (this._loading) return;
+
+    const now = Date.now();
+    const hasFreshCache = !force && this._lastFetchTime > 0 && (now - this._lastFetchTime < CACHE_TTL);
+    if (hasFreshCache) return;
+
+    const silent = this._lastFetchTime > 0;
+    this._loading = true;
+
+    if (!silent) {
+      this.setData({ status: "loading", errorMessage: "" });
+    }
+
     getPlanPageData()
       .then((pageData) => {
+        this._lastFetchTime = Date.now();
+        this._loading = false;
+
         if (!pageData.goal || !pageData.plan) {
           this.setData({
             status: getStagePreviewCache() ? "preview" : "empty",
@@ -160,10 +188,13 @@ Page({
         });
       })
       .catch((error: Error) => {
-        this.setData({
-          status: "error",
-          errorMessage: error.message || "进度加载失败，请重试。",
-        });
+        this._loading = false;
+        if (!silent) {
+          this.setData({
+            status: "error",
+            errorMessage: error.message || "进度加载失败，请重试。",
+          });
+        }
       });
   },
 
@@ -189,14 +220,18 @@ Page({
   },
 
   retry() {
-    if (this.data.status !== "loading") this.loadPlan();
+    if (this._loading) return;
+    this._lastFetchTime = 0;
+    this.loadPlan(true);
   },
 
   createGoal() {
+    this._forceNextShow = true;
     wx.navigateTo({ url: "/pages/goal-create/index" });
   },
 
   continuePreview() {
+    this._forceNextShow = true;
     const cached = getStagePreviewCache();
     const previewId = cached?.result.previewId;
     wx.navigateTo({
@@ -214,6 +249,7 @@ Page({
     this.closeManagementMenu();
     const stageId = this.data.pageData?.plan.id;
     if (stageId) {
+      this._forceNextShow = true;
       wx.navigateTo({ url: `/pages/stage-review/index?stageId=${stageId}` });
     }
   },
@@ -226,7 +262,7 @@ Page({
     updatePlanTime(plan.id, value)
       .then(() => {
         wx.showToast({ title: "行动时间已更新", icon: "success" });
-        this.loadPlan();
+        this.loadPlan(true);
       })
       .catch((error: Error) => {
         this.setData({ actionLoading: "" });
@@ -260,7 +296,7 @@ Page({
     postponePlanTask(task.id, plan.id)
       .then(() => {
         wx.showToast({ title: "行动已顺延到明天", icon: "none" });
-        this.loadPlan();
+        this.loadPlan(true);
       })
       .catch((error: Error) => {
         this.setData({ actionLoading: "", actionTaskId: "" });
@@ -287,7 +323,7 @@ Page({
         pauseCurrentPlan(plan.id)
           .then(() => {
             wx.showToast({ title: "阶段已暂停", icon: "none" });
-            this.loadPlan();
+            this.loadPlan(true);
           })
           .catch((error: Error) => this.showActionError(error));
       },
@@ -301,7 +337,7 @@ Page({
     resumeCurrentPlan(plan.id)
       .then(() => {
         wx.showToast({ title: "阶段已恢复", icon: "success" });
-        this.loadPlan();
+        this.loadPlan(true);
       })
       .catch((error: Error) => this.showActionError(error));
   },
@@ -338,6 +374,7 @@ Page({
         clearLongTermGoalDraft();
         clearPlanPreview();
         clearStagePreviewCache();
+        this._lastFetchTime = 0;
         this.setData({ deleting: false, pageData: null, status: "empty" });
         wx.showToast({ title: "当前目标已删除", icon: "success" });
       })

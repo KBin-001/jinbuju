@@ -12,6 +12,9 @@ import { saveTodayCheckinDraft } from "../../utils/checkin-draft";
 
 type PageStatus = "loading" | "success" | "error";
 
+/** Cache TTL in ms – data within this window is considered fresh. */
+const CACHE_TTL = 30_000;
+
 interface TaskToggleEvent {
   currentTarget: {
     dataset: {
@@ -184,30 +187,52 @@ Page({
     creatingTask: false,
   },
 
+  // ── In-memory cache metadata ──
+  _lastFetchTime: 0,
+  _loading: false,
+  _forceNextShow: false,
+
   onShow() {
-    this.loadToday();
+    const force = this._forceNextShow;
+    this._forceNextShow = false;
+    this.loadToday(force);
   },
 
-  loadToday() {
-    if (this.data.status === "loading" && this.data.businessDate) {
-      return;
-    }
+  /**
+   * @param force  true = always refetch (after mutations); false = use cache if fresh.
+   */
+  loadToday(force = false) {
+    if (this._loading) return;
 
-    this.setData({
-      status: "loading",
-      errorMessage: "",
-      navigating: false,
-    });
+    const now = Date.now();
+    const hasFreshCache = !force && this._lastFetchTime > 0 && (now - this._lastFetchTime < CACHE_TTL);
+    if (hasFreshCache) return;
+
+    const silent = this._lastFetchTime > 0;
+    this._loading = true;
+
+    if (!silent) {
+      this.setData({
+        status: "loading",
+        errorMessage: "",
+        navigating: false,
+      });
+    }
 
     getHomeData()
       .then((homeData: HomeData) => {
+        this._lastFetchTime = Date.now();
+        this._loading = false;
         this.applyHomeData(homeData);
       })
       .catch((error: Error) => {
-        this.setData({
-          status: "error",
-          errorMessage: error.message || "今日数据暂时无法加载，请稍后重试。",
-        });
+        this._loading = false;
+        if (!silent) {
+          this.setData({
+            status: "error",
+            errorMessage: error.message || "今日数据暂时无法加载，请稍后重试。",
+          });
+        }
       });
   },
 
@@ -407,7 +432,7 @@ Page({
           icon: "success",
           duration: 1200,
         });
-        this.loadToday();
+        this.loadToday(true);
       }, (error: Error) => {
         finishCreating();
         wx.showToast({
@@ -419,16 +444,16 @@ Page({
   },
 
   retry() {
-    if (this.data.status === "loading") {
-      return;
-    }
-    this.loadToday();
+    if (this._loading) return;
+    this._lastFetchTime = 0;
+    this.loadToday(true);
   },
 
   goToCreateGoal() {
     if (this.data.navigating) {
       return;
     }
+    this._forceNextShow = true;
     this.setData({ navigating: true });
     wx.navigateTo({
       url: "/pages/goal-create/index",
@@ -470,6 +495,7 @@ Page({
       preparedAt: Date.now(),
       taskResults: taskResults.length > 0 ? taskResults : undefined,
     };
+    this._forceNextShow = true;
     saveTodayCheckinDraft(draft);
 
     wx.navigateTo({
