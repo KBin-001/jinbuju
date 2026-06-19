@@ -30,6 +30,16 @@ button::after {
   border: 0;
 }
 
+button:not([disabled]):active {
+  opacity: 0.86;
+  transform: scale(0.985);
+}
+
+button[disabled] {
+  cursor: default;
+  opacity: 0.52;
+}
+
 .page {
   min-height: 100vh;
   padding: 56rpx 32rpx calc(48rpx + env(safe-area-inset-bottom));
@@ -104,7 +114,11 @@ button::after {
 }
 
 .primary-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 240rpx;
+  min-height: 88rpx;
   margin-top: 32rpx;
   padding: 24rpx 36rpx;
   border-radius: 999rpx;
@@ -112,6 +126,11 @@ button::after {
   color: #ffffff;
   font-weight: 600;
   text-align: center;
+}
+
+.primary-button[disabled] {
+  background: #d9ded8;
+  color: #7f877e;
 }
 
 .loading-dot {
@@ -132,5 +151,25 @@ button::after {
   50% {
     opacity: 1;
     transform: scale(1.15);
+  }
+}
+
+@media (max-width: 340px) {
+  .page {
+    padding-right: 24rpx;
+    padding-left: 24rpx;
+  }
+
+  .page-title {
+    font-size: 44rpx;
+  }
+
+  .card {
+    padding: 26rpx;
+    border-radius: 24rpx;
+  }
+
+  .state-card {
+    min-height: 360rpx;
   }
 }

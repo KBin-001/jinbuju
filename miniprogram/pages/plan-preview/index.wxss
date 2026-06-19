@@ -81,6 +81,27 @@
 .feedback-chip { display: inline-flex; align-items: center; padding: 14rpx 24rpx; border-radius: 999rpx; border: 2rpx solid var(--color-border); background: #fff; font-size: 24rpx; color: var(--color-text); }
 .feedback-chip.selected { border-color: var(--color-primary); background: var(--color-primary-light); color: var(--color-primary); font-weight: 650; }
 
+@media (max-width: 340px) {
+  .plan-scroll {
+    height: calc(100vh - 104rpx - env(safe-area-inset-top) - 286rpx - env(safe-area-inset-bottom));
+  }
+
+  .plan-content {
+    padding-right: 22rpx;
+    padding-left: 22rpx;
+  }
+
+  .actions-row {
+    flex-direction: column;
+  }
+
+  .confirm-button,
+  .adjust-button {
+    width: 100%;
+    flex: none;
+  }
+}
+
 /* Feedback note */
 .feedback-note-section { margin-top: 24rpx; }
 .feedback-note-input { width: 100%; height: 160rpx; padding: 18rpx; border: 2rpx solid var(--color-border); border-radius: 14rpx; background: #fff; font-size: 26rpx; box-sizing: border-box; }

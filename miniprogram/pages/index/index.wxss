@@ -1,4 +1,6 @@
 .today-page {
+  display: flex;
+  flex-direction: column;
   padding-top: 40rpx;
   padding-bottom: calc(176rpx + env(safe-area-inset-bottom));
 }
@@ -186,7 +188,23 @@
 }
 
 .quick-task-card {
+  order: 4;
   margin-top: 24rpx;
+}
+
+.progress-card {
+  order: 2;
+}
+
+.task-section {
+  order: 3;
+}
+
+.quick-task-hint {
+  margin-top: 6rpx;
+  color: var(--color-text-secondary);
+  font-size: 22rpx;
+  line-height: 1.45;
 }
 
 .more-settings-button {
@@ -508,4 +526,27 @@
 .checkin-button-done {
   background: #e3efe9;
   color: var(--color-primary);
+}
+
+@media (max-width: 340px) {
+  .date-row,
+  .card-heading-row {
+    align-items: flex-start;
+  }
+
+  .streak-pill {
+    min-width: 142rpx;
+    margin-left: 16rpx;
+  }
+
+  .task-main-row {
+    align-items: flex-start;
+  }
+
+  .task-toggle {
+    min-width: 124rpx;
+    margin-left: 16rpx;
+    padding-right: 14rpx;
+    padding-left: 14rpx;
+  }
 }

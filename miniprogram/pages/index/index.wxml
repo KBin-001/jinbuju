@@ -29,8 +29,8 @@
 
     <view wx:if="{{!goal && totalCount === 0}}" class="card empty-goal-card">
       <view class="section-eyebrow">你的第一个目标</view>
-      <view class="empty-goal-title">先安排今天，也可以稍后再创建长期目标。</view>
-      <view class="empty-goal-description">从一件 10 秒能写下来的小任务开始。</view>
+      <view class="empty-goal-title">还没有目标</view>
+      <view class="empty-goal-description">把想做的事，变成今天能完成的一小步。</view>
       <button
         class="primary-button create-button"
         loading="{{navigating}}"
@@ -74,7 +74,10 @@
 
     <view class="card quick-task-card">
       <view class="section-title-row">
-        <view class="section-title">快速添加</view>
+        <view>
+          <view class="section-title">临时行动</view>
+          <view class="quick-task-hint">有计划外的小事时再添加</view>
+        </view>
         <button class="more-settings-button" bindtap="toggleMoreSettings">
           {{showMoreSettings ? '收起' : '更多设置'}}
         </button>
@@ -147,7 +150,7 @@
         disabled="{{creatingTask}}"
         bindtap="createTodayTask"
       >
-        添加到今日
+        添加一项行动
       </button>
     </view>
 
@@ -183,8 +186,8 @@
 
       <view wx:if="{{totalCount === 0}}" class="card no-task-card">
         <view class="state-mark small-mark">0</view>
-        <view class="no-task-title">{{todayRest ? '今天是计划休息日' : '今天还没有任务'}}</view>
-        <view class="state-description">{{todayRest ? '休息也是计划的一部分，可以轻松整理前面的成果。' : '在上方添加一件今天想完成的小事。'}}</view>
+        <view class="no-task-title">{{todayRest ? '今天是计划休息日' : '今天还没有行动'}}</view>
+        <view class="state-description">{{todayRest ? '休息也是计划的一部分，可以轻松整理前面的成果。' : '可以在下方添加一件今天想完成的小事。'}}</view>
       </view>
 
       <view wx:for="{{taskGroups}}" wx:key="key" class="period-group">

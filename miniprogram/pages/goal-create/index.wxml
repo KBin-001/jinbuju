@@ -2,7 +2,7 @@
   <view class="goal-header">
     <button class="back-button" disabled="{{submitting && currentStep !== 3}}" bindtap="previousStep">‹</button>
     <view class="header-center">
-      <view class="header-title">创建行动计划</view>
+      <view class="header-title">创建目标</view>
       <view class="step-text">{{currentStep}} / {{totalSteps}}</view>
     </view>
     <view class="header-placeholder"></view>
