@@ -71,20 +71,7 @@ function buildBadges(statistics, unlockDates = {}) {
 }
 
 function isCommunityUnlocked(profile, requirements = {}) {
-  const minimumCheckinDays = Math.max(
-    Number(requirements.minimumCheckinDays || 1),
-    0,
-  );
-  const minimumStreakDays = Math.max(
-    Number(requirements.minimumStreakDays || 3),
-    0,
-  );
-  const requiresActiveGoal = requirements.requiresActiveGoal !== false;
-  return Boolean(
-    (!requiresActiveGoal || profile.hasCurrentGoal) &&
-      Number(profile.totalCheckinDays || 0) >= minimumCheckinDays &&
-      Number(profile.longestStreak || 0) >= minimumStreakDays,
-  );
+  return true;
 }
 
 module.exports = {

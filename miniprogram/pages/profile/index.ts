@@ -1,11 +1,9 @@
 import {
-  getCommunityEntry,
   getProfileData,
   ProfileServiceError,
 } from "../../services/profile";
 import {
   BadgeSummary,
-  CommunityEntry,
   HistoryGoalSummary,
   ProfilePageData,
 } from "../../types/profile";
@@ -45,7 +43,6 @@ Page({
     avatarDisplay: DEFAULT_AVATAR,
     actionDuration: "0 分钟",
     badges: [] as BadgeView[],
-    loadingCommunity: false,
   },
 
   // ── In-memory cache metadata ──
@@ -143,49 +140,7 @@ Page({
   },
 
   openCommunity() {
-    if (this.data.loadingCommunity) return;
-    const profile = this.data.profile as ProfilePageData | null;
-    if (!profile?.community.unlocked) {
-      wx.showModal({
-        title: "社群入口尚未解锁",
-        content:
-          profile?.community.description || "继续完成行动后再来看看。",
-        showCancel: false,
-      });
-      return;
-    }
-
-    this.setData({ loadingCommunity: true });
-    getCommunityEntry()
-      .then((entry: CommunityEntry) => {
-        if (!entry.imageFileId) {
-          wx.showModal({
-            title: entry.title,
-            content: entry.description,
-            showCancel: false,
-          });
-          return;
-        }
-        return wx.cloud
-          .downloadFile({ fileID: entry.imageFileId })
-          .then((result: { tempFilePath: string }) => {
-            wx.previewImage({
-              urls: [result.tempFilePath],
-              current: result.tempFilePath,
-            });
-          });
-      })
-      .catch((error: Error) => {
-        wx.showModal({
-          title: "暂时无法打开",
-          content: error.message || "社群入口暂时不可用，请稍后重试。",
-          showCancel: false,
-        });
-      })
-      .then(
-        () => this.setData({ loadingCommunity: false }),
-        () => this.setData({ loadingCommunity: false }),
-      );
+    wx.navigateTo({ url: "/pages/community-qrcode/index" });
   },
 
   openPrivacy() {

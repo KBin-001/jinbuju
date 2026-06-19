@@ -1,0 +1,36 @@
+<view class="container">
+  <view class="header">
+    <text class="title">加入微信陪跑群</text>
+    <text class="subtitle">扫码加入陪跑群，一起稳步行动</text>
+  </view>
+
+  <view class="qrcode-container" bindtap="previewQrcode">
+    <image
+      wx:if="{{qrcodeUrl}}"
+      class="qrcode"
+      src="{{qrcodeUrl}}"
+      mode="aspectFit"
+      bindtap="previewQrcode"
+    />
+    <view wx:if="{{loading}}" class="loading">
+      <text>加载中...</text>
+    </view>
+    <view wx:if="{{!qrcodeUrl && !loading}}" class="empty">
+      <text>二维码图片未找到</text>
+      <text class="hint">请将 community-qrcode.jpg 添加到 /miniprogram/images/ 目录</text>
+    </view>
+  </view>
+
+  <view class="actions">
+    <button class="btn-save" bindtap="saveToAlbum" disabled="{{!qrcodeUrl}}">
+      保存到相册
+    </button>
+  </view>
+
+  <view class="tips">
+    <text class="tip-title">使用说明</text>
+    <text class="tip-text">1. 点击图片可放大查看</text>
+    <text class="tip-text">2. 保存到相册后，用微信扫一扫识别</text>
+    <text class="tip-text">3. 长按图片也可直接保存</text>
+  </view>
+</view>

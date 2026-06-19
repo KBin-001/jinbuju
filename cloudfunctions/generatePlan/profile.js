@@ -120,7 +120,9 @@ async function buildProfile(openid) {
     Number((user && (user.longestStreak || user.streakDays)) || 0),
     ...checkins.map((record) => Number(record.streakDays || 0)),
   );
-  const completedTasks = tasks.filter((task) => task.status === "completed");
+  const completedTasks = tasks.filter(
+    (task) => task && task.status === "completed" && task.completedAt,
+  );
   const completedStages = plans.filter((plan) => plan.status === "completed");
   const statistics = {
     totalCheckinDays,
@@ -164,7 +166,7 @@ async function buildProfile(openid) {
         ).size,
         completedStageCount: goalPlans.filter((plan) => plan.status === "completed").length,
         completedTaskCount: tasks.filter(
-          (task) => goalPlanIds.has(task.planId) && task.status === "completed",
+          (task) => goalPlanIds.has(task.planId) && task.status === "completed" && task.completedAt,
         ).length,
       };
     });
@@ -223,11 +225,9 @@ async function buildProfile(openid) {
     ),
     recentGoals: endedGoals,
     community: {
-      unlocked: communityUnlocked,
-      title: communityUnlocked ? "加入微信陪跑群" : "微信陪跑群尚未解锁",
-      description: communityUnlocked
-        ? "你已满足基础行动条件，可查看社群入口。"
-        : `完成首次打卡并连续行动 ${minimumStreakDays} 天后解锁。`,
+      unlocked: true,
+      title: "加入微信陪跑群",
+      description: "扫码加入陪跑群，一起稳步行动。",
     },
   };
 }
