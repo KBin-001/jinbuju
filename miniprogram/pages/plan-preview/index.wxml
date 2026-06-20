@@ -24,7 +24,7 @@
       <view class="plan-content">
         <!-- Regenerating overlay -->
         <view wx:if="{{regenerating}}" class="regen-overlay">
-          <view class="loading-dot"></view>
+          <ant-loading type="spin" size="large" color="#356859" />
           <view class="regen-title">正在根据你的反馈调整行动方案</view>
           <view class="regen-subtitle">我们会重新检查任务量、难度、行动方式和时间安排。</view>
         </view>
@@ -45,16 +45,28 @@
           <view>这是第 {{preview.currentVersion}} 版方案。</view>
         </ant-notice>
 
+        <view wx:if="{{justGenerated && !regenerating}}" class="plan-ready-hero" bindtap="dismissJustGenerated">
+          <view class="plan-ready-icon">
+            <view class="plan-ready-check">✓</view>
+            <view class="plan-ready-ring"></view>
+          </view>
+          <view class="plan-ready-text">
+            <view class="plan-ready-title">行动方案已生成</view>
+            <view class="plan-ready-desc">请查看下方方案，确认后立即开始今日行动</view>
+          </view>
+          <view class="plan-ready-arrow">↓</view>
+        </view>
+
         <view class="ai-ready-banner preview-ai-hero">
           <view class="ai-ready-mark">AI</view>
           <view>
-            <view class="ai-ready-title">行动阶段已准备好</view>
-            <view class="ai-ready-copy">已按你的目标与节奏拆解，可以逐天查看后再开始。</view>
+            <view class="ai-ready-title">完整行动计划已准备好</view>
+            <view class="ai-ready-copy">已生成全部 {{preview.stagePlan.stage.planDurationDays || preview.stagePlan.stage.durationDays}} 天行动，可按周展开查看。</view>
           </view>
         </view>
 
         <ant-card className="plan-hero growth-ant-card growth-hero">
-          <view class="plan-label">第 {{preview.stageNumber}} 个行动阶段 · {{preview.stagePlan.stage.durationDays}} 天</view>
+          <view class="plan-label">计划周期 · {{preview.stagePlan.stage.planDurationDays || preview.stagePlan.stage.durationDays}} 天</view>
           <view class="plan-summary">{{preview.stagePlan.stage.title}}</view>
           <view class="weekly-goal">
             <view class="weekly-goal-label">阶段重点</view>
@@ -62,6 +74,21 @@
           </view>
           <view class="stage-summary">{{preview.stagePlan.stage.summary}}</view>
         </ant-card>
+
+        <view wx:if="{{preview.stagePlan.outline}}" class="plan-outline-card">
+          <view class="outline-head">
+            <view class="outline-title">完整行动路线</view>
+            <view class="outline-hint">左右滑动查看各阶段</view>
+          </view>
+          <scroll-view class="outline-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+            <view class="outline-track">
+              <view wx:for="{{preview.stagePlan.outline.blocks}}" wx:key="blockIndex" class="outline-block">
+                <view class="outline-index">第 {{item.startDay}}–{{item.endDay}} 天</view>
+                <view class="outline-copy"><view>{{item.focus}}</view><text>{{item.objective}}</text></view>
+              </view>
+            </view>
+          </scroll-view>
+        </view>
 
         <view wx:for="{{weeks}}" wx:key="number" wx:for-item="week" class="week-card">
           <button class="week-header" data-week="{{week.number}}" bindtap="toggleWeek">
@@ -149,15 +176,20 @@
             <view class="feedback-hint">告诉我们哪里不合适，AI 会重新设计整个阶段，而不是只修改几句话。</view>
 
             <view class="feedback-options">
-              <ant-checkbox
+              <button
                 wx:for="{{feedbackOptions}}"
                 wx:key="type"
                 wx:for-item="option"
-                className="feedback-chip {{feedbackTypeSet[option.type] ? 'selected' : ''}}"
-                checked="{{feedbackTypeSet[option.type]}}"
+                class="feedback-chip {{feedbackTypeSet[option.type] ? 'selected' : ''}}"
                 data-type="{{option.type}}"
-                bindchange="toggleFeedbackType"
-              >{{option.label}}</ant-checkbox>
+                aria-label="{{option.label}}{{feedbackTypeSet[option.type] ? '，已选择' : '，未选择'}}"
+                aria-pressed="{{feedbackTypeSet[option.type]}}"
+                hover-class="feedback-chip-pressed"
+                bindtap="toggleFeedbackType"
+              >
+                <view class="feedback-chip-mark">{{feedbackTypeSet[option.type] ? '✓' : ''}}</view>
+                <text>{{option.label}}</text>
+              </button>
             </view>
 
             <view wx:if="{{hasOtherFeedback || selectedFeedbackTypes.length > 0}}" class="feedback-note-section">
@@ -195,21 +227,28 @@
       </view>
     </scroll-view>
 
-    <view class="preview-actions">
+    <view class="preview-actions {{justGenerated ? 'preview-actions-highlight' : ''}}">
+      <view wx:if="{{justGenerated}}" class="confirm-hint-bar">
+        <view class="confirm-hint-dot"></view>
+        <text>方案已就绪，点击下方按钮确认开始</text>
+      </view>
       <block wx:if="{{isV2Create && !showFeedbackPanel && !regenerating}}">
         <view class="actions-row">
-          <ant-button type="primary" className="confirm-button" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
+          <ant-button type="primary" className="confirm-button {{justGenerated ? 'confirm-button-pulse' : ''}}" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
             确认并开始
           </ant-button>
-          <ant-button type="default" className="adjust-button" disabled="{{confirming || (preview.maxRegenerationCount - preview.regenerationCount) <= 0}}" bindtap="openFeedbackPanel">
-            需要调整
-          </ant-button>
+          <view class="adjust-button-wrapper">
+            <ant-button type="default" className="adjust-button" disabled="{{confirming || (preview.maxRegenerationCount - preview.regenerationCount) <= 0}}" bindtap="openFeedbackPanel">
+              需要调整
+            </ant-button>
+            <view wx:if="{{(preview.maxRegenerationCount - preview.regenerationCount) <= 0}}" class="adjust-disabled-hint">已用完重新生成次数</view>
+          </view>
         </view>
         <button wx:if="{{!showFeedbackPanel}}" class="text-action" disabled="{{confirming || regenerating}}" bindtap="editGoal">调整目标设置</button>
       </block>
       <block wx:elif="{{!isV2Create}}">
         <view class="actions-row">
-          <ant-button type="primary" className="confirm-button" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
+          <ant-button type="primary" className="confirm-button {{justGenerated ? 'confirm-button-pulse' : ''}}" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
             确认并开始
           </ant-button>
         </view>

@@ -53,8 +53,10 @@ function buildFallbackPlan(goal, requestedStartDate) {
       ? Math.max(15, Math.floor(goal.dailyMinutes * 0.75))
       : goal.dailyMinutes;
 
-  const days = copy.themes.map((theme, index) => {
-    const isStudyDay = studyIndexes.has(index);
+  const planDurationDays = Math.max(Number(goal.planDurationDays || 7), 3);
+  const days = Array.from({ length: planDurationDays }, (_, index) => {
+    const theme = copy.themes[index % copy.themes.length];
+    const isStudyDay = studyIndexes.has(index % 7);
     const date = addBusinessDays(startDate, index);
     if (!isStudyDay) {
       return {

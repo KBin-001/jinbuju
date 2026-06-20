@@ -3,21 +3,28 @@ import { CloudFunctionResult as SharedCloudFunctionResult } from "./goal";
 export type CloudFunctionResult<T> = SharedCloudFunctionResult<T>;
 export type StageGeneratedBy = "ai" | "ai_repaired" | "template" | "regenerated_ai" | "regenerated_ai_repaired";
 export type StageOptimizationStatus = "idle" | "processing" | "ready" | "failed";
-export type GoalTemplateId =
-  | "cet4"
+export type GoalTemplateKey =
+  | "cet"
   | "teacher_exam"
+  | "postgraduate_exam"
+  | "civil_service_exam"
+  | "ai_learning"
+  | "custom";
+export type LegacyGoalTemplateKey =
+  | "cet4"
   | "python"
   | "ai_tools"
   | "video_editing"
   | "resume"
-  | "interview"
-  | "custom";
+  | "interview";
+export type GoalTemplateId = GoalTemplateKey | LegacyGoalTemplateKey;
 export type GoalLevel = "zero" | "basic" | "intermediate";
 export type GoalIntensity = "light" | "normal" | "intensive";
 export type GoalCategoryGroup = "learning" | "career" | "health" | "habit" | "creative" | "project" | "life" | "other";
 export type GoalType = "skill" | "habit" | "outcome" | "project";
 export type ClarificationQuestionType = "single_choice" | "multiple_choice" | "number" | "short_text" | "boolean";
-export type PlanDurationDays = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type PlanDurationPreset = "7_days" | "14_days" | "30_days" | "long_term";
+export type PlanDurationDays = number;
 export type LongTermGoalCategory =
   | "exam"
   | "skill"
@@ -36,10 +43,11 @@ export interface CreateStagePreviewInput {
   templateId: GoalTemplateId;
   customGoalTitle?: string;
   currentLevel: GoalLevel;
-  dailyMinutes: 15 | 30 | 45 | 60 | 90;
+  dailyMinutes: 30 | 60 | 90 | 120 | 180 | 360;
   weeklyDays: 3 | 5 | 7;
   intensity: GoalIntensity;
   durationDays: PlanDurationDays;
+  planDurationDays: PlanDurationDays;
   deadline?: string;
 }
 
@@ -114,6 +122,7 @@ export interface StagePlanGenerationInput {
   targetDuration: TargetDuration;
   stageNumber: number;
   durationDays: number;
+  planDurationDays?: PlanDurationDays;
   templateId?: GoalTemplateId | "";
   currentLevel?: GoalLevel;
   weeklyDays?: 3 | 5 | 7;
@@ -146,10 +155,33 @@ export interface AIStagePlan {
     objective?: string;
     focus: string;
     durationDays: number;
+    planDurationDays?: number;
     successMetrics?: string[];
     assumptions?: string[];
   };
   days: AIStageDay[];
+  outline?: PlanOutline;
+}
+
+export interface PlanOutlineBlock {
+  blockIndex: number;
+  startDay: number;
+  endDay: number;
+  focus: string;
+  objective: string;
+}
+
+export interface PlanOutline {
+  totalDays: number;
+  blocks: PlanOutlineBlock[];
+}
+
+export type PlanStatus = "draft" | "active" | "completed" | "expired" | "extended" | "archived" | "paused";
+
+export interface ExpandPlanWindowInput {
+  planId: string;
+  startDay: number;
+  endDay: number;
 }
 
 export interface StageGenerationResult {
@@ -206,6 +238,7 @@ export interface StageReviewInput {
   difficulty: "easy" | "suitable" | "hard";
   nextPreference: "lighter" | "same" | "stronger" | "change_focus";
   focusAdjustment?: string;
+  planDurationDays?: PlanDurationDays;
 }
 
 export interface StageExecutionSummary {

@@ -6,7 +6,7 @@
   </view>
 
   <view wx:if="{{status === 'loading'}}" class="card state-card">
-    <view class="loading-dot"></view>
+    <ant-loading type="spin" size="large" color="#356859" />
     <view class="state-title">正在同步小队信息</view>
     <view class="state-description">稍等一下，马上回来。</view>
   </view>
@@ -17,12 +17,13 @@
     <view class="state-description">
       和相同目标方向的伙伴一起行动，只展示进度，不聊天、不打扰。
     </view>
-    <button
-      class="primary-button"
+    <ant-button
+      type="primary"
+      className="growth-primary-button"
       loading="{{joining}}"
       disabled="{{joining}}"
       bindtap="joinTeam"
-    >{{joining ? '正在加入' : '加入小队'}}</button>
+    >{{joining ? '正在加入' : '加入小队'}}</ant-button>
   </view>
 
   <view wx:elif="{{status === 'error'}}" class="card state-card">
@@ -31,11 +32,11 @@
       {{errorCode === 'NOT_TEAM_MEMBER' ? '暂无访问权限' : '小队加载失败'}}
     </view>
     <view class="state-description">{{errorMessage}}</view>
-    <button class="primary-button" bindtap="retry">重新加载</button>
+    <ant-button type="primary" className="growth-primary-button" bindtap="retry">重新加载</ant-button>
   </view>
 
   <block wx:else>
-    <view class="card team-summary-card">
+    <ant-card className="team-summary-card growth-ant-card">
       <view class="summary-heading">
         <view>
           <view class="section-eyebrow">我的行动小队</view>
@@ -68,7 +69,7 @@
       <view wx:elif="{{team.memberCount >= team.maxMembers}}" class="full-notice">
         小队成员已集结
       </view>
-    </view>
+    </ant-card>
 
     <view class="members-section">
       <view class="section-heading">
@@ -76,10 +77,10 @@
         <view class="privacy-copy">仅展示必要行动信息</view>
       </view>
 
-      <view
+      <ant-card
         wx:for="{{members}}"
         wx:key="id"
-        class="card member-card {{item.isSelf ? 'member-self' : ''}}"
+        className="member-card growth-ant-card {{item.isSelf ? 'member-self' : ''}}"
       >
         <view class="member-top">
           <ant-badge type="{{item.todayCompleted ? 'dot' : 'text'}}" text="{{item.todayCompleted ? '' : '待'}}" position="bottom-right" bgColor="{{item.todayCompleted ? '#D8A84E' : '#7567C8'}}">
@@ -129,7 +130,7 @@
         >
           {{item.encouragedByMeToday ? '今天已鼓励' : '送鼓励'}}
         </button>
-      </view>
+      </ant-card>
     </view>
   </block>
 </view>

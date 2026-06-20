@@ -12,7 +12,7 @@ type NextPreference = StageReviewInput["nextPreference"];
 interface OptionEvent {
   currentTarget: {
     dataset: {
-      value?: Difficulty | NextPreference;
+      value?: Difficulty | NextPreference | number;
     };
   };
 }
@@ -53,8 +53,10 @@ const PREFERENCE_OPTIONS = [
   { value: "lighter", label: "轻一点", description: "减少负担，优先保持连续行动" },
   { value: "same", label: "保持节奏", description: "延续当前强度和方向" },
   { value: "stronger", label: "加强一点", description: "在可执行的前提下增加挑战" },
-  { value: "change_focus", label: "调整重点", description: "告诉 AI 下一阶段更想推进什么" },
+  { value: "change_focus", label: "调整重点", description: "告诉 AI 新计划更想推进什么" },
 ];
+
+const DURATION_OPTIONS = [7, 14, 21, 30];
 
 Page({
   data: {
@@ -64,10 +66,14 @@ Page({
     errorMessage: "",
     difficulty: "suitable" as Difficulty,
     nextPreference: "same" as NextPreference,
+    planDurationDays: 14,
+    durationOptions: DURATION_OPTIONS,
     focusAdjustment: "",
     difficultyOptions: DIFFICULTY_OPTIONS,
     preferenceOptions: PREFERENCE_OPTIONS,
     submitting: false,
+    justReviewed: false,
+    generatedPreviewId: "",
     submitErrorCode: "",
     submitErrorMessage: "",
     actionTypeRates: [] as { type: string; label: string; rate: number }[],
@@ -151,12 +157,18 @@ Page({
     if (value) this.setData({ nextPreference: value });
   },
 
+  chooseDuration(event: OptionEvent) {
+    if (this.data.submitting) return;
+    const value = Number(event.currentTarget.dataset.value || 0);
+    if (DURATION_OPTIONS.includes(value)) this.setData({ planDurationDays: value });
+  },
+
   updateFocus(event: InputEvent) {
     this.setData({ focusAdjustment: String(event.detail.value || "").slice(0, 200) });
   },
 
   continuePreview() {
-    const previewId = this.data.review?.previewId;
+    const previewId = this.data.generatedPreviewId || this.data.review?.previewId;
     if (previewId && !this.data.submitting) {
       wx.navigateTo({ url: `/pages/plan-preview/index?previewId=${previewId}` });
     }
@@ -186,23 +198,28 @@ Page({
         nextPreference: this.data.nextPreference,
         focusAdjustment:
           this.data.nextPreference === "change_focus" ? focusAdjustment : undefined,
+        planDurationDays: this.data.planDurationDays,
       },
       createStageRequestId(),
     )
       .then((result) => {
-        wx.navigateTo({ url: `/pages/plan-preview/index?previewId=${result.previewId}` });
+        this.setData({
+          submitting: false,
+          justReviewed: true,
+          generatedPreviewId: result.previewId,
+        });
       })
       .catch((error: Error & { code?: string }) => {
         this.setData({
+          submitting: false,
           submitErrorCode: error.code || "INTERNAL_ERROR",
-          submitErrorMessage: error.message || "下一阶段暂时无法生成",
+          submitErrorMessage: error.message || "新计划暂时无法生成",
         });
         wx.showModal({
-          title: "下一阶段暂时无法生成",
+          title: "新计划暂时无法生成",
           content: error.message || "请稍后重试。",
           showCancel: false,
         });
-      })
-      .then(() => this.setData({ submitting: false }));
+      });
   },
 });

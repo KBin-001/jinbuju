@@ -70,7 +70,7 @@ assert.deepStrictEqual(
 
 const categories = ["exam", "skill", "career"];
 const weeklyDaysOptions = [3, 5, 7];
-const minuteOptions = [15, 45, 120];
+const minuteOptions = [15, 45, 120, 180, 360];
 
 assert.ok(USER_OWNED_COLLECTIONS.includes("goal_analysis_drafts"));
 assert.ok(USER_OWNED_COLLECTIONS.includes("stage_preview_versions"));
@@ -230,7 +230,7 @@ const templateIds = Object.keys(GOAL_TEMPLATES);
 assert.strictEqual(templateIds.length, 8);
 for (const templateId of templateIds) {
   for (const currentLevel of ["zero", "basic", "intermediate"]) {
-    for (const dailyMinutes of [15, 30, 45, 60, 90]) {
+    for (const dailyMinutes of [15, 30, 45, 60, 90, 120, 180, 360]) {
       for (const weeklyDays of [3, 5, 7]) {
         for (const intensity of ["light", "normal", "intensive"]) {
           for (const durationDays of [1, 2, 3, 4, 5, 6, 7]) {

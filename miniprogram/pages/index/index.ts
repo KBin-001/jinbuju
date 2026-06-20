@@ -172,14 +172,17 @@ Page({
     planPaused: false,
     planReviewing: false,
     planReadOnly: false,
+    pendingActionCount: 0,
     navigating: false,
     quickTitle: "",
+    quickDescription: "",
     quickTimePeriod: "anytime" as TodayTask["timePeriod"],
     quickEstimatedMinutes: 30,
     quickTagName: "",
     showQuickTaskPanel: false,
     showMoreSettings: false,
     creatingTask: false,
+    sheetTranslateY: 0,
     quickTimeOptions: [
       { label: "上午", value: "morning" },
       { label: "下午", value: "afternoon" },
@@ -198,11 +201,17 @@ Page({
   _lastFetchTime: 0,
   _loading: false,
   _forceNextShow: false,
+  _sheetTouchStartY: 0,
+  _sheetTouchStartTime: 0,
 
   onShow() {
     const force = this._forceNextShow;
     this._forceNextShow = false;
     this.loadToday(force);
+    if (wx.getStorageSync("openQuickTaskOnShow")) {
+      wx.removeStorageSync("openQuickTaskOnShow");
+      setTimeout(() => this.openQuickTaskPanel(), 300);
+    }
   },
 
   /**
@@ -265,7 +274,10 @@ Page({
       todayRest: homeData.todayRest || false,
       planPaused,
       planReviewing,
-      planReadOnly: Boolean(goal?.planId) && goal?.planStatus !== "active",
+      planReadOnly:
+        Boolean(goal?.planId) &&
+        !["active", "expired", "extended"].includes(String(goal?.planStatus || "")),
+      pendingActionCount: homeData.pendingActionCount || 0,
     });
     this.updateProgress(tasks, (homeData.user || EMPTY_USER).streakDays);
   },
@@ -355,6 +367,10 @@ Page({
     this.setData({ quickTitle: getUiEventString(event) });
   },
 
+  onQuickDescriptionInput(event: { detail: { value?: string } }) {
+    this.setData({ quickDescription: String(event.detail.value || "").slice(0, 150) });
+  },
+
   openQuickTaskPanel() {
     this.setData({ showQuickTaskPanel: true });
   },
@@ -366,7 +382,36 @@ Page({
     this.setData({
       showQuickTaskPanel: false,
       showMoreSettings: false,
+      sheetTranslateY: 0,
     });
+  },
+
+  onSheetTouchStart(e: WechatMiniprogram.TouchEvent) {
+    if (this.data.creatingTask) return;
+    this._sheetTouchStartY = e.touches[0].clientY;
+    this._sheetTouchStartTime = Date.now();
+  },
+
+  onSheetTouchMove(e: WechatMiniprogram.TouchEvent) {
+    if (this.data.creatingTask || !this._sheetTouchStartY) return;
+    const deltaY = e.touches[0].clientY - this._sheetTouchStartY;
+    if (deltaY > 0) {
+      this.setData({ sheetTranslateY: deltaY });
+    } else if (this.data.sheetTranslateY > 0) {
+      this.setData({ sheetTranslateY: 0 });
+    }
+  },
+
+  onSheetTouchEnd() {
+    if (this.data.creatingTask) return;
+    const deltaY = this.data.sheetTranslateY;
+    const timeDiff = Date.now() - this._sheetTouchStartTime;
+    const velocity = deltaY / Math.max(timeDiff, 1);
+    if (deltaY > 100 || (deltaY > 30 && velocity > 0.3)) {
+      this.closeQuickTaskPanel();
+    } else {
+      this.setData({ sheetTranslateY: 0 });
+    }
   },
 
   preventBubble() {},
@@ -411,7 +456,7 @@ Page({
 
   createTodayTask() {
     const title = this.data.quickTitle.trim();
-    if (!title) {
+    if (title.length < 2) {
       wx.showToast({
         title: "先写下今天要完成什么",
         icon: "none",
@@ -430,10 +475,12 @@ Page({
     createManualTask({
       requestId: createRequestId(),
       title,
+      description: this.data.quickDescription.trim(),
       taskDate: this.data.businessDate,
       timePeriod: this.data.quickTimePeriod,
       estimatedMinutes: this.data.quickEstimatedMinutes,
       tagName: this.data.quickTagName.trim(),
+      planId: this.data.goal?.planId || "",
       repeatType: "none",
       priority: "normal",
       taskType: "required",
@@ -442,6 +489,7 @@ Page({
         finishCreating();
         this.setData({
           quickTitle: "",
+          quickDescription: "",
           quickTagName: "",
           quickTimePeriod: "anytime",
           quickEstimatedMinutes: 30,

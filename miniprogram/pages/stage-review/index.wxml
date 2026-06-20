@@ -1,7 +1,7 @@
 <view class="page review-page">
   <view class="page-header growth-hero review-hero">
-    <view class="page-eyebrow">行动阶段复盘</view>
-    <view class="page-title">回顾，再走下一段</view>
+    <view class="page-eyebrow">可选的计划复盘</view>
+    <view class="page-title">回顾这段行动</view>
     <view class="page-subtitle">用真实完成情况调整节奏，不追求一次做到完美。</view>
   </view>
 
@@ -52,7 +52,7 @@
         <view class="summary-value {{timeDeviation < -10 ? 'summary-warn' : ''}}">{{review.executionSummary.averageDailyMinutes}} 分钟</view>
       </view>
       <view wx:if="{{timeDeviation < -10}}" class="summary-hint">
-        实际投入比计划少了 {{-timeDeviation}} 分钟，AI 会在下一阶段据此调整
+        实际投入比计划少了 {{-timeDeviation}} 分钟，AI 会在新计划中据此调整
       </view>
 
       <!-- 行动类型完成率 -->
@@ -78,18 +78,54 @@
       </view>
     </view>
 
-    <view wx:if="{{review.reviewed}}" class="card reviewed-card">
+    <view wx:if="{{justReviewed}}" class="review-success-view">
+      <view class="confetti-layer" aria-hidden="true">
+        <view class="confetti-piece confetti-1"></view><view class="confetti-piece confetti-2"></view>
+        <view class="confetti-piece confetti-3"></view><view class="confetti-piece confetti-4"></view>
+        <view class="confetti-piece confetti-5"></view><view class="confetti-piece confetti-6"></view>
+        <view class="confetti-piece confetti-7"></view><view class="confetti-piece confetti-8"></view>
+        <view class="confetti-piece confetti-9"></view><view class="confetti-piece confetti-10"></view>
+      </view>
+      <view class="card review-success-card">
+        <view class="review-success-mark" aria-label="复盘完成">✓</view>
+        <view class="review-success-title">复盘已完成</view>
+        <view class="review-success-subtitle">新的行动计划已生成，继续向前推进。</view>
+        <view class="review-success-stats">
+          <view class="review-stat-item">
+            <view class="review-stat-value">{{review.completionRate}}%</view>
+            <view class="review-stat-label">完成率</view>
+          </view>
+          <view class="review-stat-item">
+            <view class="review-stat-value">{{review.actionDays}}</view>
+            <view class="review-stat-label">行动天数</view>
+          </view>
+          <view class="review-stat-item">
+            <view class="review-stat-value">{{review.streakDays}}</view>
+            <view class="review-stat-label">最长连续</view>
+          </view>
+        </view>
+        <view class="review-success-encouragement">每一次复盘，都是让行动更清晰的一步。</view>
+      </view>
+      <button
+        wx:if="{{generatedPreviewId || review.previewId}}"
+        class="primary-button full-button review-success-button"
+        bindtap="continuePreview"
+      >查看新计划方案</button>
+      <view wx:else class="section-copy">预览暂时不可用，请稍后从进度页重试。</view>
+    </view>
+
+    <view wx:elif="{{review.reviewed}}" class="card reviewed-card">
       <view class="section-title">复盘已经完成</view>
-      <view class="section-copy">下一阶段预览已经生成，可以继续查看并确认。</view>
+      <view class="section-copy">新计划预览已经生成，可以继续查看并确认。</view>
       <button
         wx:if="{{review.previewId}}"
         class="primary-button full-button"
         bindtap="continuePreview"
-      >继续制定下一阶段</button>
+      >主动生成新计划</button>
       <view wx:else class="section-copy">预览暂时不可用，请稍后从进度页重试。</view>
     </view>
 
-    <block wx:else>
+    <block wx:elif="{{!review.reviewed}}">
       <view class="card question-card">
         <view class="section-title">这段节奏感觉如何？</view>
         <button
@@ -105,7 +141,7 @@
       </view>
 
       <view class="card question-card">
-        <view class="section-title">下一阶段怎么调整？</view>
+        <view class="section-title">新计划怎么调整？</view>
         <button
           wx:for="{{preferenceOptions}}"
           wx:key="value"
@@ -126,6 +162,20 @@
         />
       </view>
 
+      <view class="card question-card">
+        <view class="section-title">新计划准备推进多久？</view>
+        <view class="section-copy">14 天以内生成完整行动；更长周期先生成整体大纲和首个 7 天。</view>
+        <view class="duration-grid">
+          <button
+            wx:for="{{durationOptions}}"
+            wx:key="*this"
+            class="duration-choice {{planDurationDays === item ? 'duration-choice-active' : ''}}"
+            data-value="{{item}}"
+            bindtap="chooseDuration"
+          >{{item}} 天</button>
+        </view>
+      </view>
+
       <view wx:if="{{!review.canReview}}" class="notice">
         当前阶段结束后开放复盘。你可以先回到今日页继续行动。
       </view>
@@ -134,7 +184,7 @@
         disabled="{{!review.canReview || submitting}}"
         loading="{{submitting}}"
         bindtap="submit"
-      >生成下一阶段</button>
+      >生成新的行动计划</button>
     </block>
   </block>
 </view>

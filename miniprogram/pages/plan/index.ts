@@ -1,4 +1,7 @@
 import {
+  archiveCurrentPlan,
+  completePlanActions,
+  continueExpiredPlan,
   deleteCurrentPlan,
   getPlanPageData,
   pauseCurrentPlan,
@@ -59,9 +62,13 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const PLAN_STATUS_LABELS: Record<PlanStatus, string> = {
+  draft: "草稿",
   active: "进行中",
   paused: "已暂停",
   completed: "已完成",
+  expired: "已到期",
+  extended: "继续推进中",
+  archived: "已结束",
   reviewing: "待复盘",
 };
 
@@ -89,8 +96,8 @@ function formatDay(dateValue: string): { monthDay: string; weekday: string } {
 }
 
 function getProgressText(rate: number): string {
-  if (rate >= 100) return "当前阶段行动已经完成";
-  if (rate >= 80) return "当前阶段接近完成";
+  if (rate >= 100) return "当前计划行动已经完成";
+  if (rate >= 80) return "当前计划接近完成";
   if (rate >= 40) return "你正在稳步推进";
   if (rate > 0) return "阶段已经开始，继续保持";
   return "从今天的一件小事开始";
@@ -135,6 +142,7 @@ Page({
   _lastFetchTime: 0,
   _loading: false,
   _forceNextShow: false,
+  _completingFullPlan: false,
 
   onShow() {
     const force = this._forceNextShow;
@@ -172,6 +180,28 @@ Page({
             recentDays: [],
             selectedDay: null,
           });
+          return;
+        }
+
+        if (pageData.plan.needsFullPlanCompletion && !this._completingFullPlan) {
+          this._completingFullPlan = true;
+          this._loading = true;
+          this.setData({ status: "loading", errorMessage: "" });
+          completePlanActions(pageData.plan.id)
+            .then(() => {
+              this._completingFullPlan = false;
+              this._loading = false;
+              this._lastFetchTime = 0;
+              this.loadPlan(true);
+            })
+            .catch((error: Error) => {
+              this._completingFullPlan = false;
+              this._loading = false;
+              this.setData({
+                status: "error",
+                errorMessage: error.message || "完整计划补全失败，请重试。",
+              });
+            });
           return;
         }
 
@@ -253,6 +283,11 @@ Page({
     wx.switchTab({ url: "/pages/index/index" });
   },
 
+  addManualAction() {
+    wx.setStorageSync("openQuickTaskOnShow", true);
+    wx.switchTab({ url: "/pages/index/index" });
+  },
+
   goToStageReview() {
     this.closeManagementMenu();
     const stageId = this.data.pageData?.plan.id;
@@ -260,6 +295,39 @@ Page({
       this._forceNextShow = true;
       wx.navigateTo({ url: `/pages/stage-review/index?stageId=${stageId}` });
     }
+  },
+
+  continuePlan() {
+    const plan = this.data.pageData?.plan;
+    if (!plan || this.data.actionLoading) return;
+    this.setData({ actionLoading: "continue" });
+    continueExpiredPlan(plan.id)
+      .then((result) => {
+        wx.showToast({
+          title: result.rolledOverCount ? `已带回 ${result.rolledOverCount} 项行动` : "可以继续推进",
+          icon: "none",
+        });
+        this._lastFetchTime = 0;
+        this.loadPlan(true);
+      })
+      .catch((error: Error) => this.setData({ actionLoading: "", errorMessage: error.message }));
+  },
+
+  endPlan() {
+    const plan = this.data.pageData?.plan;
+    if (!plan || this.data.actionLoading) return;
+    wx.showModal({
+      title: "结束当前计划？",
+      content: "已有行动记录会保留，之后仍可查看或进行计划复盘。",
+      confirmText: "结束计划",
+      success: (result) => {
+        if (!result.confirm) return;
+        this.setData({ actionLoading: "archive" });
+        archiveCurrentPlan(plan.id)
+          .then(() => { this._lastFetchTime = 0; this.loadPlan(true); })
+          .catch((error: Error) => this.setData({ actionLoading: "", errorMessage: error.message }));
+      },
+    });
   },
 
   changePlanTime(event: TimeChangeEvent) {

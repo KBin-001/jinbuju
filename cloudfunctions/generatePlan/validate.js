@@ -41,6 +41,11 @@ function validateGoal(input) {
   if (businessDateDiff(formatBusinessDate(), input.deadline) < 1) {
     fail("INVALID_ARGUMENT", "截止日期至少为明天。");
   }
+  // Legacy goals only had a long-term deadline; keep their original 7-day default.
+  const planDurationDays = Number(input.planDurationDays || input.durationDays || 7);
+  if (!Number.isInteger(planDurationDays) || planDurationDays < 3 || planDurationDays > 90) {
+    fail("INVALID_PLAN_DURATION", "计划周期需为 3～90 天。");
+  }
 
   return {
     category: input.category,
@@ -51,6 +56,7 @@ function validateGoal(input) {
     weeklyDays: input.weeklyDays,
     dailyMinutes: input.dailyMinutes,
     intensity: input.intensity,
+    planDurationDays,
     status: "draft",
   };
 }
@@ -73,15 +79,16 @@ function validatePlan(input, goal, requestedStartDate) {
   if (!isSafeText(input.summary, 100)) fail("PLAN_SCHEMA_INVALID", "计划摘要无效。");
   if (!isSafeText(input.weeklyGoal, 100)) fail("PLAN_SCHEMA_INVALID", "本周目标无效。");
   if (!isSafeText(input.fallbackAdvice, 160)) fail("PLAN_SCHEMA_INVALID", "顺延建议无效。");
-  if (!Array.isArray(input.days) || input.days.length !== 7) {
-    fail("PLAN_SCHEMA_INVALID", "计划必须包含 7 天。");
+  const planDurationDays = Number(goal.planDurationDays || 7);
+  if (!Array.isArray(input.days) || input.days.length !== planDurationDays) {
+    fail("PLAN_SCHEMA_INVALID", `计划必须包含 ${planDurationDays} 天。`);
   }
 
   const dayNumbers = new Set();
   const startDate = requestedStartDate || formatBusinessDate();
   const days = input.days.map((day, index) => {
     if (!day || typeof day !== "object") fail("PLAN_SCHEMA_INVALID", "每日计划无效。");
-    if (!Number.isInteger(day.day) || day.day < 1 || day.day > 7 || dayNumbers.has(day.day)) {
+    if (!Number.isInteger(day.day) || day.day < 1 || day.day > planDurationDays || dayNumbers.has(day.day)) {
       fail("PLAN_SCHEMA_INVALID", "计划日期序号无效。");
     }
     dayNumbers.add(day.day);

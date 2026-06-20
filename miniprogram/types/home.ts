@@ -101,6 +101,7 @@ export interface HomeData {
   completionRate: number;
   checkedInToday: boolean;
   todayRest: boolean;
+  pendingActionCount: number;
 }
 
 export interface TodayCheckinDraft {

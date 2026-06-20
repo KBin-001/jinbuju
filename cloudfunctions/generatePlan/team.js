@@ -163,7 +163,7 @@ async function getMyTeam(openid) {
       id: String(team._id),
       name: String(team.name),
       goalCategory: String(team.goalCategory),
-      stageTitle: String(team.stageTitle || "当前 7 天行动阶段"),
+      stageTitle: String(team.stageTitle || "当前行动计划"),
       stageStartDate: String(team.stageStartDate),
       stageEndDate: String(team.stageEndDate),
       memberCount: memberships.length,

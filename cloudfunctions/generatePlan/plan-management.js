@@ -14,6 +14,21 @@ function clampPercentage(value) {
   return Math.min(Math.max(Math.round(value), 0), 100);
 }
 
+function selectRolloverTasks(tasks, businessDate, limit = 5) {
+  return tasks
+    .filter(
+      (task) =>
+        task.status !== "completed" &&
+        String(task.currentDate || task.taskDate || "") < businessDate,
+    )
+    .sort((left, right) =>
+      String(left.currentDate || left.taskDate).localeCompare(
+        String(right.currentDate || right.taskDate),
+      ),
+    )
+    .slice(0, limit);
+}
+
 function validateId(value, label) {
   if (typeof value !== "string" || !value.trim() || value.length > 100) {
     fail("INVALID_ARGUMENT", `${label}无效。`);
@@ -53,7 +68,9 @@ async function getCurrentGoalAndPlan(openid) {
 
   const plans = await getMany("plans", { _openid: openid, goalId: goal._id }, 20);
   const plan =
+    plans.find((item) => item.status === "extended") ||
     plans.find((item) => item.status === "active") ||
+    plans.find((item) => item.status === "expired") ||
     plans.find((item) => item.status === "paused") ||
     plans.find((item) => item.status === "reviewing") ||
     plans.find((item) => item.status === "completed") ||
@@ -94,20 +111,67 @@ async function getPlanPageData(openid) {
     totalCount > 0 ? clampPercentage((completedCount / totalCount) * 100) : 0;
   const tomorrow = addBusinessDays(businessDate, 1);
 
-  const durationDays = Math.max(Number(plan.durationDays || plan.totalDays || 7), 1);
+  const durationDays = Math.max(Number(plan.planDurationDays || plan.durationDays || plan.totalDays || 7), 1);
+  const plannedEndDate = String(plan.plannedEndDate || plan.endDate || addBusinessDays(plan.startDate, durationDays - 1));
+  const generatedWindowEnd = Array.isArray(plan.generatedWindows)
+    ? Math.max(0, ...plan.generatedWindows.map((window) => Number(window.endDay || 0)))
+    : 0;
+  const generatedDayCount = Math.max(
+    ...taskRecords.map((task) => Number(task.dayIndex || task.day || 0)),
+    generatedWindowEnd,
+    Math.min(durationDays, 7),
+  );
+  const weeklyDays = Number(goal.weeklyDays || 7);
+  const activeWeekDays = {
+    3: [1, 3, 5],
+    5: [1, 2, 3, 5, 6],
+    7: [1, 2, 3, 4, 5, 6, 7],
+  }[weeklyDays] || [1, 2, 3, 4, 5, 6, 7];
+  const generatedActionDays = new Set(
+    taskRecords
+      .filter((task) => task.generatedBy !== "manual")
+      .map((task) => Number(task.dayIndex || task.day || 0))
+      .filter(Boolean),
+  );
+  const needsFullPlanCompletion = Array.from(
+    { length: durationDays },
+    (_, index) => index + 1,
+  ).some((dayIndex) =>
+    activeWeekDays.includes(((dayIndex - 1) % 7) + 1) && !generatedActionDays.has(dayIndex),
+  );
+  let effectiveStatus = plan.status || "active";
+  if (
+    ["active", "extended", "expired"].includes(effectiveStatus) &&
+    generatedDayCount >= durationDays &&
+    totalCount > 0 &&
+    completedCount === totalCount
+  ) {
+    effectiveStatus = "completed";
+  } else if (effectiveStatus === "active" && businessDate > plannedEndDate) {
+    effectiveStatus = "expired";
+  }
+  if (effectiveStatus !== plan.status) {
+    await db.collection("plans").doc(plan._id).update({
+      data: {
+        status: effectiveStatus,
+        ...(effectiveStatus === "completed" ? { actualEndDate: businessDate } : {}),
+        updatedAt: db.serverDate(),
+      },
+    });
+  }
   const buildDay = (date, dayNumber) => {
     const dayTasks = taskRecords
       .filter((task) => task.taskDate === date)
       .sort((left, right) => Number(left.order || 0) - Number(right.order || 0));
     const dayCompletedCount = dayTasks.filter((task) => task.status === "completed").length;
-    const withinPlan = date >= plan.startDate && date <= plan.endDate;
+    const withinPlan = date >= plan.startDate && date <= plannedEndDate;
     return {
       day: dayNumber,
       date,
       isToday: date === businessDate,
       status: withinPlan
         ? getDayStatus(
-            plan.status,
+            effectiveStatus,
             date,
             businessDate,
             dayCompletedCount,
@@ -132,15 +196,15 @@ async function getPlanPageData(openid) {
         postponed: task.postponed === true,
         state: getTaskState(plan.status, task, businessDate),
         canPostpone:
-          plan.status === "active" &&
+          ["active", "extended", "expired"].includes(effectiveStatus) &&
           task.status !== "completed" &&
           task.postponed !== true &&
           task.taskDate <= businessDate &&
-          tomorrow <= plan.endDate,
+          true,
       })),
     };
   };
-  const days = Array.from({ length: durationDays }, (_, index) =>
+  const days = Array.from({ length: Math.min(durationDays, generatedDayCount) }, (_, index) =>
     buildDay(addBusinessDays(plan.startDate, index), index + 1),
   );
   const recentDays = Array.from({ length: 7 }, (_, index) => {
@@ -163,23 +227,32 @@ async function getPlanPageData(openid) {
     },
     plan: {
       id: String(plan._id),
-      status: plan.status || "active",
+      status: effectiveStatus,
       summary: String(plan.summary || ""),
       stageTitle: String(plan.stageTitle || plan.title || plan.weeklyGoal || "当前行动阶段"),
       focus: String(plan.focus || plan.weeklyGoal || ""),
       stageNumber: Math.max(Number(plan.stageNumber || 1), 1),
       weeklyGoal: String(plan.weeklyGoal || ""),
       startDate: String(plan.startDate),
-      endDate: String(plan.endDate),
+      endDate: plannedEndDate,
+      plannedEndDate,
+      planDurationDays: durationDays,
       currentDay: Math.min(getCurrentDay(plan.startDate, businessDate), durationDays),
       totalDays: durationDays,
       dailyReminderTime: String(plan.dailyReminderTime || "21:00"),
       completedCount,
       totalCount,
       completionRate,
-      nextWeekEligible: plan.status === "active" && businessDate >= plan.endDate,
+      nextWeekEligible: false,
       reviewEligible:
-        ["active", "reviewing"].includes(plan.status) && formatReviewEligibleDate() >= plan.endDate,
+        ["active", "expired", "extended", "completed", "archived", "reviewing"].includes(effectiveStatus) &&
+        (formatReviewEligibleDate() >= plannedEndDate ||
+          effectiveStatus === "archived" ||
+          (generatedDayCount >= durationDays && totalCount > 0 && completedCount === totalCount)),
+      pendingCount: Math.max(totalCount - completedCount, 0),
+      rolloverCount: taskRecords.filter((task) => Number(task.rolloverCount || 0) > 0).length,
+      needsFullPlanCompletion:
+        needsFullPlanCompletion && ["active", "expired", "extended"].includes(effectiveStatus),
     },
     days,
     recentDays,
@@ -223,7 +296,7 @@ async function postponeTask(openid, event) {
       fail("GOAL_NOT_FOUND", "当前目标不存在。");
     }
     if (plan.status === "paused") fail("PLAN_PAUSED", "计划暂停期间不能顺延任务。");
-    if (plan.status !== "active") fail("PLAN_STATUS_INVALID", "当前计划状态不支持顺延。");
+    if (!["active", "expired", "extended"].includes(plan.status)) fail("PLAN_STATUS_INVALID", "当前计划状态不支持顺延。");
 
     const taskResult = await transaction.collection("tasks").doc(taskId).get().catch(() => null);
     const task = taskResult && taskResult.data;
@@ -232,23 +305,68 @@ async function postponeTask(openid, event) {
     }
     if (task.status === "completed") fail("TASK_NOT_ELIGIBLE", "已完成任务不能顺延。");
     if (task.taskDate > businessDate) fail("TASK_NOT_ELIGIBLE", "未来任务不能提前顺延。");
-    if (task.postponed === true) fail("TASK_ALREADY_POSTPONED", "该任务已经顺延过。");
-    if (targetDate > plan.endDate) fail("PLAN_DATE_EXCEEDED", "顺延后会超出当前计划。");
+    if (task.currentDate === targetDate || task.taskDate === targetDate) fail("TASK_ALREADY_POSTPONED", "该任务已经安排到明天。");
 
     await transaction.collection("tasks").doc(taskId).update({
       data: {
         originalScheduledDate: task.originalScheduledDate || task.taskDate,
+        plannedDate: task.plannedDate || task.originalScheduledDate || task.taskDate,
+        currentDate: targetDate,
         taskDate: targetDate,
         scheduledDate: targetDate,
         day: businessDateDiff(plan.startDate, targetDate) + 1,
         dayIndex: businessDateDiff(plan.startDate, targetDate) + 1,
         postponed: true,
+        rolloverCount: Number(task.rolloverCount || 0) + 1,
         postponedAt: db.serverDate(),
         updatedAt: db.serverDate(),
       },
     });
     return { taskId, planId, scheduledDate: targetDate, postponed: true };
   });
+}
+
+async function continueExpiredPlan(openid, event) {
+  const planId = validateId(event && event.planId, "计划 ID");
+  const businessDate = formatBusinessDate();
+  const plan = await getOwnedPlan(openid, planId);
+  await ensureActiveGoalForPlan(openid, plan);
+  if (!["expired", "extended", "active"].includes(plan.status)) {
+    fail("PLAN_NOT_ACTIVE", "当前计划不支持继续推进。");
+  }
+  const tasks = await getMany("tasks", { _openid: openid, planId }, 500);
+  const pending = selectRolloverTasks(tasks, businessDate, 5);
+  for (const task of pending) {
+    await db.collection("tasks").doc(task._id).update({
+      data: {
+        plannedDate: task.plannedDate || task.originalScheduledDate || task.taskDate,
+        currentDate: businessDate,
+        taskDate: businessDate,
+        scheduledDate: businessDate,
+        status: "pending",
+        postponed: true,
+        rolloverCount: Number(task.rolloverCount || 0) + 1,
+        updatedAt: db.serverDate(),
+      },
+    });
+  }
+  await db.collection("plans").doc(planId).update({
+    data: { status: "extended", extendedAt: db.serverDate(), updatedAt: db.serverDate() },
+  });
+  return { planId, status: "extended", rolledOverCount: pending.length };
+}
+
+async function archivePlan(openid, event) {
+  const planId = validateId(event && event.planId, "计划 ID");
+  const plan = await getOwnedPlan(openid, planId);
+  await ensureActiveGoalForPlan(openid, plan);
+  if (!["active", "expired", "extended", "completed", "paused"].includes(plan.status)) {
+    fail("PLAN_STATUS_INVALID", "当前计划已经结束。");
+  }
+  await db.collection("plans").doc(planId).update({
+    data: { status: "archived", actualEndDate: formatBusinessDate(), archivedAt: db.serverDate(), updatedAt: db.serverDate() },
+  });
+  return { planId, status: "archived", changed: true };
 }
 
 async function changePlanStatus(openid, event, expectedStatus, nextStatus) {
@@ -282,14 +400,15 @@ function resumePlan(openid, event) {
 
 async function getNextWeekContext(openid, planId) {
   const plan = await getOwnedPlan(openid, validateId(planId, "计划 ID"));
-  if (plan.status !== "active") {
+  if (!["active", "expired", "extended", "completed"].includes(plan.status)) {
     fail(
       plan.status === "paused" ? "PLAN_PAUSED" : "PLAN_STATUS_INVALID",
-      "当前计划状态不支持生成下一周计划。",
+      "当前计划状态不支持生成新计划。",
     );
   }
-  if (formatBusinessDate() < plan.endDate) {
-    fail("PLAN_STATUS_INVALID", "到达当前计划第 7 天后才可以生成下一周计划。");
+  const plannedEndDate = String(plan.plannedEndDate || plan.endDate || "");
+  if (formatBusinessDate() < plannedEndDate && plan.status === "active") {
+    fail("PLAN_STATUS_INVALID", "当前计划仍在进行中，可先继续执行或主动结束后再生成新计划。");
   }
   const goal = await getFirst("goals", {
     _openid: openid,
@@ -300,15 +419,18 @@ async function getNextWeekContext(openid, planId) {
   return {
     goal,
     plan,
-    nextStartDate: addBusinessDays(plan.endDate, 1),
+    nextStartDate: addBusinessDays(plannedEndDate, 1),
   };
 }
 
 module.exports = {
+  archivePlan,
+  continueExpiredPlan,
   getNextWeekContext,
   getPlanPageData,
   pausePlan,
   postponeTask,
   resumePlan,
+  selectRolloverTasks,
   updatePlanTime,
 };

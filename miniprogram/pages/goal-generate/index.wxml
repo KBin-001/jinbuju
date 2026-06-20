@@ -1,0 +1,177 @@
+<view class="generate-page">
+  <!-- Analyzing state -->
+  <view wx:if="{{flowState === 'analyzing' && !showClarification}}" class="gen-center">
+    <ant-loading type="spin" size="x-large" color="#356859" />
+    <view class="gen-title">正在理解你的目标</view>
+    <view class="gen-sub">AI 分析完成后将自动进入下一步</view>
+  </view>
+
+  <!-- Clarification needed -->
+  <scroll-view wx:elif="{{showClarification && analysis}}" class="clarify-scroll" scroll-y show-scrollbar="{{false}}">
+    <view class="clarify-card">
+      <view class="clarify-title">再确认几个关键问题</view>
+      <view class="clarify-sub">AI 发现了几个需要确认的点，回答后方案会更贴合你的情况。</view>
+
+      <view class="analysis-card">
+        <view class="field-label">理解后的目标</view>
+        <view class="analysis-goal">{{analysis.normalizedGoal}}</view>
+        <view wx:if="{{analysis.analysisSource === 'fallback'}}" class="fallback-copy">
+          目标分析暂时不可用，先用基础问题帮你补齐关键信息。
+        </view>
+      </view>
+
+      <view
+        wx:for="{{clarificationQuestions}}"
+        wx:key="id"
+        wx:for-item="question"
+        class="question-card"
+      >
+        <view class="question-title">
+          <text>{{index + 1}}. {{question.question}}</text>
+          <text wx:if="{{question.required}}" class="required-mark">必填</text>
+        </view>
+
+        <view wx:if="{{question.type === 'single_choice'}}" class="answer-options">
+          <button
+            wx:for="{{question.optionViews}}"
+            wx:key="value"
+            wx:for-item="option"
+            class="answer-chip {{option.selected ? 'choice-chip-active' : ''}}"
+            data-question-id="{{question.id}}"
+            data-value="{{option.value}}"
+            bindtap="selectAnswer"
+          >{{option.value}}</button>
+        </view>
+
+        <view wx:elif="{{question.type === 'multiple_choice'}}" class="answer-options">
+          <ant-checkbox
+            wx:for="{{question.optionViews}}"
+            wx:key="value"
+            wx:for-item="option"
+            className="answer-chip {{option.selected ? 'choice-chip-active' : ''}}"
+            checked="{{option.selected}}"
+            data-question-id="{{question.id}}"
+            data-value="{{option.value}}"
+            bindchange="toggleMultiAnswer"
+          >{{option.value}}</ant-checkbox>
+        </view>
+
+        <view wx:elif="{{question.type === 'boolean'}}" class="answer-options">
+          <button
+            class="answer-chip {{answers[question.id] === true ? 'choice-chip-active' : ''}}"
+            data-question-id="{{question.id}}"
+            data-value="true"
+            bindtap="selectAnswer"
+          >可以</button>
+          <button
+            class="answer-chip {{answers[question.id] === false ? 'choice-chip-active' : ''}}"
+            data-question-id="{{question.id}}"
+            data-value="false"
+            bindtap="selectAnswer"
+          >暂时不行</button>
+        </view>
+
+        <ant-input
+          wx:elif="{{question.type === 'number'}}"
+          className="answer-input"
+          type="number"
+          controlled="{{true}}"
+          value="{{answers[question.id]}}"
+          placeholder="{{question.min}}～{{question.max}}"
+          data-question-id="{{question.id}}"
+          bindchange="inputNumberAnswer"
+        />
+
+        <ant-textarea
+          wx:else
+          className="answer-textarea"
+          controlled="{{true}}"
+          maxLength="{{question.maxLength || 100}}"
+          value="{{answers[question.id]}}"
+          placeholder="{{question.placeholder || '简单说明即可'}}"
+          data-question-id="{{question.id}}"
+          bindchange="inputAnswer"
+        />
+      </view>
+    </view>
+    <view class="scroll-spacer"></view>
+  </scroll-view>
+
+  <!-- Generating state -->
+  <view wx:elif="{{flowState === 'generating'}}" class="gen-center">
+    <view class="generation-panel">
+      <ant-loading type="spin" size="x-large" color="#fff" />
+
+      <view class="phase-list">
+        <view class="phase-item {{generationPhase === 'understanding' ? 'phase-active' : ''}} {{generationPhase === 'organizing' || generationPhase === 'generating' || generationPhase === 'validating' || generationPhase === 'completed' ? 'phase-done' : ''}}">
+          <view class="phase-icon">
+            <text wx:if="{{generationPhase === 'organizing' || generationPhase === 'generating' || generationPhase === 'validating' || generationPhase === 'completed'}}">✓</text>
+            <text wx:else>1</text>
+          </view>
+          <view class="phase-text">理解你的目标</view>
+        </view>
+        <view class="phase-item {{generationPhase === 'organizing' ? 'phase-active' : ''}} {{generationPhase === 'generating' || generationPhase === 'validating' || generationPhase === 'completed' ? 'phase-done' : ''}}">
+          <view class="phase-icon">
+            <text wx:if="{{generationPhase === 'generating' || generationPhase === 'validating' || generationPhase === 'completed'}}">✓</text>
+            <text wx:else>2</text>
+          </view>
+          <view class="phase-text">整理行动重点</view>
+        </view>
+        <view class="phase-item {{generationPhase === 'generating' ? 'phase-active' : ''}} {{generationPhase === 'validating' || generationPhase === 'completed' ? 'phase-done' : ''}}">
+          <view class="phase-icon">
+            <text wx:if="{{generationPhase === 'validating' || generationPhase === 'completed'}}">✓</text>
+            <text wx:else>3</text>
+          </view>
+          <view class="phase-text">生成行动方案</view>
+        </view>
+        <view class="phase-item {{generationPhase === 'validating' ? 'phase-active' : ''}} {{generationPhase === 'completed' ? 'phase-done' : ''}}">
+          <view class="phase-icon">
+            <text wx:if="{{generationPhase === 'completed'}}">✓</text>
+            <text wx:else>4</text>
+          </view>
+          <view class="phase-text">检查方案可行性</view>
+        </view>
+      </view>
+
+      <view class="generation-message">{{generationMessage}}</view>
+
+      <view wx:if="{{showLongWaitHint}}" class="long-wait-hint">
+        {{longWaitMessage}}
+      </view>
+    </view>
+  </view>
+
+  <!-- Completed state -->
+  <view wx:elif="{{flowState === 'completed'}}" class="gen-center">
+    <view class="generation-panel generation-complete">
+      <view class="complete-icon">✓</view>
+      <view class="generation-message">{{generationMessage}}</view>
+      <view class="complete-hint">即将跳转到方案预览</view>
+    </view>
+  </view>
+
+  <!-- Error state -->
+  <view wx:elif="{{flowState === 'error'}}" class="gen-center">
+    <view class="generation-panel generation-error">
+      <view class="state-mark">!</view>
+      <view class="state-title">方案生成遇到问题</view>
+      <view class="state-description">{{pageError}}</view>
+      <view wx:if="{{retryCount >= 2}}" class="retry-hint">已重试 {{retryCount}} 次，建议稍后再试或返回修改目标。</view>
+    </view>
+  </view>
+
+  <!-- Bottom actions -->
+  <view class="bottom-actions">
+    <block wx:if="{{showClarification && analysis}}">
+      <ant-button type="default" className="previous-button" disabled="{{submitting}}" bindtap="goBack">返回修改</ant-button>
+      <ant-button type="primary" className="next-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitClarificationAndGenerate">
+        确认并生成方案
+      </ant-button>
+    </block>
+    <block wx:elif="{{flowState === 'error'}}">
+      <ant-button type="default" className="previous-button" bindtap="goBack">返回修改</ant-button>
+      <ant-button type="primary" className="next-button" disabled="{{submitting}}" bindtap="retryGeneration">重新生成</ant-button>
+    </block>
+    <!-- generating/completed: no buttons -->
+  </view>
+</view>

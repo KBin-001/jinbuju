@@ -128,10 +128,34 @@ async function getHomeData(openid) {
     ),
   };
 
-  const todayTaskRecords = await getMany("tasks", {
-    _openid: openid,
-    taskDate: businessDate,
-  });
+  const [plannedTodayRecords, overdueRecords] = await Promise.all([
+    getMany("tasks", { _openid: openid, taskDate: businessDate }, 20),
+    getMany("tasks", { _openid: openid, status: "pending", taskDate: command.lt(businessDate) }, 20),
+  ]);
+  const todayTaskRecords = plannedTodayRecords.slice(0, 5);
+  const remainingSlots = Math.max(5 - todayTaskRecords.length, 0);
+  const selectedOverdue = overdueRecords
+    .sort((left, right) => String(left.taskDate).localeCompare(String(right.taskDate)))
+    .slice(0, remainingSlots);
+  for (const task of selectedOverdue) {
+    await db.collection("tasks").doc(task._id).update({
+      data: {
+        plannedDate: task.plannedDate || task.originalScheduledDate || task.taskDate,
+        currentDate: businessDate,
+        taskDate: businessDate,
+        scheduledDate: businessDate,
+        rolloverCount: Number(task.rolloverCount || 0) + 1,
+        updatedAt: db.serverDate(),
+      },
+    });
+    todayTaskRecords.push({
+      ...task,
+      taskDate: businessDate,
+      currentDate: businessDate,
+      source: "carry_over",
+    });
+  }
+  const pendingActionCount = Math.max(plannedTodayRecords.length + overdueRecords.length - todayTaskRecords.length, 0);
   const planIds = Array.from(new Set(todayTaskRecords.map((task) => task.planId).filter(Boolean)));
   const planTitles = new Map();
   if (planIds.length) {
@@ -185,6 +209,7 @@ async function getHomeData(openid) {
       completionRate,
       checkedInToday: checkinRecords.length > 0,
       todayRest: false,
+      pendingActionCount,
     };
   }
 
@@ -208,7 +233,7 @@ async function getHomeData(openid) {
         title: String(goal.title || goal.goalTitle || "当前目标"),
         category: String(goal.category || ""),
         currentDay: 1,
-        totalDays: 7,
+        totalDays: Number(goal.planDurationDays || goal.durationDays || 7),
         stageTitle: "",
         planCompletionRate: 0,
         planStatus: "active",
@@ -221,6 +246,7 @@ async function getHomeData(openid) {
       completionRate,
       checkedInToday: checkinRecords.length > 0,
       todayRest: false,
+      pendingActionCount,
     };
   }
 
@@ -238,7 +264,11 @@ async function getHomeData(openid) {
     planTaskRecords.length > 0
       ? clampPercentage((planCompleted / planTaskRecords.length) * 100)
       : 0;
-  const durationDays = Math.max(Number(plan.durationDays || plan.totalDays || 7), 1);
+  const durationDays = Math.max(Number(plan.planDurationDays || plan.durationDays || plan.totalDays || 7), 1);
+  const plannedEndDate = String(plan.plannedEndDate || plan.endDate || "");
+  const effectiveStatus = plan.status === "active" && plannedEndDate && businessDate > plannedEndDate
+    ? "expired"
+    : plan.status;
 
   return {
     businessDate,
@@ -252,7 +282,7 @@ async function getHomeData(openid) {
       totalDays: durationDays,
       stageTitle: String(plan.stageTitle || plan.title || plan.weeklyGoal || "当前行动阶段"),
       planCompletionRate,
-      planStatus: plan.status,
+      planStatus: effectiveStatus,
     },
     todayTasks,
     taskGroups: buildTaskGroups(todayTasks),
@@ -261,7 +291,8 @@ async function getHomeData(openid) {
     totalCount,
     completionRate,
     checkedInToday: checkinRecords.length > 0,
-    todayRest: totalCount === 0 && businessDate >= plan.startDate && businessDate <= plan.endDate,
+    todayRest: totalCount === 0 && businessDate >= plan.startDate && businessDate <= plannedEndDate,
+    pendingActionCount,
   };
 }
 
@@ -297,7 +328,7 @@ async function toggleTask(openid, event) {
       _openid: openid,
       _id: task.data.planId,
     });
-    if (!plan || plan.status !== "active") {
+    if (!plan || !["active", "extended", "expired"].includes(plan.status)) {
       throw createError(
         plan && plan.status === "paused" ? "PLAN_PAUSED" : "PLAN_STATUS_INVALID",
         plan && plan.status === "paused"
@@ -306,13 +337,16 @@ async function toggleTask(openid, event) {
       );
     }
   }
-  if (task.data.taskDate !== formatBusinessDate()) {
+  if (task.data.taskDate > formatBusinessDate()) {
     throw createError("TASK_NOT_ELIGIBLE", "只能在今日页修改当天任务。");
   }
 
   await db.collection("tasks").doc(taskId).update({
     data: {
       status: newStatus,
+      currentDate: formatBusinessDate(),
+      taskDate: formatBusinessDate(),
+      scheduledDate: formatBusinessDate(),
       completedAt: completed ? db.serverDate() : command.remove(),
       updatedAt: db.serverDate(),
     },
@@ -323,16 +357,16 @@ async function toggleTask(openid, event) {
 
 function normalizeManualTask(event) {
   const title = String(event.title || "").trim();
-  if (!title) {
-    throw createError("INVALID_ARGUMENT", "请填写任务名称。");
+  if (title.length < 2) {
+    throw createError("MANUAL_ACTION_INVALID", "行动标题需为 2～40 个字。");
   }
   if (title.length > 40) {
-    throw createError("INVALID_ARGUMENT", "任务名称请控制在 40 个字以内。");
+    throw createError("MANUAL_ACTION_INVALID", "行动标题需为 2～40 个字。");
   }
 
   const description = String(event.description || "").trim();
-  if (description.length > 120) {
-    throw createError("INVALID_ARGUMENT", "任务说明请控制在 120 个字以内。");
+  if (description.length > 150) {
+    throw createError("MANUAL_ACTION_INVALID", "行动说明请控制在 150 个字以内。");
   }
 
   const requestId = String(event.requestId || "").trim();
@@ -347,8 +381,8 @@ function normalizeManualTask(event) {
 
   const timePeriod = TIME_PERIODS.includes(event.timePeriod) ? event.timePeriod : "anytime";
   const estimatedMinutes = Math.round(Number(event.estimatedMinutes) || 30);
-  if (estimatedMinutes < 1 || estimatedMinutes > 480) {
-    throw createError("INVALID_ARGUMENT", "预计时长需在 1 到 480 分钟之间。");
+  if (estimatedMinutes < 5 || estimatedMinutes > 180) {
+    throw createError("MANUAL_ACTION_INVALID", "预计时长需在 5 到 180 分钟之间。");
   }
 
   const repeatType = ["none", "daily", "weekly", "custom"].includes(event.repeatType)
@@ -374,6 +408,9 @@ function normalizeManualTask(event) {
 
 async function createManualTask(openid, event) {
   const taskInput = normalizeManualTask(event);
+  if (!taskInput.planId) {
+    throw createError("PLAN_NOT_ACTIVE", "请先创建一个计划，再新增行动。");
+  }
   const taskId = stableId("task_manual", `${openid}:${taskInput.requestId}`);
   const existing = await db.collection("tasks").doc(taskId).get().catch(() => null);
   if (existing && existing.data) {
@@ -382,7 +419,7 @@ async function createManualTask(openid, event) {
 
   if (taskInput.planId) {
     const plan = await getFirst("plans", { _openid: openid, _id: taskInput.planId });
-    if (!plan || plan.status !== "active") {
+    if (!plan || !["active", "extended", "expired"].includes(plan.status)) {
       throw createError("PLAN_STATUS_INVALID", "所属计划暂时不可用。");
     }
   }
@@ -394,12 +431,16 @@ async function createManualTask(openid, event) {
       title: taskInput.title,
       description: taskInput.description,
       taskDate: taskInput.taskDate,
+      plannedDate: taskInput.taskDate,
+      currentDate: taskInput.taskDate,
       timePeriod: taskInput.timePeriod,
       estimatedMinutes: taskInput.estimatedMinutes,
       tagName: taskInput.tagName,
       tagId: null,
       planId: taskInput.planId || null,
       source: "manual",
+      generatedBy: "manual",
+      rolloverCount: 0,
       taskType: taskInput.taskType,
       priority: taskInput.priority,
       repeatType: taskInput.repeatType,
@@ -416,5 +457,6 @@ async function createManualTask(openid, event) {
 module.exports = {
   createManualTask,
   getHomeData,
+  normalizeManualTask,
   toggleTask,
 };

@@ -30,9 +30,65 @@
 .management-popup .management-menu {
   position: static;
   width: auto;
-  margin: 0 24rpx calc(24rpx + env(safe-area-inset-bottom));
+  max-height: calc(100vh - 300rpx - env(safe-area-inset-bottom));
+  margin: 0 24rpx 24rpx;
+  overflow-y: auto;
   border-radius: 24rpx;
   box-shadow: none;
+}
+
+/* A centered panel cannot be covered by the native tabBar. */
+.management-popup .ant-popup-content {
+  width: calc(100vw - 48rpx);
+  max-width: 680rpx;
+  overflow: hidden;
+  border-radius: 38rpx;
+  background: #f7f2e8;
+  box-shadow: 0 24rpx 64rpx rgba(21, 63, 54, 0.24);
+}
+
+.management-popup .ant-popup-content-header {
+  height: 104rpx;
+}
+
+.management-popup .ant-popup-content-header-icon {
+  top: 28rpx;
+}
+
+.plan-action-dialog .ant-dialog-body,
+.plan-action-dialog-body {
+  width: calc(100vw - 64rpx);
+  max-width: 640rpx;
+  padding: 44rpx 32rpx;
+  box-sizing: border-box;
+}
+
+.plan-action-dialog .ant-dialog-body-title {
+  padding-bottom: 24rpx;
+  font-size: 38rpx;
+}
+
+.plan-action-dialog .ant-dialog-body-content {
+  padding-bottom: 16rpx;
+  font-size: 29rpx;
+  line-height: 1.55;
+}
+
+.plan-action-dialog .ant-dialog-body-footer {
+  width: 100%;
+  padding: 36rpx 0 0;
+  box-sizing: border-box;
+}
+
+.plan-action-dialog .ant-dialog-body-footer-button {
+  min-width: 0;
+}
+
+.plan-action-dialog .ant-button {
+  width: 100%;
+  min-width: 0;
+  padding-right: 16rpx;
+  padding-left: 16rpx;
 }
 
 .plan-header,
@@ -830,3 +886,7 @@
 .task-card { border-left:7rpx solid #5c78d6; }
 .task-completed { border-left-color:#78ad84; background:#f1f6f2; }
 .management-popup { --popup-background:#f7f2e8; }
+.expired-plan-notice { margin:24rpx 0; border-radius:26rpx; }
+.expired-plan-actions { display:flex; flex-wrap:wrap; gap:12rpx; margin-top:18rpx; }
+.expired-plan-actions button { padding:12rpx 18rpx; border-radius:999rpx; background:#fff; color:#153f36; font-size:22rpx; font-weight:650; }
+.plan-add-action { margin-top:18rpx; padding:14rpx 22rpx; border-radius:999rpx; background:#eef1fb; color:#5967a3; font-size:24rpx; font-weight:650; }

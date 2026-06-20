@@ -158,7 +158,7 @@ async function submitCheckin(openid, event) {
   if (plan.status === "paused") {
     fail("PLAN_PAUSED", "计划暂停期间不能提交打卡。");
   }
-  if (plan.status !== "active") {
+  if (!["active", "expired", "extended"].includes(plan.status)) {
     fail("PLAN_STATUS_INVALID", "当前计划状态不支持打卡。");
   }
 

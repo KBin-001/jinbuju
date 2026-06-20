@@ -236,7 +236,7 @@ function buildDirectStageGenerationPrompt(profile) {
 
   return `你是长期目标行动规划助手，不是学习笔记生成器。
 
-请根据用户目标、期望结果、当前水平、每天可投入时间、阶段天数和限制条件，设计一个完整、具体、可执行的行动阶段。
+请根据用户目标、期望结果、当前水平、每天可投入时间和完整计划周期，设计具体、可执行的行动计划。
 
 目标领域是开放的，不得将所有目标强行转化为阅读、观看、学习知识或记录笔记。
 
@@ -249,7 +249,8 @@ function buildDirectStageGenerationPrompt(profile) {
 - 当前水平：${profile.currentLevel}
 - 计划强度：${profile.intensity}
 - 每日可投入：${profile.dailyMinutes} 分钟
-- 阶段天数：${profile.durationDays} 天
+- 计划总周期：${profile.planDurationDays || profile.durationDays} 天
+- 本次需要完整生成：${profile.durationDays} 天
 - 截止日期：${profile.deadline || "未设置"}
 - 每周执行频率：${profile.weeklyFrequency || profile.durationDays} 天
 - 限制条件：
@@ -269,7 +270,10 @@ ${safetyRule}
 6. 必要安全提示
 
 要求：
-- 每天 1～4 个行动，休息日 actions 为空。
+- 必须完整返回第 1 天到第 ${profile.durationDays} 天，不得只生成前 7 天。
+- 每个执行日安排 1 个核心行动，休息日 actions 为空。
+- 周期超过 7 天时，每个 7 天区块严格按每周 ${profile.weeklyFrequency || 7} 天安排执行日，其余日期标记为休息日。
+- 每个 7 天区块应有不同且递进的重点，依次体现启动、基础、练习、应用、突破、完善和成果验证，不得机械重复同一主题。
 - 每天总时间不得明显超过 dailyMinutes。
 - 行动内容必须适合用户当前水平。
 - 行动应循序渐进。

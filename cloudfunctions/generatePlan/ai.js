@@ -11,7 +11,7 @@ function getApp() {
         process.env.TCB_ENV ||
         process.env.SCF_NAMESPACE ||
         DEFAULT_ENV_ID,
-      timeout: 60000,
+      timeout: 210000,
     });
   }
   return app;

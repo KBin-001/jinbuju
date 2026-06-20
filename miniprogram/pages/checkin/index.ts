@@ -102,11 +102,8 @@ Page({
     submitButtonText: "记录今日行动",
 
     feeling: "normal" as CheckinFeeling,
+    feelingBounce: "" as string,
     feelingOptions: FEELING_OPTIONS,
-    feelingRadioOptions: FEELING_OPTIONS.map((item) => ({
-      value: item.value,
-      label: `${item.emoji} ${item.label}`,
-    })),
     note: "",
     noteRemaining: 100,
     submitting: false,
@@ -250,10 +247,19 @@ Page({
     }
   },
 
-  selectFeeling(event: UiComponentEvent<unknown>) {
-    const value = getUiEventString(event) as CheckinFeeling;
-    if (FEELING_OPTIONS.some((option) => option.value === value)) {
-      this.setData({ feeling: value });
+  selectFeeling(event: UiComponentEvent<unknown> | WechatMiniprogram.TouchEvent) {
+    let value: string;
+    if ('currentTarget' in event && event.currentTarget?.dataset?.value) {
+      value = String(event.currentTarget.dataset.value);
+    } else {
+      value = getUiEventString(event);
+    }
+    const feelingValue = value as CheckinFeeling;
+    if (FEELING_OPTIONS.some((option) => option.value === feelingValue)) {
+      this.setData({ feelingBounce: "" });
+      setTimeout(() => {
+        this.setData({ feeling: feelingValue, feelingBounce: feelingValue });
+      }, 20);
     }
   },
 

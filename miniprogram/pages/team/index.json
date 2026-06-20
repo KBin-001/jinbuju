@@ -2,6 +2,9 @@
   "navigationBarTitleText": "小队",
   "usingComponents": {
     "ant-avatar": "antd-mini/Avatar/index",
-    "ant-badge": "antd-mini/Badge/index"
+    "ant-badge": "antd-mini/Badge/index",
+    "ant-button": "antd-mini/Button/index",
+    "ant-card": "antd-mini/Card/index",
+    "ant-loading": "antd-mini/Loading/index"
   }
 }

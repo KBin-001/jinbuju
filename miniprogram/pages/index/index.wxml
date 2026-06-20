@@ -54,7 +54,14 @@
       </view>
       <view wx:elif="{{planReviewing}}" class="paused-notice">
         <view class="paused-notice-title">当前阶段等待复盘</view>
-        <view>完成阶段复盘并确认下一阶段后，新的今日行动会显示在这里。</view>
+        <view>主动创建并确认新计划后，新的今日行动会显示在这里。</view>
+      </view>
+      <view wx:elif="{{goal.planStatus === 'expired'}}" class="paused-notice expired-today-notice">
+        <view class="paused-notice-title">计划已到期，但行动还可以继续</view>
+        <view>之前的小行动会按优先级带回今日，不会判定为失败。</view>
+      </view>
+      <view wx:if="{{pendingActionCount > 0}}" class="pending-action-hint">
+        还有 {{pendingActionCount}} 个待完成行动没有挤进今天，稍后可以继续安排。
       </view>
       <ant-card className="goal-card growth-ant-card section-shell">
         <view class="card-heading-row">
@@ -206,7 +213,15 @@
       className="quick-task-popup"
       bindclose="closeQuickTaskPanel"
     >
-      <view class="quick-task-sheet">
+      <view class="quick-task-sheet"
+        bindtouchstart="onSheetTouchStart"
+        bindtouchmove="onSheetTouchMove"
+        bindtouchend="onSheetTouchEnd"
+        style="{{sheetTranslateY > 0 ? 'transform: translateY(' + sheetTranslateY + 'px); transition: none;' : ''}}"
+      >
+        <view class="sheet-drag-handle" aria-label="向下拖拽关闭面板">
+          <view class="sheet-drag-indicator"></view>
+        </view>
         <view class="quick-task-sheet-header">
           <view>
             <view class="quick-task-sheet-title">添加计划外行动</view>
@@ -228,6 +243,14 @@
           focus="{{showQuickTaskPanel}}"
           confirmType="done"
           bindchange="onQuickTitleInput"
+        />
+        <textarea
+          class="quick-task-description"
+          value="{{quickDescription}}"
+          placeholder="补充完成标准或说明（可选）"
+          maxlength="150"
+          disabled="{{creatingTask}}"
+          bindinput="onQuickDescriptionInput"
         />
         <button class="more-settings-button" bindtap="toggleMoreSettings">
           <text>时间与标签</text>

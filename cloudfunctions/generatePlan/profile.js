@@ -72,7 +72,7 @@ function calculateJoinedDays(user) {
 
 function calculateCurrentDay(plan, businessDate) {
   if (!plan || !plan.startDate) return 1;
-  const durationDays = Math.max(Number(plan.durationDays || plan.totalDays || 7), 1);
+  const durationDays = Math.max(Number(plan.planDurationDays || plan.durationDays || plan.totalDays || 7), 1);
   return Math.min(
     Math.max(businessDateDiff(plan.startDate, businessDate) + 1, 1),
     durationDays,
@@ -205,7 +205,7 @@ async function buildProfile(openid) {
           ),
           currentDay: currentPlan ? calculateCurrentDay(currentPlan, businessDate) : 1,
           totalDays: currentPlan
-            ? Math.max(Number(currentPlan.durationDays || currentPlan.totalDays || 7), 1)
+            ? Math.max(Number(currentPlan.planDurationDays || currentPlan.durationDays || currentPlan.totalDays || 7), 1)
             : 7,
           planStatus: currentPlan ? String(currentPlan.status) : "completed",
           stageCompletionRate:

@@ -1,6 +1,7 @@
 const cloud = require("wx-server-sdk");
 const crypto = require("crypto");
 const { generateTextWithMetadata } = require("./ai");
+const { DAILY_MINUTES } = require("./constants");
 const {
   GOAL_ANALYSIS_PROMPT_VERSION,
   buildGoalAnalysisPrompt,
@@ -88,8 +89,8 @@ function normalizeAnalyzeInput(value) {
     intensity: ["light", "normal", "intensive"].includes(value.intensity) ? value.intensity : "normal",
     deadline: typeof value.deadline === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.deadline) ? value.deadline : "",
   };
-  if (input.dailyMinutes < 10 || input.dailyMinutes > 180) fail("INVALID_ARGUMENT", "每日投入时间无效。");
-  if (input.durationDays < 1 || input.durationDays > 7) fail("INVALID_ARGUMENT", "阶段天数无效。");
+  if (!DAILY_MINUTES.includes(input.dailyMinutes)) fail("INVALID_ARGUMENT", "每日投入时间无效。");
+  if (input.durationDays < 3 || input.durationDays > 90) fail("INVALID_PLAN_DURATION", "计划周期需为 3～90 天。");
   return input;
 }
 
@@ -277,9 +278,10 @@ function buildGoalProfile(input, analysis, answers = []) {
     domainLabel: analysis.domainLabel,
     goalType: analysis.goalType,
     currentLevel: String(currentLevel || input.currentLevel || "zero"),
-    targetHorizon: input.deadline || `${input.durationDays} 天阶段`,
+    targetHorizon: input.deadline || `${input.durationDays} 天计划`,
     dailyMinutes: input.dailyMinutes,
     durationDays: input.durationDays,
+    planDurationDays: input.durationDays,
     intensity: input.intensity || "normal",
     deadline: input.deadline || "",
     weeklyFrequency: Number.isFinite(weeklyFrequency) && weeklyFrequency > 0 ? weeklyFrequency : 5,

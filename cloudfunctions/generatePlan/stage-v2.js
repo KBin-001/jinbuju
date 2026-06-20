@@ -5,7 +5,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const { createStagePlanProvider } = require("./stage-ai");
 const { addBusinessDays, formatBusinessDate } = require("./date");
 const { stableId } = require("./repository");
-const { DANGEROUS_CONTENT } = require("./constants");
+const { DAILY_MINUTES, DANGEROUS_CONTENT } = require("./constants");
 const { getOwnedAnalysis } = require("./goal-analysis");
 const {
   GENERATED_STAGE_SCHEMA_VERSION,
@@ -27,9 +27,15 @@ const {
 } = require("./stage-prompt");
 
 const db = cloud.database();
-const PLAN_DURATIONS = [1, 2, 3, 4, 5, 6, 7];
+const MIN_PLAN_DURATION = 3;
+const MAX_PLAN_DURATION = 90;
+const COMPLETE_GENERATION_MAX_DAYS = MAX_PLAN_DURATION;
+const DETAIL_WINDOW_DAYS = 7;
+const PLAN_DURATIONS = Array.from(
+  { length: MAX_PLAN_DURATION - MIN_PLAN_DURATION + 1 },
+  (_, index) => index + MIN_PLAN_DURATION,
+);
 const WEEKLY_DAYS = [3, 5, 7];
-const DAILY_MINUTES = [15, 30, 45, 60, 90];
 const LEVELS = ["zero", "basic", "intermediate"];
 const INTENSITIES = ["light", "normal", "intensive"];
 const ACTIVE_WEEK_DAYS = {
@@ -40,10 +46,22 @@ const ACTIVE_WEEK_DAYS = {
 const PREVIEW_LIFETIME_MILLISECONDS = 24 * 60 * 60 * 1000;
 const MAX_OPTIMIZATION_ATTEMPTS = 2;
 const MAX_STAGE_REGENERATIONS = 2;
-const STAGE_GENERATION_TIMEOUT_MS = 45000;
-const STAGE_REPAIR_TIMEOUT_MS = 30000;
 const DEFAULT_MODEL_ID = process.env.CLOUDBASE_AI_MODEL || "hy3-preview";
 const DEFAULT_PROVIDER_GROUP = process.env.CLOUDBASE_AI_PROVIDER || "cloudbase";
+
+function getStageTimeoutBudget(durationDays) {
+  const days = Math.max(Number(durationDays || 7), 1);
+  if (days <= 14) {
+    return { generation: 45000, repair: 30000, optimization: 30000 };
+  }
+  if (days <= 30) {
+    return { generation: 90000, repair: 60000, optimization: 60000 };
+  }
+  if (days <= 60) {
+    return { generation: 135000, repair: 90000, optimization: 90000 };
+  }
+  return { generation: 180000, repair: 120000, optimization: 120000 };
+}
 
 function shortError(error) {
   return {
@@ -55,6 +73,12 @@ function shortError(error) {
 }
 
 const GOAL_TEMPLATES = {
+  cet: {
+    title: "英语四六级",
+    category: "exam",
+    desiredResult: "熟悉英语四六级题型，稳定推进词汇、听力、阅读和写作练习",
+    themes: ["了解题型", "积累词汇", "听力练习", "阅读训练", "写作表达"],
+  },
   cet4: {
     title: "英语四级",
     category: "exam",
@@ -66,6 +90,24 @@ const GOAL_TEMPLATES = {
     category: "exam",
     desiredResult: "梳理教师资格证考试范围，完成核心知识学习和基础练习",
     themes: ["了解考情", "梳理知识", "记忆重点", "完成练习", "整理错题"],
+  },
+  postgraduate_exam: {
+    title: "考研",
+    category: "exam",
+    desiredResult: "明确考研备考方向，按长期目标推进当前阶段复习与练习",
+    themes: ["梳理目标", "制定阶段重点", "学习知识", "完成练习", "复盘调整"],
+  },
+  civil_service_exam: {
+    title: "考公",
+    category: "exam",
+    desiredResult: "建立行测、申论的备考节奏，并持续完成针对性练习与复盘",
+    themes: ["了解考情", "行测练习", "申论训练", "整理错题", "复盘节奏"],
+  },
+  ai_learning: {
+    title: "AI学习",
+    category: "skill",
+    desiredResult: "掌握 AI 工具、提示词和应用方法，并用于解决实际任务",
+    themes: ["认识工具", "学习提示词", "完成练习", "应用到任务", "整理方法"],
   },
   python: {
     title: "Python 入门",
@@ -142,6 +184,7 @@ function validateCreateStagePreviewInput(value) {
     "weeklyDays",
     "intensity",
     "durationDays",
+    "planDurationDays",
     "deadline",
   ];
   if (!hasOnlyKeys(value, allowedKeys)) {
@@ -168,8 +211,9 @@ function validateCreateStagePreviewInput(value) {
   if (!INTENSITIES.includes(value.intensity)) {
     fail("INVALID_ARGUMENT", "计划强度无效。");
   }
-  if (!PLAN_DURATIONS.includes(value.durationDays)) {
-    fail("INVALID_ARGUMENT", "计划周期无效。");
+  const planDurationDays = Number(value.planDurationDays || value.durationDays);
+  if (!Number.isInteger(planDurationDays) || planDurationDays < MIN_PLAN_DURATION || planDurationDays > MAX_PLAN_DURATION) {
+    fail("INVALID_PLAN_DURATION", "计划周期需为 3～90 天。");
   }
   const deadline = String(value.deadline || "").trim();
   const parsedDeadline = deadline ? Date.parse(`${deadline}T00:00:00Z`) : 0;
@@ -181,7 +225,7 @@ function validateCreateStagePreviewInput(value) {
   ) {
     fail("INVALID_ARGUMENT", "长期截止日期格式无效。");
   }
-  const minimumDeadline = addBusinessDays(formatBusinessDate(), value.durationDays - 1);
+  const minimumDeadline = addBusinessDays(formatBusinessDate(), planDurationDays - 1);
   if (deadline && deadline < minimumDeadline) {
     fail("INVALID_ARGUMENT", "长期截止日期不能早于当前计划结束日期。");
   }
@@ -199,7 +243,8 @@ function validateCreateStagePreviewInput(value) {
     dailyMinutes: value.dailyMinutes,
     weeklyDays: value.weeklyDays,
     intensity: value.intensity,
-    durationDays: value.durationDays,
+    durationDays: planDurationDays,
+    planDurationDays,
     deadline,
     targetDuration: "long_term",
     stageNumber: 1,
@@ -207,9 +252,9 @@ function validateCreateStagePreviewInput(value) {
 }
 
 function goalTypeFromInput(input) {
-  if (["python", "ai_tools", "video_editing"].includes(input.templateId)) return "skill";
+  if (["python", "ai_tools", "ai_learning", "video_editing"].includes(input.templateId)) return "skill";
   if (["resume", "interview"].includes(input.templateId)) return "project";
-  if (["cet4", "teacher_exam"].includes(input.templateId)) return "outcome";
+  if (["cet", "cet4", "teacher_exam", "postgraduate_exam", "civil_service_exam"].includes(input.templateId)) return "outcome";
   if (/习惯|作息|阅读/.test(input.goalTitle)) return "habit";
   if (/博客|小程序|项目|制作|完成/.test(input.goalTitle)) return "project";
   if (/学|练|摄影|烹饪|驱动|搏击|技能/.test(input.goalTitle)) return "skill";
@@ -218,7 +263,7 @@ function goalTypeFromInput(input) {
 
 function categoryGroupFromInput(input) {
   const title = input.goalTitle;
-  if (input.category === "exam" || /四级|考试|备考|教师资格|考研/.test(title)) return "learning";
+  if (input.category === "exam" || /四六级|四级|六级|考试|备考|教师资格|考研|考公|行测|申论/.test(title)) return "learning";
   if (input.category === "career" || /求职|简历|面试|岗位/.test(title)) return "career";
   if (/作息|健康|运动|搏击|体能|睡眠/.test(title)) return "health";
   if (/习惯|阅读/.test(title)) return "habit";
@@ -240,6 +285,7 @@ function buildGoalProfile(input) {
     intensity: input.intensity,
     dailyMinutes: input.dailyMinutes,
     durationDays: input.durationDays,
+    planDurationDays: input.planDurationDays || input.durationDays,
     deadline: input.deadline || "",
     weeklyFrequency: input.weeklyDays,
     constraints: [],
@@ -249,6 +295,7 @@ function buildGoalProfile(input) {
 }
 
 function inputFromGoalProfile(profile) {
+  const planDurationDays = Number(profile.planDurationDays || profile.durationDays || 7);
   return {
     templateId: "",
     customGoalTitle: profile.title,
@@ -266,7 +313,8 @@ function inputFromGoalProfile(profile) {
     dailyMinutes: Number(profile.dailyMinutes || 30),
     weeklyDays: Number(profile.weeklyFrequency || 5),
     intensity: profile.intensity || "normal",
-    durationDays: Number(profile.durationDays || 7),
+    durationDays: planDurationDays,
+    planDurationDays,
     deadline: profile.deadline || "",
     targetDuration: "long_term",
     stageNumber: 1,
@@ -280,9 +328,10 @@ function isExecutionDay(dayIndex, weeklyDays, durationDays) {
 }
 
 function taskMinutes(input) {
-  return input.intensity === "light"
+  const minutes = input.intensity === "light"
     ? Math.max(10, Math.round((input.dailyMinutes * 0.75) / 5) * 5)
     : input.dailyMinutes;
+  return Math.min(minutes, 180);
 }
 
 function levelLabel(level) {
@@ -293,22 +342,49 @@ function levelLabel(level) {
   }[level];
 }
 
+function progressionForBlock(blockIndex, totalBlocks) {
+  const ratio = blockIndex / Math.max(totalBlocks, 1);
+  if (blockIndex === 1) {
+    return { label: "启动与基线", objective: "明确起点、准备条件并完成首轮可验证行动" };
+  }
+  if (ratio <= 0.25) {
+    return { label: "核心基础", objective: "稳定掌握关键基础并形成可重复的行动方法" };
+  }
+  if (ratio <= 0.5) {
+    return { label: "专项练习", objective: "围绕关键能力进行有针对性的练习和反馈" };
+  }
+  if (ratio <= 0.7) {
+    return { label: "综合应用", objective: "把已有能力组合到更接近真实目标的任务中" };
+  }
+  if (ratio <= 0.85) {
+    return { label: "难点突破", objective: "识别主要短板并通过集中行动完成改进" };
+  }
+  if (blockIndex < totalBlocks) {
+    return { label: "成果完善", objective: "完善阶段成果并提高完成质量与稳定性" };
+  }
+  return { label: "成果验证与复盘", objective: "完成最终验证、整理成果并形成下一步方向" };
+}
+
 function buildBaseStagePlan(input) {
   const template = GOAL_TEMPLATES[input.templateId] || GOAL_TEMPLATES.custom;
   const minutes = taskMinutes(input);
   const intensityCopy =
     input.intensity === "intensive" ? "完成一项带成果的进阶练习" : "完成一项可验证的小练习";
+  const totalBlocks = Math.ceil(input.durationDays / DETAIL_WINDOW_DAYS);
   const days = Array.from({ length: input.durationDays }, (_, index) => {
     const dayIndex = index + 1;
+    const blockIndex = Math.floor(index / DETAIL_WINDOW_DAYS) + 1;
+    const progression = progressionForBlock(blockIndex, totalBlocks);
     if (!isExecutionDay(dayIndex, input.weeklyDays, input.durationDays)) {
       return {
         dayIndex,
-        theme: "休息与整理",
+        theme: `${progression.label} · 休息整理`,
         totalMinutes: 0,
         actions: [],
       };
     }
-    const theme = template.themes[index % template.themes.length];
+    const themeIndex = (index + blockIndex - 1) % template.themes.length;
+    const theme = `${progression.label} · ${template.themes[themeIndex]}`;
     return {
       dayIndex,
       theme,
@@ -316,8 +392,8 @@ function buildBaseStagePlan(input) {
       actions: [
         {
           slotId: `slot_day_${dayIndex}`,
-          title: `${theme}：${intensityCopy}`,
-          description: `${levelLabel(input.currentLevel)}，围绕“${input.goalTitle}”留下可以检查的结果。`,
+          title: `${template.themes[themeIndex]}：${intensityCopy}`,
+          description: `${levelLabel(input.currentLevel)}。本阶段目标是${progression.objective}，围绕“${input.goalTitle}”留下可以检查的结果。`,
           estimatedMinutes: minutes,
         },
       ],
@@ -325,14 +401,60 @@ function buildBaseStagePlan(input) {
   });
   return {
     stage: {
-      title: `${input.goalTitle} ${input.durationDays} 天行动计划`,
-      summary: input.durationDays <= 7
+      title: `${input.goalTitle} ${input.planDurationDays || input.durationDays} 天行动计划`,
+      summary: (input.planDurationDays || input.durationDays) <= 7
         ? `每天约 ${minutes} 分钟推进，先从容易开始的小行动建立节奏。`
-        : `按每周 ${input.weeklyDays} 天、每天约 ${minutes} 分钟推进，先从容易开始的小行动建立节奏。`,
+        : `已按每周 ${input.weeklyDays} 天、每天约 ${minutes} 分钟生成完整 ${input.planDurationDays || input.durationDays} 天行动，内容从启动逐步推进到成果验证。`,
       focus: input.desiredResult.slice(0, 50),
       durationDays: input.durationDays,
     },
     days,
+  };
+}
+
+function buildPlanOutline(planDurationDays, focus, days = []) {
+  const blocks = [];
+  const totalBlocks = Math.ceil(planDurationDays / DETAIL_WINDOW_DAYS);
+  let startDay = 1;
+  let blockIndex = 1;
+  while (startDay <= planDurationDays) {
+    const endDay = Math.min(startDay + DETAIL_WINDOW_DAYS - 1, planDurationDays);
+    const blockDays = days.filter((day) => day.dayIndex >= startDay && day.dayIndex <= endDay);
+    const themes = Array.from(
+      new Set(
+        blockDays
+          .filter((day) => Array.isArray(day.actions) && day.actions.length)
+          .map((day) => String(day.theme || "").trim())
+          .filter(Boolean),
+      ),
+    ).slice(0, 2);
+    const actionTitles = blockDays
+      .flatMap((day) => Array.isArray(day.actions) ? day.actions : [])
+      .map((action) => String(action.title || "").trim())
+      .filter(Boolean);
+    const progression = progressionForBlock(blockIndex, totalBlocks);
+    blocks.push({
+      blockIndex,
+      startDay,
+      endDay,
+      focus: themes.length ? themes.join("、") : `${progression.label} · ${focus}`,
+      objective: actionTitles.length
+        ? `${progression.objective}，完成“${actionTitles[0]}”等 ${actionTitles.length} 项行动。`
+        : progression.objective,
+    });
+    startDay = endDay + 1;
+    blockIndex += 1;
+  }
+  return { totalDays: planDurationDays, blocks };
+}
+
+function attachPlanMetadata(stagePlan, input) {
+  const planDurationDays = Number(input.planDurationDays || input.durationDays);
+  const detailedDays = stagePlan.days.map((day) => ({ ...day }));
+  return {
+    ...stagePlan,
+    stage: { ...stagePlan.stage, planDurationDays },
+    outline: buildPlanOutline(planDurationDays, stagePlan.stage.focus, detailedDays),
   };
 }
 
@@ -398,6 +520,11 @@ async function createStagePreview(openid, event) {
     }
     goalProfile = analysisRecord.goalProfile;
     input = inputFromGoalProfile(goalProfile);
+    goalProfile = {
+      ...goalProfile,
+      planDurationDays: input.planDurationDays,
+      durationDays: input.durationDays,
+    };
   } else {
     input = validateCreateStagePreviewInput(event && event.input);
     goalProfile = buildGoalProfile(input);
@@ -448,6 +575,7 @@ async function createStagePreview(openid, event) {
   });
 
   const generationStartedAt = Date.now();
+  const timeoutBudget = getStageTimeoutBudget(input.durationDays);
   let stagePlan = null;
   let generatedBy = "template";
   let repairAttempted = false;
@@ -464,7 +592,7 @@ async function createStagePreview(openid, event) {
       const prompt = buildDirectStageGenerationPrompt(goalProfile);
       const result = await provider.generateStagePlanWithMetadata(
         prompt,
-        STAGE_GENERATION_TIMEOUT_MS,
+        timeoutBudget.generation,
         {
           action: "createStagePreview",
           promptVersion: DIRECT_STAGE_PROMPT_VERSION,
@@ -520,16 +648,11 @@ async function createStagePreview(openid, event) {
         dailyMinutes: input.dailyMinutes,
       });
       try {
-        if (firstError.code === "AI_REQUEST_TIMEOUT" && !firstOutput) {
-          const timeoutError = new Error("AI_REQUEST_TIMEOUT");
-          timeoutError.code = "AI_REQUEST_TIMEOUT";
-          throw timeoutError;
-        }
         repairAttempted = true;
         const repairPrompt = buildDirectStageRepairPrompt(goalProfile, firstOutput, firstProblems);
         const repaired = await provider.generateStagePlanWithMetadata(
           repairPrompt,
-          STAGE_REPAIR_TIMEOUT_MS,
+          timeoutBudget.repair,
           {
             action: "createStagePreviewRepair",
             promptVersion: DIRECT_STAGE_PROMPT_VERSION,
@@ -580,6 +703,7 @@ async function createStagePreview(openid, event) {
     stagePlan = buildBaseStagePlan(input);
     generatedBy = "template";
   }
+  stagePlan = attachPlanMetadata(stagePlan, input);
 
   await db.collection("stage_previews").doc(previewId).set({
     data: {
@@ -823,13 +947,14 @@ async function optimizeStagePreview(openid, event) {
   if (preview.optimizationStatus === "ready") return publicPreview(preview);
   const provider = createStagePlanProvider();
   const prompt = buildOptimizationPrompt(preview.generationInput, preview.stagePlan);
+  const timeoutBudget = getStageTimeoutBudget(preview.generationInput.durationDays);
   let optimizedPlan = null;
   let lastError = null;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       const output = await provider.generateStagePlan(
         attempt === 0 ? prompt : `${prompt}\n上一份输出未通过校验，请重新返回完整 JSON。`,
-        attempt === 0 ? 18000 : 16000,
+        timeoutBudget.optimization,
       );
       optimizedPlan = validateOptimizedPlan(
         parseAiJson(output),
@@ -1085,6 +1210,7 @@ async function regenerateStagePreview(openid, event) {
   };
 
   const generationStartedAt = Date.now();
+  const timeoutBudget = getStageTimeoutBudget(goalProfile.durationDays);
   let newStagePlan = null;
   let generatedBy = "template";
   let modelId = preview.modelId || DEFAULT_MODEL_ID;
@@ -1096,7 +1222,7 @@ async function regenerateStagePreview(openid, event) {
   try {
     const provider = createStagePlanProvider();
     const prompt = buildStageRegenerationPrompt(context);
-    const result = await provider.generateStagePlanWithMetadata(prompt, 22000, {
+    const result = await provider.generateStagePlanWithMetadata(prompt, timeoutBudget.generation, {
       action: "regenerateStagePreview",
       promptVersion: STAGE_REGENERATION_PROMPT_VERSION,
       schemaVersion: GENERATED_STAGE_SCHEMA_VERSION,
@@ -1127,7 +1253,10 @@ async function regenerateStagePreview(openid, event) {
       throw error;
     }
 
-    newStagePlan = candidate;
+    newStagePlan = attachPlanMetadata(candidate, {
+      durationDays: goalProfile.durationDays,
+      planDurationDays: goalProfile.planDurationDays || goalProfile.durationDays,
+    });
     generatedBy = "regenerated_ai";
     console.info("stage regeneration accepted", {
       action: "regenerateStagePreview",
@@ -1151,7 +1280,7 @@ async function regenerateStagePreview(openid, event) {
     try {
       const provider = createStagePlanProvider();
       const repairPrompt = buildStageRegenerationRepairPrompt(context, firstOutput, firstProblems);
-      const repaired = await provider.generateStagePlanWithMetadata(repairPrompt, 18000, {
+      const repaired = await provider.generateStagePlanWithMetadata(repairPrompt, timeoutBudget.repair, {
         action: "regenerateStagePreviewRepair",
         promptVersion: STAGE_REGENERATION_PROMPT_VERSION,
         schemaVersion: GENERATED_STAGE_SCHEMA_VERSION,
@@ -1181,7 +1310,10 @@ async function regenerateStagePreview(openid, event) {
         });
       }
 
-      newStagePlan = repairedPlan;
+      newStagePlan = attachPlanMetadata(repairedPlan, {
+        durationDays: goalProfile.durationDays,
+        planDurationDays: goalProfile.planDurationDays || goalProfile.durationDays,
+      });
       generatedBy = "regenerated_ai_repaired";
     } catch (repairError) {
       console.warn("stage regeneration failed, keeping old plan", {
@@ -1249,7 +1381,14 @@ module.exports = {
   ACTIVE_WEEK_DAYS,
   GOAL_TEMPLATES,
   MAX_STAGE_REGENERATIONS,
+  COMPLETE_GENERATION_MAX_DAYS,
+  DETAIL_WINDOW_DAYS,
+  getStageTimeoutBudget,
+  MAX_PLAN_DURATION,
+  MIN_PLAN_DURATION,
   PLAN_DURATIONS,
+  attachPlanMetadata,
+  buildPlanOutline,
   applyStageOptimization,
   buildBaseStagePlan,
   buildGoalProfile,

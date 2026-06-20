@@ -30,10 +30,11 @@ function buildPrompt(goal, currentDate) {
 - 每周学习天数：${goal.weeklyDays}
 - 每日可投入：${goal.dailyMinutes} 分钟
 - 执行强度：${INTENSITY_LABELS[goal.intensity]}
+- 计划周期：${goal.planDurationDays} 天
 
 生成规则：
-1. 固定生成连续 7 天，days 必须恰好有 7 项，day 为 1 到 7 且不重复。
-2. 学习日数量必须恰好为 ${goal.weeklyDays} 天，并均匀分布；其余为休息或轻量复习日。
+1. 根据计划周期生成连续 ${goal.planDurationDays} 天，days 必须恰好有 ${goal.planDurationDays} 项，day 从 1 连续递增。
+2. 每周按 ${goal.weeklyDays} 个执行日均匀安排，其余为休息或轻量复习日。
 3. 学习日每日至少一个具体、可执行、可打卡的任务，任务总时长不得超过 ${goal.dailyMinutes} 分钟。
 4. 休息日 isStudyDay=false 且 tasks=[]。
 5. 禁止“努力学习”“继续提升”“了解相关内容”“保持坚持”等模糊任务。

@@ -313,6 +313,8 @@ async function generateWithInput(openid, event, input) {
   if (!stagePlan) {
     stagePlan = validateStagePlan(buildStageFallback(input), input);
   }
+  const { attachPlanMetadata } = require("./stage-v2");
+  stagePlan = attachPlanMetadata(stagePlan, input);
   return savePreview(
     openid,
     reservation,

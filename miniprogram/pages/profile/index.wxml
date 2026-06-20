@@ -14,7 +14,7 @@
       <view class="qrcode-popup-content">
         <image
           class="qrcode-popup-image"
-          src="/images/community-qrcode.jpg.jpg"
+          src="/images/community-qrcode.jpg"
           mode="widthFix"
           show-menu-by-longpress="{{true}}"
         />
@@ -27,7 +27,7 @@
   </view>
 
   <view wx:if="{{status === 'loading'}}" class="card state-card">
-    <view class="loading-dot"></view>
+    <ant-loading type="spin" size="large" color="#356859" />
     <view class="state-title">正在整理你的行动记录</view>
     <view class="state-description">统计结果来自云端可信数据。</view>
   </view>
@@ -36,11 +36,11 @@
     <view class="state-mark">!</view>
     <view class="state-title">个人数据加载失败</view>
     <view class="state-description">{{errorMessage}}</view>
-    <button class="primary-button" bindtap="retry">重新加载</button>
+    <ant-button type="primary" className="growth-primary-button" bindtap="retry">重新加载</ant-button>
   </view>
 
   <block wx:else>
-    <view class="card user-card">
+    <ant-card className="user-card growth-ant-card">
       <ant-badge type="bubble" text="{{profile.user.streakDays}}天" position="bottom-right" bgColor="#D8A84E">
         <ant-avatar className="avatar" size="x-large" src="{{avatarDisplay}}" aria-label="用户头像" />
       </ant-badge>
@@ -53,9 +53,9 @@
         <view class="streak-value">{{profile.user.streakDays}}</view>
         <view class="streak-label">连续行动天数</view>
       </view>
-    </view>
+    </ant-card>
 
-    <view wx:if="{{profile.currentGoal}}" class="card goal-card">
+    <ant-card wx:if="{{profile.currentGoal}}" className="goal-card growth-ant-card">
       <view class="section-heading">
         <view>
           <view class="section-eyebrow">当前目标</view>
@@ -85,37 +85,37 @@
         <view class="progress-fill" style="width: {{profile.currentGoal.stageCompletionRate}}%;"></view>
       </view>
       <button class="text-button" bindtap="goToPlan">查看行动进度</button>
-    </view>
+    </ant-card>
 
-    <view wx:else class="card empty-goal-card">
+    <ant-card wx:else className="empty-goal-card growth-ant-card">
       <view class="section-title">还没有进行中的目标</view>
       <view class="muted-copy">创建一个长期目标，开始第一个行动阶段。</view>
-      <button class="primary-button compact-button" bindtap="createGoal">创建目标</button>
-    </view>
+      <ant-button type="primary" className="growth-primary-button compact-button" bindtap="createGoal">创建目标</ant-button>
+    </ant-card>
 
     <view class="section-block">
       <view class="section-title">行动数据</view>
       <view class="stats-grid">
-        <view class="card stat-card">
+        <ant-card className="stat-card growth-ant-card">
           <view class="stat-value">{{profile.statistics.totalCheckinDays}}</view>
           <view class="stat-label">累计打卡天数</view>
-        </view>
-        <view class="card stat-card">
+        </ant-card>
+        <ant-card className="stat-card growth-ant-card">
           <view class="stat-value">{{profile.statistics.longestStreak}}</view>
           <view class="stat-label">最长连续天数</view>
-        </view>
-        <view class="card stat-card">
+        </ant-card>
+        <ant-card className="stat-card growth-ant-card">
           <view class="stat-value">{{profile.statistics.completedTaskCount}}</view>
           <view class="stat-label">完成行动数量</view>
-        </view>
-        <view class="card stat-card">
+        </ant-card>
+        <ant-card className="stat-card growth-ant-card">
           <view class="stat-value stat-duration">{{actionDuration}}</view>
           <view class="stat-label">累计行动时长</view>
-        </view>
-        <view class="card stat-card stat-card-wide">
+        </ant-card>
+        <ant-card className="stat-card stat-card-wide growth-ant-card">
           <view class="stat-value">{{profile.statistics.completedStageCount}}</view>
           <view class="stat-label">完成阶段数量</view>
-        </view>
+        </ant-card>
       </view>
     </view>
 
@@ -136,7 +136,7 @@
             </view>
           </view>
         </view>
-        <view wx:else class="card small-empty">完成行动后，徽章会记录在这里。</view>
+        <ant-card wx:else className="small-empty growth-ant-card">完成行动后，徽章会记录在这里。</ant-card>
       </scroll-view>
     </view>
 
@@ -145,13 +145,13 @@
         <view class="section-title">最近目标</view>
         <button class="history-link" bindtap="showAllHistory">查看全部</button>
       </view>
-      <view wx:if="{{profile.recentGoals.length === 0}}" class="card small-empty">
+      <ant-card wx:if="{{profile.recentGoals.length === 0}}" className="small-empty growth-ant-card">
         完成或结束目标后，会在这里留下阶段记录。
-      </view>
-      <button
+      </ant-card>
+      <ant-card
         wx:for="{{profile.recentGoals}}"
         wx:key="id"
-        class="card history-card"
+        className="history-card growth-ant-card"
         data-goal-id="{{item.id}}"
         bindtap="showHistoryGoal"
       >
@@ -161,10 +161,10 @@
           <view class="history-meta">打卡 {{item.checkinDays}} 天 · 完成阶段 {{item.completedStageCount}} 个</view>
         </view>
         <view class="history-status">{{item.status === 'completed' ? '已完成' : '已结束'}}</view>
-      </button>
+      </ant-card>
     </view>
 
-    <view class="card community-card">
+    <ant-card className="community-card growth-ant-card">
       <view class="community-mark">群</view>
       <view class="community-main">
         <view class="section-title">加入微信陪跑群</view>
@@ -174,7 +174,7 @@
         class="community-button"
         bindtap="openCommunity"
       >查看入口</button>
-    </view>
+    </ant-card>
 
     <view class="menu-section">
       <view class="menu-section-title">帮助与信息</view>

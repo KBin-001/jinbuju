@@ -367,15 +367,31 @@
 .quick-task-sheet {
   width: 100%;
   max-height: 86vh;
-  padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+  padding: 0 32rpx calc(32rpx + env(safe-area-inset-bottom));
   overflow-y: auto;
   border-radius: 36rpx 36rpx 0 0;
   background: var(--color-surface);
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sheet-drag-handle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 18rpx 0 8rpx;
+  cursor: grab;
+}
+
+.sheet-drag-indicator {
+  width: 72rpx;
+  height: 8rpx;
+  border-radius: 999rpx;
+  background: #d8d8d8;
 }
 
 .quick-task-popup .quick-task-sheet {
   max-height: 72vh;
-  padding-top: 12rpx;
+  padding-top: 0;
   border-radius: 0;
   box-shadow: none;
 }
@@ -802,3 +818,6 @@
     animation: none;
   }
 }
+.expired-today-notice { border-left:7rpx solid var(--color-sun); }
+.pending-action-hint { margin:-12rpx 0 24rpx; padding:18rpx 22rpx; border-radius:20rpx; background:#eef1fb; color:#5967a3; font-size:23rpx; line-height:1.55; }
+.quick-task-description { width:100%; min-height:120rpx; margin-top:16rpx; padding:20rpx 24rpx; border:1rpx solid var(--color-border); border-radius:20rpx; background:#fbfcfa; font-size:26rpx; line-height:1.55; }

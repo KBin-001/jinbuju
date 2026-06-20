@@ -129,7 +129,7 @@ export function createStagePreview(
     action: "createStagePreview",
     ...(analysisId ? { analysisId } : { input }),
     requestId,
-  }, 100000);
+  }, 330000);
 }
 
 export function optimizeStagePreview(
@@ -138,7 +138,7 @@ export function optimizeStagePreview(
   return callStageFunction<StageGenerationResult>({
     action: "optimizeStagePreview",
     previewId,
-  });
+  }, 330000);
 }
 
 export function updateStagePreviewTask(
@@ -211,7 +211,7 @@ export function submitStageReview(
     action: "submitStageReview",
     ...input,
     requestId,
-  }, 100000);
+  }, 330000);
 }
 
 export function regenerateStagePreview(
@@ -223,5 +223,5 @@ export function regenerateStagePreview(
     feedbackTypes: input.feedbackTypes,
     ...(input.feedbackNote ? { feedbackNote: input.feedbackNote } : {}),
     requestId: input.requestId,
-  }, 90000);
+  }, 330000);
 }

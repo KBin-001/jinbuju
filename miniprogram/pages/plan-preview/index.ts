@@ -54,6 +54,7 @@ function toCreateInput(): CreateStagePreviewInput | null {
     weeklyDays: draft.weeklyDays,
     intensity: draft.intensity,
     durationDays: draft.durationDays,
+    planDurationDays: draft.planDurationDays || draft.durationDays,
     deadline: draft.deadline || undefined,
   };
 }
@@ -131,7 +132,10 @@ Page({
     regenerating: false,
     regenerationError: "",
     feedbackOptions: STAGE_FEEDBACK_OPTIONS,
+    justGenerated: false,
   },
+
+  _justGeneratedTimer: 0 as number,
 
   onLoad(options: { create?: string; previewId?: string }) {
     if (options.previewId) {
@@ -153,12 +157,16 @@ Page({
           isV2Create: Boolean(
             cachedInput && "templateId" in cachedInput && !("goalTitle" in cachedInput),
           ),
+          justGenerated: true,
         });
         this.applyPreview(cached.result);
+        this.scheduleClearJustGenerated();
         return;
       }
       // Fallback: generate if no cached result
+      this.setData({ justGenerated: true });
       this.createBasePreview();
+      this.scheduleClearJustGenerated();
       return;
     }
     const cached = getStagePreviewCache();
@@ -176,6 +184,33 @@ Page({
       status: "error",
       errorMessage: "没有找到计划信息，请返回重新创建。",
     });
+  },
+
+  onUnload() {
+    this.clearJustGeneratedTimer();
+  },
+
+  onHide() {
+    this.clearJustGeneratedTimer();
+  },
+
+  scheduleClearJustGenerated() {
+    this.clearJustGeneratedTimer();
+    this._justGeneratedTimer = setTimeout(() => {
+      this.setData({ justGenerated: false });
+    }, 6000) as unknown as number;
+  },
+
+  clearJustGeneratedTimer() {
+    if (this._justGeneratedTimer) {
+      clearTimeout(this._justGeneratedTimer);
+      this._justGeneratedTimer = 0;
+    }
+  },
+
+  dismissJustGenerated() {
+    this.clearJustGeneratedTimer();
+    this.setData({ justGenerated: false });
   },
 
   createBasePreview() {
@@ -377,6 +412,7 @@ Page({
 
   editGoal() {
     if (this.data.confirming || this.data.savingTask || this.data.regenerating) return;
+    this.dismissJustGenerated();
     const previousStageId = this.data.preview?.previousStageId || "";
     if (this.data.isNextStage && previousStageId) {
       wx.redirectTo({ url: `/pages/stage-review/index?stageId=${previousStageId}` });
@@ -396,6 +432,7 @@ Page({
   confirmStage() {
     const preview = this.data.preview;
     if (!preview || this.data.confirming || this.data.savingTask || this.data.regenerating) return;
+    this.dismissJustGenerated();
     this.setData({ confirming: true });
     confirmStagePlan(
       preview.previewId,
@@ -428,6 +465,7 @@ Page({
     if (this.data.regenerating || this.data.confirming) return;
     const preview = this.data.preview;
     if (!preview) return;
+    this.dismissJustGenerated();
     const remaining = Math.max(
       0,
       (preview.maxRegenerationCount || 2) - (preview.regenerationCount || 0),
@@ -498,6 +536,8 @@ Page({
     })
       .then((result) => {
         this.applyPreview(result);
+        this.setData({ justGenerated: true });
+        this.scheduleClearJustGenerated();
         wx.showToast({ title: "方案已重新生成", icon: "success" });
       })
       .catch((error: Error & { code?: string }) => {
@@ -532,6 +572,9 @@ Page({
             this.setData({
               regenerationError: "暂时没有生成新的方案，当前方案已经保留。",
             });
+          } else {
+            this.setData({ justGenerated: true });
+            this.scheduleClearJustGenerated();
           }
         })
         .catch(() => {

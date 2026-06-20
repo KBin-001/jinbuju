@@ -73,7 +73,7 @@
         <view class="state-mark small-mark">0</view>
         <view class="no-task-title">今天没有安排行动</view>
         <view class="state-description">返回今日页查看任务安排。</view>
-        <button class="primary-button" bindtap="goBackToToday">返回今日页</button>
+        <ant-button type="primary" className="growth-primary-button" bindtap="goBackToToday">返回今日页</ant-button>
       </view>
 
       <ant-card
@@ -99,7 +99,18 @@
     <!-- Feeling selector -->
     <ant-card className="feeling-card growth-ant-card">
       <view class="section-title">今天的感受</view>
-      <ant-radio-group className="feeling-radio-group" options="{{feelingRadioOptions}}" value="{{feeling}}" bindchange="selectFeeling" />
+      <view class="feeling-options-grid">
+        <view
+          wx:for="{{feelingOptions}}"
+          wx:key="value"
+          class="feeling-option {{feeling === item.value ? 'feeling-option-active' : ''}} {{feelingBounce === item.value ? 'feeling-option-bounce' : ''}}"
+          data-value="{{item.value}}"
+          bindtap="selectFeeling"
+        >
+          <view class="feeling-emoji">{{item.emoji}}</view>
+          <view class="feeling-label">{{item.label}}</view>
+        </view>
+      </view>
     </ant-card>
 
     <!-- Note input -->

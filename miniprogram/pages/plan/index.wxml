@@ -8,9 +8,15 @@
     <button wx:if="{{status === 'ready'}}" class="management-menu-trigger" aria-label="打开阶段管理菜单" bindtap="toggleManagementMenu">•••</button>
   </view>
 
-  <ant-popup visible="{{showManagementMenu && pageData}}" position="bottom" title="阶段管理" showClose="{{true}}" className="management-popup" bindclose="closeManagementMenu">
+  <ant-popup
+    visible="{{showManagementMenu && pageData}}"
+    position="center"
+    title="阶段管理"
+    showClose="{{true}}"
+    className="management-popup"
+    bindclose="closeManagementMenu"
+  >
   <view class="management-menu">
-    <view class="management-menu-title">阶段管理</view>
     <picker mode="time" value="{{pageData.plan.dailyReminderTime}}" disabled="{{actionLoading !== '' || (pageData.plan.status !== 'active' && pageData.plan.status !== 'paused')}}" bindchange="changePlanTime">
       <view class="management-menu-row">
         <view><view class="management-menu-label">每日行动时间</view><view class="management-menu-value">{{pageData.plan.dailyReminderTime}}</view></view>
@@ -28,6 +34,8 @@
   </ant-popup>
 
   <ant-dialog
+    className="plan-action-dialog"
+    bodyClassName="plan-action-dialog-body"
     visible="{{dialogVisible}}"
     title="{{dialogTitle}}"
     content="{{dialogContent}}"
@@ -47,7 +55,7 @@
   <view wx:elif="{{status === 'empty'}}" class="card state-card">
     <view class="state-mark">1</view>
     <view class="state-title">还没有进行中的目标</view>
-    <view class="state-description">创建一个长期目标，开始第一个行动阶段。</view>
+    <view class="state-description">创建一个长期目标，开始第一个行动计划。</view>
     <ant-button type="primary" className="growth-primary-button" bindtap="createGoal">创建目标</ant-button>
   </view>
 
@@ -75,7 +83,7 @@
         <ant-tag type="fill-light" color="success">{{categoryLabel}}</ant-tag>
       </view>
       <view class="stage-row">
-        <view><view class="stage-label">当前阶段</view><view class="goal-summary">{{pageData.plan.stageTitle}}</view></view>
+        <view><view class="stage-label">当前计划</view><view class="goal-summary">{{pageData.plan.stageTitle}}</view></view>
         <ant-tag type="fill-light" color="{{pageData.plan.status === 'paused' ? 'warning' : 'success'}}">{{planStatusLabel}}</ant-tag>
       </view>
       <view class="weekly-goal {{showStageFocus ? 'weekly-goal-expanded' : ''}}">
@@ -88,13 +96,28 @@
       <view class="overview-progress">
         <ant-progress type="circle" percent="{{pageData.plan.completionRate}}" strokeColor="#D8A84E" trailColor="#E8ECE6" width="{{96}}" />
         <view class="overview-stats">
-          <view class="overview-stat"><view class="overview-stat-value">第 {{pageData.plan.currentDay}} / {{pageData.plan.totalDays}} 天</view><view class="overview-stat-label">当前阶段</view></view>
+          <view class="overview-stat"><view class="overview-stat-value">已进行 {{pageData.plan.currentDay}} 天</view><view class="overview-stat-label">计划周期 {{pageData.plan.planDurationDays}} 天</view></view>
           <view class="overview-stat"><view class="overview-stat-value streak-flip">{{pageData.progress.streakDays}} 天</view><view class="overview-stat-label">连续行动</view></view>
           <view class="overview-stat"><view class="overview-stat-value">{{pageData.progress.totalActionDays}} 天</view><view class="overview-stat-label">累计行动</view></view>
         </view>
       </view>
       <view class="progress-copy">{{progressText}} · {{pageData.plan.completedCount}} / {{pageData.plan.totalCount}} 项完成</view>
     </ant-card>
+
+    <ant-notice wx:if="{{pageData.plan.status === 'expired'}}" type="warning" className="expired-plan-notice">
+      <view class="paused-title">这个计划已经到期</view>
+      <view>仍有 {{pageData.plan.pendingCount}} 个行动可以继续完成，也可以主动生成新计划。</view>
+      <view class="expired-plan-actions">
+        <button disabled="{{actionLoading !== ''}}" bindtap="continuePlan">继续完成未完成行动</button>
+        <button bindtap="goToStageReview">生成新计划</button>
+        <button bindtap="endPlan">结束计划</button>
+      </view>
+    </ant-notice>
+
+    <ant-notice wx:elif="{{pageData.plan.status === 'extended'}}" type="info" className="expired-plan-notice">
+      <view class="paused-title">计划已进入继续推进状态</view>
+      <view>不受原结束日期限制，完成剩余行动后再决定下一步。</view>
+    </ant-notice>
 
     <ant-notice wx:if="{{pageData.plan.status === 'paused'}}" type="info" className="paused-notice" ellipsisRow="{{2}}">
       <view class="paused-title">当前阶段已暂停</view>
@@ -113,7 +136,7 @@
     </view>
 
     <view class="timeline-section">
-      <view class="section-title">阶段每日行动概览</view>
+      <view class="section-title">完整计划行动</view>
       <scroll-view class="timeline-scroll" scroll-x enhanced show-scrollbar="{{false}}">
         <view class="timeline-row">
           <button
@@ -142,6 +165,7 @@
         </view>
         <view class="day-status-text">{{selectedDay.statusLabel}}</view>
       </view>
+      <button class="plan-add-action" bindtap="addManualAction">＋ 手动新增行动</button>
 
       <view wx:if="{{selectedDay.tasks.length === 0}}" class="card empty-tasks">
         <view class="state-mark small-mark">0</view>

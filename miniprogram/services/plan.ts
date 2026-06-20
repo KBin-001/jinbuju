@@ -174,6 +174,20 @@ export function resumeCurrentPlan(planId: string): Promise<PlanActionResult> {
   return callGeneratePlan<PlanActionResult>({ action: "resumePlan", planId }, 12000);
 }
 
+export function continueExpiredPlan(planId: string): Promise<PlanActionResult> {
+  return callGeneratePlan<PlanActionResult>({ action: "continueExpiredPlan", planId }, 12000);
+}
+
+export function archiveCurrentPlan(planId: string): Promise<PlanActionResult> {
+  return callGeneratePlan<PlanActionResult>({ action: "archivePlan", planId }, 12000);
+}
+
+export function completePlanActions(
+  planId: string,
+): Promise<{ planId: string; totalDays: number; generatedBy: string; createdTaskCount: number; completed: boolean }> {
+  return callGeneratePlan({ action: "completePlanActions", planId }, 240000);
+}
+
 export function generateNextWeekPlan(
   planId: string,
   requestId: string,

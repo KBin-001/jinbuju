@@ -170,7 +170,11 @@ async function confirmStagePlan(openid, event) {
   const input = preview.generationInput;
   const stagePlan = preview.stagePlan;
   const startDate = formatBusinessDate();
-  const endDate = addBusinessDays(startDate, stagePlan.stage.durationDays - 1);
+  const planDurationDays = Math.max(
+    Number(stagePlan.stage.planDurationDays || input.planDurationDays || input.durationDays || stagePlan.stage.durationDays || 7),
+    3,
+  );
+  const endDate = addBusinessDays(startDate, planDurationDays - 1);
 
   return db.runTransaction(async (transaction) => {
     const currentPreviewResult = await transaction
@@ -237,6 +241,7 @@ async function confirmStagePlan(openid, event) {
           weeklyDays: Number(input.weeklyDays || 7),
           intensity: input.intensity || "normal",
           durationDays: Number(input.durationDays || stagePlan.stage.durationDays),
+          planDurationDays,
           deadline: input.deadline || "",
           status: "active",
           currentStageId: stageId,
@@ -256,7 +261,7 @@ async function confirmStagePlan(openid, event) {
       }
       const previousStageId = String(preview.previousStageId || "");
       if (!previousStageId || goalResult.data.currentStageId !== previousStageId) {
-        fail("STAGE_PREVIEW_NOT_FOUND", "当前阶段已变化，请重新生成下一阶段。");
+        fail("STAGE_PREVIEW_NOT_FOUND", "当前计划已变化，请重新生成新计划。");
       }
       const previousStageResult = await transaction
         .collection("plans")
@@ -291,12 +296,19 @@ async function confirmStagePlan(openid, event) {
         focus: stagePlan.stage.focus,
         weeklyGoal: stagePlan.stage.focus,
         durationDays: stagePlan.stage.durationDays,
-        totalDays: stagePlan.stage.durationDays,
+        planDurationDays,
+        totalDays: planDurationDays,
         status: "active",
         generatedBy: preview.generatedBy,
         source: preview.generatedBy === "template" ? "fallback" : "ai",
         startDate,
         endDate,
+        plannedEndDate: endDate,
+        actualEndDate: null,
+        planOutline: stagePlan.outline || null,
+        generatedWindows: [{ startDay: 1, endDay: stagePlan.days.length }],
+        fullPlanGenerationStatus:
+          stagePlan.days.length >= planDurationDays ? "complete" : "needs_completion",
         dailyReminderTime,
         requestId: preview.requestId,
         previousStageId: preview.previousStageId || "",
@@ -320,12 +332,16 @@ async function confirmStagePlan(openid, event) {
             planId: stageId,
             dayIndex: day.dayIndex,
             day: day.dayIndex,
+            plannedDate: addBusinessDays(startDate, day.dayIndex - 1),
+            currentDate: addBusinessDays(startDate, day.dayIndex - 1),
             scheduledDate: addBusinessDays(startDate, day.dayIndex - 1),
             taskDate: addBusinessDays(startDate, day.dayIndex - 1),
             theme: day.theme,
             dayTitle: day.theme,
             ...mapStageActionToTaskFields(action, day.dayIndex, index),
             status: "pending",
+            rolloverCount: 0,
+            generatedBy: preview.generatedBy,
             createdAt: now,
             updatedAt: now,
           },
@@ -505,7 +521,12 @@ async function buildReviewData(openid, stage) {
     streakDays,
     completedActionCount,
     totalActionCount: tasks.length,
-    canReview: formatReviewEligibleDate() >= stage.endDate,
+    canReview:
+      ["completed", "archived"].includes(stage.status) ||
+      formatReviewEligibleDate() >= String(stage.plannedEndDate || stage.endDate || "") ||
+      (Math.max(...tasks.map((task) => Number(task.dayIndex || task.day || 0)), 0) >=
+        Number(stage.planDurationDays || stage.durationDays || stage.totalDays || 7) &&
+        tasks.length > 0 && completedActionCount === tasks.length),
     reviewed,
     previewId,
     executionSummary,
@@ -547,7 +568,7 @@ async function submitStageReview(openid, event) {
     goal._openid !== openid ||
     goal.status !== "active" ||
     goal.currentStageId !== stage._id ||
-    !["active", "reviewing"].includes(stage.status)
+    !["active", "expired", "extended", "completed", "archived", "reviewing"].includes(stage.status)
   ) {
     fail("GOAL_NOT_FOUND", "长期目标不存在。");
   }
@@ -561,6 +582,13 @@ async function submitStageReview(openid, event) {
 
   const resolvedGoalTitle = resolveGoalTitle(goal, stage);
   const resolvedDesiredResult = resolveDesiredResult(goal, resolvedGoalTitle);
+  const planDurationDays = Number(
+    event.planDurationDays || stage.planDurationDays || stage.durationDays || stage.totalDays || 7,
+  );
+  if (!Number.isInteger(planDurationDays) || planDurationDays < 3 || planDurationDays > 90) {
+    fail("INVALID_PLAN_DURATION", "计划周期需为 3 到 90 天。");
+  }
+  const detailDurationDays = planDurationDays;
 
   const result = await generateTrustedStagePlan(
     openid,
@@ -577,7 +605,8 @@ async function submitStageReview(openid, event) {
       intensity: goal.intensity || "normal",
       deadline: goal.deadline || "",
       stageNumber: Number(stage.stageNumber || 1) + 1,
-      durationDays: Number(stage.durationDays || stage.totalDays || 7),
+      durationDays: detailDurationDays,
+      planDurationDays,
       previousReview: {
         completionRate: data.completionRate,
         actionDays: data.actionDays,

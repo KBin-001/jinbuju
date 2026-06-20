@@ -7,6 +7,7 @@ const { submitCheckin, getCheckinStatus } = require("./checkin");
 const { formatBusinessDate } = require("./date");
 const { buildFallbackPlan } = require("./fallback");
 const { createManualTask, getHomeData, toggleTask } = require("./home");
+const { completePlanActions } = require("./plan-window");
 const { buildPrompt, buildRepairPrompt } = require("./prompt");
 const {
   adoptPlan,
@@ -21,6 +22,8 @@ const {
   verifyGeneratedPlan,
 } = require("./repository");
 const {
+  archivePlan,
+  continueExpiredPlan,
   getNextWeekContext,
   getPlanPageData,
   pausePlan,
@@ -66,12 +69,20 @@ function success(data) {
 function failure(error) {
   const allowedCodes = [
     "INVALID_ARGUMENT",
+    "INVALID_PLAN_DURATION",
     "UNAUTHORIZED",
     "GOAL_ALREADY_EXISTS",
     "PLAN_SCHEMA_INVALID",
     "RATE_LIMITED",
     "GOAL_NOT_FOUND",
     "PLAN_NOT_FOUND",
+    "PLAN_NOT_ACTIVE",
+    "PLAN_EXPIRED",
+    "PLAN_ALREADY_COMPLETED",
+    "PLAN_WINDOW_ALREADY_GENERATED",
+    "PLAN_WINDOW_INVALID",
+    "MANUAL_ACTION_INVALID",
+    "ACTION_ROLLOVER_FAILED",
     "TASK_NOT_FOUND",
     "CHECKIN_ALREADY_EXISTS",
     "PLAN_PAUSED",
@@ -137,12 +148,20 @@ function failure(error) {
   }
   const messages = {
     INVALID_ARGUMENT: error.message,
+    INVALID_PLAN_DURATION: error.message,
     UNAUTHORIZED: "用户身份无效，请重新进入小程序。",
     GOAL_ALREADY_EXISTS: error.message,
     PLAN_SCHEMA_INVALID: "计划内容暂时不可用，请重新生成。",
     RATE_LIMITED: error.message,
     GOAL_NOT_FOUND: "当前目标不存在，请重新进入小程序。",
     PLAN_NOT_FOUND: "当前计划不存在，请重新进入小程序。",
+    PLAN_NOT_ACTIVE: error.message,
+    PLAN_EXPIRED: error.message,
+    PLAN_ALREADY_COMPLETED: error.message,
+    PLAN_WINDOW_ALREADY_GENERATED: error.message,
+    PLAN_WINDOW_INVALID: error.message,
+    MANUAL_ACTION_INVALID: error.message,
+    ACTION_ROLLOVER_FAILED: error.message,
     TASK_NOT_FOUND: "今日暂无任务安排。",
     TASK_ALREADY_EXISTS: "任务已创建，请勿重复提交。",
     CHECKIN_ALREADY_EXISTS: "今天已经打过卡了，明天继续加油。",
@@ -435,6 +454,15 @@ exports.main = async (event) => {
     }
     if (event.action === "resumePlan") {
       return success(await resumePlan(context.OPENID, event));
+    }
+    if (event.action === "continueExpiredPlan") {
+      return success(await continueExpiredPlan(context.OPENID, event));
+    }
+    if (event.action === "archivePlan") {
+      return success(await archivePlan(context.OPENID, event));
+    }
+    if (event.action === "completePlanActions") {
+      return success(await completePlanActions(context.OPENID, event));
     }
     if (event.action === "generateNextWeek") {
       return await generateNextWeek(event, context.OPENID);

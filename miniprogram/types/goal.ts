@@ -2,7 +2,7 @@ export type GoalCategory = "exam" | "skill" | "career";
 export type GoalLevel = "zero" | "basic" | "intermediate" | "experienced" | "improve";
 export type GoalIntensity = "light" | "normal" | "intensive";
 export type PlanSource = "ai" | "fallback";
-export type PlanStatus = "active" | "paused" | "completed" | "reviewing";
+export type PlanStatus = "draft" | "active" | "paused" | "completed" | "expired" | "extended" | "archived" | "reviewing";
 export type PlanDayStatus =
   | "future"
   | "today"
@@ -122,6 +122,8 @@ export interface PlanPageData {
     weeklyGoal: string;
     startDate: string;
     endDate: string;
+    plannedEndDate: string;
+    planDurationDays: number;
     currentDay: number;
     totalDays: number;
     dailyReminderTime: string;
@@ -130,6 +132,9 @@ export interface PlanPageData {
     completionRate: number;
     nextWeekEligible: boolean;
     reviewEligible: boolean;
+    pendingCount: number;
+    rolloverCount: number;
+    needsFullPlanCompletion: boolean;
   } | null;
   days: PlanDaySummary[];
   recentDays: PlanDaySummary[];
@@ -140,6 +145,7 @@ export interface PlanActionResult {
   status?: PlanStatus;
   changed?: boolean;
   dailyReminderTime?: string;
+  rolledOverCount?: number;
 }
 
 export interface PostponeTaskResult {
