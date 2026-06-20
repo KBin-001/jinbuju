@@ -1,4 +1,15 @@
 {
   "navigationStyle": "custom",
-  "disableScroll": true
+  "disableScroll": true,
+  "usingComponents": {
+    "ant-button": "antd-mini/Button/index",
+    "ant-card": "antd-mini/Card/index",
+    "ant-checkbox": "antd-mini/Checkbox/index",
+    "ant-input": "antd-mini/Input/index",
+    "ant-loading": "antd-mini/Loading/index",
+    "ant-notice": "antd-mini/NoticeBar/index",
+    "ant-radio": "antd-mini/Radio/index",
+    "ant-steps": "antd-mini/Steps/index",
+    "ant-textarea": "antd-mini/Input/Textarea/index"
+  }
 }

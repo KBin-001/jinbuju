@@ -6,7 +6,7 @@
   </view>
 
   <view wx:if="{{status === 'loading'}}" class="preview-state">
-    <view class="loading-dot"></view>
+    <ant-loading type="spin" size="large" color="#356859" />
     <view class="state-title">{{isV2Create ? '正在读取行动方案' : '正在读取行动计划'}}</view>
     <view class="state-description">请稍等，正在加载方案内容。</view>
   </view>
@@ -15,7 +15,7 @@
     <view class="state-mark">!</view>
     <view class="state-title">计划加载遇到问题</view>
     <view class="state-description">{{errorMessage}}</view>
-    <button class="primary-button" bindtap="retry">重新加载</button>
+    <ant-button type="primary" className="growth-primary-button" bindtap="retry">重新加载</ant-button>
     <button class="text-action" bindtap="editGoal">{{isNextStage ? '返回阶段复盘' : '返回修改目标'}}</button>
   </view>
 
@@ -29,23 +29,31 @@
           <view class="regen-subtitle">我们会重新检查任务量、难度、行动方式和时间安排。</view>
         </view>
 
-        <view wx:if="{{preview.generatedBy === 'template'}}" class="optimization-failed">
+        <ant-notice wx:if="{{preview.generatedBy === 'template'}}" type="error" className="optimization-failed" ellipsisRow="{{3}}">
           <view>
             <view class="notice-title">当前是基础兜底方案</view>
             <view>AI 没有返回可用计划，已临时使用模板。原因：{{preview.fallbackReason || '暂未返回'}}</view>
           </view>
           <button wx:if="{{isNextStage && preview.previousStageId}}" bindtap="editGoal">重新复盘生成</button>
-        </view>
-        <view wx:elif="{{isV2Create && preview.generatedBy === 'ai_repaired'}}" class="optimization-notice">
+        </ant-notice>
+        <ant-notice wx:elif="{{isV2Create && preview.generatedBy === 'ai_repaired'}}" type="info" className="optimization-notice">
           <view class="notice-title">方案已完成自动修正</view>
           <view>系统已根据校验结果整理为可执行的行动阶段。</view>
-        </view>
-        <view wx:elif="{{isV2Create && (preview.generatedBy === 'regenerated_ai' || preview.generatedBy === 'regenerated_ai_repaired')}}" class="optimization-notice regen-success">
+        </ant-notice>
+        <ant-notice wx:elif="{{isV2Create && (preview.generatedBy === 'regenerated_ai' || preview.generatedBy === 'regenerated_ai_repaired')}}" type="primary" className="optimization-notice regen-success">
           <view class="notice-title">方案已根据你的反馈重新生成</view>
           <view>这是第 {{preview.currentVersion}} 版方案。</view>
+        </ant-notice>
+
+        <view class="ai-ready-banner preview-ai-hero">
+          <view class="ai-ready-mark">AI</view>
+          <view>
+            <view class="ai-ready-title">行动阶段已准备好</view>
+            <view class="ai-ready-copy">已按你的目标与节奏拆解，可以逐天查看后再开始。</view>
+          </view>
         </view>
 
-        <view class="plan-hero">
+        <ant-card className="plan-hero growth-ant-card growth-hero">
           <view class="plan-label">第 {{preview.stageNumber}} 个行动阶段 · {{preview.stagePlan.stage.durationDays}} 天</view>
           <view class="plan-summary">{{preview.stagePlan.stage.title}}</view>
           <view class="weekly-goal">
@@ -53,7 +61,7 @@
             <view>{{preview.stagePlan.stage.focus}}</view>
           </view>
           <view class="stage-summary">{{preview.stagePlan.stage.summary}}</view>
-        </view>
+        </ant-card>
 
         <view wx:for="{{weeks}}" wx:key="number" wx:for-item="week" class="week-card">
           <button class="week-header" data-week="{{week.number}}" bindtap="toggleWeek">
@@ -86,11 +94,11 @@
                 <block wx:if="{{editingSlotId === action.slotId}}">
                   <view class="edit-form">
                     <view class="edit-label">任务名称</view>
-                    <input maxlength="40" value="{{editTitle}}" bindinput="inputEditTitle" />
+                    <ant-input controlled="{{true}}" maxLength="{{40}}" value="{{editTitle}}" bindchange="inputEditTitle" />
                     <view class="edit-label">任务说明</view>
-                    <textarea maxlength="150" value="{{editDescription}}" bindinput="inputEditDescription" />
+                    <ant-textarea controlled="{{true}}" maxLength="{{150}}" value="{{editDescription}}" bindchange="inputEditDescription" />
                     <view class="edit-label">预计分钟数</view>
-                    <input type="number" value="{{editMinutes}}" bindinput="inputEditMinutes" />
+                    <ant-input controlled="{{true}}" type="number" value="{{editMinutes}}" bindchange="inputEditMinutes" />
                     <view class="edit-actions">
                       <button disabled="{{savingTask}}" bindtap="cancelEdit">取消</button>
                       <button class="save-button" loading="{{savingTask}}" disabled="{{savingTask}}" bindtap="saveTask">保存</button>
@@ -136,28 +144,31 @@
             <view>{{regenerationError}}</view>
           </view>
 
-          <view wx:if="{{showFeedbackPanel}}" class="feedback-panel">
+          <ant-popup visible="{{showFeedbackPanel}}" position="bottom" title="调整行动方案" showClose="{{true}}" className="feedback-popup" bindclose="closeFeedbackPanel">
+          <view class="feedback-panel">
             <view class="feedback-hint">告诉我们哪里不合适，AI 会重新设计整个阶段，而不是只修改几句话。</view>
 
             <view class="feedback-options">
-              <button
+              <ant-checkbox
                 wx:for="{{feedbackOptions}}"
                 wx:key="type"
                 wx:for-item="option"
-                class="feedback-chip {{feedbackTypeSet[option.type] ? 'selected' : ''}}"
+                className="feedback-chip {{feedbackTypeSet[option.type] ? 'selected' : ''}}"
+                checked="{{feedbackTypeSet[option.type]}}"
                 data-type="{{option.type}}"
-                bindtap="toggleFeedbackType"
-              >{{option.label}}</button>
+                bindchange="toggleFeedbackType"
+              >{{option.label}}</ant-checkbox>
             </view>
 
             <view wx:if="{{hasOtherFeedback || selectedFeedbackTypes.length > 0}}" class="feedback-note-section">
               <view class="edit-label">补充说明（可选，最多 200 字）</view>
-              <textarea
-                class="feedback-note-input"
-                maxlength="200"
+              <ant-textarea
+                className="feedback-note-input"
+                controlled="{{true}}"
+                maxLength="{{200}}"
                 placeholder="例如：我暂时无法去付费场馆"
                 value="{{feedbackNote}}"
-                bindinput="inputFeedbackNote"
+                bindchange="inputFeedbackNote"
               />
               <view class="note-counter">{{feedbackNote.length}}/200</view>
             </view>
@@ -167,15 +178,17 @@
             </view>
 
             <view class="feedback-actions">
-              <button class="feedback-cancel" disabled="{{regenerating}}" bindtap="closeFeedbackPanel">取消</button>
-              <button
-                class="feedback-submit"
+              <ant-button type="default" className="feedback-cancel" disabled="{{regenerating}}" bindtap="closeFeedbackPanel">取消</ant-button>
+              <ant-button
+                type="primary"
+                className="feedback-submit"
                 loading="{{regenerating}}"
                 disabled="{{regenerating || selectedFeedbackTypes.length === 0}}"
                 bindtap="submitRegeneration"
-              >重新生成方案</button>
+              >重新生成方案</ant-button>
             </view>
           </view>
+          </ant-popup>
         </view>
 
         <view class="plan-bottom-spacer"></view>
@@ -185,25 +198,25 @@
     <view class="preview-actions">
       <block wx:if="{{isV2Create && !showFeedbackPanel && !regenerating}}">
         <view class="actions-row">
-          <button class="confirm-button" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
+          <ant-button type="primary" className="confirm-button" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
             确认并开始
-          </button>
-          <button class="adjust-button" disabled="{{confirming || (preview.maxRegenerationCount - preview.regenerationCount) <= 0}}" bindtap="openFeedbackPanel">
+          </ant-button>
+          <ant-button type="default" className="adjust-button" disabled="{{confirming || (preview.maxRegenerationCount - preview.regenerationCount) <= 0}}" bindtap="openFeedbackPanel">
             需要调整
-          </button>
+          </ant-button>
         </view>
         <button wx:if="{{!showFeedbackPanel}}" class="text-action" disabled="{{confirming || regenerating}}" bindtap="editGoal">调整目标设置</button>
       </block>
       <block wx:elif="{{!isV2Create}}">
         <view class="actions-row">
-          <button class="confirm-button" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
+          <ant-button type="primary" className="confirm-button" loading="{{confirming}}" disabled="{{confirming || savingTask}}" bindtap="confirmStage">
             确认并开始
-          </button>
+          </ant-button>
         </view>
       </block>
       <block wx:else>
         <view class="actions-row">
-          <button class="confirm-button" disabled="{{true}}">调整中...</button>
+          <ant-button type="primary" className="confirm-button" disabled="{{true}}">调整中...</ant-button>
         </view>
         <button wx:if="{{!showFeedbackPanel}}" class="text-action" disabled="{{confirming || regenerating}}" bindtap="editGoal">调整目标设置</button>
       </block>

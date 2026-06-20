@@ -22,6 +22,7 @@ import {
 } from "../../utils/storage";
 
 type PageStatus = "loading" | "empty" | "error" | "preview" | "ready";
+type ActionDialogKind = "" | "postpone" | "pause" | "delete";
 
 /** Cache TTL in ms – data within this window is considered fresh. */
 const CACHE_TTL = 30_000;
@@ -121,6 +122,13 @@ Page({
     deleting: false,
     showManagementMenu: false,
     showStageFocus: false,
+    dialogVisible: false,
+    dialogBusy: false,
+    dialogKind: "" as ActionDialogKind,
+    dialogTitle: "",
+    dialogContent: "",
+    dialogTaskId: "",
+    dialogFooter: { buttons: [], layout: "horizontal" },
   },
 
   // ── In-memory cache metadata ──
@@ -278,15 +286,13 @@ Page({
     const taskId = String(event.currentTarget.dataset.taskId || "");
     const task = this.data.selectedDay?.tasks.find((item) => item.id === taskId);
     if (!task || !task.canPostpone || this.data.actionLoading) return;
-    wx.showModal({
-      title: "顺延到明天？",
-      content: "行动会移动到明天，当前阶段的其他行动不会改变。",
-      confirmText: "确认顺延",
-      confirmColor: "#356859",
-      success: (result: { confirm: boolean }) => {
-        if (result.confirm) this.postponeTask(task);
-      },
-    });
+    this.openActionDialog(
+      "postpone",
+      "顺延到明天？",
+      "行动会移动到明天，当前阶段的其他行动不会改变。",
+      "确认顺延",
+      task.id,
+    );
   },
 
   postponeTask(task: PlanPageTask) {
@@ -312,22 +318,12 @@ Page({
     const plan = this.data.pageData?.plan;
     if (!plan || plan.status !== "active" || this.data.actionLoading) return;
     this.closeManagementMenu();
-    wx.showModal({
-      title: "暂停当前阶段？",
-      content: "暂停后，每日行动会保留，但暂停期间不会计入连续行动统计。是否继续？",
-      confirmText: "暂停阶段",
-      confirmColor: "#356859",
-      success: (result: { confirm: boolean }) => {
-        if (!result.confirm) return;
-        this.setData({ actionLoading: "status" });
-        pauseCurrentPlan(plan.id)
-          .then(() => {
-            wx.showToast({ title: "阶段已暂停", icon: "none" });
-            this.loadPlan(true);
-          })
-          .catch((error: Error) => this.showActionError(error));
-      },
-    });
+    this.openActionDialog(
+      "pause",
+      "暂停当前阶段？",
+      "暂停后，每日行动会保留，但暂停期间不会计入连续行动统计。是否继续？",
+      "暂停阶段",
+    );
   },
 
   resumePlan() {
@@ -354,15 +350,69 @@ Page({
   confirmDelete() {
     if (this.data.deleting) return;
     this.closeManagementMenu();
-    wx.showModal({
-      title: "删除当前目标？",
-      content: "长期目标、当前阶段和相关行动都会删除，此操作无法撤销。",
-      confirmText: "确认删除",
-      confirmColor: "#C65353",
-      success: (result: { confirm: boolean }) => {
-        if (result.confirm) this.deletePlan();
+    this.openActionDialog(
+      "delete",
+      "删除当前目标？",
+      "长期目标、当前阶段和相关行动都会删除，此操作无法撤销。",
+      "确认删除",
+    );
+  },
+
+  openActionDialog(
+    kind: ActionDialogKind,
+    title: string,
+    content: string,
+    confirmText: string,
+    taskId = "",
+  ) {
+    this.setData({
+      dialogVisible: true,
+      dialogKind: kind,
+      dialogTitle: title,
+      dialogContent: content,
+      dialogTaskId: taskId,
+      dialogFooter: {
+        layout: "horizontal",
+        buttons: [
+          { id: "cancel", text: "取消", type: "default" },
+          { id: "confirm", text: confirmText, type: "primary", danger: kind === "delete" },
+        ],
       },
     });
+  },
+
+  closeActionDialog() {
+    if (!this.data.dialogBusy) {
+      this.setData({ dialogVisible: false, dialogKind: "", dialogTaskId: "" });
+    }
+  },
+
+  handleActionDialogButton(event: { detail?: { id?: string } }) {
+    if (event.detail?.id !== "confirm") {
+      this.closeActionDialog();
+      return;
+    }
+    const kind = this.data.dialogKind as ActionDialogKind;
+    const taskId = this.data.dialogTaskId;
+    this.setData({ dialogVisible: false, dialogKind: "", dialogTaskId: "" });
+    if (kind === "postpone") {
+      const task = this.data.selectedDay?.tasks.find((item) => item.id === taskId);
+      if (task) this.postponeTask(task);
+      return;
+    }
+    if (kind === "pause") {
+      const plan = this.data.pageData?.plan;
+      if (!plan || plan.status !== "active" || this.data.actionLoading) return;
+      this.setData({ actionLoading: "status" });
+      pauseCurrentPlan(plan.id)
+        .then(() => {
+          wx.showToast({ title: "阶段已暂停", icon: "none" });
+          this.loadPlan(true);
+        })
+        .catch((error: Error) => this.showActionError(error));
+      return;
+    }
+    if (kind === "delete") this.deletePlan();
   },
 
   deletePlan() {

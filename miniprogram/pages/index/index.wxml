@@ -1,6 +1,6 @@
 <view class="page today-page">
   <view wx:if="{{status === 'loading'}}" class="card state-card page-state">
-    <view class="loading-dot"></view>
+    <ant-skeleton animate="{{true}}" />
     <view class="state-title">正在准备今天的行动</view>
     <view class="state-description">稍等一下，马上回来。</view>
   </view>
@@ -9,37 +9,43 @@
     <view class="state-mark">!</view>
     <view class="state-title">今日数据加载失败</view>
     <view class="state-description">{{errorMessage}}</view>
-    <button class="primary-button" bindtap="retry">重新加载</button>
+    <ant-button type="primary" className="growth-primary-button" bindtap="retry">重新加载</ant-button>
   </view>
 
   <block wx:else>
-    <view class="today-header">
+    <view class="today-header growth-hero">
       <view class="date-row">
         <view>
+          <view class="hero-kicker">TODAY · ACTION COCKPIT</view>
           <view class="date-title">{{dateTitle}}</view>
           <view class="weekday">{{weekday}}</view>
         </view>
-        <view class="streak-pill" aria-label="已连续行动 {{user.streakDays}} 天">
-          <text class="streak-number">{{user.streakDays}}</text>
-          <text>天连续行动</text>
+        <view class="hero-progress" aria-label="今日完成度 {{completionRate}}%">
+          <ant-progress type="circle" percent="{{completionRate}}" strokeColor="#D8A84E" trailColor="rgba(255,255,255,.18)" width="{{82}}" />
         </view>
       </view>
       <view class="greeting">{{greetingText}}</view>
+      <view class="cockpit-bento">
+        <view class="cockpit-tile cockpit-gold"><view class="cockpit-value">{{user.streakDays}}<text class="cockpit-unit">天</text></view><view class="cockpit-label">连续行动</view></view>
+        <view class="cockpit-tile cockpit-blue"><view class="cockpit-value">{{completedCount}}<text class="cockpit-unit">/{{totalCount}}</text></view><view class="cockpit-label">今日完成</view></view>
+        <view class="cockpit-tile cockpit-purple"><view class="cockpit-value">{{goal ? goal.currentDay : 0}}<text class="cockpit-unit">天</text></view><view class="cockpit-label">当前阶段</view></view>
+      </view>
     </view>
 
-    <view wx:if="{{!goal && totalCount === 0}}" class="card empty-goal-card">
+    <ant-card wx:if="{{!goal && totalCount === 0}}" className="empty-goal-card growth-ant-card">
       <view class="section-eyebrow">你的第一个目标</view>
       <view class="empty-goal-title">还没有目标</view>
       <view class="empty-goal-description">把想做的事，变成今天能完成的一小步。</view>
-      <button
-        class="primary-button create-button"
+      <ant-button
+        type="primary"
+        className="create-button"
         loading="{{navigating}}"
         disabled="{{navigating}}"
         bindtap="goToCreateGoal"
       >
         创建目标
-      </button>
-    </view>
+      </ant-button>
+    </ant-card>
 
     <block wx:if="{{goal}}">
       <view wx:if="{{planPaused}}" class="paused-notice">
@@ -50,13 +56,13 @@
         <view class="paused-notice-title">当前阶段等待复盘</view>
         <view>完成阶段复盘并确认下一阶段后，新的今日行动会显示在这里。</view>
       </view>
-      <view class="card goal-card">
+      <ant-card className="goal-card growth-ant-card section-shell">
         <view class="card-heading-row">
           <view>
             <view class="section-eyebrow">当前目标</view>
             <view class="goal-title">{{goal.title}}</view>
           </view>
-          <view class="category-tag">{{categoryLabel}}</view>
+          <ant-tag type="fill-light" color="success">{{categoryLabel}}</ant-tag>
         </view>
         <view class="goal-meta">
           <view class="meta-item">
@@ -69,10 +75,10 @@
             <view class="meta-label">当前计划进度</view>
           </view>
         </view>
-      </view>
+      </ant-card>
     </block>
 
-    <view class="card progress-card">
+    <ant-card className="progress-card growth-ant-card accent-gold">
       <view class="card-heading-row">
         <view>
           <view class="section-eyebrow">今日进度</view>
@@ -83,20 +89,11 @@
         </view>
       </view>
       <view class="progress-bar-row">
-        <view
-          class="progress-track"
-          aria-role="progressbar"
-          aria-label="今日行动完成 {{completionRate}}%"
-          aria-valuemin="0"
-          aria-valuemax="100"
-          aria-valuenow="{{completionRate}}"
-        >
-          <view class="progress-fill" style="width: {{completionRate}}%;"></view>
-        </view>
+        <ant-progress className="growth-progress" percent="{{completionRate}}" strokeColor="#356859" trailColor="#E6ECE8" strokeWidth="{{10}}" />
         <view class="progress-rate">{{completionRate}}%</view>
       </view>
       <view class="progress-status">{{progressText}}</view>
-    </view>
+    </ant-card>
 
     <view class="task-section">
       <view class="section-title-row">
@@ -201,12 +198,15 @@
       </view>
     </view>
 
-    <view
-      wx:if="{{showQuickTaskPanel}}"
-      class="quick-task-overlay"
-      catchtap="closeQuickTaskPanel"
+    <ant-popup
+      visible="{{showQuickTaskPanel}}"
+      position="bottom"
+      title="添加计划外行动"
+      showClose="{{true}}"
+      className="quick-task-popup"
+      bindclose="closeQuickTaskPanel"
     >
-      <view class="quick-task-sheet" catchtap="preventBubble">
+      <view class="quick-task-sheet">
         <view class="quick-task-sheet-header">
           <view>
             <view class="quick-task-sheet-title">添加计划外行动</view>
@@ -219,14 +219,15 @@
             bindtap="closeQuickTaskPanel"
           >取消</button>
         </view>
-        <input
-          class="quick-task-input"
+        <ant-input
+          className="quick-task-input"
+          controlled="{{true}}"
           value="{{quickTitle}}"
           placeholder="例如：整理今天的会议记录"
-          maxlength="40"
+          maxLength="{{40}}"
           focus="{{showQuickTaskPanel}}"
-          confirm-type="done"
-          bindinput="onQuickTitleInput"
+          confirmType="done"
+          bindchange="onQuickTitleInput"
         />
         <button class="more-settings-button" bindtap="toggleMoreSettings">
           <text>时间与标签</text>
@@ -234,40 +235,32 @@
         </button>
         <view wx:if="{{showMoreSettings}}" class="more-settings">
           <view class="field-label">安排在</view>
-          <view class="quick-options">
-            <button class="quick-chip {{quickTimePeriod === 'morning' ? 'quick-chip-active' : ''}}" data-id="morning" bindtap="selectTimePeriod">上午</button>
-            <button class="quick-chip {{quickTimePeriod === 'afternoon' ? 'quick-chip-active' : ''}}" data-id="afternoon" bindtap="selectTimePeriod">下午</button>
-            <button class="quick-chip {{quickTimePeriod === 'evening' ? 'quick-chip-active' : ''}}" data-id="evening" bindtap="selectTimePeriod">晚上</button>
-            <button class="quick-chip {{quickTimePeriod === 'anytime' ? 'quick-chip-active' : ''}}" data-id="anytime" bindtap="selectTimePeriod">随时</button>
-          </view>
+          <ant-radio-group className="quick-radio-group" options="{{quickTimeOptions}}" value="{{quickTimePeriod}}" bindchange="changeQuickTimePeriod" />
           <view class="field-label settings-field-label">预计用时</view>
-          <view class="quick-options">
-            <button class="quick-chip {{quickEstimatedMinutes === 15 ? 'quick-chip-active' : ''}}" data-id="15" bindtap="selectDuration">15 分钟</button>
-            <button class="quick-chip {{quickEstimatedMinutes === 30 ? 'quick-chip-active' : ''}}" data-id="30" bindtap="selectDuration">30 分钟</button>
-            <button class="quick-chip {{quickEstimatedMinutes === 45 ? 'quick-chip-active' : ''}}" data-id="45" bindtap="selectDuration">45 分钟</button>
-            <button class="quick-chip {{quickEstimatedMinutes === 60 ? 'quick-chip-active' : ''}}" data-id="60" bindtap="selectDuration">60 分钟</button>
-          </view>
+          <ant-radio-group className="quick-radio-group" options="{{quickDurationOptions}}" value="{{quickEstimatedMinutes}}" bindchange="changeQuickDuration" />
           <view class="field-label settings-field-label">标签（可选）</view>
-          <input class="quick-task-input small-input" value="{{quickTagName}}" placeholder="例如：工作" maxlength="20" bindinput="onQuickTagInput" />
+          <ant-input className="quick-task-input small-input" controlled="{{true}}" value="{{quickTagName}}" placeholder="例如：工作" maxLength="{{20}}" bindchange="onQuickTagInput" />
         </view>
-        <button
-          class="primary-button add-task-button"
+        <ant-button
+          type="primary"
+          className="add-task-button"
           loading="{{creatingTask}}"
           disabled="{{creatingTask || !quickTitle}}"
           bindtap="createTodayTask"
-        >{{creatingTask ? '正在添加' : '添加到今日'}}</button>
+        >{{creatingTask ? '正在添加' : '添加到今日'}}</ant-button>
       </view>
-    </view>
+    </ant-popup>
 
     <view class="bottom-action">
-      <button
-        class="checkin-button {{checkedInToday ? 'checkin-button-done' : ''}}"
+      <ant-button
+        type="primary"
+        className="checkin-button {{checkedInToday ? 'checkin-button-done' : ''}}"
         disabled="{{navigating || !goal || !goal.planId || checkedInToday || planReadOnly}}"
         loading="{{navigating}}"
         bindtap="prepareCheckin"
       >
         {{checkinButtonText}}
-      </button>
+      </ant-button>
     </view>
   </block>
 </view>

@@ -1,3 +1,12 @@
 {
-  "navigationBarTitleText": "记录今日行动"
+  "navigationBarTitleText": "记录今日行动",
+  "usingComponents": {
+    "ant-button": "antd-mini/Button/index",
+    "ant-card": "antd-mini/Card/index",
+    "ant-loading": "antd-mini/Loading/index",
+    "ant-progress": "antd-mini/Progress/index",
+    "ant-radio-group": "antd-mini/Radio/RadioGroup/index",
+    "ant-tag": "antd-mini/Tag/index",
+    "ant-textarea": "antd-mini/Input/Textarea/index"
+  }
 }

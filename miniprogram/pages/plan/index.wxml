@@ -1,15 +1,15 @@
 <view class="page plan-page">
-  <view class="page-header plan-header">
+  <view class="page-header plan-header growth-hero">
     <view>
       <view class="page-eyebrow">长期目标行动记录</view>
-      <view class="page-title">进度</view>
+      <view class="page-title">成长档案</view>
       <view class="page-subtitle">看见当前阶段，也看见每一次行动。</view>
     </view>
     <button wx:if="{{status === 'ready'}}" class="management-menu-trigger" aria-label="打开阶段管理菜单" bindtap="toggleManagementMenu">•••</button>
   </view>
 
-  <view wx:if="{{showManagementMenu}}" class="management-menu-backdrop" catchtap="closeManagementMenu"></view>
-  <view wx:if="{{showManagementMenu && pageData}}" class="management-menu" catchtap="preventBubble">
+  <ant-popup visible="{{showManagementMenu && pageData}}" position="bottom" title="阶段管理" showClose="{{true}}" className="management-popup" bindclose="closeManagementMenu">
+  <view class="management-menu">
     <view class="management-menu-title">阶段管理</view>
     <picker mode="time" value="{{pageData.plan.dailyReminderTime}}" disabled="{{actionLoading !== '' || (pageData.plan.status !== 'active' && pageData.plan.status !== 'paused')}}" bindchange="changePlanTime">
       <view class="management-menu-row">
@@ -25,9 +25,21 @@
     </button>
     <button class="management-menu-row menu-danger-row" loading="{{deleting}}" disabled="{{deleting || actionLoading !== ''}}" bindtap="confirmDelete"><text>删除当前目标</text><text class="menu-arrow">›</text></button>
   </view>
+  </ant-popup>
+
+  <ant-dialog
+    visible="{{dialogVisible}}"
+    title="{{dialogTitle}}"
+    content="{{dialogContent}}"
+    footer="{{dialogFooter}}"
+    maskClosable="{{!dialogBusy}}"
+    closable="{{false}}"
+    bindclose="closeActionDialog"
+    bindbuttontap="handleActionDialogButton"
+  />
 
   <view wx:if="{{status === 'loading'}}" class="card state-card">
-    <view class="loading-dot"></view>
+    <ant-loading type="spin" size="large" color="#356859" />
     <view class="state-title">正在读取行动进度</view>
     <view class="state-description">正在同步你的目标和进度。</view>
   </view>
@@ -36,35 +48,35 @@
     <view class="state-mark">1</view>
     <view class="state-title">还没有进行中的目标</view>
     <view class="state-description">创建一个长期目标，开始第一个行动阶段。</view>
-    <button class="primary-button" bindtap="createGoal">创建目标</button>
+    <ant-button type="primary" className="growth-primary-button" bindtap="createGoal">创建目标</ant-button>
   </view>
 
   <view wx:elif="{{status === 'error'}}" class="card state-card">
     <view class="state-mark">!</view>
     <view class="state-title">进度加载失败</view>
     <view class="state-description">{{errorMessage}}</view>
-    <button class="primary-button" bindtap="retry">重新加载</button>
+    <ant-button type="primary" className="growth-primary-button" bindtap="retry">重新加载</ant-button>
   </view>
 
   <view wx:elif="{{status === 'preview'}}" class="card state-card">
     <view class="state-mark">1</view>
     <view class="state-title">行动阶段预览已准备好</view>
     <view class="state-description">确认后就可以开始今天的行动。</view>
-    <button class="primary-button" bindtap="continuePreview">继续查看阶段</button>
+    <ant-button type="primary" className="growth-primary-button" bindtap="continuePreview">继续查看阶段</ant-button>
   </view>
 
   <block wx:else>
-    <view class="card overview-card">
+    <ant-card className="overview-card growth-ant-card archive-overview">
       <view class="goal-heading">
         <view>
           <view class="section-eyebrow">当前目标</view>
           <view class="goal-title">{{pageData.goal.title}}</view>
         </view>
-        <view class="category-tag">{{categoryLabel}}</view>
+        <ant-tag type="fill-light" color="success">{{categoryLabel}}</ant-tag>
       </view>
       <view class="stage-row">
         <view><view class="stage-label">当前阶段</view><view class="goal-summary">{{pageData.plan.stageTitle}}</view></view>
-        <view class="status-badge status-{{pageData.plan.status}}">{{planStatusLabel}}</view>
+        <ant-tag type="fill-light" color="{{pageData.plan.status === 'paused' ? 'warning' : 'success'}}">{{planStatusLabel}}</ant-tag>
       </view>
       <view class="weekly-goal {{showStageFocus ? 'weekly-goal-expanded' : ''}}">
         <button class="weekly-goal-toggle" aria-expanded="{{showStageFocus}}" bindtap="toggleStageFocus">
@@ -74,9 +86,7 @@
         <view wx:if="{{showStageFocus}}" class="weekly-goal-content">{{pageData.plan.focus}}</view>
       </view>
       <view class="overview-progress">
-        <view class="progress-ring" style="background: conic-gradient(#356859 {{pageData.plan.completionRate}}%, #E8ECE6 0);" aria-role="progressbar" aria-label="阶段行动完成 {{pageData.plan.completionRate}}%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{pageData.plan.completionRate}}">
-          <view class="progress-ring-center"><view class="progress-ring-value">{{pageData.plan.completionRate}}%</view><view class="progress-ring-label">阶段进度</view></view>
-        </view>
+        <ant-progress type="circle" percent="{{pageData.plan.completionRate}}" strokeColor="#D8A84E" trailColor="#E8ECE6" width="{{96}}" />
         <view class="overview-stats">
           <view class="overview-stat"><view class="overview-stat-value">第 {{pageData.plan.currentDay}} / {{pageData.plan.totalDays}} 天</view><view class="overview-stat-label">当前阶段</view></view>
           <view class="overview-stat"><view class="overview-stat-value streak-flip">{{pageData.progress.streakDays}} 天</view><view class="overview-stat-label">连续行动</view></view>
@@ -84,12 +94,12 @@
         </view>
       </view>
       <view class="progress-copy">{{progressText}} · {{pageData.plan.completedCount}} / {{pageData.plan.totalCount}} 项完成</view>
-    </view>
+    </ant-card>
 
-    <view wx:if="{{pageData.plan.status === 'paused'}}" class="paused-notice">
+    <ant-notice wx:if="{{pageData.plan.status === 'paused'}}" type="info" className="paused-notice" ellipsisRow="{{2}}">
       <view class="paused-title">当前阶段已暂停</view>
       <view>行动会继续保留，暂停期间不能记录或顺延。</view>
-    </view>
+    </ant-notice>
 
     <view class="timeline-section">
       <view class="section-title">近 7 天行动</view>

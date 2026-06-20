@@ -39,6 +39,7 @@ import {
   saveStagePreviewCache,
 } from "../../utils/storage";
 import { addDays, formatDate } from "../../utils/date";
+import { getUiEventString, UiComponentEvent } from "../../utils/ui-event";
 
 interface DatasetEvent {
   currentTarget: {
@@ -142,6 +143,11 @@ function buildClarificationQuestions(
 
 Page({
   data: {
+    stepItems: [
+      { title: "目标" },
+      { title: "节奏" },
+      { title: "生成" },
+    ],
     pageStatus: "loading" as "loading" | "form" | "error",
     pageError: "",
     currentStep: 1,
@@ -317,11 +323,11 @@ Page({
     saveLongTermGoalDraft(newDraft);
   },
 
-  inputCustomGoal(event: { detail: { value?: string } }) {
+  inputCustomGoal(event: UiComponentEvent<unknown>) {
     this.resetAnalysisState();
     const newDraft = {
       ...this.data.draft,
-      customGoalTitle: String(event.detail.value || "").slice(0, 30),
+      customGoalTitle: getUiEventString(event).slice(0, 30),
     };
     this.setData({ draft: newDraft });
     saveLongTermGoalDraft(newDraft);
@@ -794,14 +800,14 @@ Page({
     );
   },
 
-  inputAnswer(event: { currentTarget: { dataset: { questionId?: string } }; detail: { value?: string } }) {
-    const questionId = String(event.currentTarget.dataset.questionId || "");
-    this.setAnswer(questionId, String(event.detail.value || ""));
+  inputAnswer(event: UiComponentEvent<unknown>) {
+    const questionId = String(event.currentTarget?.dataset?.questionId || "");
+    this.setAnswer(questionId, getUiEventString(event));
   },
 
-  inputNumberAnswer(event: { currentTarget: { dataset: { questionId?: string } }; detail: { value?: string } }) {
-    const questionId = String(event.currentTarget.dataset.questionId || "");
-    this.setAnswer(questionId, Number(event.detail.value || 0));
+  inputNumberAnswer(event: UiComponentEvent<unknown>) {
+    const questionId = String(event.currentTarget?.dataset?.questionId || "");
+    this.setAnswer(questionId, Number(getUiEventString(event) || 0));
   },
 
   validateClarification(): ClarificationAnswer[] | null {

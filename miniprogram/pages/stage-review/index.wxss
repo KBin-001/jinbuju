@@ -202,3 +202,39 @@
   font-size: 23rpx;
   color: var(--color-text-secondary);
 }
+
+.stats-card {
+  background:
+    radial-gradient(circle at 100% 0, rgba(157, 143, 214, 0.12), transparent 38%),
+    linear-gradient(145deg, #ffffff, #f7faf8);
+}
+
+.summary-bar-fill {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-growth));
+}
+
+.choice {
+  box-shadow: 0 6rpx 18rpx rgba(31, 77, 66, 0.04);
+}
+
+.choice-active {
+  box-shadow: 0 0 0 4rpx rgba(53, 104, 89, 0.08);
+}
+
+.submit-button {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-deep));
+  box-shadow: 0 12rpx 28rpx rgba(31, 77, 66, 0.18);
+}
+.review-hero { padding:38rpx; }
+.review-hero .page-eyebrow { color:#e8c97f; }
+.review-hero .page-title { color:#fff; font-size:48rpx; }
+.review-hero .page-subtitle { color:rgba(255,255,255,.68); }
+.stats-card { border:0; border-radius:36rpx; background:linear-gradient(145deg,#fff,#f2ead8); }
+.stats-grid { gap:14rpx; }
+.stat-item { border-radius:24rpx; background:#153f36; color:#fff; }
+.stat-item:nth-child(2) { background:linear-gradient(145deg,#5c78d6,#7567c8); }
+.stat-item:nth-child(3) { background:linear-gradient(145deg,#e67861,#d8a84e); }
+.stat-item .stat-label { color:rgba(255,255,255,.7); }
+.summary-card { border-left:7rpx solid #7567c8; background:#f7f8ff; }
+.summary-bar-fill { background:linear-gradient(90deg,#5c78d6,#7567c8); }
+.summary-tag { background:#f2dfb4; color:#725719; }

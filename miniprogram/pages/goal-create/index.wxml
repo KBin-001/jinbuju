@@ -1,5 +1,5 @@
 <view class="goal-page">
-  <view class="goal-header">
+  <view class="goal-header creator-hero">
     <button class="back-button" disabled="{{submitting && currentStep !== 3}}" bindtap="previousStep">‹</button>
     <view class="header-center">
       <view class="header-title">创建目标</view>
@@ -7,26 +7,26 @@
     </view>
     <view class="header-placeholder"></view>
   </view>
-  <view class="progress-track">
-    <view class="progress-value" style="width: {{pageStatus === 'form' ? currentStep * 25 : 0}}%;"></view>
-  </view>
+  <ant-steps className="goal-steps" items="{{stepItems}}" current="{{currentStep - 1}}" />
 
   <view wx:if="{{pageStatus === 'loading'}}" class="goal-state">
-    <view class="loading-dot"></view>
+    <ant-loading type="spin" size="large" color="#356859" />
     <view class="state-title">正在检查目标状态</view>
   </view>
   <view wx:elif="{{pageStatus === 'error'}}" class="goal-state">
     <view class="state-mark">!</view>
     <view class="state-title">暂时无法开始创建</view>
     <view class="state-description">{{pageError}}</view>
-    <button class="primary-button" bindtap="retryInitialize">重新加载</button>
+    <ant-button type="primary" className="growth-primary-button" bindtap="retryInitialize">重新加载</ant-button>
   </view>
 
   <scroll-view wx:else class="form-scroll" scroll-y enhanced show-scrollbar="{{false}}">
     <!-- Step 1: 目标描述 -->
-    <view wx:if="{{currentStep === 1}}" class="step-section">
+    <view wx:if="{{currentStep === 1}}" class="step-section step-section-intro">
+      <view class="growth-kicker">GROWTH OS · AI 行动规划</view>
       <view class="step-title">这次想进步什么？</view>
-      <view class="step-subtitle">选一个最接近的目标，不需要先写很多信息。</view>
+      <view class="step-lead">把想做的事，变成今天能完成的一小步。</view>
+      <view class="step-subtitle">AI 会先理解你的目标，再帮你拆解成可执行的行动阶段。</view>
       <view class="template-grid">
         <button
           wx:for="{{templateOptions}}"
@@ -39,15 +39,16 @@
           <view class="choice-description">{{item.description}}</view>
         </button>
       </view>
-      <view wx:if="{{draft.templateId === 'custom'}}" class="input-card">
-        <input
+      <ant-card wx:if="{{draft.templateId === 'custom'}}" className="input-card growth-ant-card">
+        <ant-input
+          controlled="{{true}}"
           value="{{draft.customGoalTitle}}"
-          maxlength="30"
+          maxLength="{{30}}"
           placeholder="例如：学会基础摄影"
-          bindinput="inputCustomGoal"
+          bindchange="inputCustomGoal"
         />
         <view class="input-count">{{draft.customGoalTitle.length}} / 30</view>
-      </view>
+      </ant-card>
     </view>
 
     <!-- Step 2: 关键情况确认 -->
@@ -93,7 +94,7 @@
         <text>{{advancedOpen ? '收起' : '展开'}}</text>
       </button>
 
-      <view wx:if="{{advancedOpen}}" class="advanced-card">
+      <ant-card wx:if="{{advancedOpen}}" className="advanced-card growth-ant-card">
         <view class="field-label">计划周期</view>
         <view class="chip-grid three-grid">
           <button
@@ -124,7 +125,7 @@
           </picker>
           <button wx:if="{{draft.deadline}}" class="clear-button" bindtap="clearDeadline">清除</button>
         </view>
-      </view>
+      </ant-card>
 
       <!-- Clarification section (shown after analysis) -->
       <view wx:if="{{showClarification && analysis}}" class="clarification-section">
@@ -164,15 +165,16 @@
           </view>
 
           <view wx:elif="{{question.type === 'multiple_choice'}}" class="answer-options">
-            <button
+            <ant-checkbox
               wx:for="{{question.optionViews}}"
               wx:key="value"
               wx:for-item="option"
-              class="answer-chip {{option.selected ? 'choice-chip-active' : ''}}"
+              className="answer-chip {{option.selected ? 'choice-chip-active' : ''}}"
+              checked="{{option.selected}}"
               data-question-id="{{question.id}}"
               data-value="{{option.value}}"
-              bindtap="toggleMultiAnswer"
-            >{{option.value}}</button>
+              bindchange="toggleMultiAnswer"
+            >{{option.value}}</ant-checkbox>
           </view>
 
           <view wx:elif="{{question.type === 'boolean'}}" class="answer-options">
@@ -190,24 +192,26 @@
             >暂时不行</button>
           </view>
 
-          <input
+          <ant-input
             wx:elif="{{question.type === 'number'}}"
-            class="answer-input"
+            className="answer-input"
             type="number"
+            controlled="{{true}}"
             value="{{answers[question.id]}}"
             placeholder="{{question.min}}～{{question.max}}"
             data-question-id="{{question.id}}"
-            bindinput="inputNumberAnswer"
+            bindchange="inputNumberAnswer"
           />
 
-          <textarea
+          <ant-textarea
             wx:else
-            class="answer-textarea"
-            maxlength="{{question.maxLength || 100}}"
+            className="answer-textarea"
+            controlled="{{true}}"
+            maxLength="{{question.maxLength || 100}}"
             value="{{answers[question.id]}}"
             placeholder="{{question.placeholder || '简单说明即可'}}"
             data-question-id="{{question.id}}"
-            bindinput="inputAnswer"
+            bindchange="inputAnswer"
           />
         </view>
       </view>
@@ -218,7 +222,7 @@
     <view wx:elif="{{currentStep === 3}}" class="step-section generation-step">
       <!-- Generating state -->
       <view wx:if="{{flowState === 'analyzing' || flowState === 'generating'}}" class="generation-panel">
-        <view class="loading-dot large-dot"></view>
+        <ant-loading type="spin" size="x-large" color="#356859" />
 
         <view class="phase-list">
           <view class="phase-item {{generationPhase === 'understanding' ? 'phase-active' : ''}} {{generationPhase === 'organizing' || generationPhase === 'generating' || generationPhase === 'validating' || generationPhase === 'completed' ? 'phase-done' : ''}}">
@@ -278,21 +282,22 @@
   <!-- Bottom actions -->
   <view wx:if="{{pageStatus === 'form'}}" class="bottom-actions">
     <block wx:if="{{currentStep < 3}}">
-      <button class="previous-button" disabled="{{submitting}}" bindtap="previousStep">
+      <ant-button type="default" className="previous-button" disabled="{{submitting}}" bindtap="previousStep">
         {{currentStep === 1 ? '返回' : '上一步'}}
-      </button>
-      <button
-        class="next-button"
+      </ant-button>
+      <ant-button
+        type="primary"
+        className="next-button"
         loading="{{submitting}}"
         disabled="{{submitting}}"
         bindtap="nextStep"
       >
         {{currentStep === 1 ? '下一步' : (analyzing ? '正在分析目标' : (showClarification ? '确认并生成方案' : '分析并生成方案'))}}
-      </button>
+      </ant-button>
     </block>
     <block wx:elif="{{currentStep === 3 && flowState === 'error'}}">
-      <button class="previous-button" bindtap="backToStep2">返回修改</button>
-      <button class="next-button" disabled="{{submitting}}" bindtap="retryGeneration">重新生成</button>
+      <ant-button type="default" className="previous-button" bindtap="backToStep2">返回修改</ant-button>
+      <ant-button type="primary" className="next-button" disabled="{{submitting}}" bindtap="retryGeneration">重新生成</ant-button>
     </block>
     <!-- Step 3 generating/completed: no buttons to prevent accidental interaction -->
   </view>

@@ -15,16 +15,16 @@
     "pages/about/index"
   ],
   "window": {
-    "backgroundColor": "#F5F7F2",
+    "backgroundColor": "#EDF1EE",
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#F5F7F2",
+    "navigationBarBackgroundColor": "#EDF1EE",
     "navigationBarTitleText": "进步局",
     "navigationBarTextStyle": "black"
   },
   "tabBar": {
     "color": "#7A8175",
-    "selectedColor": "#356859",
-    "backgroundColor": "#FFFFFF",
+    "selectedColor": "#153F36",
+    "backgroundColor": "#F7F2E8",
     "borderStyle": "white",
     "list": [
       {
@@ -54,6 +54,5 @@
     ]
   },
   "sitemapLocation": "sitemap.json",
-  "style": "v2",
-  "lazyCodeLoading": "requiredComponents"
+  "style": "v2"
 }

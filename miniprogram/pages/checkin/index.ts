@@ -13,6 +13,7 @@ import {
 } from "../../types/home";
 import { clearTodayCheckinDraft, getTodayCheckinDraft } from "../../utils/checkin-draft";
 import { CheckinServiceError } from "../../services/checkin";
+import { getUiEventString, UiComponentEvent } from "../../utils/ui-event";
 
 type PageStatus = "loading" | "ready" | "success" | "error";
 
@@ -102,6 +103,10 @@ Page({
 
     feeling: "normal" as CheckinFeeling,
     feelingOptions: FEELING_OPTIONS,
+    feelingRadioOptions: FEELING_OPTIONS.map((item) => ({
+      value: item.value,
+      label: `${item.emoji} ${item.label}`,
+    })),
     note: "",
     noteRemaining: 100,
     submitting: false,
@@ -200,11 +205,9 @@ Page({
       });
   },
 
-  selectTaskStatus(event: {
-    currentTarget: { dataset: { taskId?: string; status?: string } };
-  }) {
-    const taskId = String(event.currentTarget.dataset.taskId || "");
-    const statusValue = event.currentTarget.dataset.status as ActionResultStatus;
+  selectTaskStatus(event: UiComponentEvent<unknown>) {
+    const taskId = String(event.currentTarget?.dataset?.taskId || "");
+    const statusValue = getUiEventString(event) as ActionResultStatus;
 
     if (!taskId || !ACTION_STATUS_OPTIONS.some((o) => o.value === statusValue)) {
       return;
@@ -237,8 +240,8 @@ Page({
     });
   },
 
-  selectSkipReason(event: { currentTarget: { dataset: { value?: string } } }) {
-    const value = event.currentTarget.dataset.value as SkipReason;
+  selectSkipReason(event: UiComponentEvent<unknown>) {
+    const value = getUiEventString(event) as SkipReason;
     if (SKIP_REASON_OPTIONS.some((o) => o.value === value)) {
       // Toggle: if already selected, deselect.
       this.setData({
@@ -247,15 +250,15 @@ Page({
     }
   },
 
-  selectFeeling(event: { currentTarget: { dataset: { value?: string } } }) {
-    const value = event.currentTarget.dataset.value as CheckinFeeling;
+  selectFeeling(event: UiComponentEvent<unknown>) {
+    const value = getUiEventString(event) as CheckinFeeling;
     if (FEELING_OPTIONS.some((option) => option.value === value)) {
       this.setData({ feeling: value });
     }
   },
 
-  onNoteInput(event: { detail: { value?: string } }) {
-    const raw = String(event.detail.value || "");
+  onNoteInput(event: UiComponentEvent<unknown>) {
+    const raw = getUiEventString(event);
     const note = raw.slice(0, 100);
     this.setData({
       note,

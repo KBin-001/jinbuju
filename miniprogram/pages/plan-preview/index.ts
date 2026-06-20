@@ -23,6 +23,7 @@ import {
   getStagePreviewCache,
   saveStagePreviewCache,
 } from "../../utils/storage";
+import { getUiEventString, UiComponentEvent } from "../../utils/ui-event";
 
 type PreviewStatus = "loading" | "ready" | "error";
 
@@ -320,16 +321,16 @@ Page({
     });
   },
 
-  inputEditTitle(event: { detail: { value?: string } }) {
-    this.setData({ editTitle: String(event.detail.value || "").slice(0, 40) });
+  inputEditTitle(event: UiComponentEvent<unknown>) {
+    this.setData({ editTitle: getUiEventString(event).slice(0, 40) });
   },
 
-  inputEditDescription(event: { detail: { value?: string } }) {
-    this.setData({ editDescription: String(event.detail.value || "").slice(0, 150) });
+  inputEditDescription(event: UiComponentEvent<unknown>) {
+    this.setData({ editDescription: getUiEventString(event).slice(0, 150) });
   },
 
-  inputEditMinutes(event: { detail: { value?: string } }) {
-    this.setData({ editMinutes: Number(event.detail.value || 0) });
+  inputEditMinutes(event: UiComponentEvent<unknown>) {
+    this.setData({ editMinutes: Number(getUiEventString(event) || 0) });
   },
 
   cancelEdit() {
@@ -474,8 +475,8 @@ Page({
     });
   },
 
-  inputFeedbackNote(event: { detail: { value?: string } }) {
-    this.setData({ feedbackNote: String(event.detail.value || "").slice(0, 200) });
+  inputFeedbackNote(event: UiComponentEvent<unknown>) {
+    this.setData({ feedbackNote: getUiEventString(event).slice(0, 200) });
   },
 
   submitRegeneration() {

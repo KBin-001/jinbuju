@@ -397,3 +397,70 @@
   font-size: 28rpx;
   line-height: 1.5;
 }
+
+.user-card {
+  background:
+    radial-gradient(circle at 100% 0, rgba(243, 199, 106, 0.2), transparent 36%),
+    linear-gradient(145deg, #ffffff, #f4f8f5);
+}
+
+.avatar {
+  border: 4rpx solid #ffffff;
+  box-shadow: 0 8rpx 24rpx rgba(31, 77, 66, 0.12);
+}
+
+.goal-card,
+.community-card {
+  box-shadow: var(--shadow-card);
+}
+
+.stat-card {
+  background: linear-gradient(145deg, #ffffff, #fbfcfa);
+}
+
+.stat-card-wide {
+  background: linear-gradient(135deg, var(--color-primary-light), #ffffff);
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-growth));
+}
+
+.badge-unlocked {
+  border-color: rgba(243, 199, 106, 0.35);
+  background: linear-gradient(145deg, #fffdf8, var(--color-background-warm));
+  box-shadow: 0 8rpx 24rpx rgba(118, 95, 55, 0.08);
+}
+
+.menu-card {
+  box-shadow: 0 8rpx 24rpx rgba(31, 77, 66, 0.05);
+}
+
+.qrcode-popup-mask {
+  background: rgba(20, 31, 27, 0.54);
+  backdrop-filter: blur(8rpx);
+}
+
+.qrcode-popup {
+  box-shadow: var(--shadow-float);
+  animation: popup-enter 180ms ease-out;
+}
+
+@keyframes popup-enter {
+  from { opacity: 0; transform: translateY(18rpx) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+/* Personal growth hub */
+.profile-hero { padding:38rpx; }
+.profile-hero .page-eyebrow { color:#e8c97f; }
+.profile-hero .page-title { color:#fff; }
+.profile-hero .page-subtitle { color:rgba(255,255,255,.68); }
+.user-card { border:0; border-radius:36rpx; background:linear-gradient(145deg,#fff,#eef1fb); box-shadow:0 18rpx 48rpx rgba(21,63,54,.11); }
+.avatar { overflow:hidden; border:4rpx solid #fff; border-radius:50%; box-shadow:0 10rpx 24rpx rgba(21,63,54,.15); }
+.streak-box { border-radius:24rpx; background:linear-gradient(145deg,#f2dfb4,#d8a84e); color:#153f36; }
+.goal-card { border-left:7rpx solid #7567c8; background:linear-gradient(145deg,#fff,#f2effc); }
+.stats-grid { gap:16rpx; }
+.stat-card, .stats-card .stat-item { border:0; border-radius:26rpx; background:#f4f1e9; }
+.stat-card:nth-child(2), .stats-card .stat-item:nth-child(2) { background:#e6eafb; }
+.stat-card:nth-child(3), .stats-card .stat-item:nth-child(3) { background:#f5ddd7; }
+.menu-card { border:0; border-radius:34rpx; background:rgba(255,255,255,.82); }

@@ -2,7 +2,7 @@
 
   <!-- Loading state -->
   <view wx:if="{{status === 'loading'}}" class="card state-card page-state">
-    <view class="loading-dot"></view>
+    <ant-loading type="spin" size="large" color="#356859" />
     <view class="state-title">正在加载行动记录</view>
     <view class="state-description">稍等一下，马上回来。</view>
   </view>
@@ -12,7 +12,7 @@
     <view class="state-mark">!</view>
     <view class="state-title">记录行动遇到问题</view>
     <view class="state-description">{{errorMessage}}</view>
-    <button class="primary-button" bindtap="goBackToToday">返回今日页</button>
+    <ant-button type="primary" className="growth-primary-button" bindtap="goBackToToday">返回今日页</ant-button>
   </view>
 
   <!-- Success state -->
@@ -24,7 +24,7 @@
       <view class="confetti-piece confetti-7"></view><view class="confetti-piece confetti-8"></view>
       <view class="confetti-piece confetti-9"></view><view class="confetti-piece confetti-10"></view>
     </view>
-    <view class="card success-card">
+    <ant-card className="success-card growth-ant-card">
       <view class="success-mark" aria-label="打卡成功">✓</view>
       <view class="success-title">今天的行动已记录</view>
       <view class="success-stats">
@@ -38,17 +38,17 @@
         </view>
       </view>
       <view class="success-encouragement">{{encouragementText}}</view>
-    </view>
-    <button class="primary-button back-home-button" bindtap="goBackToToday">
+    </ant-card>
+    <ant-button type="primary" className="back-home-button" bindtap="goBackToToday">
       返回今日页
-    </button>
+    </ant-button>
   </view>
 
   <!-- Ready state: checkin form -->
   <block wx:else>
 
     <!-- Summary card -->
-    <view class="card summary-card">
+    <ant-card className="summary-card growth-ant-card checkin-hero">
       <view class="section-eyebrow">记录今日行动</view>
       <view class="summary-subtitle">为每项行动选择今天的完成情况。</view>
       <view class="summary-date">{{dateDisplay}}</view>
@@ -59,17 +59,8 @@
         </view>
         <view class="progress-rate">{{completionRate}}%</view>
       </view>
-      <view
-        class="progress-track"
-        aria-role="progressbar"
-        aria-label="今日行动完成 {{completionRate}}%"
-        aria-valuemin="0"
-        aria-valuemax="100"
-        aria-valuenow="{{completionRate}}"
-      >
-        <view class="progress-fill" style="width: {{completionRate}}%;"></view>
-      </view>
-    </view>
+      <ant-progress percent="{{completionRate}}" strokeColor="#D8A84E" trailColor="rgba(255,255,255,.18)" strokeWidth="{{10}}" />
+    </ant-card>
 
     <!-- Task list with status selectors -->
     <view class="task-status-section">
@@ -85,96 +76,60 @@
         <button class="primary-button" bindtap="goBackToToday">返回今日页</button>
       </view>
 
-      <view
+      <ant-card
         wx:for="{{taskItems}}"
         wx:key="id"
-        class="card task-status-card {{item.currentStatus !== '' ? 'task-status-selected' : ''}}"
+        className="task-status-card growth-ant-card {{item.currentStatus !== '' ? 'task-status-selected' : ''}}"
       >
         <view class="task-status-header">
           <view class="task-status-title">{{item.title}}</view>
         </view>
         <view wx:if="{{item.description}}" class="task-status-desc">{{item.description}}</view>
-        <view class="task-status-options">
-          <button
-            wx:for="{{item.statusOptions}}"
-            wx:for-item="opt"
-            wx:key="value"
-            class="status-btn status-btn-{{opt.value}} {{item.currentStatus === opt.value ? 'status-active' : ''}}"
-            data-task-id="{{item.id}}"
-            data-status="{{opt.value}}"
-            bindtap="selectTaskStatus"
-            aria-label="{{opt.label}}"
-          >
-            <text class="status-btn-icon">{{opt.icon}}</text>
-            <text class="status-btn-label">{{opt.label}}</text>
-          </button>
-        </view>
-      </view>
+        <ant-radio-group className="status-radio-group" options="{{item.statusOptions}}" value="{{item.currentStatus}}" data-task-id="{{item.id}}" bindchange="selectTaskStatus" />
+      </ant-card>
     </view>
 
     <!-- Skip reason selector (shown when overallStatus is not completed) -->
-    <view wx:if="{{showSkipReason}}" class="card reason-card">
+    <ant-card wx:if="{{showSkipReason}}" className="reason-card growth-ant-card">
       <view class="section-title">今天的主要原因</view>
       <view class="reason-hint">可选，帮助改进后续计划</view>
-      <view class="reason-options">
-        <button
-          wx:for="{{skipReasonOptions}}"
-          wx:key="value"
-          class="reason-btn {{skipReason === item.value ? 'reason-active' : ''}}"
-          data-value="{{item.value}}"
-          bindtap="selectSkipReason"
-          aria-label="选择原因：{{item.label}}"
-        >
-          <text>{{item.label}}</text>
-        </button>
-      </view>
-    </view>
+      <ant-radio-group className="reason-radio-group" options="{{skipReasonOptions}}" value="{{skipReason}}" bindchange="selectSkipReason" />
+    </ant-card>
 
     <!-- Feeling selector -->
-    <view class="card feeling-card">
+    <ant-card className="feeling-card growth-ant-card">
       <view class="section-title">今天的感受</view>
-      <view class="feeling-options">
-        <button
-          wx:for="{{feelingOptions}}"
-          wx:key="value"
-          class="feeling-btn {{feeling === item.value ? 'feeling-active' : ''}}"
-          data-value="{{item.value}}"
-          bindtap="selectFeeling"
-          aria-label="选择感受：{{item.label}}"
-        >
-          <text class="feeling-emoji">{{item.emoji}}</text>
-          <text class="feeling-label">{{item.label}}</text>
-        </button>
-      </view>
-    </view>
+      <ant-radio-group className="feeling-radio-group" options="{{feelingRadioOptions}}" value="{{feeling}}" bindchange="selectFeeling" />
+    </ant-card>
 
     <!-- Note input -->
-    <view class="card note-card">
+    <ant-card className="note-card growth-ant-card">
       <view class="note-header">
         <view class="section-title">今日备注</view>
         <view class="note-count">{{noteRemaining}}/100</view>
       </view>
       <view class="note-hint">记录一下今天的想法（可选）</view>
-      <textarea
-        class="note-input"
+      <ant-textarea
+        className="note-input"
+        controlled="{{true}}"
         placeholder="写点什么..."
-        maxlength="100"
+        maxLength="{{100}}"
         value="{{note}}"
-        bindinput="onNoteInput"
-        auto-height
+        bindchange="onNoteInput"
       />
-    </view>
+    </ant-card>
 
     <!-- Submit button -->
     <view class="bottom-action">
-      <button
-        class="checkin-button"
+      <ant-button
+        type="primary"
+        className="checkin-button"
         disabled="{{submitting || !canSubmit}}"
         loading="{{submitting}}"
         bindtap="doSubmitCheckin"
       >
         {{submitButtonText}}
-      </button>
+      </ant-button>
     </view>
 
   </block>

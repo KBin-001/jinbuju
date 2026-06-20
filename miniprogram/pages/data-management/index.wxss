@@ -23,7 +23,8 @@
   margin-top: 24rpx;
   padding: 26rpx;
   border-radius: 24rpx;
-  background: #fff0ee;
+  border: 1rpx solid rgba(180, 92, 85, 0.2);
+  background: var(--color-danger-light);
   color: #8f3e37;
   line-height: 1.65;
 }
@@ -60,9 +61,15 @@
   background: #f9faf7;
 }
 
+.confirmation-input:focus {
+  border-color: var(--color-danger);
+  background: #ffffff;
+}
+
 .danger-button {
-  background: #b44c43;
+  background: linear-gradient(135deg, #b45c55, #91453f);
   color: #ffffff;
+  box-shadow: 0 12rpx 28rpx rgba(145, 69, 63, 0.16);
 }
 
 .danger-button[disabled] {
@@ -74,3 +81,12 @@
   color: #b44c43;
   font-size: 24rpx;
 }
+.data-hero { padding:38rpx; background:linear-gradient(145deg,#493735,#714944); }
+.data-hero .page-eyebrow { color:#f0c795; }
+.data-hero .page-title { color:#fff; }
+.data-hero .page-subtitle { color:rgba(255,255,255,.68); }
+.scope-card { border:0; border-radius:34rpx; background:linear-gradient(145deg,#fff,#f5ddd7); }
+.scope-list view { position:relative; padding-left:32rpx; }
+.scope-list view::before { position:absolute; top:15rpx; left:2rpx; width:12rpx; height:12rpx; border-radius:50%; background:#e67861; content:""; }
+.warning-card { border:1rpx solid rgba(230,120,97,.2); border-radius:28rpx; background:#fff7f4; }
+.confirmation-card { border:2rpx solid rgba(230,120,97,.24); border-radius:34rpx; box-shadow:0 16rpx 40rpx rgba(113,73,68,.1); }

@@ -1,8 +1,8 @@
 <view class="page team-page">
-  <view class="page-header">
+  <view class="page-header growth-hero team-hero">
     <view class="page-eyebrow">3～5 人轻量陪伴</view>
     <view class="page-title">小队</view>
-    <view class="page-subtitle">只展示行动进度，不聊天、不打扰。</view>
+    <view class="page-subtitle">轻量陪伴，只展示必要进度，不聊天、不打扰。</view>
   </view>
 
   <view wx:if="{{status === 'loading'}}" class="card state-card">
@@ -82,12 +82,9 @@
         class="card member-card {{item.isSelf ? 'member-self' : ''}}"
       >
         <view class="member-top">
-          <image
-            class="member-avatar"
-            src="{{item.avatarDisplay}}"
-            mode="aspectFill"
-            aria-label="{{item.nickname}}的头像"
-          />
+          <ant-badge type="{{item.todayCompleted ? 'dot' : 'text'}}" text="{{item.todayCompleted ? '' : '待'}}" position="bottom-right" bgColor="{{item.todayCompleted ? '#D8A84E' : '#7567C8'}}">
+            <ant-avatar className="member-avatar" size="large" src="{{item.avatarDisplay}}" aria-label="{{item.nickname}}的头像" />
+          </ant-badge>
           <view class="member-main">
             <view class="member-name-row">
               <view class="member-name">{{item.nickname}}</view>

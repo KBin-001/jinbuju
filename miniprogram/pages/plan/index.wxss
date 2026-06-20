@@ -3,6 +3,38 @@
   padding-top: 40rpx;
 }
 
+/* Growth archive visual layer */
+.overview-card {
+  background:
+    radial-gradient(circle at 100% 0, rgba(139, 191, 114, 0.14), transparent 34%),
+    linear-gradient(145deg, #ffffff, #f7faf8);
+}
+
+.progress-ring {
+  box-shadow: 0 12rpx 30rpx rgba(31, 77, 66, 0.12);
+}
+
+.recent-day {
+  box-shadow: 0 6rpx 18rpx rgba(31, 77, 66, 0.05);
+}
+
+.day-chip {
+  box-shadow: 0 8rpx 24rpx rgba(31, 77, 66, 0.06);
+}
+
+.day-selected {
+  background: linear-gradient(145deg, #ffffff, var(--color-primary-light));
+  box-shadow: 0 12rpx 30rpx rgba(53, 104, 89, 0.14);
+}
+
+.management-popup .management-menu {
+  position: static;
+  width: auto;
+  margin: 0 24rpx calc(24rpx + env(safe-area-inset-bottom));
+  border-radius: 24rpx;
+  box-shadow: none;
+}
+
 .plan-header,
 .stage-row,
 .overview-progress,
@@ -781,3 +813,20 @@
   font-size: 23rpx;
   line-height: 1.55;
 }
+/* Growth archive */
+.plan-header { margin:0 0 30rpx; padding:38rpx; }
+.plan-header .page-eyebrow { color:#e8c97f; }
+.plan-header .page-title { color:#fff; }
+.plan-header .page-subtitle { color:rgba(255,255,255,.68); }
+.management-menu-trigger { position:relative; z-index:2; color:#fff; background:rgba(255,255,255,.12); }
+.archive-overview { border:0; border-radius:36rpx; background:linear-gradient(145deg,#fff,#f2ead8); box-shadow:0 18rpx 48rpx rgba(21,63,54,.11); }
+.overview-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12rpx; }
+.overview-stat { padding:18rpx; border-radius:22rpx; background:rgba(255,255,255,.68); }
+.recent-grid { gap:10rpx; padding:16rpx; border-radius:30rpx; background:#153f36; }
+.recent-day { border:0; background:rgba(255,255,255,.08); color:#fff; }
+.recent-completed { background:linear-gradient(145deg,#d8a84e,#b9822d); color:#153f36; }
+.day-chip { border:0; border-radius:26rpx; background:#fff; box-shadow:0 10rpx 28rpx rgba(21,63,54,.08); }
+.day-selected { background:linear-gradient(145deg,#5c78d6,#7567c8); color:#fff; box-shadow:0 14rpx 34rpx rgba(92,120,214,.25); }
+.task-card { border-left:7rpx solid #5c78d6; }
+.task-completed { border-left-color:#78ad84; background:#f1f6f2; }
+.management-popup { --popup-background:#f7f2e8; }

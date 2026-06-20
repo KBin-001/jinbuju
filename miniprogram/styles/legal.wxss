@@ -1,17 +1,22 @@
 .legal-page {
   padding-top: 40rpx;
+  background:
+    radial-gradient(circle at 100% 0, rgba(123, 167, 201, 0.09), transparent 28%),
+    var(--color-background);
 }
 
 .legal-title {
-  font-size: 44rpx;
-  font-weight: 700;
+  font-size: 48rpx;
+  font-weight: 750;
+  line-height: 1.35;
 }
 
 .legal-notice {
   margin-top: 24rpx;
   padding: 24rpx;
   border-radius: 22rpx;
-  background: #fff4dc;
+  border: 1rpx solid rgba(243, 199, 106, 0.28);
+  background: var(--color-background-warm);
   color: #725625;
   font-size: 24rpx;
   line-height: 1.65;
@@ -19,6 +24,11 @@
 
 .legal-section {
   margin-top: 36rpx;
+  padding: 30rpx;
+  border: 1rpx solid var(--color-border);
+  border-radius: 26rpx;
+  background: #ffffff;
+  box-shadow: 0 8rpx 24rpx rgba(31, 77, 66, 0.05);
 }
 
 .legal-heading {
@@ -31,3 +41,19 @@
   color: var(--color-text-secondary);
   line-height: 1.85;
 }
+.legal-page {
+  background: radial-gradient(circle at 100% 0, rgba(216,168,78,.16), transparent 28%), #edf1ee;
+}
+
+.legal-page .page-header {
+  padding: 36rpx;
+  border-radius: 36rpx;
+  background: linear-gradient(145deg,#153f36,#356859);
+  box-shadow: 0 20rpx 50rpx rgba(21,63,54,.2);
+}
+
+.legal-page .page-eyebrow { color:#e8c97f; }
+.legal-page .page-title { color:#fff; }
+.legal-page .page-subtitle { color:rgba(255,255,255,.68); }
+.legal-page .card, .legal-section { border:0; border-radius:30rpx; background:rgba(255,255,255,.86); box-shadow:0 12rpx 34rpx rgba(21,63,54,.07); }
+.legal-page .card:nth-of-type(even), .legal-section:nth-of-type(even) { background:linear-gradient(145deg,#fff,#eef1fb); }

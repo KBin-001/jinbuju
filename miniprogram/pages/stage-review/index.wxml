@@ -1,5 +1,5 @@
 <view class="page review-page">
-  <view class="page-header">
+  <view class="page-header growth-hero review-hero">
     <view class="page-eyebrow">行动阶段复盘</view>
     <view class="page-title">回顾，再走下一段</view>
     <view class="page-subtitle">用真实完成情况调整节奏，不追求一次做到完美。</view>

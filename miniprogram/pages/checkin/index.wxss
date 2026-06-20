@@ -270,6 +270,52 @@
   color: var(--color-primary);
 }
 
+/* Calm action journal */
+.checkin-page {
+  background:
+    radial-gradient(circle at 100% 0, rgba(157, 143, 214, 0.1), transparent 30%),
+    var(--color-background);
+}
+
+.summary-card,
+.task-status-card,
+.feeling-card,
+.reason-card,
+.note-card {
+  box-shadow: var(--shadow-card);
+}
+
+.summary-card {
+  background: linear-gradient(145deg, #ffffff, #f4f8f5);
+}
+
+.status-btn-active,
+.feeling-option-active,
+.reason-option-active {
+  border-color: var(--color-primary) !important;
+  background: var(--color-primary-light) !important;
+  box-shadow: 0 0 0 4rpx rgba(53, 104, 89, 0.08);
+}
+
+.submit-bar {
+  border-top: 1rpx solid var(--color-border);
+  background: rgba(246, 248, 243, 0.94);
+  box-shadow: 0 -12rpx 36rpx rgba(31, 77, 66, 0.08);
+}
+
+.success-card {
+  background:
+    radial-gradient(circle at 50% 0, rgba(243, 199, 106, 0.24), transparent 38%),
+    #ffffff;
+}
+
+.status-radio-group,
+.reason-radio-group,
+.feeling-radio-group {
+  display: block;
+  margin-top: 18rpx;
+}
+
 .feeling-emoji {
   display: block;
   font-size: 36rpx;
@@ -461,3 +507,19 @@
   background: #d9ded8;
   color: #899087;
 }
+/* Check-in dashboard */
+.checkin-page { background: radial-gradient(circle at 100% 8%,rgba(216,168,78,.18),transparent 26%),#edf1ee; }
+.checkin-hero { position:relative; overflow:hidden; padding:38rpx; border:0; border-radius:40rpx; background:linear-gradient(145deg,#153f36,#356859); color:#fff; box-shadow:0 22rpx 56rpx rgba(21,63,54,.22); }
+.checkin-hero::after { position:absolute; right:-60rpx; bottom:-100rpx; width:250rpx; height:250rpx; border-radius:50%; background:rgba(216,168,78,.16); content:""; }
+.checkin-hero .section-eyebrow { color:#e8c97f; }
+.checkin-hero .summary-subtitle, .checkin-hero .summary-date, .checkin-hero .progress-count, .checkin-hero .progress-rate { position:relative; z-index:1; color:#fff; }
+.task-status-card { border:0; border-left:7rpx solid #5c78d6; border-radius:28rpx; background:linear-gradient(145deg,#fff,#f4f6ff); }
+.task-status-card:nth-child(3n+2) { border-left-color:#e67861; background:linear-gradient(145deg,#fff,#fff6f3); }
+.task-status-card:nth-child(3n) { border-left-color:#d8a84e; background:linear-gradient(145deg,#fff,#fffaf0); }
+.task-status-selected { box-shadow:0 16rpx 40rpx rgba(92,120,214,.16); }
+.reason-card { background:linear-gradient(145deg,#fffaf0,#f4e5c4); }
+.feeling-card { background:linear-gradient(145deg,#faf8ff,#e8e3fa); }
+.note-card { background:linear-gradient(145deg,#fff,#eef4f0); }
+.success-card { border:0; background:linear-gradient(145deg,#153f36,#356859); color:#fff; box-shadow:var(--shadow-float); }
+.success-card .success-title, .success-card .stat-value { color:#fff; }
+.success-card .success-encouragement, .success-card .stat-label { color:rgba(255,255,255,.7); }

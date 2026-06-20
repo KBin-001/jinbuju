@@ -5,6 +5,66 @@
   padding-bottom: calc(176rpx + env(safe-area-inset-bottom));
 }
 
+/* Today action cockpit */
+.today-header {
+  margin: -8rpx -8rpx 34rpx;
+  padding: 38rpx 34rpx 32rpx;
+}
+
+.greeting {
+  position: relative;
+  z-index: 1;
+  max-width: 480rpx;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 30rpx;
+  line-height: 1.55;
+}
+
+.hero-kicker { margin-bottom: 10rpx; color: #e8c97f; font-size: 19rpx; font-weight: 700; letter-spacing: 3rpx; }
+.hero-progress { position: relative; z-index: 1; padding: 8rpx; border-radius: 50%; background: rgba(255, 255, 255, 0.08); }
+.hero-progress { --progress-indicator-color: #ffffff; }
+.cockpit-bento { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12rpx; margin-top: 30rpx; }
+.cockpit-tile { min-width: 0; padding: 19rpx 16rpx; border: 1rpx solid rgba(255, 255, 255, 0.12); border-radius: 22rpx; background: rgba(255, 255, 255, 0.09); backdrop-filter: blur(12rpx); }
+.cockpit-gold { border-top-color: #d8a84e; }
+.cockpit-blue { border-top-color: #7f99ef; }
+.cockpit-purple { border-top-color: #a89be8; }
+.cockpit-value { color: #ffffff; font-size: 34rpx; font-weight: 760; }
+.cockpit-unit { margin-left: 4rpx; color: rgba(255, 255, 255, 0.64); font-size: 20rpx; font-weight: 500; }
+.cockpit-label { margin-top: 5rpx; color: rgba(255, 255, 255, 0.62); font-size: 19rpx; }
+.today-header .greeting { color: rgba(255, 255, 255, 0.82); }
+
+.goal-card {
+  background: linear-gradient(145deg, #ffffff, #f7faf8);
+}
+
+.progress-card {
+  background: linear-gradient(145deg, #ffffff, #fffaf0);
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-growth));
+}
+
+.task-card {
+  box-shadow: 0 8rpx 26rpx rgba(31, 77, 66, 0.07);
+}
+
+.task-detail-panel {
+  border: 1rpx solid var(--color-border);
+  background: #fbfcfa;
+}
+
+.task-note-item {
+  border-color: rgba(243, 199, 106, 0.3);
+  background: var(--color-background-warm);
+}
+
+.bottom-action {
+  border-top: 1rpx solid rgba(230, 236, 232, 0.9);
+  background: rgba(246, 248, 243, 0.94);
+  box-shadow: 0 -12rpx 36rpx rgba(31, 77, 66, 0.08);
+}
+
 .page-state {
   margin-top: 80rpx;
 }
@@ -19,6 +79,9 @@
 }
 
 .date-title {
+  position: relative;
+  z-index: 1;
+  color: #ffffff;
   font-size: 38rpx;
   font-weight: 700;
   line-height: 1.35;
@@ -26,7 +89,7 @@
 
 .weekday {
   margin-top: 6rpx;
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.62);
   font-size: 24rpx;
 }
 
@@ -101,6 +164,7 @@
   position: relative;
   overflow: hidden;
   padding-left: 38rpx;
+  background: linear-gradient(145deg, #ffffff, #eef1fb);
 }
 
 .goal-card::before {
@@ -109,7 +173,7 @@
   bottom: 0;
   left: 0;
   width: 6rpx;
-  background: var(--color-primary);
+  background: linear-gradient(180deg, var(--color-blue), var(--color-purple));
   content: "";
 }
 
@@ -309,6 +373,17 @@
   background: var(--color-surface);
 }
 
+.quick-task-popup .quick-task-sheet {
+  max-height: 72vh;
+  padding-top: 12rpx;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.quick-radio-group {
+  margin-top: 14rpx;
+}
+
 .quick-task-sheet > .more-settings-button,
 .quick-task-sheet > .add-task-button {
   width: 100% !important;
@@ -469,6 +544,10 @@
 .period-group {
   margin-top: 24rpx;
 }
+
+.period-group:nth-of-type(3n + 1) .task-card { border-left: 7rpx solid var(--color-blue); }
+.period-group:nth-of-type(3n + 2) .task-card { border-left: 7rpx solid var(--color-coral); }
+.period-group:nth-of-type(3n) .task-card { border-left: 7rpx solid var(--color-sun); }
 
 .period-title {
   padding-left: 6rpx;

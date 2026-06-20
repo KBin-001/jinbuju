@@ -9,6 +9,7 @@ import {
   UserProgress,
 } from "../../types/home";
 import { saveTodayCheckinDraft } from "../../utils/checkin-draft";
+import { getUiEventString, UiComponentEvent } from "../../utils/ui-event";
 
 type PageStatus = "loading" | "success" | "error";
 
@@ -20,12 +21,6 @@ interface TaskToggleEvent {
     dataset: {
       id?: string | number;
     };
-  };
-}
-
-interface InputEvent {
-  detail: {
-    value?: string;
   };
 }
 
@@ -185,6 +180,18 @@ Page({
     showQuickTaskPanel: false,
     showMoreSettings: false,
     creatingTask: false,
+    quickTimeOptions: [
+      { label: "上午", value: "morning" },
+      { label: "下午", value: "afternoon" },
+      { label: "晚上", value: "evening" },
+      { label: "随时", value: "anytime" },
+    ],
+    quickDurationOptions: [
+      { label: "15 分钟", value: 15 },
+      { label: "30 分钟", value: 30 },
+      { label: "45 分钟", value: 45 },
+      { label: "60 分钟", value: 60 },
+    ],
   },
 
   // ── In-memory cache metadata ──
@@ -344,8 +351,8 @@ Page({
     });
   },
 
-  onQuickTitleInput(event: InputEvent) {
-    this.setData({ quickTitle: String(event.detail.value || "") });
+  onQuickTitleInput(event: UiComponentEvent<unknown>) {
+    this.setData({ quickTitle: getUiEventString(event) });
   },
 
   openQuickTaskPanel() {
@@ -364,8 +371,22 @@ Page({
 
   preventBubble() {},
 
-  onQuickTagInput(event: InputEvent) {
-    this.setData({ quickTagName: String(event.detail.value || "") });
+  onQuickTagInput(event: UiComponentEvent<unknown>) {
+    this.setData({ quickTagName: getUiEventString(event) });
+  },
+
+  changeQuickTimePeriod(event: UiComponentEvent<unknown>) {
+    const value = getUiEventString(event);
+    if (["morning", "afternoon", "evening", "anytime"].includes(value)) {
+      this.setData({ quickTimePeriod: value as TodayTask["timePeriod"] });
+    }
+  },
+
+  changeQuickDuration(event: UiComponentEvent<unknown>) {
+    const value = Number(getUiEventString(event));
+    if ([15, 30, 45, 60].includes(value)) {
+      this.setData({ quickEstimatedMinutes: value });
+    }
   },
 
   selectTimePeriod(event: TaskToggleEvent) {

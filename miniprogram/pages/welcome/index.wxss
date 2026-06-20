@@ -241,3 +241,13 @@
     height: 88rpx;
   }
 }
+.welcome-page { background:radial-gradient(circle at 90% 8%,rgba(216,168,78,.24),transparent 28%),radial-gradient(circle at 0 65%,rgba(92,120,214,.18),transparent 30%),linear-gradient(155deg,#153f36,#285f51 58%,#1d3141); color:#fff; }
+.brand-name, .hero-title { color:#fff; }
+.hero-label { color:#e8c97f; letter-spacing:3rpx; }
+.hero-subtitle { color:rgba(255,255,255,.68); }
+.brand-mark { background:linear-gradient(145deg,#f0d28c,#d8a84e); box-shadow:0 12rpx 32rpx rgba(0,0,0,.2); }
+.example-card { border:1rpx solid rgba(255,255,255,.14); border-radius:34rpx; background:rgba(255,255,255,.1); color:#fff; backdrop-filter:blur(18rpx); }
+.example-title, .task-title { color:#fff; }
+.task-meta, .example-note { color:rgba(255,255,255,.62); }
+.start-button { background:linear-gradient(135deg,#f0d28c,#d8a84e); color:#153f36; box-shadow:0 16rpx 38rpx rgba(216,168,78,.24); }
+.example-button { border-color:rgba(255,255,255,.22); color:#fff; }

@@ -1,7 +1,8 @@
 <view class="page profile-page">
-  <view class="page-header">
+  <view class="page-header growth-hero profile-hero">
     <view class="page-eyebrow">看见每一步积累</view>
-    <view class="page-title">我的</view>
+    <view class="page-title">我的成长</view>
+    <view class="page-subtitle">目标、行动数据与个人设置，都在这里。</view>
   </view>
 
   <!-- 社群二维码浮窗 -->
@@ -40,7 +41,9 @@
 
   <block wx:else>
     <view class="card user-card">
-      <image class="avatar" src="{{avatarDisplay}}" mode="aspectFill" aria-label="用户头像" />
+      <ant-badge type="bubble" text="{{profile.user.streakDays}}天" position="bottom-right" bgColor="#D8A84E">
+        <ant-avatar className="avatar" size="x-large" src="{{avatarDisplay}}" aria-label="用户头像" />
+      </ant-badge>
       <view class="user-main">
         <view class="nickname">{{profile.user.nickname}}</view>
         <view class="user-copy">加入进步局 {{profile.user.joinedDays}} 天</view>
