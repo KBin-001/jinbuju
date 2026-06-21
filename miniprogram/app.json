@@ -2,6 +2,7 @@
   "pages": [
     "pages/welcome/index",
     "pages/goal-create/index",
+    "pages/action-edit/index",
     "pages/goal-generate/index",
     "pages/plan-preview/index",
     "pages/stage-review/index",
@@ -39,12 +40,6 @@
         "text": "进度",
         "iconPath": "images/icons/tab-progress.png",
         "selectedIconPath": "images/icons/tab-progress-active.png"
-      },
-      {
-        "pagePath": "pages/team/index",
-        "text": "小队",
-        "iconPath": "images/icons/tab-team.png",
-        "selectedIconPath": "images/icons/tab-team-active.png"
       },
       {
         "pagePath": "pages/profile/index",

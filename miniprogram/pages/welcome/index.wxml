@@ -25,7 +25,7 @@
     <view class="hero">
       <view class="hero-label">把目标变成行动</view>
       <view class="hero-title">把想变好，拆成今天就能做到的一步</view>
-      <view class="hero-subtitle">把长期目标拆成今天能完成的一小步，搭子陪你持续行动</view>
+      <view class="hero-subtitle">创建目标，手动安排每天的小行动，记录真实投入和进步</view>
     </view>
 
     <view wx:if="{{showExample}}" class="example-card">
@@ -34,7 +34,7 @@
           <view class="example-tag">目标示例</view>
           <view class="example-title">长期目标：提升面试表达</view>
         </view>
-        <view class="example-day">第 1 天</view>
+        <view class="example-day">今天</view>
       </view>
       <view class="example-task">
         <view class="task-check">1</view>

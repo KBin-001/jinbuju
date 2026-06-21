@@ -1,13 +1,1 @@
-{
-  "navigationBarTitleText": "成长档案",
-  "usingComponents": {
-    "ant-button": "antd-mini/Button/index",
-    "ant-card": "antd-mini/Card/index",
-    "ant-dialog": "antd-mini/Dialog/index",
-    "ant-loading": "antd-mini/Loading/index",
-    "ant-notice": "antd-mini/NoticeBar/index",
-    "ant-popup": "antd-mini/Popup/index",
-    "ant-progress": "antd-mini/Progress/index",
-    "ant-tag": "antd-mini/Tag/index"
-  }
-}
+{"navigationBarTitleText":"成长档案","enablePullDownRefresh":false}

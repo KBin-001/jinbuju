@@ -1,11 +1,1 @@
-{
-  "navigationStyle": "custom",
-  "disableScroll": true,
-  "usingComponents": {
-    "ant-button": "antd-mini/Button/index",
-    "ant-card": "antd-mini/Card/index",
-    "ant-input": "antd-mini/Input/index",
-    "ant-loading": "antd-mini/Loading/index",
-    "ant-steps": "antd-mini/Steps/index"
-  }
-}
+{"navigationBarTitleText":"创建长期目标","enablePullDownRefresh":false}

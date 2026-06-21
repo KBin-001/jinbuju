@@ -1,11 +1,1 @@
-{
-  "navigationBarTitleText": "我的",
-  "enablePullDownRefresh": false,
-  "usingComponents": {
-    "ant-avatar": "antd-mini/Avatar/index",
-    "ant-badge": "antd-mini/Badge/index",
-    "ant-button": "antd-mini/Button/index",
-    "ant-card": "antd-mini/Card/index",
-    "ant-loading": "antd-mini/Loading/index"
-  }
-}
+{"navigationBarTitleText":"我的","enablePullDownRefresh":false}
