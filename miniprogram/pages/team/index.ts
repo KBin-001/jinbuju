@@ -2,6 +2,7 @@ import {
   getMyTeam,
   joinTeam as requestJoinTeam,
   sendEncouragement,
+  syncTeamActivity,
   TeamServiceError,
 } from "../../services/team";
 import {
@@ -10,6 +11,9 @@ import {
   TeamPageData,
   TeamSummary,
 } from "../../types/team";
+import { getActiveGoal } from "../../services/manualGoal";
+import { getTasksByDate } from "../../services/manualTask";
+import { formatDate } from "../../utils/date";
 
 type PageStatus = "loading" | "empty" | "error" | "ready";
 
@@ -100,7 +104,21 @@ Page({
       });
     }
 
-    getMyTeam()
+    const goal = getActiveGoal();
+    const today = formatDate(new Date());
+    const syncRequest = goal
+      ? syncTeamActivity({
+          goalTitle: goal.title,
+          tasks: getTasksByDate(goal.id, today).map((task) => ({
+            id: task.id,
+            status: task.status,
+            actualMinutes: task.actualMinutes,
+            estimatedMinutes: task.estimatedMinutes,
+          })),
+        }).catch(() => undefined)
+      : Promise.resolve(undefined);
+
+    syncRequest.then(() => getMyTeam())
       .then((data: TeamPageData) => {
         this._lastFetchTime = Date.now();
         this._loading = false;
@@ -159,7 +177,13 @@ Page({
   joinTeam() {
     if (this.data.joining) return;
     this.setData({ joining: true });
-    requestJoinTeam()
+    const goal = getActiveGoal();
+    if (!goal) {
+      this.setData({ joining: false });
+      wx.showToast({ title: "请先创建目标", icon: "none" });
+      return;
+    }
+    requestJoinTeam({ goalTitle: goal.title })
       .then(() => {
         wx.showToast({
           title: "已加入行动小队",

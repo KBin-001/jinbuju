@@ -42,6 +42,12 @@
         "selectedIconPath": "images/icons/tab-progress-active.png"
       },
       {
+        "pagePath": "pages/team/index",
+        "text": "小队",
+        "iconPath": "images/icons/tab-team.png",
+        "selectedIconPath": "images/icons/tab-team-active.png"
+      },
+      {
         "pagePath": "pages/profile/index",
         "text": "我的",
         "iconPath": "images/icons/tab-profile.png",

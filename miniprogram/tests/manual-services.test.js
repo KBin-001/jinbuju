@@ -16,7 +16,7 @@ global.wx = {
 };
 
 const { createGoal } = require("../services/manualGoal.ts");
-const { createTask, getTasksByDate, rescheduleTask, updateTaskStatus } = require("../services/manualTask.ts");
+const { createTask, getTasksByDate, getTodayPageTasks, rescheduleTask, updateTaskStatus } = require("../services/manualTask.ts");
 const { getProgressSummary, recordDailyCheckin } = require("../services/manualStats.ts");
 
 const today = "2026-06-21";
@@ -35,6 +35,8 @@ rescheduleTask(pending.id);
 
 assert.equal(getTasksByDate(goal.id, today).length, 2);
 assert.equal(getTasksByDate(goal.id, "2026-06-22").length, 1);
+assert.equal(getTodayPageTasks(goal.id, today).length, 2);
+assert.equal(getTodayPageTasks(goal.id, "2026-06-22").length, 2);
 const firstCheckin = recordDailyCheckin(goal.id, today);
 const repeatedCheckin = recordDailyCheckin(goal.id, today);
 assert.equal(firstCheckin.id, repeatedCheckin.id);

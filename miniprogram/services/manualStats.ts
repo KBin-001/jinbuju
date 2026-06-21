@@ -7,7 +7,7 @@ export function getProgressSummary(goalId: string, today = formatDate(new Date()
   const tasks = readManualStore().tasks.filter((task) => task.goalId === goalId && task.status !== "rescheduled");
   const todayTasks = tasks.filter((task) => task.currentDate === today);
   const recentDays: DailyActionSummary[] = [];
-  for (let offset = -6; offset <= 0; offset += 1) {
+  for (let offset = 0; offset >= -6; offset -= 1) {
     const date = formatDate(addDays(new Date(`${today}T00:00:00`), offset));
     const dayTasks = tasks.filter((task) => task.currentDate === date);
     recentDays.push({ date, label: offset === 0 ? "今天" : `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`, completedCount: dayTasks.filter((task) => task.status === "completed").length, partialCount: dayTasks.filter((task) => task.status === "partially_completed").length, totalCount: dayTasks.length, isToday: offset === 0 });

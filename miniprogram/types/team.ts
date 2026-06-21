@@ -32,6 +32,8 @@ export interface TeamMemberSummary {
   stageCompletionRate: number;
   encouragementCount: number;
   encouragedByMeToday: boolean;
+  goalTitle: string;
+  todayMinutes: number;
 }
 
 export interface TeamPageData {
@@ -40,8 +42,17 @@ export interface TeamPageData {
 }
 
 export interface JoinTeamInput {
-  goalId?: string;
-  stageId?: string;
+  goalTitle?: string;
+}
+
+export interface SyncTeamActivityInput {
+  goalTitle: string;
+  tasks: Array<{
+    id: string;
+    status: string;
+    actualMinutes?: number;
+    estimatedMinutes: number;
+  }>;
 }
 
 export interface JoinTeamResult {

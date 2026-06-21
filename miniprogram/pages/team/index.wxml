@@ -1,8 +1,8 @@
 <view class="page team-page">
   <view class="page-header growth-hero team-hero">
-    <view class="page-eyebrow">3～5 人轻量陪伴</view>
+    <view class="page-eyebrow">3～5 人自律同行</view>
     <view class="page-title">小队</view>
-    <view class="page-subtitle">轻量陪伴，只展示必要进度，不聊天、不打扰。</view>
+    <view class="page-subtitle">目标可以不同，认真行动这件事相同。</view>
   </view>
 
   <view wx:if="{{status === 'loading'}}" class="card state-card">
@@ -15,7 +15,7 @@
     <view class="state-mark">3</view>
     <view class="state-title">还没有加入行动小队</view>
     <view class="state-description">
-      和相同目标方向的伙伴一起行动，只展示进度，不聊天、不打扰。
+      学习、运动、求职或创作，都可以加入同一个自律小队。
     </view>
     <ant-button
       type="primary"
@@ -47,8 +47,8 @@
 
       <view class="team-detail">
         <view class="detail-row">
-          <text class="detail-label">目标类型</text>
-          <text class="detail-value">{{categoryLabel}}</text>
+          <text class="detail-label">小队定位</text>
+          <text class="detail-value">跨目标自律同行</text>
         </view>
         <view class="detail-row">
           <text class="detail-label">当前阶段</text>
@@ -91,7 +91,7 @@
               <view class="member-name">{{item.nickname}}</view>
               <view wx:if="{{item.isSelf}}" class="self-tag">我</view>
             </view>
-            <view class="member-streak">连续行动 {{item.streakDays}} 天</view>
+            <view class="member-streak">目标：{{item.goalTitle || '正在建立目标'}}</view>
           </view>
           <view class="today-tag {{item.todayRest ? 'today-rest' : (item.todayCompleted ? 'today-done' : 'today-pending')}}">
             {{item.todayStatusText}}
@@ -100,8 +100,8 @@
 
         <view class="member-progress-row">
           <view>
-            <view class="member-progress-value">{{item.stageCompletionRate}}%</view>
-            <view class="member-progress-label">阶段进度</view>
+            <view class="member-progress-value">{{item.todayMinutes || 0}} 分钟</view>
+            <view class="member-progress-label">今日投入</view>
           </view>
           <view>
             <view class="member-progress-value">{{item.encouragementCount}}</view>

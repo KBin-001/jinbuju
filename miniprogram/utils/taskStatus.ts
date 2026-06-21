@@ -9,14 +9,7 @@
  * 数据库中不保存 "待开始" 这类纯展示文案，它只用于页面渲染。
  */
 
-/** 任务执行状态：与数据库 status 字段保持一致 */
-export type ActionTaskStatus =
-  | "pending"
-  | "in_progress"
-  | "completed"
-  | "partially_completed"
-  | "skipped"
-  | "rescheduled";
+import { ActionTaskStatus } from "../types/manual";
 
 /** 任务日期状态 */
 export type TaskDateStatus = "today" | "future" | "past";
@@ -33,16 +26,12 @@ export interface DisplayStatusTask {
   rolloverCount?: number;
 }
 
-/** 页面显示文案 */
-export type ActionTaskDisplayStatus =
-  | "待开始"
-  | "未到日期"
-  | "待继续"
-  | "进行中"
-  | "已完成"
-  | "完成一部分"
-  | "今天不做"
-  | "已顺延";
+/** 页面显示状态，不会写回数据库。 */
+export interface ActionTaskDisplayStatus {
+  text: "待开始" | "未到日期" | "待继续" | "已完成" | "完成一部分" | "今天不做" | "已顺延";
+  tone: "neutral" | "success" | "warning" | "muted";
+  badge?: "待继续";
+}
 
 /**
  * 比较 YYYY-MM-DD 业务日期字符串。
@@ -83,12 +72,9 @@ export function isCarryOverTask(task: DisplayStatusTask): boolean {
  *
  * 规则：
  * - completed                 → 已完成
- * - partially_completed
- *     · 今天                   → 完成一部分
- *     · 过去（未到今天）        → 待继续（卡片内仍可弱提示完成一部分）
+ * - partially_completed       → 完成一部分（过去日期额外提示待继续）
  * - skipped                   → 今天不做
  * - rescheduled               → 已顺延
- * - in_progress               → 进行中
  * - pending
  *     · 今天                   → 待开始（不再显示 "未开始"）
  *     · 未来                   → 未到日期
@@ -103,20 +89,22 @@ export function getActionTaskDisplayStatus(
 
   switch (status) {
     case "completed":
-      return "已完成";
+      return { text: "已完成", tone: "success" };
     case "partially_completed":
-      return dateStatus === "past" ? "待继续" : "完成一部分";
+      return {
+        text: "完成一部分",
+        tone: "neutral",
+        badge: dateStatus === "past" ? "待继续" : undefined,
+      };
     case "skipped":
-      return "今天不做";
+      return { text: "今天不做", tone: "muted" };
     case "rescheduled":
-      return "已顺延";
-    case "in_progress":
-      return "进行中";
+      return { text: "已顺延", tone: "muted" };
     case "pending":
     default:
-      if (dateStatus === "future") return "未到日期";
-      if (dateStatus === "past") return "待继续";
-      return "待开始";
+      if (dateStatus === "future") return { text: "未到日期", tone: "muted" };
+      if (dateStatus === "past") return { text: "待继续", tone: "warning" };
+      return { text: "待开始", tone: "success" };
   }
 }
 

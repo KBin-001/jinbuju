@@ -1,1 +1,10 @@
-{"navigationBarTitleText":"今日行动","enablePullDownRefresh":false}
+{
+  "navigationBarTitleText": "今日行动",
+  "enablePullDownRefresh": false,
+  "usingComponents": {
+    "ant-button": "antd-mini/Button/index",
+    "ant-card": "antd-mini/Card/index",
+    "ant-icon": "antd-mini/Icon/index",
+    "ant-tag": "antd-mini/Tag/index"
+  }
+}

@@ -1,4 +1,5 @@
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
+const SHANGHAI_OFFSET_MILLISECONDS = 8 * 60 * 60 * 1000;
 
 function pad(value: number): string {
   return String(value).padStart(2, "0");
@@ -6,6 +7,12 @@ function pad(value: number): string {
 
 export function formatDate(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** 按 Asia/Shanghai 时区生成 YYYY-MM-DD 业务日期。 */
+export function getTodayBusinessDate(now: Date = new Date()): string {
+  const shanghaiDate = new Date(now.getTime() + SHANGHAI_OFFSET_MILLISECONDS);
+  return `${shanghaiDate.getUTCFullYear()}-${pad(shanghaiDate.getUTCMonth() + 1)}-${pad(shanghaiDate.getUTCDate())}`;
 }
 
 export function addDays(date: Date, days: number): Date {

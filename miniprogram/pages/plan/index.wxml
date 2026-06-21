@@ -1,1 +1,37 @@
-<view class="page progress-page"><view wx:if="{{status === 'loading'}}" class="card state-card"><view class="loading-dot"></view><view class="state-title">正在整理行动档案</view></view><view wx:elif="{{status === 'error'}}" class="card state-card"><view class="state-mark">!</view><view class="state-title">进度读取失败</view><view class="state-description">{{errorMessage}}</view><button class="primary-button" bindtap="retry">重新加载</button></view><view wx:elif="{{!goal}}" class="card state-card"><view class="state-mark">0</view><view class="state-title">还没有行动目标</view><view class="state-description">创建目标后，这里会沉淀你的每次行动。</view><button class="primary-button" bindtap="createGoal">创建目标</button></view><block wx:else><view class="growth-hero archive-hero"><view class="hero-kicker">GROWTH ARCHIVE</view><view class="hero-title">成长档案</view><view class="hero-goal">{{goal.title}}</view><view class="hero-rate"><text>{{completionRate}}</text><text class="rate-unit">%</text></view><view class="hero-copy">累计行动完成率</view></view><view class="metric-grid"><view class="metric-card green"><view class="metric-value">{{summary.totalTasks}}</view><view class="metric-label">累计行动</view></view><view class="metric-card gold"><view class="metric-value">{{summary.completedTasks}}</view><view class="metric-label">已完成</view></view><view class="metric-card coral"><view class="metric-value">{{summary.totalActualMinutes}}</view><view class="metric-label">投入分钟</view></view><view class="metric-card blue"><view class="metric-value">{{summary.totalActionDays}}</view><view class="metric-label">行动天数</view></view></view><view class="card today-card"><view class="section-title">今日完成情况</view><view class="today-count"><text>{{summary.todayCompleted}}</text> / {{summary.todayTotal}} 项</view><view class="progress-track"><view class="progress-fill" style="width: {{summary.todayTotal ? summary.todayCompleted / summary.todayTotal * 100 : 0}}%"></view></view></view><view class="section-title section-gap">最近 7 天行动记录</view><view class="week-card card"><view wx:for="{{summary.recentDays}}" wx:key="date" class="day-column"><view class="day-bar-wrap"><view class="day-bar {{item.completedCount ? 'day-done' : item.partialCount ? 'day-partial' : ''}}" style="height: {{item.totalCount ? 28 + (item.completedCount + item.partialCount) * 16 : 12}}rpx"></view></view><view class="day-label">{{item.label}}</view><view class="day-state">{{item.completedCount ? '完成' : item.partialCount ? '部分' : '未记录'}}</view></view></view><view class="section-heading"><view class="section-title">待继续行动</view><button class="mini-add" bindtap="addTask">＋ 添加</button></view><view wx:if="{{summary.unfinishedTasks.length === 0}}" class="card empty-copy">当前没有待继续的行动，给自己留一点空间也很好。</view><button wx:for="{{summary.unfinishedTasks}}" wx:key="id" class="card pending-card" data-id="{{item.id}}" bindtap="editTask"><view class="pending-main"><view class="pending-title">{{item.title}}</view><view class="pending-meta">{{item.currentDate}} · 预计 {{item.estimatedMinutes}} 分钟</view></view><view class="pending-arrow">›</view></button></block></view>
+<view class="page progress-page">
+  <view wx:if="{{status === 'loading'}}" class="card state-card"><view class="loading-dot"></view><view class="state-title">正在整理行动档案</view></view>
+  <view wx:elif="{{status === 'error'}}" class="card state-card"><view class="state-mark">!</view><view class="state-title">进度读取失败</view><view class="state-description">{{errorMessage}}</view><button class="primary-button" bindtap="retry">重新加载</button></view>
+  <view wx:elif="{{!goal}}" class="card state-card"><view class="state-mark">0</view><view class="state-title">还没有行动目标</view><view class="state-description">创建目标后，这里会沉淀你的每次行动。</view><button class="primary-button" bindtap="createGoal">创建目标</button></view>
+
+  <block wx:else>
+    <view class="growth-hero archive-hero">
+      <view class="hero-kicker">GROWTH ARCHIVE</view><view class="hero-title">成长档案</view><view class="hero-goal">{{goal.title}}</view>
+      <view class="hero-rate"><text>{{completionRate}}</text><text class="rate-unit">%</text></view><view class="hero-copy">累计行动完成率</view>
+    </view>
+
+    <view class="metric-grid">
+      <view class="metric-card green"><view class="metric-value">{{summary.totalTasks}}</view><view class="metric-label">累计行动</view></view>
+      <view class="metric-card gold"><view class="metric-value">{{summary.completedTasks}}</view><view class="metric-label">已完成</view></view>
+      <view class="metric-card coral"><view class="metric-value">{{summary.totalActualMinutes}}</view><view class="metric-label">投入分钟</view></view>
+      <view class="metric-card blue"><view class="metric-value">{{summary.totalActionDays}}</view><view class="metric-label">行动天数</view></view>
+    </view>
+
+    <view class="card today-card"><view class="section-title">今日完成情况</view><view class="today-count"><text>{{summary.todayCompleted}}</text> / {{summary.todayTotal}} 项</view><view class="progress-track"><view class="progress-fill" style="width: {{summary.todayTotal ? summary.todayCompleted / summary.todayTotal * 100 : 0}}%"></view></view></view>
+
+    <view class="section-title section-gap">最近 7 天行动记录</view>
+    <view class="week-card card">
+      <view wx:for="{{summary.recentDays}}" wx:key="date" class="day-column {{item.isToday ? 'day-today' : ''}}">
+        <view class="day-bar-wrap"><view class="day-bar {{item.completedCount ? 'day-done' : item.partialCount ? 'day-partial' : ''}}" style="height: {{item.totalCount ? 28 + (item.completedCount + item.partialCount) * 16 : 12}}rpx"></view></view>
+        <view class="day-label">{{item.label}}</view><view class="day-state">{{item.completedCount ? '完成' : item.partialCount ? '部分' : '未记录'}}</view>
+      </view>
+    </view>
+
+    <view class="section-heading pending-heading"><view><view class="section-title">待继续行动</view><view class="section-copy">给尚未完成的事情留一个清晰位置</view></view><button class="mini-add" bindtap="addTask">＋ 添加</button></view>
+    <view wx:if="{{summary.unfinishedTasks.length === 0}}" class="card empty-copy">当前没有待继续的行动，给自己留一点空间也很好。</view>
+    <button wx:for="{{summary.unfinishedTasks}}" wx:key="id" class="card pending-card" data-id="{{item.id}}" bindtap="editTask">
+      <view class="pending-date"><view>待继续</view><text>{{item.currentDate}}</text></view>
+      <view class="pending-main"><view class="pending-title">{{item.title}}</view><view wx:if="{{item.description}}" class="pending-description">{{item.description}}</view><view class="pending-meta"><text>预计 {{item.estimatedMinutes}} 分钟</text><text>{{item.status === 'partially_completed' ? '完成一部分' : '待继续'}}</text></view></view>
+      <view class="pending-arrow">›</view>
+    </button>
+  </block>
+</view>

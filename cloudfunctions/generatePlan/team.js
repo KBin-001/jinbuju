@@ -82,8 +82,10 @@ async function buildMemberSummary(team, membership, currentUserKey, businessDate
   let todayCompleted = false;
   let todayRest = false;
   let stageCompletionRate = 0;
+  let goalTitle = String(membership.goalTitle || "正在建立目标");
+  let todayMinutes = 0;
   if (memberOpenid) {
-    const [checkin, tasks] = await Promise.all([
+    const [checkin, tasks, activity] = await Promise.all([
       getFirst("checkins", {
         _openid: memberOpenid,
         planId: membership.stageId,
@@ -93,8 +95,12 @@ async function buildMemberSummary(team, membership, currentUserKey, businessDate
         _openid: memberOpenid,
         planId: membership.stageId,
       }),
+      db.collection("team_activity").doc(stableId("team_activity", `${membership.userKey}:${businessDate}`)).get().catch(() => null),
     ]);
-    todayCompleted = Boolean(checkin);
+    const activityData = activity && activity.data;
+    todayCompleted = Boolean(activityData ? activityData.todayCompleted : checkin);
+    goalTitle = String((activityData && activityData.goalTitle) || membership.goalTitle || "正在建立目标").slice(0, 30);
+    todayMinutes = Math.max(Number((activityData && activityData.todayMinutes) || 0), 0);
     todayRest =
       !tasks.some((task) => task.taskDate === businessDate) &&
       businessDate >= String(team.stageStartDate) &&
@@ -124,6 +130,8 @@ async function buildMemberSummary(team, membership, currentUserKey, businessDate
     stageCompletionRate,
     encouragementCount,
     encouragedByMeToday: Boolean(encouragedRecord && encouragedRecord.data),
+    goalTitle,
+    todayMinutes,
   };
 }
 
@@ -205,6 +213,7 @@ async function joinExistingTeam(openid, userKey, stage, team) {
         teamId: team._id,
         userKey,
         goalId: stage.goal._id,
+        goalTitle: stage.goal.title,
         stageId: stage.plan._id,
         status: "active",
         joinOrder: nextCount,
@@ -252,6 +261,7 @@ async function createTeamAndJoin(openid, userKey, stage) {
           teamId,
           userKey,
           goalId: stage.goal._id,
+          goalTitle: stage.goal.title,
           stageId: stage.plan._id,
           status: "active",
           joinOrder: nextCount,
@@ -269,11 +279,11 @@ async function createTeamAndJoin(openid, userKey, stage) {
     const now = db.serverDate();
     await transaction.collection("teams").doc(teamId).set({
       data: {
-        name: `${CATEGORY_LABELS[stage.goal.category] || "成长行动"}第 ${teamNumber} 队`,
+        name: `自律同行第 ${teamNumber} 队`,
         teamNumber,
-        goalCategory: stage.goal.category,
+        goalCategory: "all",
         stageType: "current_plan",
-        stageTitle: `${CATEGORY_LABELS[stage.goal.category] || "成长行动"}阶段`,
+        stageTitle: "一起自律，各自成长",
         stageStartDate: stage.plan.startDate,
         stageEndDate: stage.plan.endDate,
         memberCount: 1,
@@ -289,6 +299,7 @@ async function createTeamAndJoin(openid, userKey, stage) {
         teamId,
         userKey,
         goalId: stage.goal._id,
+        goalTitle: stage.goal.title,
         stageId: stage.plan._id,
         status: "active",
         joinOrder: 1,
@@ -300,18 +311,22 @@ async function createTeamAndJoin(openid, userKey, stage) {
   });
 }
 
-async function joinTeam(openid) {
+async function joinTeam(openid, event) {
   const userKey = stableId("user", openid);
   const existing = await getMembershipByUserKey(userKey);
   if (existing) return { teamId: existing.teamId, joined: false };
-
-  const stage = await getCurrentStage(openid);
+  const goalTitle = String((event && event.goalTitle) || "").trim();
+  if (goalTitle.length < 2 || goalTitle.length > 30) fail("INVALID_ARGUMENT", "请先创建有效目标。");
+  const userRecord = await db.collection("users").doc(userKey).get().catch(() => null);
+  if (!userRecord || !userRecord.data) {
+    const now = db.serverDate();
+    await db.collection("users").doc(userKey).set({ data: { _openid: openid, nickname: "行动伙伴", avatarUrl: "", streakDays: 0, createdAt: now, updatedAt: now } });
+  }
+  const businessDate = formatBusinessDate();
+  const stage = { goal: { _id: "", title: goalTitle, category: "all" }, plan: { _id: "", startDate: businessDate, endDate: businessDate } };
   const candidates = await db
     .collection("teams")
     .where({
-      goalCategory: stage.goal.category,
-      stageStartDate: stage.plan.startDate,
-      stageEndDate: stage.plan.endDate,
       status: "active",
       memberCount: command.lt(MAX_MEMBERS),
     })
@@ -326,6 +341,34 @@ async function joinTeam(openid) {
     }
   }
   return createTeamAndJoin(openid, userKey, stage);
+}
+
+async function syncTeamActivity(openid, event) {
+  const goalTitle = String((event && event.goalTitle) || "").trim();
+  const tasks = Array.isArray(event && event.tasks) ? event.tasks : [];
+  if (goalTitle.length < 2 || goalTitle.length > 30 || tasks.length > 30) fail("INVALID_ARGUMENT", "行动摘要无效。");
+  let todayMinutes = 0;
+  let todayCompleted = false;
+  for (const task of tasks) {
+    if (!task || typeof task !== "object" || typeof task.id !== "string" || task.id.length > 80) fail("INVALID_ARGUMENT", "行动摘要无效。");
+    const estimated = Math.round(Number(task.estimatedMinutes || 0));
+    const actual = task.actualMinutes === undefined ? estimated : Math.round(Number(task.actualMinutes));
+    if (estimated < 0 || estimated > 240 || actual < 0 || actual > 480) fail("INVALID_ARGUMENT", "行动时长无效。");
+    if (task.status === "completed" || task.status === "partially_completed") {
+      todayMinutes += actual;
+      todayCompleted = true;
+    }
+  }
+  todayMinutes = Math.min(todayMinutes, 1440);
+  const userKey = stableId("user", openid);
+  const businessDate = formatBusinessDate();
+  const activityId = stableId("team_activity", `${userKey}:${businessDate}`);
+  const existing = await db.collection("team_activity").doc(activityId).get().catch(() => null);
+  const now = db.serverDate();
+  const data = { _openid: openid, userKey, businessDate, goalTitle, todayMinutes, todayCompleted, updatedAt: now };
+  if (existing && existing.data) await db.collection("team_activity").doc(activityId).update({ data });
+  else await db.collection("team_activity").doc(activityId).set({ data: { ...data, createdAt: now } });
+  return { todayMinutes };
 }
 
 async function sendEncouragement(openid, event) {
@@ -388,4 +431,5 @@ module.exports = {
   joinTeam,
   publicMemberId,
   sendEncouragement,
+  syncTeamActivity,
 };

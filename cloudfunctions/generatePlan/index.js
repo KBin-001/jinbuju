@@ -31,7 +31,7 @@ const {
   resumePlan,
   updatePlanTime,
 } = require("./plan-management");
-const { getMyTeam, joinTeam, sendEncouragement } = require("./team");
+const { getMyTeam, joinTeam, sendEncouragement, syncTeamActivity } = require("./team");
 const {
   deleteUserData,
   getCommunityEntry,
@@ -474,10 +474,13 @@ exports.main = async (event) => {
       return success(await getMyTeam(context.OPENID));
     }
     if (event.action === "joinTeam") {
-      return success(await joinTeam(context.OPENID));
+      return success(await joinTeam(context.OPENID, event));
     }
     if (event.action === "sendEncouragement") {
       return success(await sendEncouragement(context.OPENID, event));
+    }
+    if (event.action === "syncTeamActivity") {
+      return success(await syncTeamActivity(context.OPENID, event));
     }
     if (event.action === "getProfileData") {
       return success(await getProfileData(context.OPENID));

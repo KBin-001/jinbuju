@@ -4,6 +4,7 @@ import {
   JoinTeamResult,
   SendEncouragementInput,
   SendEncouragementResult,
+  SyncTeamActivityInput,
   TeamPageData,
 } from "../types/team";
 
@@ -84,8 +85,12 @@ export function getMyTeam(): Promise<TeamPageData> {
   return callTeamFunction<TeamPageData>({ action: "getMyTeam" }, READ_TIMEOUT);
 }
 
-export function joinTeam(_input: JoinTeamInput = {}): Promise<JoinTeamResult> {
-  return callTeamFunction<JoinTeamResult>({ action: "joinTeam" }, WRITE_TIMEOUT);
+export function joinTeam(input: JoinTeamInput = {}): Promise<JoinTeamResult> {
+  return callTeamFunction<JoinTeamResult>({ action: "joinTeam", goalTitle: input.goalTitle || "" }, WRITE_TIMEOUT);
+}
+
+export function syncTeamActivity(input: SyncTeamActivityInput): Promise<{ todayMinutes: number }> {
+  return callTeamFunction<{ todayMinutes: number }>({ action: "syncTeamActivity", goalTitle: input.goalTitle, tasks: input.tasks }, WRITE_TIMEOUT);
 }
 
 export function sendEncouragement(

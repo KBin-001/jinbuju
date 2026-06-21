@@ -43,6 +43,17 @@ export function getTasksByDate(goalId: string, date: string): ActionTask[] {
   return readManualStore().tasks.filter((task) => task.goalId === goalId && task.currentDate === date && task.status !== "rescheduled").sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
+/** 今日页只展示今天的行动，以及过去仍需继续的行动；未来行动不进入主列表。 */
+export function getTodayPageTasks(goalId: string, today: string): ActionTask[] {
+  return readManualStore().tasks
+    .filter((task) => {
+      if (task.goalId !== goalId) return false;
+      if (task.currentDate === today) return true;
+      return task.currentDate < today && (task.status === "pending" || task.status === "partially_completed");
+    })
+    .sort((a, b) => a.currentDate.localeCompare(b.currentDate) || a.createdAt.localeCompare(b.createdAt));
+}
+
 export function updateTaskStatus(taskId: string, status: ActionTaskStatus, actualMinutes?: number, issueReason?: ActionIssueReason): ActionTask {
   const store = readManualStore();
   const task = store.tasks.find((item) => item.id === taskId);
