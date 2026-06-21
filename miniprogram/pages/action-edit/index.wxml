@@ -1,0 +1,51 @@
+<view class="page action-edit-page">
+  <view wx:if="{{status === 'loading'}}" class="card state-card">
+    <view class="loading-dot"></view>
+    <view class="state-title">正在准备行动表单</view>
+    <view class="state-description">马上就好。</view>
+  </view>
+
+  <view wx:elif="{{status === 'error'}}" class="card state-card">
+    <view class="state-mark">!</view>
+    <view class="state-title">加载失败</view>
+    <view class="state-description">{{errorMessage}}</view>
+    <button class="primary-button" bindtap="retry">重新加载</button>
+  </view>
+
+  <view wx:elif="{{status === 'empty'}}" class="card state-card">
+    <view class="state-mark">+</view>
+    <view class="state-title">还没有可用的行动计划</view>
+    <view class="state-description">先创建并确认目标计划，再添加自己的行动。</view>
+    <button class="primary-button" bindtap="goCreateGoal">创建目标</button>
+  </view>
+
+  <block wx:else>
+    <view class="page-header growth-hero action-hero">
+      <view class="hero-kicker">MANUAL ACTION</view>
+      <view class="hero-title">添加行动</view>
+      <view class="hero-copy">围绕“{{goal.title}}”，写下一件准备推进的小事。</view>
+    </view>
+
+    <view class="card form-card">
+      <view class="field-label">行动标题</view>
+      <input class="text-input" value="{{title}}" maxlength="40" placeholder="例如：做一组逻辑推理题" bindinput="inputTitle" />
+      <view class="counter">{{title.length}} / 40</view>
+
+      <view class="field-label field-gap">预计时间</view>
+      <view class="minutes-input"><input type="number" value="{{estimatedMinutes}}" bindinput="inputMinutes" /><text>分钟</text></view>
+      <view class="field-hint">5～180 分钟</view>
+
+      <view class="field-label field-gap">安排日期</view>
+      <picker mode="date" value="{{taskDate}}" bindchange="changeDate"><view class="date-picker">{{taskDate}}<text>›</text></view></picker>
+
+      <view class="field-label field-gap">时间段</view>
+      <view class="chip-row"><button wx:for="{{timeOptions}}" wx:key="value" class="time-chip {{timePeriod === item.value ? 'time-chip-active' : ''}}" data-value="{{item.value}}" bindtap="selectTime">{{item.label}}</button></view>
+
+      <view class="field-label field-gap">简单说明（可选）</view>
+      <textarea class="description-input" value="{{description}}" maxlength="150" placeholder="补充执行方式或完成标准" bindinput="inputDescription" />
+      <view class="counter">{{description.length}} / 150</view>
+    </view>
+
+    <button class="primary-button save-button" loading="{{submitting}}" disabled="{{submitting || title.length < 2}}" bindtap="submit">{{submitting ? '正在保存' : '保存行动'}}</button>
+  </block>
+</view>

@@ -1,0 +1,17 @@
+.action-edit-page { padding-top: 40rpx; }
+.action-hero { margin-bottom: 28rpx; }
+.hero-kicker { position: relative; color: #e8c97f; font-size: 20rpx; letter-spacing: 3rpx; }
+.hero-title { position: relative; margin-top: 10rpx; font-size: 50rpx; font-weight: 750; }
+.hero-copy { position: relative; margin-top: 14rpx; color: rgba(255,255,255,.72); line-height: 1.55; }
+.field-label { font-weight: 650; }
+.field-gap { margin-top: 30rpx; }
+.text-input,.minutes-input,.date-picker,.description-input { width: 100%; margin-top: 15rpx; padding: 23rpx 24rpx; border: 2rpx solid var(--color-border); border-radius: 22rpx; background: #fbfcfa; }
+.minutes-input,.date-picker { display: flex; align-items: center; justify-content: space-between; }
+.minutes-input input { min-width: 0; flex: 1; }
+.description-input { height: 180rpx; }
+.counter { margin-top: 8rpx; color: var(--color-text-light); font-size: 21rpx; text-align: right; }
+.field-hint { margin-top: 8rpx; color: var(--color-text-secondary); font-size: 21rpx; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 14rpx; margin-top: 16rpx; }
+.time-chip { padding: 16rpx 24rpx; border: 2rpx solid var(--color-border); border-radius: 999rpx; background: #fff; color: var(--color-text-secondary); }
+.time-chip-active { border-color: var(--color-primary); background: var(--color-primary-light); color: var(--color-primary); font-weight: 650; }
+.save-button { width: 100%; margin-top: 30rpx; }
