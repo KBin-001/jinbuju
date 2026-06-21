@@ -27,4 +27,3 @@ Page({
     } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" }); this.setData({ submitting: false }); }
   },
 });
-
