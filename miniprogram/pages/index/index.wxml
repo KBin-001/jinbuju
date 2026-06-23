@@ -90,10 +90,13 @@
                   <view class="meta-item">{{task.dateLabel}}</view>
                 </view>
               </view>
-              <view wx:if="{{task.status === 'completed'}}" class="completed-mark" aria-label="已完成">
-                <ant-icon type="CheckCircleFill" />
+              <view wx:if="{{task.status === 'completed'}}" class="action-completed-icon" aria-label="已完成">
+                <ant-icon type="CheckOutline" />
               </view>
-              <ant-button wx:else type="default" inline size="small" icon="CheckOutline" className="complete-action-button" data-id="{{task.id}}" catchtap="quickCompleteTask">完成</ant-button>
+              <button wx:else class="action-complete-btn" data-id="{{task.id}}" catchtap="quickCompleteTask">
+                <ant-icon type="CheckOutline" />
+                <text>完成</text>
+              </button>
             </view>
           </ant-card>
         </view>

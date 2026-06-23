@@ -55,6 +55,10 @@ Page({
     quickAddSubmitting: false,
     quickAddTouchStartY: 0,
     quickAddTouchDeltaY: 0,
+    currentScrollTop: 0,
+  },
+  onPageScroll(event: { scrollTop: number }) {
+    this.setData({ currentScrollTop: event.scrollTop });
   },
   onShow() { this.load(); },
   load() {
@@ -139,10 +143,18 @@ Page({
     const id = String(event.currentTarget.dataset.id || "");
     const task = this.data.tasks.find((item) => item.id === id);
     if (!task || task.status === "completed") return;
+    const prevScrollTop = this.data.currentScrollTop;
     try {
-      updateTaskStatus(task.id, "completed", task.actualMinutes || task.estimatedMinutes);
+      const today = getTodayBusinessDate();
+      const updatedTask = toViewTask(updateTaskStatus(task.id, "completed", task.actualMinutes || task.estimatedMinutes), today);
+      const tasks = this.data.tasks.map((item) => (item.id === id ? updatedTask : item));
+      const taskGroups = this.data.taskGroups.map((group) => ({ ...group, tasks: group.tasks.map((item) => (item.id === id ? updatedTask : item)) }));
+      const todayTasks = tasks.filter((item) => item.currentDate === today);
+      this.setData({ tasks, taskGroups, summary: calculateTodaySummary(todayTasks) });
       wx.showToast({ title: "行动已完成", icon: "success" });
-      this.load();
+      wx.nextTick(() => {
+        wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 });
+      });
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
     }
