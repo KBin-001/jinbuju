@@ -1,1 +1,185 @@
-<view class="page profile-page"><view class="growth-hero profile-hero"><view class="avatar">进</view><view><view class="hero-kicker">MY GROWTH</view><view class="hero-title">我的行动空间</view><view class="hero-copy">不用比较，只记录自己的推进。</view></view></view><view wx:if="{{goal}}" class="card goal-card"><view class="eyebrow">当前目标</view><view class="goal-title">{{goal.title}}</view><view class="goal-meta">创建于 {{goalCreatedDate}} · 进行中</view><button class="text-button" bindtap="goProgress">查看行动进度 ›</button></view><view wx:else class="card empty-goal"><view class="goal-title">还没有当前目标</view><view class="goal-meta">从一件真正想推进的事开始。</view><button class="primary-button" bindtap="createGoal">创建目标</button></view><view class="section-title">个人数据</view><view class="stats-grid"><view class="stat-card"><view class="stat-value">{{summary ? summary.totalActionDays : 0}}</view><view class="stat-label">累计行动天数</view></view><view class="stat-card blue"><view class="stat-value">{{summary ? summary.completedTasks : 0}}</view><view class="stat-label">累计完成行动</view></view><view class="stat-card wide"><view class="stat-value">{{summary ? summary.totalActualMinutes : 0}}<text> 分钟</text></view><view class="stat-label">累计实际投入</view></view></view><view class="menu-section"><view class="menu-title">目标与数据</view><view class="menu-card"><button class="menu-row" bindtap="showHistory"><text>历史目标</text><text class="arrow">›</text></button><button class="menu-row danger" bindtap="clearLocalData"><text>清除本地数据</text><text class="arrow">›</text></button></view></view><view class="menu-section"><view class="menu-title">帮助与信息</view><view class="menu-card"><button class="menu-row" open-type="feedback"><text>问题反馈</text><text class="arrow">›</text></button><button class="menu-row" bindtap="openPrivacy"><text>隐私政策</text><text class="arrow">›</text></button><button class="menu-row" bindtap="openTerms"><text>用户协议</text><text class="arrow">›</text></button><button class="menu-row" bindtap="openAbout"><text>关于进步局</text><text class="arrow">›</text></button></view></view></view>
+<view class="page profile-page">
+  <view class="profile-banner">
+    <view class="avatar">进</view>
+    <view class="banner-copy">
+      <view class="hero-kicker">MY GROWTH</view>
+      <view class="hero-title">我的行动空间</view>
+      <view class="hero-copy">不用比较，只记录自己的推进。</view>
+    </view>
+  </view>
+
+  <view wx:if="{{goal}}" class="profile-card goal-card">
+    <view class="card-head">
+      <view class="section-kicker">当前目标</view>
+      <view class="goal-status">进行中</view>
+    </view>
+    <view class="goal-title">{{goal.title}}</view>
+    <view class="goal-meta">创建于 {{goalCreatedDate}}</view>
+    <button class="goal-primary-action" bindtap="goProgress">查看进度</button>
+    <view class="goal-secondary-actions">
+      <button loading="{{lifecycleSubmitting}}" disabled="{{lifecycleSubmitting}}" bindtap="replaceCurrentGoal">更换目标</button>
+      <button class="danger" loading="{{lifecycleSubmitting}}" disabled="{{lifecycleSubmitting}}" bindtap="endCurrentGoal">结束目标</button>
+    </view>
+  </view>
+
+  <view wx:else class="profile-card empty-goal">
+    <view class="section-kicker">当前目标</view>
+    <view class="goal-title">还没有当前目标</view>
+    <view class="goal-meta">从一件真正想推进的事开始。</view>
+    <button class="goal-primary-action" bindtap="createGoal">创建目标</button>
+  </view>
+
+  <view class="profile-card growth-data-card">
+    <view class="card-title">成长数据</view>
+    <view class="growth-stats">
+      <view class="growth-stat">
+        <view class="growth-value">{{summary ? summary.totalActionDays : 0}}<text> 天</text></view>
+        <view class="growth-label">行动天数</view>
+      </view>
+      <view class="growth-stat">
+        <view class="growth-value">{{summary ? summary.completedTasks : 0}}<text> 项</text></view>
+        <view class="growth-label">完成行动</view>
+      </view>
+      <view class="growth-stat">
+        <view class="growth-value">{{summary ? summary.totalActualMinutes : 0}}<text> 分钟</text></view>
+        <view class="growth-label">实际投入</view>
+      </view>
+    </view>
+    <view wx:if="{{!hasGrowthData}}" class="growth-empty-tip">完成今日行动后，这里会自动生成你的成长数据。</view>
+  </view>
+
+  <view class="menu-section">
+    <view class="menu-title">管理</view>
+    <view class="menu-card">
+      <view class="menu-row" bindtap="showHistory">
+        <view class="menu-row-inner">
+          <text>历史目标</text>
+          <text class="arrow">›</text>
+        </view>
+      </view>
+      <view class="menu-row" bindtap="openDataSettings">
+        <view class="menu-row-inner">
+          <text>数据设置</text>
+          <text class="arrow">›</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="menu-section">
+    <view class="menu-title">帮助与信息</view>
+    <view class="menu-card">
+      <view class="menu-row feedback-row">
+        <view class="menu-row-inner">
+          <text>问题反馈</text>
+          <text class="arrow">›</text>
+        </view>
+        <button class="feedback-hitarea" open-type="feedback" aria-label="问题反馈"></button>
+      </view>
+      <view class="menu-row" bindtap="openPrivacy">
+        <view class="menu-row-inner">
+          <text>隐私政策</text>
+          <text class="arrow">›</text>
+        </view>
+      </view>
+      <view class="menu-row" bindtap="openTerms">
+        <view class="menu-row-inner">
+          <text>用户协议</text>
+          <text class="arrow">›</text>
+        </view>
+      </view>
+      <view class="menu-row" bindtap="openAbout">
+        <view class="menu-row-inner">
+          <text>关于进步局</text>
+          <text class="arrow">›</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{historyVisible}}" class="history-layer">
+    <view class="history-mask" catchtap="closeHistory"></view>
+    <view class="history-panel" catchtap="noop">
+      <view class="panel-header">
+        <view>
+          <view class="panel-kicker">GOAL REVIEW</view>
+          <view class="panel-title">{{historyDetailVisible ? '目标复盘' : '历史目标'}}</view>
+        </view>
+        <view class="panel-close" catchtap="closeHistory" aria-label="关闭">×</view>
+      </view>
+
+      <block wx:if="{{!historyDetailVisible}}">
+        <view wx:if="{{archivedGoals.length === 0}}" class="history-empty">
+          <view class="history-empty-title">{{historyEmptyTitle}}</view>
+          <view class="history-empty-desc">{{historyEmptyDescription}}</view>
+        </view>
+
+        <view wx:else class="history-list">
+          <view
+            wx:for="{{archivedGoals}}"
+            wx:key="id"
+            class="history-card"
+            data-id="{{item.id}}"
+            bindtap="openArchivedGoal"
+          >
+            <view class="history-card-head">
+              <view class="history-title">{{item.title}}</view>
+              <view class="history-arrow">›</view>
+            </view>
+            <view class="history-date">{{item.dateRange}}</view>
+            <view class="history-tags">
+              <text class="history-tag">{{item.statusLabel}}</text>
+              <text class="history-tag">{{item.stats.completionRate}}%</text>
+            </view>
+            <view class="history-stats">
+              <view><text>{{item.stats.totalActions}}</text><text>累计行动</text></view>
+              <view><text>{{item.stats.completedActions}}</text><text>完成行动</text></view>
+              <view><text>{{item.stats.estimatedMinutes}}</text><text>预计分钟</text></view>
+              <view><text>{{item.stats.actualMinutes}}</text><text>实际分钟</text></view>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <block wx:else>
+        <button class="back-button" catchtap="backToHistoryList">‹ 返回历史目标</button>
+        <view wx:if="{{selectedArchivedGoal}}" class="review-content">
+          <view class="review-card">
+            <view class="review-status">{{selectedArchivedGoal.statusLabel}}</view>
+            <view class="review-title">{{selectedArchivedGoal.title}}</view>
+            <view class="review-date">{{selectedArchivedGoal.dateRange}}</view>
+            <view class="review-rate">
+              <view class="review-rate-value">{{selectedArchivedGoal.stats.completionRate}}%</view>
+              <view class="review-rate-label">完成率</view>
+            </view>
+          </view>
+
+          <view class="review-stats-grid">
+            <view><text>{{selectedArchivedGoal.stats.totalActions}}</text><text>累计行动</text></view>
+            <view><text>{{selectedArchivedGoal.stats.completedActions}}</text><text>完成行动</text></view>
+            <view><text>{{selectedArchivedGoal.stats.estimatedMinutes}}</text><text>预计投入</text></view>
+            <view><text>{{selectedArchivedGoal.stats.actualMinutes}}</text><text>实际投入</text></view>
+          </view>
+
+          <view class="records-title">行动记录</view>
+          <view wx:if="{{selectedArchivedGoal.actions.length === 0}}" class="record-empty">这个目标下还没有行动记录。</view>
+          <view wx:else class="record-list">
+            <view wx:for="{{selectedArchivedGoal.actions}}" wx:key="id" class="record-card">
+              <view class="record-head">
+                <view class="record-title">{{item.title}}</view>
+                <text class="record-tag {{item.statusTone}}">{{item.statusLabel}}</text>
+              </view>
+              <view wx:if="{{item.description}}" class="record-desc">{{item.description}}</view>
+              <view class="record-meta">
+                <text>预计 {{item.estimatedMinutes}} 分钟</text>
+                <text>实际 {{item.actualMinutesText}}</text>
+                <text>创建 {{item.createdDate}}</text>
+                <text wx:if="{{item.completedDate}}">完成 {{item.completedDate}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+</view>

@@ -2,6 +2,7 @@ import {
   deleteUserData,
   ProfileServiceError,
 } from "../../services/profile";
+import { clearManualStore } from "../../services/manualStore";
 
 interface InputEvent {
   detail: {
@@ -33,6 +34,23 @@ Page({
             errorMessage: "",
           });
         }
+      },
+    });
+  },
+
+  clearLocalData() {
+    if (this.data.deleting) return;
+    wx.showModal({
+      title: "清除本地数据？",
+      content: "只会清除当前设备上的目标、行动、打卡和历史复盘数据，不会操作线上数据库。清除后无法恢复。",
+      confirmText: "确认清除",
+      confirmColor: "#9B4B45",
+      success: (result: { confirm: boolean }) => {
+        if (!result.confirm) return;
+        clearManualStore();
+        wx.removeStorageSync("welcomeCompleted");
+        wx.showToast({ title: "本地数据已清除", icon: "success" });
+        setTimeout(() => wx.reLaunch({ url: "/pages/welcome/index" }), 350);
       },
     });
   },

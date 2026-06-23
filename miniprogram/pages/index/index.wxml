@@ -19,9 +19,6 @@
           <view class="date-title">{{dateTitle}}</view>
           <view class="weekday">{{weekday}}</view>
         </view>
-        <view class="hero-progress-badge">
-          <text>{{summary.completedCount}}/{{summary.totalCount}}</text>
-        </view>
       </view>
       <view class="hero-copy">{{summary.totalCount ? '按自己的节奏，推进今天真正重要的事。' : '今天先加一件想推进的小事。'}}</view>
       <view class="hero-progress">
@@ -52,11 +49,32 @@
         <view class="goal-chip">进行中</view>
       </view>
 
-      <view class="stats-grid">
-        <view class="stat-tile"><view class="stat-value">{{summary.completedCount}}</view><view class="stat-label">已完成</view></view>
-        <view class="stat-tile accent"><view class="stat-value">{{summary.estimatedMinutes}}</view><view class="stat-label">预计分钟</view></view>
-        <view class="stat-tile warm"><view class="stat-value">{{summary.actualMinutes}}</view><view class="stat-label">实际投入</view></view>
-        <view class="stat-tile blue"><view class="stat-value">{{summary.partialCount}}</view><view class="stat-label">完成一部分</view></view>
+      <view class="today-data-card">
+        <view class="today-data-header">
+          <view class="today-data-title">今日数据</view>
+          <view class="today-data-badge">{{remainingCount ? '剩余 ' + remainingCount + ' 项' : '全部完成'}}</view>
+        </view>
+        <view class="today-data-grid">
+          <view class="today-data-item">
+            <view class="today-data-value">{{summary.completedCount}} / {{summary.totalCount}}</view>
+            <view class="today-data-label">已完成</view>
+          </view>
+          <view class="today-data-item">
+            <view class="today-data-value">{{summary.actualMinutes}} 分钟</view>
+            <view class="today-data-label">实际投入</view>
+          </view>
+          <view class="today-data-item">
+            <view class="today-data-value">{{summary.estimatedMinutes}} 分钟</view>
+            <view class="today-data-label">预计投入</view>
+          </view>
+          <view class="today-data-item">
+            <view class="today-data-value today-data-efficiency">{{efficiencyText}}</view>
+            <view class="today-data-label">效率表现</view>
+          </view>
+        </view>
+        <view wx:if="{{summary.partialCount > 0}}" class="today-data-footer">
+          <view class="today-data-tag">部分完成 {{summary.partialCount}}</view>
+        </view>
       </view>
 
       <view class="action-section-header">

@@ -1,5 +1,5 @@
 export type GoalCategory = "cet" | "teacher" | "postgraduate" | "civil_service" | "ai_learning" | "custom";
-export type GoalStatus = "active" | "completed" | "archived";
+export type GoalStatus = "active" | "completed" | "ended" | "archived";
 
 export interface Goal {
   id: string;
@@ -8,6 +8,9 @@ export interface Goal {
   description?: string;
   status: GoalStatus;
   createdAt: string;
+  startedAt?: string;
+  endedAt?: string;
+  archivedAt?: string;
   updatedAt: string;
 }
 
@@ -71,10 +74,31 @@ export interface TodaySummary {
   totalCount: number;
 }
 
+export interface ArchivedGoalStats {
+  totalActions: number;
+  completedActions: number;
+  estimatedMinutes: number;
+  actualMinutes: number;
+  completionRate: number;
+}
+
+export interface ArchivedGoal {
+  id: string;
+  title: string;
+  status: "completed" | "ended" | "archived";
+  createdAt: string;
+  startedAt?: string;
+  endedAt: string;
+  archivedAt: string;
+  actions: ActionTask[];
+  stats: ArchivedGoalStats;
+}
+
 export interface ManualDataStore {
   version: 1;
   goals: Goal[];
   tasks: ActionTask[];
   checkins: DailyCheckin[];
+  archivedGoals: ArchivedGoal[];
 }
 

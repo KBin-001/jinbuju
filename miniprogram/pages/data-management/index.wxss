@@ -29,6 +29,37 @@
   line-height: 1.65;
 }
 
+.local-card {
+  margin-top: 24rpx;
+  border: 1rpx solid rgba(230, 120, 97, 0.16);
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-shadow: 0 10rpx 28rpx rgba(113, 73, 68, 0.06);
+}
+
+.local-copy {
+  margin-top: 12rpx;
+  color: var(--color-text-secondary);
+  font-size: 25rpx;
+  line-height: 1.55;
+}
+
+.local-danger-button {
+  width: 100%;
+  min-height: 82rpx;
+  margin-top: 24rpx;
+  border: 1rpx solid rgba(180, 76, 67, 0.22);
+  border-radius: 999rpx;
+  background: #fff7f4;
+  color: #b44c43;
+  font-size: 28rpx;
+  font-weight: 650;
+}
+
+.local-danger-button::after {
+  border: 0;
+}
+
 .danger-outline-button,
 .danger-button {
   width: 100%;

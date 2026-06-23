@@ -19,6 +19,11 @@
   box-shadow: var(--today-shadow);
 }
 
+.today-hero::before,
+.today-hero::after {
+  display: none;
+}
+
 .hero-kicker {
   position: relative;
   color: rgba(243, 199, 106, 0.92);
@@ -160,37 +165,92 @@
   white-space: nowrap;
 }
 
-.stats-grid {
+.today-data-card {
+  margin-top: 22rpx;
+  padding: 26rpx 28rpx;
+  box-sizing: border-box;
+  border: 1rpx solid rgba(230, 236, 232, 0.9);
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-shadow: var(--today-shadow);
+}
+
+.today-data-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.today-data-title {
+  color: var(--today-text);
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.today-data-badge {
+  min-height: 42rpx;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  box-sizing: border-box;
+  padding: 0 16rpx;
+  border-radius: 999rpx;
+  background: #eff7f2;
+  color: var(--today-primary);
+  font-size: 22rpx;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.today-data-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16rpx;
+  gap: 22rpx 24rpx;
+  margin-top: 22rpx;
 }
 
-.stat-tile {
-  min-height: 112rpx;
-  box-sizing: border-box;
-  padding: 24rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.72);
-  border-radius: 24rpx;
-  background: #e8f2ed;
-  box-shadow: 0 6rpx 18rpx rgba(21, 71, 58, 0.05);
+.today-data-item {
+  min-width: 0;
 }
 
-.stat-tile.accent { background: #fff5d9; }
-.stat-tile.warm { background: #f9e7e1; }
-.stat-tile.blue { background: #e8f0f7; }
-
-.stat-value {
+.today-data-value {
   color: var(--today-text);
-  font-size: 38rpx;
+  font-size: 32rpx;
   font-weight: 750;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 
-.stat-label {
-  margin-top: 8rpx;
-  color: var(--today-secondary);
+.today-data-efficiency {
+  color: var(--today-primary-deep);
+}
+
+.today-data-label {
+  margin-top: 6rpx;
+  color: var(--today-muted);
   font-size: 22rpx;
+}
+
+.today-data-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 22rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid #edf1ee;
+}
+
+.today-data-tag {
+  min-height: 40rpx;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 14rpx;
+  border-radius: 999rpx;
+  background: #fff6df;
+  color: #8a6730;
+  font-size: 22rpx;
+  font-weight: 600;
 }
 
 .empty-card {

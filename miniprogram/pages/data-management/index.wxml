@@ -16,6 +16,12 @@
     </view>
   </view>
 
+  <view class="card local-card">
+    <view class="section-title">本地数据</view>
+    <view class="local-copy">清除当前设备上的本地目标、行动和历史复盘缓存，不会影响线上数据库。</view>
+    <button class="local-danger-button" bindtap="clearLocalData">清除本地数据</button>
+  </view>
+
   <view class="warning-card">
     清除完成后无法恢复。小队中其他成员的数据不会受到影响，系统只会更新相应的小队人数。
   </view>

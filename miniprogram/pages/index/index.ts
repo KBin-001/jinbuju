@@ -23,6 +23,13 @@ interface ViewTaskGroup { key: "today" | "continue"; title: string; tasks: ViewT
 function dateCopy(value: string): { title: string; weekday: string } { const date = new Date(`${value}T00:00:00`); return { title: `今天，${date.getMonth() + 1} 月 ${date.getDate()} 日`, weekday: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"][date.getDay()] }; }
 function emptySummary(): TodaySummary { return { estimatedMinutes: 0, actualMinutes: 0, completedCount: 0, partialCount: 0, unfinishedCount: 0, totalCount: 0 }; }
 function completionPercent(summary: TodaySummary): number { return summary.totalCount ? Math.round(summary.completedCount / summary.totalCount * 100) : 0; }
+function remainingCount(summary: TodaySummary): number { return Math.max(0, summary.totalCount - summary.completedCount); }
+function efficiencyText(summary: TodaySummary): string {
+  const diff = summary.estimatedMinutes - summary.actualMinutes;
+  if (diff > 0) return `节省 ${diff} 分钟`;
+  if (diff < 0) return `超出 ${Math.abs(diff)} 分钟`;
+  return "刚好完成";
+}
 function toViewTask(task: ActionTask, today: string): ViewTask {
   const displayStatus = getActionTaskDisplayStatus(task, today);
   return {
@@ -44,6 +51,8 @@ Page({
     taskGroups: [] as ViewTaskGroup[],
     summary: emptySummary(),
     completionPercent: 0,
+    remainingCount: 0,
+    efficiencyText: "刚好完成",
     dateTitle: "",
     weekday: "",
     navigating: false,
@@ -72,7 +81,7 @@ Page({
       const taskGroups = groupTodayTasks(sourceTasks, today).map((group) => ({ ...group, tasks: group.tasks.map((task) => toViewTask(task, today)) }));
       const tasks = taskGroups.reduce<ViewTask[]>((all, group) => all.concat(group.tasks), []);
       const summary = calculateTodaySummary(todayTasks);
-      this.setData({ status: "ready", goal, tasks, taskGroups, summary, completionPercent: completionPercent(summary), dateTitle: copy.title, weekday: copy.weekday, navigating: false });
+      this.setData({ status: "ready", goal, tasks, taskGroups, summary, completionPercent: completionPercent(summary), remainingCount: remainingCount(summary), efficiencyText: efficiencyText(summary), dateTitle: copy.title, weekday: copy.weekday, navigating: false });
     } catch (error) { this.setData({ status: "error", errorMessage: error instanceof Error ? error.message : "本地数据读取失败" }); }
   },
   retry() { this.load(); },
@@ -154,7 +163,7 @@ Page({
       const taskGroups = this.data.taskGroups.map((group) => ({ ...group, tasks: group.tasks.map((item) => (item.id === id ? updatedTask : item)) }));
       const todayTasks = tasks.filter((item) => item.currentDate === today);
       const summary = calculateTodaySummary(todayTasks);
-      this.setData({ tasks, taskGroups, summary, completionPercent: completionPercent(summary) });
+      this.setData({ tasks, taskGroups, summary, completionPercent: completionPercent(summary), remainingCount: remainingCount(summary), efficiencyText: efficiencyText(summary) });
       wx.showToast({ title: "行动已完成", icon: "success" });
       wx.nextTick(() => {
         wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 });
