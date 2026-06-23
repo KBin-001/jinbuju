@@ -26,12 +26,30 @@
       </view>
     </view>
 
-    <view class="section-heading pending-heading"><view><view class="section-title">待继续行动</view><view class="section-copy">给尚未完成的事情留一个清晰位置</view></view><button class="mini-add" bindtap="addTask">＋ 添加</button></view>
+    <view class="pending-section-header">
+      <view class="pending-section-left">
+        <view class="section-title">待继续行动</view>
+        <view class="section-copy">给尚未完成的事情留一个清晰位置</view>
+      </view>
+      <view class="pending-section-right">
+        <view class="mini-add" catchtap="addTask">＋ 添加</view>
+        <view class="pending-count">{{summary.unfinishedTasks.length}} 项</view>
+      </view>
+    </view>
     <view wx:if="{{summary.unfinishedTasks.length === 0}}" class="card empty-copy">当前没有待继续的行动，给自己留一点空间也很好。</view>
-    <button wx:for="{{summary.unfinishedTasks}}" wx:key="id" class="card pending-card" data-id="{{item.id}}" bindtap="editTask">
-      <view class="pending-date"><view>待继续</view><text>{{item.currentDate}}</text></view>
-      <view class="pending-main"><view class="pending-title">{{item.title}}</view><view wx:if="{{item.description}}" class="pending-description">{{item.description}}</view><view class="pending-meta"><text>预计 {{item.estimatedMinutes}} 分钟</text><text>{{item.status === 'partially_completed' ? '完成一部分' : '待继续'}}</text></view></view>
+    <view wx:for="{{summary.unfinishedTasks}}" wx:key="id" class="card pending-card" data-id="{{item.id}}" bindtap="editTask">
+      <view class="pending-main">
+        <view class="pending-tags">
+          <view class="pending-status">{{item.status === 'partially_completed' ? '完成一部分' : '待继续'}}</view>
+          <view class="pending-date">{{item.currentDate}}</view>
+        </view>
+        <view class="pending-title">{{item.title}}</view>
+        <view wx:if="{{item.description}}" class="pending-description">{{item.description}}</view>
+        <view class="pending-meta">
+          <text>预计 {{item.estimatedMinutes}} 分钟</text>
+        </view>
+      </view>
       <view class="pending-arrow">›</view>
-    </button>
+    </view>
   </block>
 </view>
