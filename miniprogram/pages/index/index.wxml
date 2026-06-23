@@ -51,12 +51,18 @@
         <view class="stat-tile blue"><view class="stat-value">{{summary.partialCount}}</view><view class="stat-label">完成一部分</view></view>
       </view>
 
-      <view class="section-heading action-heading">
-        <view>
+      <view class="action-section-header">
+        <view class="action-section-left">
           <view class="section-title">行动安排</view>
           <view class="section-caption">点击卡片可调整行动状态</view>
         </view>
-        <ant-button type="text" inline size="small" icon="AddOutline" className="add-action-button" bindtap="addTask">添加</ant-button>
+        <view class="action-section-right">
+          <view class="add-action-button" catchtap="addTask">
+            <ant-icon type="AddOutline" />
+            <text>添加</text>
+          </view>
+          <view class="section-count">{{tasks.length}} 项</view>
+        </view>
       </view>
       <view wx:if="{{taskGroups.length === 0}}" class="card empty-action-card">
         <view class="state-title">今天还没有行动</view>
@@ -66,7 +72,6 @@
       <view wx:for="{{taskGroups}}" wx:key="key" class="task-group">
         <view class="group-heading">
           <view class="group-title">{{item.title}}</view>
-          <view class="group-count">{{item.tasks.length}} 项</view>
         </view>
         <view wx:for="{{item.tasks}}" wx:for-item="task" wx:key="id" class="action-card-tap" data-id="{{task.id}}" bindtap="openTask">
           <ant-card className="action-card {{task.status === 'completed' ? 'action-card-completed' : ''}}">
@@ -95,4 +100,96 @@
       </view>
     </block>
   </block>
+
+  <view wx:if="{{quickAddVisible}}" class="quick-add-layer" catchtouchmove="noop">
+    <view class="quick-add-mask" catchtap="closeQuickAdd"></view>
+    <view
+      class="quick-add-panel"
+      style="transform: translateY({{quickAddTouchDeltaY}}px);"
+      catchtap="noop"
+      bindtouchstart="quickAddTouchStart"
+      bindtouchmove="quickAddTouchMove"
+      bindtouchend="quickAddTouchEnd"
+      bindtouchcancel="quickAddTouchEnd"
+    >
+      <view class="quick-add-grabber"></view>
+      <view class="quick-add-header">
+        <view>
+          <view class="quick-add-kicker">TODAY ACTION</view>
+          <view class="quick-add-title">添加今日行动</view>
+        </view>
+        <view class="quick-add-close {{quickAddSubmitting ? 'is-disabled' : ''}}" catchtap="closeQuickAdd" aria-label="关闭">
+          <ant-icon type="CloseOutline" />
+        </view>
+      </view>
+      <view class="quick-add-copy">写下一件今天能推进的小事，保存后会出现在今日行动安排里。</view>
+
+      <view class="quick-add-field">
+        <view class="quick-add-label">行动标题</view>
+        <input
+          class="quick-add-input"
+          value="{{quickAddTitle}}"
+          maxlength="40"
+          placeholder="例如：完成 20 分钟听力精听"
+          placeholder-class="quick-add-placeholder"
+          confirm-type="done"
+          bindinput="inputQuickAddTitle"
+        />
+      </view>
+      <view class="quick-add-field">
+        <view class="quick-add-label">补充说明</view>
+        <textarea
+          class="quick-add-textarea"
+          value="{{quickAddDescription}}"
+          maxlength="150"
+          placeholder="可选：写清楚材料、范围或完成标准"
+          placeholder-class="quick-add-placeholder"
+          auto-height="{{false}}"
+          bindinput="inputQuickAddDescription"
+        />
+      </view>
+      <view class="quick-add-field quick-add-minutes-row">
+        <view>
+          <view class="quick-add-label">预计投入</view>
+          <view class="quick-add-hint">点右侧滚动选择时间</view>
+        </view>
+        <view class="quick-add-minutes-control" catchtap="openDurationPicker">
+          <text class="quick-add-minutes-value">{{quickAddMinutes}}</text>
+          <text class="quick-add-minute-unit">分钟</text>
+          <view class="quick-add-picker-arrow">
+            <ant-icon type="DownOutline" />
+          </view>
+        </view>
+      </view>
+
+      <view class="quick-add-actions">
+        <button class="quick-add-secondary" disabled="{{quickAddSubmitting}}" catchtap="closeQuickAdd">取消</button>
+        <button class="quick-add-primary" loading="{{quickAddSubmitting}}" disabled="{{quickAddSubmitting}}" catchtap="saveQuickAdd">保存行动</button>
+      </view>
+    </view>
+
+    <view wx:if="{{quickDurationVisible}}" class="quick-duration-layer" catchtap="closeDurationPicker">
+      <view class="quick-duration-panel" catchtap="noop">
+        <view class="quick-duration-header">
+          <button class="quick-duration-cancel" catchtap="closeDurationPicker">取消</button>
+          <view class="quick-duration-title">选择预计投入</view>
+          <view class="quick-duration-spacer"></view>
+        </view>
+        <view class="quick-duration-options">
+          <view
+            wx:for="{{quickDurationOptions}}"
+            wx:key="value"
+            class="quick-duration-option {{quickAddMinuteIndex === index ? 'is-selected' : ''}}"
+            data-index="{{index}}"
+            catchtap="selectQuickAddDuration"
+          >
+            <view class="quick-duration-option-label">{{item.label}}</view>
+            <view wx:if="{{quickAddMinuteIndex === index}}" class="quick-duration-check">
+              <ant-icon type="CheckOutline" />
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
 </view>
