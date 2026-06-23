@@ -19,12 +19,20 @@
           <view class="date-title">{{dateTitle}}</view>
           <view class="weekday">{{weekday}}</view>
         </view>
-        <view class="completion-ring">
-          <text class="ring-value">{{summary.completedCount}}</text>
-          <text class="ring-total">/{{summary.totalCount}}</text>
+        <view class="hero-progress-badge">
+          <text>{{summary.completedCount}}/{{summary.totalCount}}</text>
         </view>
       </view>
       <view class="hero-copy">{{summary.totalCount ? '按自己的节奏，推进今天真正重要的事。' : '今天先加一件想推进的小事。'}}</view>
+      <view class="hero-progress">
+        <view class="hero-progress-head">
+          <text>今日完成度</text>
+          <text>{{completionPercent}}%</text>
+        </view>
+        <view class="hero-progress-track">
+          <view class="hero-progress-fill" style="width: {{completionPercent}}%"></view>
+        </view>
+      </view>
     </view>
 
     <view wx:if="{{!goal}}" class="card empty-card">
