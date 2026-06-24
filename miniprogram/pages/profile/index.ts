@@ -1,7 +1,9 @@
 import { FEATURE_FLAGS } from "../../config/features";
 import { endActiveGoal, getActiveGoal, getArchivedGoals } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
+import { getLocalUserProfile, saveLocalUserProfile } from "../../services/profile";
 import { ActionTask, ArchivedGoal, Goal, ProgressSummary } from "../../types/manual";
+import { UserDisplayProfile, UserProfileSource } from "../../types/profile";
 
 interface ViewAction extends ActionTask {
   statusLabel: string;
@@ -72,6 +74,16 @@ Page({
     hasGrowthData: false,
     lifecycleSubmitting: false,
     teamEnabled: FEATURE_FLAGS.ENABLE_TEAM,
+    userProfile: null as UserDisplayProfile | null,
+    displayName: "未设置展示名称",
+    displayAvatarUrl: "",
+    displayAvatarText: "进",
+    profileEditorVisible: false,
+    profileDraftNickname: "",
+    profileDraftAvatarUrl: "",
+    profileDraftAvatarText: "进",
+    profileDraftSource: "custom" as UserProfileSource,
+    profileDraftUseInTeam: true,
   },
 
   onShow() {
@@ -83,6 +95,7 @@ Page({
       const goal = getActiveGoal();
       const archivedGoals = getArchivedGoals().map(toViewArchivedGoal);
       const summary = goal ? getProgressSummary(goal.id) : null;
+      const userProfile = getLocalUserProfile();
       this.setData({
         goal,
         goalCreatedDate: goal ? shortDate(goal.createdAt) : "",
@@ -90,6 +103,10 @@ Page({
         archivedGoals,
         historyCount: archivedGoals.length,
         hasGrowthData: Boolean(summary && (summary.totalActionDays > 0 || summary.completedTasks > 0 || summary.totalActualMinutes > 0)),
+        userProfile,
+        displayName: userProfile?.nickname || "未设置展示名称",
+        displayAvatarUrl: userProfile?.avatarUrl || "",
+        displayAvatarText: userProfile?.nickname ? userProfile.nickname.slice(0, 1) : "进",
         historyEmptyDescription: goal
           ? "当前目标仍在进行中。结束或更换目标后，它会保存到这里用于复盘。"
           : "创建并完成一个目标后，这里会展示你的目标复盘。",
@@ -98,6 +115,61 @@ Page({
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "个人数据读取失败", icon: "none" });
       this.setData({ lifecycleSubmitting: false });
+    }
+  },
+
+  openProfileEditor() {
+    const userProfile = this.data.userProfile;
+    this.setData({
+      profileEditorVisible: true,
+      profileDraftNickname: userProfile?.nickname || "",
+      profileDraftAvatarUrl: userProfile?.avatarUrl || "",
+      profileDraftAvatarText: userProfile?.nickname ? userProfile.nickname.slice(0, 1) : "进",
+      profileDraftSource: userProfile?.profileSource || "custom",
+      profileDraftUseInTeam: userProfile?.useProfileInTeam !== false,
+    });
+  },
+
+  closeProfileEditor() {
+    this.setData({ profileEditorVisible: false });
+  },
+
+  onChooseAvatar(event: { detail: { avatarUrl?: string } }) {
+    const avatarUrl = String(event.detail.avatarUrl || "");
+    if (!avatarUrl) return;
+    this.setData({ profileDraftAvatarUrl: avatarUrl, profileDraftSource: "wechat" });
+  },
+
+  inputProfileNickname(event: { detail: { value?: string } }) {
+    const nickname = String(event.detail.value || "").slice(0, 16);
+    this.setData({
+      profileDraftNickname: nickname,
+      profileDraftAvatarText: nickname ? nickname.slice(0, 1) : "进",
+    });
+  },
+
+  toggleProfileUseInTeam(event: { detail: { value?: boolean } }) {
+    this.setData({ profileDraftUseInTeam: Boolean(event.detail.value) });
+  },
+
+  saveProfileEditor() {
+    try {
+      const userProfile = saveLocalUserProfile({
+        nickname: this.data.profileDraftNickname,
+        avatarUrl: this.data.profileDraftAvatarUrl,
+        profileSource: this.data.profileDraftSource,
+        useProfileInTeam: this.data.profileDraftUseInTeam,
+      });
+      this.setData({
+        userProfile,
+        displayName: userProfile.nickname,
+        displayAvatarUrl: userProfile.avatarUrl,
+        displayAvatarText: userProfile.nickname.slice(0, 1) || "进",
+        profileEditorVisible: false,
+      });
+      wx.showToast({ title: "资料已保存", icon: "success" });
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
     }
   },
 

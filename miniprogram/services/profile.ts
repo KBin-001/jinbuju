@@ -3,10 +3,13 @@ import {
   CommunityEntry,
   DeleteUserDataResult,
   ProfilePageData,
+  UserDisplayProfile,
+  UserProfileSource,
 } from "../types/profile";
 
 const READ_TIMEOUT = 12000;
 const WRITE_TIMEOUT = 30000;
+const LOCAL_PROFILE_KEY = "JINBUJU_USER_DISPLAY_PROFILE_V1";
 
 interface CloudCallResponse<T> {
   result?: CloudFunctionResult<T>;
@@ -102,4 +105,42 @@ export function deleteUserData(
     },
     WRITE_TIMEOUT,
   );
+}
+
+export function getLocalUserProfile(): UserDisplayProfile | null {
+  const value = wx.getStorageSync(LOCAL_PROFILE_KEY) as Partial<UserDisplayProfile> | undefined;
+  if (!value || typeof value !== "object") return null;
+  const nickname = typeof value.nickname === "string" ? value.nickname.trim() : "";
+  const avatarUrl = typeof value.avatarUrl === "string" ? value.avatarUrl : "";
+  if (!nickname && !avatarUrl) return null;
+  return {
+    nickname,
+    avatarUrl,
+    profileSource: value.profileSource === "wechat" ? "wechat" : "custom",
+    useProfileInTeam: value.useProfileInTeam !== false,
+    updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : "",
+  };
+}
+
+export function saveLocalUserProfile(input: {
+  nickname: string;
+  avatarUrl: string;
+  profileSource: UserProfileSource;
+  useProfileInTeam: boolean;
+}): UserDisplayProfile {
+  const nickname = input.nickname.trim().slice(0, 16);
+  if (nickname.length < 1) throw new Error("请输入展示名称");
+  const profile: UserDisplayProfile = {
+    nickname,
+    avatarUrl: input.avatarUrl,
+    profileSource: input.profileSource,
+    useProfileInTeam: input.useProfileInTeam,
+    updatedAt: new Date().toISOString(),
+  };
+  wx.setStorageSync(LOCAL_PROFILE_KEY, profile);
+  return profile;
+}
+
+export function clearLocalUserProfile(): void {
+  wx.removeStorageSync(LOCAL_PROFILE_KEY);
 }

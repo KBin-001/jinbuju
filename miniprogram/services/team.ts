@@ -1,4 +1,5 @@
 import { addDays, formatDate, getTodayBusinessDate } from "../utils/date";
+import { getLocalUserProfile } from "./profile";
 import {
   CreateTeamInput,
   EncouragementType,
@@ -100,13 +101,16 @@ function statusRank(status: MemberTodayStatus): number {
 
 function createSelfMember(teamId: string, input: CreateTeamInput): TeamMember {
   const now = new Date().toISOString();
+  const profile = getLocalUserProfile();
+  const useProfile = Boolean(profile && profile.useProfileInTeam);
   return {
     id: "member_self",
     userId: SELF_USER_ID,
     teamId,
     displayMode: "nicknameOnly",
-    nickname: "我",
+    nickname: useProfile ? profile!.nickname : "我",
     anonymousName: "行动伙伴 01",
+    avatar: useProfile ? profile!.avatarUrl : "",
     goalTitle: input.goalTitle || "正在建立目标",
     todayActionTitle: input.todayActionTitle || "",
     todayActionDetails: input.todayActionDetails || [],
@@ -294,10 +298,14 @@ export function joinRoom(input: JoinRoomInput): TeamPageData {
 export function updateSelfActivity(input: UpdateSelfActivityInput): TeamPageData {
   const store = readStore();
   if (!store.currentTeam) return { team: null, members: [], dailyStats: null };
+  const profile = getLocalUserProfile();
+  const useProfile = Boolean(profile && profile.useProfileInTeam);
   const members = store.teamMembers.map((member) => {
     if (!member.isSelf) return member;
     return {
       ...member,
+      nickname: useProfile ? profile!.nickname : "我",
+      avatar: useProfile ? profile!.avatarUrl : "",
       goalTitle: input.goalTitle || member.goalTitle,
       todayActionTitle: input.todayActionTitle || "",
       todayActionDetails: input.todayActionDetails || [],

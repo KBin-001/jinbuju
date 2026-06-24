@@ -21,6 +21,16 @@ export interface UserProfileSummary {
   streakDays: number;
 }
 
+export type UserProfileSource = "wechat" | "custom";
+
+export interface UserDisplayProfile {
+  nickname: string;
+  avatarUrl: string;
+  profileSource: UserProfileSource;
+  useProfileInTeam: boolean;
+  updatedAt: string;
+}
+
 export interface CurrentGoalSummary {
   id: string;
   planId: string;

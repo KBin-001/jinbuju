@@ -90,7 +90,10 @@
         data-id="{{item.id}}"
         bindtap="openMemberDetail"
       >
-        <view class="member-avatar">{{item.avatarText}}</view>
+        <view class="member-avatar">
+          <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+          <text wx:else>{{item.avatarText}}</text>
+        </view>
         <view class="member-content">
           <view class="member-name-row">
             <view class="member-name">{{item.displayName}}</view>

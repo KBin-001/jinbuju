@@ -1,11 +1,16 @@
 <view class="page profile-page">
   <view class="profile-banner">
-    <view class="avatar">进</view>
+    <view class="avatar">
+      <image wx:if="{{displayAvatarUrl}}" class="avatar-image" src="{{displayAvatarUrl}}" mode="aspectFill" />
+      <text wx:else>{{displayAvatarText}}</text>
+    </view>
     <view class="banner-copy">
       <view class="hero-kicker">MY GROWTH</view>
       <view class="hero-title">我的行动空间</view>
+      <view class="profile-name">{{displayName}}</view>
       <view class="hero-copy">不用比较，只记录自己的推进。</view>
     </view>
+    <button class="profile-edit-btn" bindtap="openProfileEditor">编辑资料</button>
   </view>
 
   <view wx:if="{{goal}}" class="profile-card goal-card">
@@ -180,6 +185,57 @@
           </view>
         </view>
       </block>
+    </view>
+  </view>
+
+  <view wx:if="{{profileEditorVisible}}" class="profile-editor-layer">
+    <view class="profile-editor-mask" catchtap="closeProfileEditor"></view>
+    <view class="profile-editor-panel" catchtap="noop">
+      <view class="popup-handle"></view>
+      <view class="panel-header compact">
+        <view>
+          <view class="panel-kicker">PROFILE</view>
+          <view class="panel-title">编辑展示资料</view>
+        </view>
+        <view class="panel-close" catchtap="closeProfileEditor" aria-label="关闭">×</view>
+      </view>
+
+      <view class="profile-form-card">
+        <view class="profile-avatar-row">
+          <view class="profile-avatar-preview">
+            <image wx:if="{{profileDraftAvatarUrl}}" src="{{profileDraftAvatarUrl}}" mode="aspectFill" />
+            <text wx:else>{{profileDraftAvatarText}}</text>
+          </view>
+          <button class="avatar-choose-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+            使用微信头像
+          </button>
+        </view>
+
+        <view class="profile-field">
+          <view class="profile-label">展示名称</view>
+          <input
+            class="profile-input"
+            type="nickname"
+            maxlength="16"
+            value="{{profileDraftNickname}}"
+            placeholder="输入昵称或选择微信昵称"
+            bindinput="inputProfileNickname"
+          />
+        </view>
+
+        <view class="profile-setting-row">
+          <view>
+            <view class="profile-label">在小队中使用该资料</view>
+            <view class="profile-helper">匿名模式下仍会隐藏头像和名称。</view>
+          </view>
+          <switch checked="{{profileDraftUseInTeam}}" color="#356859" bindchange="toggleProfileUseInTeam" />
+        </view>
+      </view>
+
+      <view class="profile-editor-actions">
+        <button class="profile-cancel-btn" bindtap="closeProfileEditor">取消</button>
+        <button class="profile-save-btn" bindtap="saveProfileEditor">保存</button>
+      </view>
     </view>
   </view>
 </view>
