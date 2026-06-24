@@ -1,4 +1,5 @@
 import { getActiveGoal } from "../../services/manualGoal";
+import { getProgressSummary } from "../../services/manualStats";
 import { calculateTodaySummary, createTask, deleteTask, getTodayPageTasks, rescheduleTask, updateTaskStatus } from "../../services/manualTask";
 import { ActionIssueReason, ActionTask, Goal, TodaySummary } from "../../types/manual";
 import { formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
@@ -19,6 +20,7 @@ const DURATION_OPTIONS = [
 const DEFAULT_QUICK_ADD_MINUTE_INDEX = DURATION_OPTIONS.findIndex((option) => option.value === 30);
 interface ViewTask extends ActionTask { statusLabel: string; statusTone: string; rescheduled: boolean; dateLabel: string; partialHint: boolean; }
 interface ViewTaskGroup { key: "today" | "continue"; title: string; tasks: ViewTask[]; }
+interface TodayMood { title: string; copy: string; tone: "empty" | "low" | "half" | "done"; mark: string; }
 
 function dateCopy(value: string): { title: string; weekday: string } { const date = new Date(`${value}T00:00:00`); return { title: `今天，${date.getMonth() + 1} 月 ${date.getDate()} 日`, weekday: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"][date.getDay()] }; }
 function emptySummary(): TodaySummary { return { estimatedMinutes: 0, actualMinutes: 0, completedCount: 0, partialCount: 0, unfinishedCount: 0, totalCount: 0 }; }
@@ -28,7 +30,23 @@ function efficiencyText(summary: TodaySummary): string {
   const diff = summary.estimatedMinutes - summary.actualMinutes;
   if (diff > 0) return `节省 ${diff} 分钟`;
   if (diff < 0) return `超出 ${Math.abs(diff)} 分钟`;
-  return "刚好完成";
+  return "刚好卡点";
+}
+function todayMood(summary: TodaySummary): TodayMood {
+  const percent = completionPercent(summary);
+  if (!summary.totalCount) return { title: "今天还没开局", copy: "先放一件小事上来，别让今天空过去。", tone: "empty", mark: "启" };
+  if (percent >= 100) return { title: "今天你赢下来了", copy: "该完成的都收住了，节奏很漂亮。", tone: "done", mark: "赢" };
+  if (percent >= 50) return { title: "差一点，但已经上桌了", copy: `还剩 ${remainingCount(summary)} 项，顺手收掉一件就很赚。`, tone: "half", mark: "冲" };
+  if (percent > 0) return { title: "已经启动，不算白来", copy: `先拿下 ${summary.completedCount} 项，剩下的慢慢推进。`, tone: "low", mark: "进" };
+  return { title: "今天别空手离开", copy: `还有 ${summary.totalCount} 项等你开动，挑最小的一件先做。`, tone: "low", mark: "动" };
+}
+function dailyNudge(summary: TodaySummary): string {
+  const percent = completionPercent(summary);
+  if (!summary.totalCount) return "今天的行动不需要宏大，能开始的一件小事就够。";
+  if (percent >= 100) return "完成感不是为了炫耀，是给明天少一点阻力。";
+  if (percent >= 50) return "已经过半了，剩下的不是压力，是收尾机会。";
+  if (percent > 0) return "启动之后，今天就已经站在前进的一边。";
+  return "先做 5 分钟也算，别把今天让给犹豫。";
 }
 function toViewTask(task: ActionTask, today: string): ViewTask {
   const displayStatus = getActionTaskDisplayStatus(task, today);
@@ -53,6 +71,13 @@ Page({
     completionPercent: 0,
     remainingCount: 0,
     efficiencyText: "刚好完成",
+    heroDayLabel: "DAY 1",
+    heroFocusTitle: "今日行动",
+    todayMoodTitle: "今天还没开局",
+    todayMoodCopy: "先放一件小事上来，别让今天空过去。",
+    todayMoodTone: "empty",
+    todayMoodMark: "启",
+    dailyNudge: "今天的行动不需要宏大，能开始的一件小事就够。",
     dateTitle: "",
     weekday: "",
     navigating: false,
@@ -81,7 +106,28 @@ Page({
       const taskGroups = groupTodayTasks(sourceTasks, today).map((group) => ({ ...group, tasks: group.tasks.map((task) => toViewTask(task, today)) }));
       const tasks = taskGroups.reduce<ViewTask[]>((all, group) => all.concat(group.tasks), []);
       const summary = calculateTodaySummary(todayTasks);
-      this.setData({ status: "ready", goal, tasks, taskGroups, summary, completionPercent: completionPercent(summary), remainingCount: remainingCount(summary), efficiencyText: efficiencyText(summary), dateTitle: copy.title, weekday: copy.weekday, navigating: false });
+      const progress = goal ? getProgressSummary(goal.id, today) : null;
+      const mood = todayMood(summary);
+      this.setData({
+        status: "ready",
+        goal,
+        tasks,
+        taskGroups,
+        summary,
+        completionPercent: completionPercent(summary),
+        remainingCount: remainingCount(summary),
+        efficiencyText: efficiencyText(summary),
+        heroDayLabel: `DAY ${Math.max(1, progress?.totalActionDays || (summary.completedCount > 0 ? 1 : 0))}`,
+        heroFocusTitle: goal?.title || "今日行动",
+        todayMoodTitle: mood.title,
+        todayMoodCopy: mood.copy,
+        todayMoodTone: mood.tone,
+        todayMoodMark: mood.mark,
+        dailyNudge: dailyNudge(summary),
+        dateTitle: copy.title,
+        weekday: copy.weekday,
+        navigating: false,
+      });
     } catch (error) { this.setData({ status: "error", errorMessage: error instanceof Error ? error.message : "本地数据读取失败" }); }
   },
   retry() { this.load(); },
@@ -163,7 +209,22 @@ Page({
       const taskGroups = this.data.taskGroups.map((group) => ({ ...group, tasks: group.tasks.map((item) => (item.id === id ? updatedTask : item)) }));
       const todayTasks = tasks.filter((item) => item.currentDate === today);
       const summary = calculateTodaySummary(todayTasks);
-      this.setData({ tasks, taskGroups, summary, completionPercent: completionPercent(summary), remainingCount: remainingCount(summary), efficiencyText: efficiencyText(summary) });
+      const progress = this.data.goal ? getProgressSummary(this.data.goal.id, today) : null;
+      const mood = todayMood(summary);
+      this.setData({
+        tasks,
+        taskGroups,
+        summary,
+        completionPercent: completionPercent(summary),
+        remainingCount: remainingCount(summary),
+        efficiencyText: efficiencyText(summary),
+        heroDayLabel: `DAY ${Math.max(1, progress?.totalActionDays || (summary.completedCount > 0 ? 1 : 0))}`,
+        todayMoodTitle: mood.title,
+        todayMoodCopy: mood.copy,
+        todayMoodTone: mood.tone,
+        todayMoodMark: mood.mark,
+        dailyNudge: dailyNudge(summary),
+      });
       wx.showToast({ title: "行动已完成", icon: "success" });
       wx.nextTick(() => {
         wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 });

@@ -13,14 +13,15 @@
 
   <block wx:else>
     <view class="growth-hero today-hero">
-      <view class="hero-kicker">TODAY · ACTION</view>
-      <view class="date-row">
-        <view>
-          <view class="date-title">{{dateTitle}}</view>
-          <view class="weekday">{{weekday}}</view>
-        </view>
+      <view class="hero-topline">
+        <view class="hero-kicker">TODAY · ACTION</view>
+        <view class="hero-date-pill">{{dateTitle}} · {{weekday}}</view>
       </view>
-      <view class="hero-copy">{{summary.totalCount ? '按自己的节奏，推进今天真正重要的事。' : '今天先加一件想推进的小事。'}}</view>
+      <view class="hero-focus">
+        <view class="hero-day">{{heroDayLabel}}</view>
+        <view class="hero-focus-title">{{heroFocusTitle}}</view>
+      </view>
+      <view class="hero-copy">{{summary.totalCount ? '今天只盯住眼前这几件事。' : '先加一件能开始的小事。'}}</view>
       <view class="hero-progress">
         <view class="hero-progress-head">
           <text>今日完成度</text>
@@ -54,6 +55,13 @@
           <view class="today-data-title">今日数据</view>
           <view class="today-data-badge">{{remainingCount ? '剩余 ' + remainingCount + ' 项' : '全部完成'}}</view>
         </view>
+        <view class="today-mood mood-{{todayMoodTone}}">
+          <view class="today-mood-mark">{{todayMoodMark}}</view>
+          <view class="today-mood-copy">
+            <view class="today-mood-title">{{todayMoodTitle}}</view>
+            <view class="today-mood-desc">{{todayMoodCopy}}</view>
+          </view>
+        </view>
         <view class="today-data-grid">
           <view class="today-data-item">
             <view class="today-data-value">{{summary.completedCount}} / {{summary.totalCount}}</view>
@@ -75,6 +83,11 @@
         <view wx:if="{{summary.partialCount > 0}}" class="today-data-footer">
           <view class="today-data-tag">部分完成 {{summary.partialCount}}</view>
         </view>
+      </view>
+
+      <view class="daily-nudge-card">
+        <view class="daily-nudge-label">今日一句</view>
+        <view class="daily-nudge-text">{{dailyNudge}}</view>
       </view>
 
       <view class="action-section-header">
@@ -102,6 +115,7 @@
         <view wx:for="{{item.tasks}}" wx:for-item="task" wx:key="id" class="action-card-tap" data-id="{{task.id}}" bindtap="openTask">
           <ant-card className="action-card {{task.status === 'completed' ? 'action-card-completed' : ''}}">
             <view class="action-card-body">
+              <view class="action-status-rail rail-{{task.statusTone}}"></view>
               <view class="action-main">
                 <view class="action-tags">
                   <ant-tag wx:if="{{task.rescheduled}}" type="outline" color="success" className="source-tag">从之前顺延</ant-tag>
