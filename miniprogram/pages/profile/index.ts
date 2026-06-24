@@ -23,6 +23,33 @@ function shortDate(value?: string): string {
   return value ? value.slice(0, 10) : "";
 }
 
+function daysSince(value?: string): number {
+  if (!value) return 1;
+  const start = new Date(`${shortDate(value)}T00:00:00`).getTime();
+  if (!Number.isFinite(start)) return 1;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return Math.max(1, Math.floor((today - start) / (24 * 60 * 60 * 1000)) + 1);
+}
+
+function levelTitle(actionDays: number): string {
+  if (actionDays >= 30) return "Lv.4 · 稳定推进者";
+  if (actionDays >= 14) return "Lv.3 · 行动熟手";
+  if (actionDays >= 7) return "Lv.2 · 自律练习生";
+  return "Lv.1 · 自律新兵";
+}
+
+function progressPercent(summary: ProgressSummary | null): number {
+  if (!summary || summary.totalTasks <= 0) return 0;
+  return Math.min(100, Math.round((summary.completedTasks / summary.totalTasks) * 100));
+}
+
+function goalProgressCopy(summary: ProgressSummary | null): string {
+  const days = summary?.totalActionDays || 0;
+  const completed = summary?.completedTasks || 0;
+  return `已坚持 ${days} 天 · 完成 ${completed} 项行动`;
+}
+
 function getGoalDateRange(goal: ArchivedGoal): string {
   const start = shortDate(goal.startedAt || goal.createdAt);
   const end = shortDate(goal.endedAt || goal.archivedAt);
@@ -78,6 +105,10 @@ Page({
     displayName: "未设置展示名称",
     displayAvatarUrl: "",
     displayAvatarText: "进",
+    joinedDays: 1,
+    levelLabel: "Lv.1 · 自律新兵",
+    goalProgressPercent: 0,
+    goalProgressText: "已坚持 0 天 · 完成 0 项行动",
     profileEditorVisible: false,
     profileDraftNickname: "",
     profileDraftAvatarUrl: "",
@@ -96,6 +127,7 @@ Page({
       const archivedGoals = getArchivedGoals().map(toViewArchivedGoal);
       const summary = goal ? getProgressSummary(goal.id) : null;
       const userProfile = getLocalUserProfile();
+      const joinedDays = daysSince(userProfile?.updatedAt || goal?.createdAt || archivedGoals[0]?.createdAt);
       this.setData({
         goal,
         goalCreatedDate: goal ? shortDate(goal.createdAt) : "",
@@ -107,6 +139,10 @@ Page({
         displayName: userProfile?.nickname || "未设置展示名称",
         displayAvatarUrl: userProfile?.avatarUrl || "",
         displayAvatarText: userProfile?.nickname ? userProfile.nickname.slice(0, 1) : "进",
+        joinedDays,
+        levelLabel: levelTitle(summary?.totalActionDays || 0),
+        goalProgressPercent: progressPercent(summary),
+        goalProgressText: goalProgressCopy(summary),
         historyEmptyDescription: goal
           ? "当前目标仍在进行中。结束或更换目标后，它会保存到这里用于复盘。"
           : "创建并完成一个目标后，这里会展示你的目标复盘。",
@@ -137,6 +173,27 @@ Page({
   onChooseAvatar(event: { detail: { avatarUrl?: string } }) {
     const avatarUrl = String(event.detail.avatarUrl || "");
     if (!avatarUrl) return;
+    if (!this.data.profileEditorVisible) {
+      const nickname = this.data.userProfile?.nickname || this.data.displayName;
+      try {
+        const userProfile = saveLocalUserProfile({
+          nickname,
+          avatarUrl,
+          profileSource: "wechat",
+          useProfileInTeam: this.data.userProfile?.useProfileInTeam !== false,
+        });
+        this.setData({
+          userProfile,
+          displayName: userProfile.nickname,
+          displayAvatarUrl: userProfile.avatarUrl,
+          displayAvatarText: userProfile.nickname.slice(0, 1) || "进",
+        });
+        wx.showToast({ title: "头像已更新", icon: "success" });
+      } catch (error) {
+        wx.showToast({ title: error instanceof Error ? error.message : "头像保存失败", icon: "none" });
+      }
+      return;
+    }
     this.setData({ profileDraftAvatarUrl: avatarUrl, profileDraftSource: "wechat" });
   },
 

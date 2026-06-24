@@ -1,16 +1,23 @@
 <view class="page profile-page">
   <view class="profile-banner">
-    <view class="avatar">
-      <image wx:if="{{displayAvatarUrl}}" class="avatar-image" src="{{displayAvatarUrl}}" mode="aspectFill" />
-      <text wx:else>{{displayAvatarText}}</text>
+    <view class="hero-kicker">MY GROWTH</view>
+    <button class="profile-edit-btn" bindtap="openProfileEditor">✎ 编辑</button>
+    <view class="identity-group">
+      <view class="avatar">
+        <image wx:if="{{displayAvatarUrl}}" class="avatar-image" src="{{displayAvatarUrl}}" mode="aspectFill" />
+        <text wx:else>{{displayAvatarText}}</text>
+        <view class="avatar-camera">◎</view>
+        <button class="avatar-hitarea" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></button>
+      </view>
+      <view class="identity-copy">
+        <view class="profile-name">{{displayName}}</view>
+        <view class="identity-meta-row">
+          <view class="level-pill">{{levelLabel}}</view>
+          <view class="joined-days">入驻第 {{joinedDays}} 天</view>
+        </view>
+      </view>
     </view>
-    <view class="banner-copy">
-      <view class="hero-kicker">MY GROWTH</view>
-      <view class="hero-title">我的行动空间</view>
-      <view class="profile-name">{{displayName}}</view>
-      <view class="hero-copy">不用比较，只记录自己的推进。</view>
-    </view>
-    <button class="profile-edit-btn" bindtap="openProfileEditor">编辑资料</button>
+    <view class="hero-copy">不用比较，只记录自己的推进。</view>
   </view>
 
   <view wx:if="{{goal}}" class="profile-card goal-card">
@@ -20,6 +27,10 @@
     </view>
     <view class="goal-title">{{goal.title}}</view>
     <view class="goal-meta">创建于 {{goalCreatedDate}}</view>
+    <view class="goal-progress-track">
+      <view class="goal-progress-fill" style="width: {{goalProgressPercent}}%;"></view>
+    </view>
+    <view class="goal-progress-copy">{{goalProgressText}}</view>
     <button class="goal-primary-action" bindtap="goProgress">查看进度</button>
     <view class="goal-secondary-actions">
       <button loading="{{lifecycleSubmitting}}" disabled="{{lifecycleSubmitting}}" bindtap="replaceCurrentGoal">更换目标</button>
