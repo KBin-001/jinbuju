@@ -320,9 +320,7 @@
 }
 
 .success-card {
-  background:
-    radial-gradient(circle at 50% 0, rgba(243, 199, 106, 0.24), transparent 38%),
-    #ffffff;
+  background: #ffffff;
 }
 
 .status-radio-group,
@@ -524,7 +522,7 @@
   color: #899087;
 }
 /* Check-in dashboard */
-.checkin-page { background: radial-gradient(circle at 100% 8%,rgba(216,168,78,.18),transparent 26%),#edf1ee; }
+.checkin-page { background: #edf1ee; }
 .checkin-hero { position:relative; overflow:hidden; padding:38rpx; border:0; border-radius:40rpx; background:linear-gradient(145deg,#153f36,#356859); color:#fff; box-shadow:0 22rpx 56rpx rgba(21,63,54,.22); }
 .checkin-hero::after { position:absolute; right:-60rpx; bottom:-100rpx; width:250rpx; height:250rpx; border-radius:50%; background:rgba(216,168,78,.16); content:""; }
 .checkin-hero .section-eyebrow { color:#e8c97f; }

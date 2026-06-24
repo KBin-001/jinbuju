@@ -42,7 +42,7 @@
   line-height: 1.85;
 }
 .legal-page {
-  background: radial-gradient(circle at 100% 0, rgba(216,168,78,.16), transparent 28%), #edf1ee;
+  background: #edf1ee;
 }
 
 .legal-page .page-header {

@@ -159,9 +159,7 @@
 
 .plan-hero {
   border: 1rpx solid rgba(53, 104, 89, 0.1);
-  background:
-    radial-gradient(circle at 100% 0, rgba(243, 199, 106, 0.18), transparent 34%),
-    linear-gradient(145deg, #ffffff, #f4f8f5);
+  background: linear-gradient(145deg, #ffffff, #f4f8f5);
   box-shadow: var(--shadow-card);
 }
 

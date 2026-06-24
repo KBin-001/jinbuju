@@ -232,9 +232,7 @@
 }
 
 .team-summary-card {
-  background:
-    radial-gradient(circle at 100% 0, rgba(243, 199, 106, 0.2), transparent 36%),
-    linear-gradient(145deg, #ffffff, #f6faf7);
+  background: linear-gradient(145deg, #ffffff, #f6faf7);
 }
 
 .team-detail {

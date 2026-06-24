@@ -28,10 +28,7 @@
   box-sizing: border-box;
   padding: 26rpx 30rpx;
   border-radius: 30rpx;
-  background:
-    radial-gradient(circle at 92% 4%, rgba(139, 191, 114, 0.34) 0, rgba(139, 191, 114, 0.34) 90rpx, transparent 92rpx),
-    radial-gradient(circle at 66% 100%, rgba(123, 167, 201, 0.28) 0, rgba(123, 167, 201, 0.28) 86rpx, transparent 88rpx),
-    linear-gradient(135deg, #123d35 0%, #1f4d42 56%, #356859 100%);
+  background: linear-gradient(135deg, #123d35 0%, #1f4d42 56%, #356859 100%);
   color: #ffffff;
   box-shadow: var(--profile-shadow);
 }

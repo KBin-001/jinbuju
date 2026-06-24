@@ -65,9 +65,7 @@ page {
   --checkbox-background-color: #356859;
   --checkbox-border-color: #c9d7d1;
   --checkbox-text-color: #1f2d2a;
-  background:
-    radial-gradient(circle at 100% 0, rgba(216, 168, 78, 0.12), transparent 28%),
-    linear-gradient(180deg, #f5f2e9 0, var(--color-background) 460rpx);
+  background: var(--color-background);
   color: var(--color-text);
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 28rpx;
@@ -104,10 +102,7 @@ button[disabled] {
 .page {
   min-height: 100vh;
   padding: 48rpx 32rpx calc(56rpx + env(safe-area-inset-bottom));
-  background:
-    radial-gradient(circle at 100% 0, rgba(216, 168, 78, 0.14), transparent 27%),
-    radial-gradient(circle at 0 32%, rgba(92, 120, 214, 0.08), transparent 25%),
-    transparent;
+  background: transparent;
 }
 
 .page-header {
@@ -232,21 +227,11 @@ button[disabled] {
   box-shadow: var(--shadow-float);
 }
 
-.growth-hero::before,
 .growth-hero::after {
   position: absolute;
   border-radius: 50%;
   content: "";
   pointer-events: none;
-}
-
-.growth-hero::before {
-  top: -90rpx;
-  right: -54rpx;
-  width: 250rpx;
-  height: 250rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.18);
-  background: rgba(216, 168, 78, 0.18);
 }
 
 .growth-hero::after {

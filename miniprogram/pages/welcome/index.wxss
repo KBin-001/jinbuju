@@ -2,9 +2,7 @@
   min-height: 100vh;
   padding: calc(48rpx + env(safe-area-inset-top)) 48rpx calc(40rpx + env(safe-area-inset-bottom));
   overflow: hidden;
-  background:
-    radial-gradient(circle at 88% 12%, rgba(242, 184, 75, 0.22) 0, rgba(242, 184, 75, 0) 30%),
-    linear-gradient(160deg, #f8faf5 0%, #edf4ee 100%);
+  background: linear-gradient(160deg, #f8faf5 0%, #edf4ee 100%);
 }
 
 .welcome-state {
@@ -241,7 +239,7 @@
     height: 88rpx;
   }
 }
-.welcome-page { background:radial-gradient(circle at 90% 8%,rgba(216,168,78,.24),transparent 28%),radial-gradient(circle at 0 65%,rgba(92,120,214,.18),transparent 30%),linear-gradient(155deg,#153f36,#285f51 58%,#1d3141); color:#fff; }
+.welcome-page { background:radial-gradient(circle at 0 65%,rgba(92,120,214,.18),transparent 30%),linear-gradient(155deg,#153f36,#285f51 58%,#1d3141); color:#fff; }
 .brand-name, .hero-title { color:#fff; }
 .hero-label { color:#e8c97f; letter-spacing:3rpx; }
 .hero-subtitle { color:rgba(255,255,255,.68); }
