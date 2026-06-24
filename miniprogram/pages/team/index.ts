@@ -1,225 +1,423 @@
+import { getActiveGoal } from "../../services/manualGoal";
+import { calculateTodaySummary, getTasksByDate, updateTaskStatus } from "../../services/manualTask";
 import {
+  createTeam,
   getMyTeam,
-  joinTeam as requestJoinTeam,
+  joinRoom,
   sendEncouragement,
-  syncTeamActivity,
-  TeamServiceError,
+  updateSelfActivity,
+  updateSelfDisplayMode,
+  updateSelfTaskDetailVisible,
+  validateRoomCode,
 } from "../../services/team";
+import { ActionTask, Goal, TodaySummary } from "../../types/manual";
 import {
   EncouragementType,
-  TeamMemberSummary,
-  TeamPageData,
-  TeamSummary,
+  MemberTodayStatus,
+  Team,
+  TeamDailyStats,
+  TeamDisplayMode,
+  TeamMember,
+  TeamMemberActionDetail,
 } from "../../types/team";
-import { getActiveGoal } from "../../services/manualGoal";
-import { getTasksByDate } from "../../services/manualTask";
-import { formatDate } from "../../utils/date";
+import { formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
 
-type PageStatus = "loading" | "empty" | "error" | "ready";
+type PageStatus = "loading" | "empty" | "ready" | "error";
 
-/** Cache TTL in ms – data within this window is considered fresh. */
-const CACHE_TTL = 30_000;
-
-interface MemberActionEvent {
-  currentTarget: {
-    dataset: {
-      memberId?: string;
-    };
-  };
+interface MemberView extends TeamMember {
+  displayName: string;
+  avatarText: string;
+  privacyText: string;
+  statusText: string;
+  statusClass: string;
+  actionText: string;
+  metaText: string;
+  buttonText: string;
+  compactButtonText: string;
+  canMarkComplete: boolean;
+  canEncourage: boolean;
+  canOpenDetail: boolean;
+  detailHiddenText: string;
 }
 
-interface EncouragementOption {
-  type: EncouragementType;
-  label: string;
+interface ActivitySnapshot {
+  goal: Goal | null;
+  tasks: ActionTask[];
+  summary: TodaySummary;
+  todayActionTitle: string;
+  todayActionDetails: TeamMemberActionDetail[];
+  todayStatus: MemberTodayStatus;
 }
 
-interface TeamMemberView extends TeamMemberSummary {
-  avatarDisplay: string;
-  todayStatusText: string;
-}
-
-const DEFAULT_AVATAR = "/images/icons/usercenter.png";
-const CATEGORY_LABELS: Record<string, string> = {
-  exam: "考试备考",
-  skill: "技能学习",
-  career: "求职提升",
-};
-const ENCOURAGEMENT_OPTIONS: EncouragementOption[] = [
+const ENCOURAGEMENT_OPTIONS: Array<{ type: EncouragementType; label: string }> = [
   { type: "keep_going", label: "今天也要加油" },
   { type: "very_stable", label: "你太稳了" },
   { type: "continue_tomorrow", label: "明天继续" },
   { type: "stay_together", label: "一起坚持" },
 ];
 
-function formatDateRange(startDate: string, endDate: string): string {
-  const format = (value: string): string => {
-    const parts = value.split("-").map(Number);
-    if (parts.length !== 3 || parts.some((part) => !Number.isFinite(part))) {
-      return value;
-    }
-    return `${parts[1]} 月 ${parts[2]} 日`;
+const DISPLAY_MODE_OPTIONS: Array<{ value: TeamDisplayMode; label: string }> = [
+  { value: "nicknameOnly", label: "半公开" },
+  { value: "public", label: "公开" },
+  { value: "anonymous", label: "匿名" },
+];
+
+function taskStatusToMemberStatus(status: ActionTask["status"]): MemberTodayStatus {
+  if (status === "completed") return "completed";
+  if (status === "partially_completed") return "partial";
+  if (status === "skipped") return "missed";
+  return "not_started";
+}
+
+function buildActivitySnapshot(): ActivitySnapshot {
+  const goal = getActiveGoal();
+  const today = getTodayBusinessDate();
+  const tasks = goal ? getTasksByDate(goal.id, today) : [];
+  const summary = calculateTodaySummary(tasks);
+  const todayAction = tasks.find((task) => task.status !== "completed") || tasks[0];
+  let todayStatus: MemberTodayStatus = "not_started";
+  if (summary.totalCount > 0 && summary.completedCount === summary.totalCount) {
+    todayStatus = "completed";
+  } else if (summary.completedCount > 0 || summary.partialCount > 0) {
+    todayStatus = "partial";
+  }
+  return {
+    goal,
+    tasks,
+    summary,
+    todayActionTitle: todayAction?.title || "",
+    todayActionDetails: tasks.map((task) => ({
+      id: task.id,
+      title: task.title,
+      status: taskStatusToMemberStatus(task.status),
+      estimatedMinutes: task.estimatedMinutes,
+      growthMinutes: task.actualMinutes || 0,
+    })),
+    todayStatus,
   };
-  return `${format(startDate)} 至 ${format(endDate)}`;
+}
+
+function phaseDateRange(team: Team | null): string {
+  if (!team) return "";
+  return `${formatDisplayDate(team.phaseStartDate)} 至 ${formatDisplayDate(team.phaseEndDate)}`;
+}
+
+function privacyText(mode: TeamDisplayMode): string {
+  if (mode === "public") return "公开";
+  if (mode === "anonymous") return "匿名";
+  return "半公开";
+}
+
+function statusText(status: MemberTodayStatus): string {
+  const labels: Record<MemberTodayStatus, string> = {
+    not_started: "今日未记录",
+    completed: "今日已完成",
+    partial: "完成一部分",
+    missed: "今日未完成",
+  };
+  return labels[status];
+}
+
+function toMemberView(member: TeamMember): MemberView {
+  const anonymous = member.displayMode === "anonymous";
+  const publicMode = member.displayMode === "public";
+  const displayName = anonymous ? (member.anonymousName || "行动伙伴") : member.nickname;
+  const goalText = anonymous ? "目标已隐藏" : (member.goalTitle || "正在建立目标");
+  const actionText = publicMode && member.todayActionTitle
+    ? member.todayActionTitle
+    : member.displayMode === "nicknameOnly"
+      ? "具体行动已隐藏"
+      : goalText;
+  const canMarkComplete = member.isSelf && member.todayStatus !== "completed";
+  const canOpenDetail = member.displayMode !== "anonymous";
+  return {
+    ...member,
+    displayName,
+    avatarText: displayName.slice(0, 1),
+    privacyText: privacyText(member.displayMode),
+    statusText: statusText(member.todayStatus),
+    statusClass: `status-${member.todayStatus}`,
+    actionText,
+    metaText: `预计 ${member.estimatedMinutes || 0} 分钟 · 成长 ${member.growthMinutes || 0} 分钟 · 鼓励 ${member.encouragementCount}`,
+    buttonText: member.isSelf
+      ? member.todayStatus === "completed"
+        ? "已完成"
+        : member.todayStatus === "partial"
+          ? "继续记录"
+          : "标记完成"
+      : member.encouragedByMeToday
+        ? "已鼓励"
+        : "鼓励",
+    compactButtonText: member.isSelf
+      ? member.todayStatus === "completed"
+        ? "已完成"
+        : member.todayStatus === "partial"
+          ? "继续"
+          : "完成"
+      : member.encouragedByMeToday
+        ? "已鼓励"
+        : "鼓励",
+    canMarkComplete,
+    canEncourage: !member.isSelf && !member.encouragedByMeToday,
+    canOpenDetail,
+    detailHiddenText: member.displayMode === "anonymous"
+      ? "匿名成员不会公开行动明细"
+      : "这位成员暂未开放行动明细",
+  };
 }
 
 Page({
   data: {
     status: "loading" as PageStatus,
     errorMessage: "",
-    errorCode: "",
-    team: null as TeamSummary | null,
-    members: [] as TeamMemberView[],
-    categoryLabel: "",
-    stageDateRange: "",
+    team: null as Team | null,
+    members: [] as MemberView[],
+    visibleMembers: [] as MemberView[],
+    dailyStats: null as TeamDailyStats | null,
+    phaseDateRange: "",
+    roomCodeInput: "",
+    joinPopupVisible: false,
+    reviewPopupVisible: false,
+    memberDetailVisible: false,
+    selectedMember: null as MemberView | null,
+    showAllMembers: false,
+    creating: false,
     joining: false,
+    markingComplete: false,
     encouragingMemberId: "",
+    currentScrollTop: 0,
   },
-
-  // ── In-memory cache metadata ──
-  _lastFetchTime: 0,
-  _loading: false,
 
   onShow() {
-    this.loadTeam();
+    this.load();
   },
 
-  /**
-   * @param force  true = always refetch (after mutations); false = use cache if fresh.
-   */
-  loadTeam(force = false) {
-    if (this._loading) return;
+  onPageScroll(event: { scrollTop: number }) {
+    this.setData({ currentScrollTop: event.scrollTop });
+  },
 
-    const now = Date.now();
-    const hasFreshCache = !force && this._lastFetchTime > 0 && (now - this._lastFetchTime < CACHE_TTL);
-    if (hasFreshCache) return;
+  onShareAppMessage() {
+    const team = this.data.team;
+    return {
+      title: team ? `加入我的进步局小队：${team.roomCode}` : "一起加入进步局小队",
+      path: "/pages/team/index",
+    };
+  },
 
-    const silent = this._lastFetchTime > 0;
-    this._loading = true;
-
-    if (!silent) {
+  load() {
+    try {
+      const current = getMyTeam();
+      const synced = current.team ? this.syncCurrentActivity() || current : current;
+      this.applyTeamData(synced.team, synced.members, synced.dailyStats);
+    } catch (error) {
       this.setData({
-        status: "loading",
-        errorMessage: "",
-        errorCode: "",
+        status: "error",
+        errorMessage: error instanceof Error ? error.message : "小队数据读取失败",
       });
     }
+  },
 
-    const goal = getActiveGoal();
-    const today = formatDate(new Date());
-    const syncRequest = goal
-      ? syncTeamActivity({
-          goalTitle: goal.title,
-          tasks: getTasksByDate(goal.id, today).map((task) => ({
-            id: task.id,
-            status: task.status,
-            actualMinutes: task.actualMinutes,
-            estimatedMinutes: task.estimatedMinutes,
-          })),
-        }).catch(() => undefined)
-      : Promise.resolve(undefined);
+  syncCurrentActivity() {
+    const snapshot = buildActivitySnapshot();
+    return updateSelfActivity({
+      goalTitle: snapshot.goal?.title || "",
+      todayActionTitle: snapshot.todayActionTitle,
+      todayActionDetails: snapshot.todayActionDetails,
+      estimatedMinutes: snapshot.summary.estimatedMinutes,
+      growthMinutes: snapshot.summary.actualMinutes,
+      todayStatus: snapshot.todayStatus,
+    });
+  },
 
-    syncRequest.then(() => getMyTeam())
-      .then((data: TeamPageData) => {
-        this._lastFetchTime = Date.now();
-        this._loading = false;
-
-        if (!data.team) {
-          this.setData({
-            status: "empty",
-            team: null,
-            members: [],
-          });
-          return;
-        }
-        const members = data.members.map((member) => ({
-          ...member,
-          avatarDisplay: member.avatarUrl || DEFAULT_AVATAR,
-          todayStatusText: member.todayRest
-            ? "今日休息"
-            : member.todayCompleted
-              ? "今天已完成"
-              : "今天未记录",
-        }));
-        this.setData({
-          status: "ready",
-          team: data.team,
-          members,
-          categoryLabel: CATEGORY_LABELS[data.team.goalCategory] || "成长行动",
-          stageDateRange: formatDateRange(
-            data.team.stageStartDate,
-            data.team.stageEndDate,
-          ),
-          joining: false,
-          encouragingMemberId: "",
-        });
-      })
-      .catch((error: Error) => {
-        this._loading = false;
-        if (!silent) {
-          const serviceError = error as TeamServiceError;
-          this.setData({
-            status: "error",
-            errorCode: serviceError.code || "INTERNAL_ERROR",
-            errorMessage: serviceError.message || "小队信息加载失败，请稍后重试。",
-            joining: false,
-            encouragingMemberId: "",
-          });
-        }
-      });
+  applyTeamData(team: Team | null, members: TeamMember[], dailyStats: TeamDailyStats | null) {
+    const memberViews = members.map(toMemberView);
+    const showAllMembers = this.data.showAllMembers;
+    this.setData({
+      status: team ? "ready" : "empty",
+      team,
+      members: memberViews,
+      visibleMembers: showAllMembers ? memberViews : memberViews.slice(0, 10),
+      dailyStats,
+      phaseDateRange: phaseDateRange(team),
+      errorMessage: "",
+      creating: false,
+      joining: false,
+      markingComplete: false,
+      encouragingMemberId: "",
+    });
   },
 
   retry() {
-    if (this._loading) return;
-    this._lastFetchTime = 0;
-    this.loadTeam(true);
+    this.load();
   },
 
-  joinTeam() {
+  createLocalTeam() {
+    if (this.data.creating) return;
+    this.setData({ creating: true });
+    try {
+      const snapshot = buildActivitySnapshot();
+      const data = createTeam({
+        goalTitle: snapshot.goal?.title || "",
+        todayActionTitle: snapshot.todayActionTitle,
+        todayActionDetails: snapshot.todayActionDetails,
+        estimatedMinutes: snapshot.summary.estimatedMinutes,
+        growthMinutes: snapshot.summary.actualMinutes,
+        todayStatus: snapshot.todayStatus,
+      });
+      this.applyTeamData(data.team, data.members, data.dailyStats);
+      wx.showToast({ title: "小队已创建", icon: "success" });
+    } catch (error) {
+      this.setData({ creating: false });
+      wx.showToast({ title: error instanceof Error ? error.message : "创建失败", icon: "none" });
+    }
+  },
+
+  openJoinPopup() {
+    this.setData({ joinPopupVisible: true, roomCodeInput: "" });
+  },
+
+  closeJoinPopup() {
+    if (this.data.joining) return;
+    this.setData({ joinPopupVisible: false, roomCodeInput: "" });
+  },
+
+  inputRoomCode(event: { detail: { value?: string } }) {
+    const value = String(event.detail.value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+    this.setData({ roomCodeInput: value });
+  },
+
+  submitJoinRoom() {
     if (this.data.joining) return;
     this.setData({ joining: true });
-    const goal = getActiveGoal();
-    if (!goal) {
-      this.setData({ joining: false });
-      wx.showToast({ title: "请先创建目标", icon: "none" });
-      return;
-    }
-    requestJoinTeam({ goalTitle: goal.title })
-      .then(() => {
-        wx.showToast({
-          title: "已加入行动小队",
-          icon: "success",
-        });
-        this.loadTeam(true);
-      })
-      .catch((error: Error) => {
-        const serviceError = error as TeamServiceError;
-        this.setData({ joining: false });
-        wx.showModal({
-          title: "暂时无法加入",
-          content: serviceError.message || "请稍后重试。",
-          showCancel: false,
-        });
+    try {
+      const roomCode = validateRoomCode(this.data.roomCodeInput);
+      const snapshot = buildActivitySnapshot();
+      const data = joinRoom({
+        roomCode,
+        goalTitle: snapshot.goal?.title || "",
+        todayActionTitle: snapshot.todayActionTitle,
+        todayActionDetails: snapshot.todayActionDetails,
+        estimatedMinutes: snapshot.summary.estimatedMinutes,
+        growthMinutes: snapshot.summary.actualMinutes,
+        todayStatus: snapshot.todayStatus,
       });
+      this.applyTeamData(data.team, data.members, data.dailyStats);
+      this.setData({ joinPopupVisible: false, roomCodeInput: "" });
+      wx.showModal({
+        title: "已加入本地演示小队",
+        content: "当前只保存到本机。真实跨设备加入需要后续接入云端小队数据。",
+        showCancel: false,
+      });
+    } catch (error) {
+      this.setData({ joining: false });
+      wx.showToast({ title: error instanceof Error ? error.message : "加入失败", icon: "none" });
+    }
   },
 
-  chooseEncouragement(event: MemberActionEvent) {
-    const memberId = String(event.currentTarget.dataset.memberId || "");
-    const member = this.data.members.find(
-      (item: TeamMemberView) => item.id === memberId,
-    );
-    if (
-      !member ||
-      member.isSelf ||
-      member.encouragedByMeToday ||
-      this.data.encouragingMemberId
-    ) {
+  copyRoomCode() {
+    const roomCode = this.data.team?.roomCode;
+    if (!roomCode) return;
+    wx.setClipboardData({
+      data: roomCode,
+      success: () => wx.showToast({ title: "房间号已复制", icon: "success" }),
+    });
+  },
+
+  inviteFriends() {
+    const roomCode = this.data.team?.roomCode;
+    if (!roomCode) return;
+    wx.showModal({
+      title: "邀请好友",
+      content: `把房间号 ${roomCode} 发给朋友。当前版本为本地演示，真实加入需要云端小队能力。`,
+      confirmText: "复制房间号",
+      success: (result) => {
+        if (result.confirm) this.copyRoomCode();
+      },
+    });
+  },
+
+  openTeamSettings() {
+    const self = this.data.members.find((member) => member.isSelf);
+    const detailLabel = self?.taskDetailVisible ? "关闭行动明细" : "开放行动明细";
+    wx.showActionSheet({
+      itemList: DISPLAY_MODE_OPTIONS.map((item) => item.label).concat(detailLabel),
+      success: ({ tapIndex }) => {
+        if (tapIndex === DISPLAY_MODE_OPTIONS.length) {
+          this.toggleSelfTaskDetailVisible();
+          return;
+        }
+        const option = DISPLAY_MODE_OPTIONS[tapIndex];
+        if (!option) return;
+        try {
+          updateSelfDisplayMode(option.value);
+          const data = this.syncCurrentActivity();
+          this.applyTeamData(data.team, data.members, data.dailyStats);
+          wx.showToast({ title: `已切换为${option.label}`, icon: "none" });
+        } catch (error) {
+          wx.showToast({ title: error instanceof Error ? error.message : "设置失败", icon: "none" });
+        }
+      },
+    });
+  },
+
+  toggleSelfTaskDetailVisible() {
+    const self = this.data.members.find((member) => member.isSelf);
+    if (!self || self.displayMode === "anonymous") {
+      wx.showToast({ title: "匿名模式下不会开放明细", icon: "none" });
       return;
     }
+    try {
+      updateSelfTaskDetailVisible(!self.taskDetailVisible);
+      const data = this.syncCurrentActivity();
+      this.applyTeamData(data.team, data.members, data.dailyStats);
+      wx.showToast({
+        title: self.taskDetailVisible ? "已关闭行动明细" : "已开放行动明细",
+        icon: "none",
+      });
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "设置失败", icon: "none" });
+    }
+  },
 
+  markSelfCompleted() {
+    if (this.data.markingComplete) return;
+    const snapshot = buildActivitySnapshot();
+    if (!snapshot.goal || snapshot.tasks.length === 0) {
+      wx.showToast({ title: "请先添加今日行动", icon: "none" });
+      return;
+    }
+    const prevScrollTop = this.data.currentScrollTop;
+    this.setData({ markingComplete: true });
+    try {
+      snapshot.tasks
+        .filter((task) => task.status !== "completed" && task.status !== "rescheduled")
+        .forEach((task) => updateTaskStatus(task.id, "completed", task.actualMinutes || task.estimatedMinutes));
+      const nextSnapshot = buildActivitySnapshot();
+      const data = updateSelfActivity({
+        goalTitle: nextSnapshot.goal?.title || "",
+        todayActionTitle: nextSnapshot.todayActionTitle,
+        todayActionDetails: nextSnapshot.todayActionDetails,
+        estimatedMinutes: nextSnapshot.summary.estimatedMinutes,
+        growthMinutes: nextSnapshot.summary.actualMinutes,
+        todayStatus: nextSnapshot.todayStatus,
+      });
+      this.applyTeamData(data.team, data.members, data.dailyStats);
+      wx.showToast({ title: "今日行动已完成", icon: "success" });
+      wx.nextTick(() => wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 }));
+    } catch (error) {
+      this.setData({ markingComplete: false });
+      wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
+    }
+  },
+
+  encourageMember(event: { currentTarget: { dataset: { id?: string } } }) {
+    const memberId = String(event.currentTarget.dataset.id || "");
+    const member = this.data.members.find((item) => item.id === memberId);
+    if (!member || !member.canEncourage || this.data.encouragingMemberId) return;
     wx.showActionSheet({
-      itemList: ENCOURAGEMENT_OPTIONS.map((option) => option.label),
-      success: (result: { tapIndex: number }) => {
-        const option = ENCOURAGEMENT_OPTIONS[result.tapIndex];
+      itemList: ENCOURAGEMENT_OPTIONS.map((item) => item.label),
+      success: ({ tapIndex }) => {
+        const option = ENCOURAGEMENT_OPTIONS[tapIndex];
         if (option) this.submitEncouragement(memberId, option.type);
       },
     });
@@ -227,31 +425,56 @@ Page({
 
   submitEncouragement(memberId: string, type: EncouragementType) {
     if (this.data.encouragingMemberId) return;
+    const prevScrollTop = this.data.currentScrollTop;
     this.setData({ encouragingMemberId: memberId });
-    sendEncouragement({ memberId, type })
-      .then(() => {
-        wx.showToast({
-          title: "鼓励已送达",
-          icon: "none",
-        });
-        this.loadTeam(true);
-      })
-      .catch((error: Error) => {
-        const serviceError = error as TeamServiceError;
-        if (serviceError.code === "ENCOURAGEMENT_ALREADY_SENT") {
-          wx.showToast({
-            title: "今天已经鼓励过了",
-            icon: "none",
-          });
-          this.loadTeam(true);
-          return;
-        }
-        this.setData({ encouragingMemberId: "" });
-        wx.showModal({
-          title: "鼓励没有送达",
-          content: serviceError.message || "请稍后重试。",
-          showCancel: false,
-        });
-      });
+    try {
+      sendEncouragement({ memberId, type });
+      const data = getMyTeam();
+      this.applyTeamData(data.team, data.members, data.dailyStats);
+      wx.showToast({ title: "已送出鼓励", icon: "none" });
+      wx.nextTick(() => wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 }));
+    } catch (error) {
+      this.setData({ encouragingMemberId: "" });
+      wx.showToast({ title: error instanceof Error ? error.message : "鼓励失败", icon: "none" });
+    }
   },
+
+  toggleAllMembers() {
+    const showAllMembers = !this.data.showAllMembers;
+    this.setData({
+      showAllMembers,
+      visibleMembers: showAllMembers ? this.data.members : this.data.members.slice(0, 10),
+    });
+  },
+
+  openReview() {
+    this.setData({ reviewPopupVisible: true });
+  },
+
+  closeReview() {
+    this.setData({ reviewPopupVisible: false });
+  },
+
+  openMemberDetail(event: { currentTarget: { dataset: { id?: string } } }) {
+    const memberId = String(event.currentTarget.dataset.id || "");
+    let member = this.data.members.find((item) => item.id === memberId);
+    if (!member) return;
+    if (member.isSelf) {
+      const data = this.syncCurrentActivity();
+      const memberViews = data.members.map(toMemberView);
+      this.applyTeamData(data.team, data.members, data.dailyStats);
+      member = memberViews.find((item) => item.id === memberId) || member;
+    }
+    if (!member.canOpenDetail) {
+      wx.showToast({ title: "匿名成员未开放信息", icon: "none" });
+      return;
+    }
+    this.setData({ selectedMember: member, memberDetailVisible: true });
+  },
+
+  closeMemberDetail() {
+    this.setData({ selectedMember: null, memberDetailVisible: false });
+  },
+
+  noop() {},
 });
