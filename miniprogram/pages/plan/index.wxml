@@ -6,6 +6,7 @@
   <block wx:else>
     <view class="growth-hero archive-hero">
       <view class="hero-kicker">GROWTH ARCHIVE</view><view class="hero-title">成长档案</view><view class="hero-goal">{{goal.title}}</view>
+      <view class="archive-medal">奖</view>
       <view class="hero-rate"><text>{{completionRate}}</text><text class="rate-unit">%</text></view><view class="hero-copy">累计行动完成率</view>
     </view>
 

@@ -2,7 +2,7 @@
   <view class="team-hero-card">
     <view class="hero-left">
       <view class="hero-title-row">
-        <view class="hero-leaf">⌁</view>
+        <view class="hero-leaf">队</view>
         <view class="hero-title">小队</view>
       </view>
       <view class="hero-subtitle">3-50 人自律同行</view>

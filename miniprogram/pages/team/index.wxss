@@ -780,3 +780,221 @@ button[disabled] {
     font-size: 18rpx;
   }
 }
+
+.team-page {
+  --team-primary: #356859;
+  --team-deep: #1f5b4a;
+  --team-text: #233b34;
+  --team-secondary: #71827a;
+  --team-muted: #9aa6a1;
+  --team-border: #e6eee9;
+  --team-soft: #eaf5ef;
+  --team-bg: #f5f7f2;
+  --team-shadow: 0 16rpx 40rpx rgba(31, 70, 58, 0.08);
+  min-height: 100vh;
+  padding-top: 26rpx;
+  padding-bottom: calc(156rpx + env(safe-area-inset-bottom));
+  background: var(--team-bg);
+}
+
+.team-hero-card {
+  min-height: 196rpx;
+  align-items: flex-start;
+  padding: 32rpx;
+  border: 0;
+  border-radius: 32rpx;
+  background:
+    radial-gradient(circle at 86% 22%, rgba(248, 210, 106, 0.24), transparent 28%),
+    linear-gradient(145deg, #1f5b4a 0%, #2d705e 60%, #356859 100%);
+  box-shadow: 0 18rpx 44rpx rgba(31, 91, 74, 0.16);
+}
+
+.hero-leaf {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 18rpx;
+  background: #f8d26a;
+  color: #1f5b4a;
+}
+
+.hero-title {
+  font-size: 40rpx;
+  line-height: 48rpx;
+}
+
+.hero-subtitle,
+.hero-copy {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.hero-badge {
+  height: 42rpx;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.team-card,
+.state-card,
+.member-card {
+  border: 1rpx solid rgba(230, 238, 233, 0.92);
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-shadow: var(--team-shadow);
+}
+
+.team-card {
+  margin-top: 24rpx;
+  padding: 28rpx;
+}
+
+.team-card-title,
+.compact-card-title,
+.section-title {
+  color: var(--team-text);
+  font-size: 34rpx;
+  line-height: 42rpx;
+  font-weight: 700;
+}
+
+.info-pill,
+.privacy-tag,
+.status-tag {
+  min-height: 40rpx;
+  padding: 0 18rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+}
+
+.info-pill,
+.privacy-tag {
+  background: #eaf5ef;
+  color: var(--team-primary);
+}
+
+.team-info-foot,
+.progress-copy-row,
+.review-copy,
+.member-action,
+.member-meta {
+  color: var(--team-secondary);
+}
+
+.compact-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.compact-actions .primary-action,
+.compact-actions .secondary-action,
+.compact-actions .ghost-action {
+  max-width: none;
+}
+
+.primary-action,
+.secondary-action,
+.ghost-action {
+  border-radius: 40rpx;
+}
+
+.primary-action {
+  background: var(--team-primary);
+  box-shadow: 0 10rpx 24rpx rgba(31, 91, 74, 0.16);
+}
+
+.secondary-action {
+  border-color: #d7e4de;
+  color: var(--team-primary);
+}
+
+.ghost-action {
+  background: #f7faf6;
+  color: var(--team-primary);
+}
+
+.team-progress-track {
+  height: 16rpx;
+  border-radius: 8rpx;
+  background: #e8efea;
+}
+
+.team-progress-fill {
+  background: #7dbb69;
+}
+
+.members-section {
+  margin-top: 36rpx;
+}
+
+.member-card {
+  min-height: 150rpx;
+  align-items: flex-start;
+  padding: 24rpx;
+}
+
+.member-avatar {
+  width: 76rpx;
+  height: 76rpx;
+  background: #eaf5ef;
+  color: var(--team-primary);
+}
+
+.member-card:nth-child(3n + 1) .member-avatar,
+.member-card:nth-child(3n + 2) .member-avatar,
+.member-card:nth-child(3n) .member-avatar {
+  background: #eaf5ef;
+  color: var(--team-primary);
+}
+
+.member-name {
+  color: var(--team-text);
+  font-size: 28rpx;
+}
+
+.status-tag {
+  width: auto;
+  max-width: 136rpx;
+}
+
+.status-completed {
+  background: #eaf5ef;
+  color: var(--team-primary);
+}
+
+.status-partial {
+  background: #eef5fb;
+  color: #4f7888;
+}
+
+.status-not_started {
+  background: #f2f5f3;
+  color: #71827a;
+}
+
+.status-missed {
+  background: #f2f5f3;
+  color: #71827a;
+}
+
+.member-action-btn {
+  width: 112rpx;
+  min-height: 46rpx;
+  border-color: #d7e4de;
+  color: var(--team-primary);
+  border-radius: 23rpx;
+}
+
+.member-action-btn.encourage:not(.done) {
+  background: #fff9e8;
+  border-color: rgba(248, 210, 106, 0.62);
+  color: #8a6730;
+}
+
+.review-card {
+  margin-top: 26rpx;
+}
+
+.team-popup {
+  border-radius: 32rpx 32rpx 0 0;
+}

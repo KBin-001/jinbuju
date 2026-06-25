@@ -12,6 +12,14 @@
   </view>
 
   <block wx:else>
+    <view class="today-topbar">
+      <view>
+        <view class="today-greeting">早上好</view>
+        <view class="today-subtitle">坚持的每一步，都是成长的证据</view>
+      </view>
+      <view class="today-mini-date">{{weekday}}</view>
+    </view>
+
     <view class="growth-hero today-hero">
       <view class="hero-topline">
         <view class="hero-kicker">TODAY · ACTION</view>
@@ -44,6 +52,33 @@
     </view>
 
     <block wx:else>
+      <view class="today-data-card">
+        <view class="today-data-header">
+          <view>
+            <view class="today-data-title">今日数据</view>
+            <view class="today-data-mood">{{todayMoodTitle}}</view>
+          </view>
+          <view class="today-data-badge">{{remainingCount ? '剩余 ' + remainingCount + ' 项' : '全部完成'}}</view>
+        </view>
+        <view class="today-data-grid">
+          <view class="today-data-item">
+            <view class="today-data-value">{{summary.totalCount}}</view>
+            <view class="today-data-label">今日行动</view>
+          </view>
+          <view class="today-data-item">
+            <view class="today-data-value">{{summary.completedCount}}</view>
+            <view class="today-data-label">已完成</view>
+          </view>
+          <view class="today-data-item">
+            <view class="today-data-value today-data-efficiency">{{summary.actualMinutes}}min</view>
+            <view class="today-data-label">实际投入</view>
+          </view>
+        </view>
+        <view wx:if="{{summary.partialCount > 0}}" class="today-data-footer">
+          <view class="today-data-tag">完成一部分 {{summary.partialCount}}</view>
+        </view>
+      </view>
+
       <view class="action-section-header">
         <view class="action-section-left">
           <view class="section-title">行动安排</view>
@@ -91,37 +126,12 @@
         {{actionListExpanded ? '收起行动' : '展开其余 ' + hiddenActionCount + ' 项'}}
       </view>
 
-      <view class="today-data-card">
-        <view class="today-data-header">
-          <view>
-            <view class="today-data-title">今日数据</view>
-            <view class="today-data-mood">{{todayMoodTitle}}</view>
-          </view>
-          <view class="today-data-badge">{{remainingCount ? '剩余 ' + remainingCount + ' 项' : '全部完成'}}</view>
-        </view>
-        <view class="today-data-grid">
-          <view class="today-data-item">
-            <view class="today-data-value">{{summary.completedCount}} / {{summary.totalCount}}</view>
-            <view class="today-data-label">已完成</view>
-          </view>
-          <view class="today-data-item">
-            <view class="today-data-value">{{summary.actualMinutes}} 分钟</view>
-            <view class="today-data-label">已投入</view>
-          </view>
-          <view class="today-data-item">
-            <view class="today-data-value today-data-efficiency">{{remainingEstimatedMinutes}} 分钟</view>
-            <view class="today-data-label">预计还需</view>
-          </view>
-        </view>
-        <view wx:if="{{summary.partialCount > 0}}" class="today-data-footer">
-          <view class="today-data-tag">部分完成 {{summary.partialCount}}</view>
-        </view>
-      </view>
-
       <view class="daily-nudge-card">
         <view class="daily-nudge-label">今日一句</view>
         <view class="daily-nudge-text">{{dailyNudge}}</view>
       </view>
+
+      <button class="today-bottom-action" bindtap="addTask">记录今日行动</button>
     </block>
   </block>
 

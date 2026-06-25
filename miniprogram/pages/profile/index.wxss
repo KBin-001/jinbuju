@@ -974,3 +974,194 @@
   color: #ffffff;
   box-shadow: 0 8rpx 20rpx rgba(53, 104, 89, 0.16);
 }
+
+.profile-page {
+  --profile-primary: #356859;
+  --profile-deep: #1f5b4a;
+  --profile-text: #233b34;
+  --profile-secondary: #71827a;
+  --profile-muted: #9aa6a1;
+  --profile-border: #e6eee9;
+  --profile-card-radius: 28rpx;
+  --profile-shadow: 0 16rpx 40rpx rgba(31, 70, 58, 0.08);
+  min-height: 100vh;
+  padding-top: 26rpx;
+  padding-bottom: calc(156rpx + env(safe-area-inset-bottom));
+  background: #f5f7f2;
+}
+
+.profile-banner {
+  min-height: 320rpx;
+  padding: 34rpx 34rpx 32rpx;
+  border-radius: 32rpx;
+  background:
+    radial-gradient(circle at 86% 26%, rgba(248, 210, 106, 0.25), transparent 28%),
+    linear-gradient(145deg, #1f5b4a 0%, #2d705e 58%, #356859 100%);
+  box-shadow: 0 18rpx 44rpx rgba(31, 91, 74, 0.16);
+}
+
+.hero-kicker {
+  color: rgba(248, 210, 106, 0.96);
+}
+
+.profile-edit-btn {
+  top: 32rpx;
+  right: 30rpx;
+  height: 52rpx;
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.identity-group {
+  margin-top: 58rpx;
+  padding-bottom: 46rpx;
+}
+
+.avatar {
+  width: 124rpx;
+  height: 124rpx;
+  border: 4rpx solid rgba(255, 255, 255, 0.7);
+  background: #f8d26a;
+  color: #1f5b4a;
+}
+
+.avatar-camera {
+  background: #f8d26a;
+  color: #1f5b4a;
+  border-color: #1f5b4a;
+}
+
+.profile-name {
+  font-size: 40rpx;
+  line-height: 48rpx;
+}
+
+.level-pill {
+  background: rgba(248, 210, 106, 0.2);
+  color: #f8d26a;
+}
+
+.joined-days,
+.hero-copy {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.profile-card,
+.menu-card {
+  border: 1rpx solid rgba(230, 238, 233, 0.92);
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-shadow: var(--profile-shadow);
+}
+
+.profile-card {
+  margin-top: 24rpx;
+  padding: 28rpx;
+}
+
+.section-kicker {
+  color: var(--profile-primary);
+}
+
+.goal-status {
+  height: 40rpx;
+  min-height: 40rpx;
+  padding: 0 18rpx;
+  border-radius: 20rpx;
+  background: #eaf5ef;
+  color: var(--profile-primary);
+}
+
+.goal-title,
+.card-title,
+.menu-row {
+  color: var(--profile-text);
+}
+
+.goal-title {
+  font-size: 34rpx;
+  line-height: 42rpx;
+}
+
+.goal-meta,
+.goal-progress-copy,
+.growth-label,
+.menu-title,
+.growth-empty-tip {
+  color: var(--profile-secondary);
+}
+
+.goal-progress-track {
+  height: 16rpx;
+  border-radius: 8rpx;
+  background: #e8efea;
+}
+
+.goal-progress-fill {
+  background: #7dbb69;
+}
+
+.goal-primary-action {
+  min-height: 80rpx;
+  border-radius: 40rpx;
+  background: var(--profile-primary);
+}
+
+.goal-secondary-actions button {
+  min-height: 72rpx;
+  border-radius: 36rpx;
+  border-color: #d7e4de;
+  background: #ffffff;
+}
+
+.growth-stats {
+  gap: 14rpx;
+}
+
+.growth-stat {
+  min-height: 116rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 22rpx;
+  background: #f7faf6;
+}
+
+.growth-stat + .growth-stat::before {
+  display: none;
+}
+
+.growth-value {
+  color: var(--profile-text);
+  font-size: 40rpx;
+  line-height: 48rpx;
+}
+
+.menu-section {
+  margin-top: 28rpx;
+}
+
+.menu-card {
+  overflow: hidden;
+}
+
+.menu-row {
+  height: 96rpx;
+  font-size: 28rpx;
+}
+
+.menu-row-inner {
+  height: 96rpx;
+}
+
+.history-panel,
+.profile-editor-panel {
+  background: #f5f7f2;
+}
+
+.history-card,
+.record-card,
+.profile-form-card {
+  border: 1rpx solid rgba(230, 238, 233, 0.92);
+  box-shadow: var(--profile-shadow);
+}
