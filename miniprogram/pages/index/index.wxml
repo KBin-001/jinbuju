@@ -14,32 +14,22 @@
   <block wx:else>
     <view class="today-topbar">
       <view>
-        <view class="today-greeting">早上好</view>
+        <view class="today-greeting">早上好，阿岚 👋</view>
         <view class="today-subtitle">坚持的每一步，都是成长的证据</view>
       </view>
-      <view class="today-mini-date">{{weekday}}</view>
     </view>
 
-    <view class="growth-hero today-hero">
-      <view class="hero-topline">
-        <view class="hero-kicker">TODAY · ACTION</view>
-        <view class="hero-date-pill">{{dateTitle}} · {{weekday}}</view>
-      </view>
-      <view class="hero-focus">
-        <view class="hero-day-row">
-          <view class="hero-day">{{heroDayLabel}}</view>
-          <view wx:if="{{goal}}" class="hero-status-pill">目标进行中</view>
+    <view class="week-card">
+      <view class="week-head">
+        <view class="week-title">{{weekTitle}} <text>{{weekdayShort}}</text></view>
+        <view class="week-switch">
+          <view class="week-chevron">⌄</view>
         </view>
-        <view class="hero-focus-title">{{heroFocusTitle}}</view>
       </view>
-      <view class="hero-copy">{{summary.totalCount ? '今天只盯住眼前这几件事。' : '先加一件能开始的小事。'}}</view>
-      <view class="hero-progress">
-        <view class="hero-progress-head">
-          <text>今日完成度</text>
-          <text>{{completionPercent}}%</text>
-        </view>
-        <view class="hero-progress-track segmented-progress">
-          <view wx:for="{{progressSegments}}" wx:key="index" class="hero-progress-segment {{item.active ? 'is-active' : ''}}"></view>
+      <view class="week-grid">
+        <view wx:for="{{weekDays}}" wx:key="date" class="week-day {{item.isToday ? 'is-today' : ''}} {{item.isCurrentMonth ? '' : 'is-muted'}}">
+          <view class="week-label">{{item.label}}</view>
+          <view class="week-number">{{item.day}}</view>
         </view>
       </view>
     </view>
@@ -52,86 +42,83 @@
     </view>
 
     <block wx:else>
-      <view class="today-data-card">
-        <view class="today-data-header">
+      <view class="today-action-panel">
+        <view class="today-action-hero">
           <view>
-            <view class="today-data-title">今日数据</view>
-            <view class="today-data-mood">{{todayMoodTitle}}</view>
+            <view class="action-hero-label">今日行动</view>
+            <view class="action-hero-count">
+              <text>{{summary.completedCount}}</text>
+              <text class="action-total"> / {{summary.totalCount}}</text>
+              <text class="action-unit"> 项已完成</text>
+            </view>
+            <view class="action-hero-goal">{{goal.title}}</view>
           </view>
-          <view class="today-data-badge">{{remainingCount ? '剩余 ' + remainingCount + ' 项' : '全部完成'}}</view>
-        </view>
-        <view class="today-data-grid">
-          <view class="today-data-item">
-            <view class="today-data-value">{{summary.totalCount}}</view>
-            <view class="today-data-label">今日行动</view>
-          </view>
-          <view class="today-data-item">
-            <view class="today-data-value">{{summary.completedCount}}</view>
-            <view class="today-data-label">已完成</view>
-          </view>
-          <view class="today-data-item">
-            <view class="today-data-value today-data-efficiency">{{summary.actualMinutes}}min</view>
-            <view class="today-data-label">实际投入</view>
+          <view class="progress-ring" style="background: conic-gradient(#ffffff 0% {{completionPercent}}%, rgba(255,255,255,0.24) {{completionPercent}}% 100%);">
+            <view class="progress-ring-inner">
+              <view>{{completionPercent}}%</view>
+              <text>进度</text>
+            </view>
           </view>
         </view>
-        <view wx:if="{{summary.partialCount > 0}}" class="today-data-footer">
-          <view class="today-data-tag">完成一部分 {{summary.partialCount}}</view>
+
+        <view class="today-action-list">
+          <view wx:if="{{tasks.length === 0}}" class="action-empty-inline">
+            <view>今天还没有行动</view>
+            <text>添加一件今天想推进的小事。</text>
+          </view>
+          <view
+            wx:for="{{visibleTasks}}"
+            wx:key="id"
+            wx:for-item="task"
+            class="today-task-row {{task.status === 'completed' ? 'is-done' : ''}}"
+            data-id="{{task.id}}"
+            bindtap="toggleTaskDone"
+            bindlongpress="openTask"
+          >
+            <view class="task-box">
+              <ant-icon wx:if="{{task.status === 'completed'}}" type="CheckOutline" />
+            </view>
+            <view class="task-copy">
+              <view class="task-title">{{task.displayTitle}}</view>
+              <view class="task-desc">{{task.actionSubtext}}</view>
+            </view>
+            <view wx:if="{{task.status === 'completed'}}" class="task-tail-check">
+              <ant-icon type="CheckOutline" />
+            </view>
+          </view>
+          <view wx:if="{{hiddenActionCount > 0 || actionListExpanded}}" class="action-list-toggle" bindtap="toggleActionList">
+            {{actionListExpanded ? '收起行动 ˄' : '展开剩余 ' + hiddenActionCount + ' 项 ˅'}}
+          </view>
+          <view class="inline-add-action" catchtap="addTask">
+            <ant-icon type="AddOutline" />
+            <text>添加今日行动</text>
+          </view>
         </view>
       </view>
 
-      <view class="action-section-header">
-        <view class="action-section-left">
-          <view class="section-title">行动安排</view>
-          <view class="section-caption">点击卡片可调整状态 · 已完成 {{summary.completedCount}} / {{summary.totalCount}}</view>
-        </view>
-        <view class="action-section-right">
-          <view class="add-action-button" catchtap="addTask">
-            <ant-icon type="AddOutline" />
-            <text>添加</text>
+      <view class="today-data-card">
+        <view class="today-data-title">今日数据</view>
+        <view class="today-data-grid">
+          <view class="today-data-item">
+            <view class="today-data-value">{{summary.actualMinutes}}<text> 分钟</text></view>
+            <view class="today-data-label">专注时长</view>
+          </view>
+          <view class="today-data-item">
+            <view class="today-data-value">{{summary.completedCount}}<text> 项</text></view>
+            <view class="today-data-label">完成行动</view>
+          </view>
+          <view class="today-data-item">
+            <view class="today-data-value today-data-efficiency">{{focusPercent}}<text> %</text></view>
+            <view class="today-data-label">专注度</view>
           </view>
         </view>
-      </view>
-      <view wx:if="{{tasks.length === 0}}" class="card empty-action-card">
-        <view class="state-title">今天还没有行动</view>
-        <view class="state-description">添加一件今天想推进的小事。</view>
-        <ant-button type="primary" inline icon="AddOutline" className="empty-add-button" bindtap="addTask">添加今日行动</ant-button>
-      </view>
-      <view wx:for="{{visibleTasks}}" wx:key="id" wx:for-item="task" class="action-card-tap" data-id="{{task.id}}" bindtap="openTask">
-        <ant-card className="action-card {{task.status === 'completed' ? 'action-card-completed' : ''}}">
-          <view class="action-card-body">
-            <view class="action-main">
-              <view class="action-tags">
-                <ant-tag wx:if="{{task.rescheduled}}" type="outline" color="success" className="source-tag">从之前顺延</ant-tag>
-                <ant-tag type="fill-light" color="{{task.statusTone === 'success' ? 'success' : (task.statusTone === 'warning' ? 'warning' : 'primary')}}" className="status-tag status-{{task.statusTone}}">{{task.statusLabel}}</ant-tag>
-                <ant-tag wx:if="{{task.partialHint}}" type="fill-light" color="warning" className="partial-hint">待继续</ant-tag>
-              </view>
-              <view class="action-title">{{task.title}}</view>
-              <view wx:if="{{task.description}}" class="action-description">{{task.description}}</view>
-              <view class="action-meta">
-                <view class="meta-item"><text class="meta-label">预计</text><text>{{task.estimatedMinutes}} 分钟</text></view>
-                <view wx:if="{{task.actualMinutes !== undefined}}" class="meta-item"><text class="meta-label">实际</text><text>{{task.actualMinutes}} 分钟</text></view>
-                <view class="meta-item">{{task.dateLabel}}</view>
-              </view>
-            </view>
-            <view wx:if="{{task.status === 'completed'}}" class="action-completed-icon" aria-label="已完成">
-              <ant-icon type="CheckOutline" />
-            </view>
-            <button wx:else class="action-complete-btn" data-id="{{task.id}}" catchtap="quickCompleteTask" aria-label="标记完成">
-              <ant-icon type="CheckOutline" />
-            </button>
-          </view>
-        </ant-card>
-      </view>
-      <view wx:if="{{hiddenActionCount > 0 || actionListExpanded}}" class="action-list-toggle" bindtap="toggleActionList">
-        {{actionListExpanded ? '收起行动' : '展开其余 ' + hiddenActionCount + ' 项'}}
       </view>
 
       <view class="daily-nudge-card">
-        <view class="daily-nudge-label">今日一句</view>
+        <view class="quote-mark">“</view>
         <view class="daily-nudge-text">{{dailyNudge}}</view>
       </view>
 
-      <button class="today-bottom-action" bindtap="addTask">记录今日行动</button>
     </block>
   </block>
 

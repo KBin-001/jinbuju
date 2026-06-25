@@ -2,7 +2,7 @@ import { getActiveGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { calculateTodaySummary, createTask, deleteTask, getTodayPageTasks, rescheduleTask, updateTaskStatus } from "../../services/manualTask";
 import { ActionIssueReason, ActionTask, Goal, TodaySummary } from "../../types/manual";
-import { formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
+import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
 import { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask } from "../../utils/taskStatus";
 
 const REASONS: Array<{ label: string; value: ActionIssueReason }> = [{ label: "时间不够", value: "not_enough_time" }, { label: "难度太高", value: "too_difficult" }, { label: "缺少资源", value: "resource_unavailable" }, { label: "身体或状态不适", value: "physical_condition" }, { label: "临时有事", value: "temporary_event" }, { label: "任务不符合实际", value: "not_practical" }, { label: "其他", value: "other" }];
@@ -18,14 +18,17 @@ const DURATION_OPTIONS = [
   { label: "240 分钟", value: 240 },
 ];
 const DEFAULT_QUICK_ADD_MINUTE_INDEX = DURATION_OPTIONS.findIndex((option) => option.value === 30);
-interface ViewTask extends ActionTask { statusLabel: string; statusTone: string; rescheduled: boolean; dateLabel: string; partialHint: boolean; }
+const EXAMPLE_ACTION_TITLES = ["背单词 30 个", "阅读 30 分钟", "听力练习 20 分钟", "真题复盘 1 套"];
+interface ViewTask extends ActionTask { displayTitle: string; statusLabel: string; statusTone: string; rescheduled: boolean; dateLabel: string; partialHint: boolean; actionSubtext: string; }
 interface ViewTaskGroup { key: "today" | "continue"; title: string; tasks: ViewTask[]; }
 interface TodayMood { title: string; copy: string; tone: "empty" | "low" | "half" | "done"; mark: string; }
 interface ProgressSegment { active: boolean; }
+interface WeekDayView { label: string; date: string; day: string; isToday: boolean; isCurrentMonth: boolean; }
 
 function dateCopy(value: string): { title: string; weekday: string } { const date = new Date(`${value}T00:00:00`); return { title: `今天，${date.getMonth() + 1} 月 ${date.getDate()} 日`, weekday: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"][date.getDay()] }; }
 function emptySummary(): TodaySummary { return { estimatedMinutes: 0, actualMinutes: 0, completedCount: 0, partialCount: 0, unfinishedCount: 0, totalCount: 0 }; }
 function completionPercent(summary: TodaySummary): number { return summary.totalCount ? Math.round(summary.completedCount / summary.totalCount * 100) : 0; }
+function focusPercent(summary: TodaySummary): number { return completionPercent(summary); }
 function remainingCount(summary: TodaySummary): number { return Math.max(0, summary.totalCount - summary.completedCount); }
 function remainingEstimatedMinutes(tasks: ViewTask[], today: string): number {
   return tasks
@@ -52,15 +55,43 @@ function dailyNudge(summary: TodaySummary): string {
   if (percent > 0) return "启动之后，今天就已经站在前进的一边。";
   return "先做 5 分钟也算，别把今天让给犹豫。";
 }
+function buildWeekDays(today: string, weekOffset: number): { weekTitle: string; weekDays: WeekDayView[] } {
+  const todayDate = new Date(`${today}T00:00:00`);
+  const mondayOffset = (todayDate.getDay() + 6) % 7;
+  const monday = addDays(todayDate, weekOffset * 7 - mondayOffset);
+  const weekDays = ["一", "二", "三", "四", "五", "六", "日"].map((label, index) => {
+    const date = addDays(monday, index);
+    const value = formatDate(date);
+    return {
+      label,
+      date: value,
+      day: String(date.getDate()),
+      isToday: value === today,
+      isCurrentMonth: date.getMonth() === todayDate.getMonth(),
+    };
+  });
+  return {
+    weekTitle: weekOffset === 0 ? "今天" : `${monday.getMonth() + 1} 月 ${monday.getDate()} 日起`,
+    weekDays,
+  };
+}
+function displayTaskTitle(task: ActionTask): string {
+  if (!/^\d+$/.test(task.title.trim())) return task.title;
+  const seed = task.id.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return EXAMPLE_ACTION_TITLES[seed % EXAMPLE_ACTION_TITLES.length];
+}
 function toViewTask(task: ActionTask, today: string): ViewTask {
   const displayStatus = getActionTaskDisplayStatus(task, today);
+  const displayTitle = displayTaskTitle(task);
   return {
     ...task,
+    displayTitle,
     statusLabel: displayStatus.text,
     statusTone: displayStatus.tone,
     rescheduled: isCarryOverTask(task),
     dateLabel: task.currentDate === today ? "今天" : formatDisplayDate(task.currentDate),
     partialHint: displayStatus.badge === "待继续",
+    actionSubtext: task.description || `学习 ${task.estimatedMinutes} 分钟`,
   };
 }
 
@@ -74,6 +105,7 @@ Page({
     visibleTasks: [] as ViewTask[],
     summary: emptySummary(),
     completionPercent: 0,
+    focusPercent: 0,
     remainingCount: 0,
     remainingEstimatedMinutes: 0,
     progressSegments: [] as ProgressSegment[],
@@ -88,6 +120,10 @@ Page({
     dailyNudge: "今天的行动不需要宏大，能开始的一件小事就够。",
     dateTitle: "",
     weekday: "",
+    weekdayShort: "",
+    weekOffset: 0,
+    weekTitle: "今天",
+    weekDays: [] as WeekDayView[],
     navigating: false,
     quickAddVisible: false,
     quickAddTitle: "",
@@ -117,6 +153,7 @@ Page({
       const progress = goal ? getProgressSummary(goal.id, today) : null;
       const mood = todayMood(summary);
       const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 3);
+      const week = buildWeekDays(today, this.data.weekOffset);
       this.setData({
         status: "ready",
         goal,
@@ -125,6 +162,7 @@ Page({
         visibleTasks,
         summary,
         completionPercent: completionPercent(summary),
+        focusPercent: focusPercent(summary),
         remainingCount: remainingCount(summary),
         remainingEstimatedMinutes: remainingEstimatedMinutes(tasks, today),
         progressSegments: progressSegments(summary),
@@ -138,6 +176,9 @@ Page({
         dailyNudge: dailyNudge(summary),
         dateTitle: copy.title,
         weekday: copy.weekday,
+        weekdayShort: copy.weekday.replace("星期", "周"),
+        weekTitle: week.weekTitle,
+        weekDays: week.weekDays,
         navigating: false,
       });
     } catch (error) { this.setData({ status: "error", errorMessage: error instanceof Error ? error.message : "本地数据读取失败" }); }
@@ -147,6 +188,13 @@ Page({
     const actionListExpanded = !this.data.actionListExpanded;
     const visibleTasks = actionListExpanded ? this.data.tasks : this.data.tasks.slice(0, 3);
     this.setData({ actionListExpanded, visibleTasks, hiddenActionCount: Math.max(0, this.data.tasks.length - visibleTasks.length) });
+  },
+  switchWeek(event: { currentTarget: { dataset: { direction?: string | number } } }) {
+    const direction = Number(event.currentTarget.dataset.direction || 0);
+    const weekOffset = this.data.weekOffset + direction;
+    const today = getTodayBusinessDate();
+    const week = buildWeekDays(today, weekOffset);
+    this.setData({ weekOffset, weekTitle: week.weekTitle, weekDays: week.weekDays });
   },
   goCreateGoal() { if (this.data.navigating) return; this.setData({ navigating: true }); wx.navigateTo({ url: "/pages/goal-create/index", fail: () => this.setData({ navigating: false }) }); },
   addTask() {
@@ -214,6 +262,53 @@ Page({
       if (tapIndex === 0) this.askActual(task, "completed"); else if (tapIndex === 1) this.chooseReason(task, "partially_completed"); else if (tapIndex === 2) this.reschedule(task); else if (tapIndex === 3) this.chooseReason(task, "skipped"); else if (tapIndex === 4) wx.navigateTo({ url: `/pages/action-edit/index?id=${task.id}` }); else if (tapIndex === 5) this.remove(task);
     } });
   },
+  applyTaskPatch(updatedTask: ViewTask, prevScrollTop: number) {
+    const today = getTodayBusinessDate();
+    const tasks = this.data.tasks.map((item) => (item.id === updatedTask.id ? updatedTask : item));
+    const taskGroups = this.data.taskGroups.map((group) => ({ ...group, tasks: group.tasks.map((item) => (item.id === updatedTask.id ? updatedTask : item)) }));
+    const todayTasks = tasks.filter((item) => item.currentDate === today);
+    const summary = calculateTodaySummary(todayTasks);
+    const progress = this.data.goal ? getProgressSummary(this.data.goal.id, today) : null;
+    const mood = todayMood(summary);
+    const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 3);
+    this.setData({
+      tasks,
+      taskGroups,
+      visibleTasks,
+      summary,
+      completionPercent: completionPercent(summary),
+      focusPercent: focusPercent(summary),
+      remainingCount: remainingCount(summary),
+      remainingEstimatedMinutes: remainingEstimatedMinutes(tasks, today),
+      progressSegments: progressSegments(summary),
+      hiddenActionCount: Math.max(0, tasks.length - visibleTasks.length),
+      heroDayLabel: `DAY ${Math.max(1, progress?.totalActionDays || (summary.completedCount > 0 ? 1 : 0))}`,
+      todayMoodTitle: mood.title,
+      todayMoodCopy: mood.copy,
+      todayMoodTone: mood.tone,
+      todayMoodMark: mood.mark,
+      dailyNudge: dailyNudge(summary),
+    });
+    wx.nextTick(() => wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 }));
+  },
+  toggleTaskDone(event: { currentTarget: { dataset: { id?: string } } }) {
+    const id = String(event.currentTarget.dataset.id || "");
+    const task = this.data.tasks.find((item) => item.id === id);
+    if (!task || task.status === "rescheduled") return;
+    const prevScrollTop = this.data.currentScrollTop;
+    try {
+      const today = getTodayBusinessDate();
+      const nextStatus = task.status === "completed" ? "pending" : "completed";
+      const nextActual = nextStatus === "completed" ? task.actualMinutes || task.estimatedMinutes : undefined;
+      const updatedTask = toViewTask(updateTaskStatus(task.id, nextStatus, nextActual), today);
+      this.applyTaskPatch(updatedTask, prevScrollTop);
+      if (nextStatus === "completed") {
+        wx.vibrateShort({ type: "light" });
+      }
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
+    }
+  },
   quickCompleteTask(event: { currentTarget: { dataset: { id?: string } } }) {
     const id = String(event.currentTarget.dataset.id || "");
     const task = this.data.tasks.find((item) => item.id === id);
@@ -222,34 +317,8 @@ Page({
     try {
       const today = getTodayBusinessDate();
       const updatedTask = toViewTask(updateTaskStatus(task.id, "completed", task.actualMinutes || task.estimatedMinutes), today);
-      const tasks = this.data.tasks.map((item) => (item.id === id ? updatedTask : item));
-      const taskGroups = this.data.taskGroups.map((group) => ({ ...group, tasks: group.tasks.map((item) => (item.id === id ? updatedTask : item)) }));
-      const todayTasks = tasks.filter((item) => item.currentDate === today);
-      const summary = calculateTodaySummary(todayTasks);
-      const progress = this.data.goal ? getProgressSummary(this.data.goal.id, today) : null;
-      const mood = todayMood(summary);
-      const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 3);
-      this.setData({
-        tasks,
-        taskGroups,
-        visibleTasks,
-        summary,
-        completionPercent: completionPercent(summary),
-        remainingCount: remainingCount(summary),
-        remainingEstimatedMinutes: remainingEstimatedMinutes(tasks, today),
-        progressSegments: progressSegments(summary),
-        hiddenActionCount: Math.max(0, tasks.length - visibleTasks.length),
-        heroDayLabel: `DAY ${Math.max(1, progress?.totalActionDays || (summary.completedCount > 0 ? 1 : 0))}`,
-        todayMoodTitle: mood.title,
-        todayMoodCopy: mood.copy,
-        todayMoodTone: mood.tone,
-        todayMoodMark: mood.mark,
-        dailyNudge: dailyNudge(summary),
-      });
+      this.applyTaskPatch(updatedTask, prevScrollTop);
       wx.showToast({ title: "行动已完成", icon: "success" });
-      wx.nextTick(() => {
-        wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 });
-      });
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
     }

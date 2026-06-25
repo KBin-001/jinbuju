@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "今日行动",
+  "navigationBarTitleText": "",
   "enablePullDownRefresh": false,
   "usingComponents": {
     "ant-button": "antd-mini/Button/index",
