@@ -102,6 +102,8 @@ export interface ArchivedGoalStats {
   estimatedMinutes: number;
   actualMinutes: number;
   completionRate: number;
+  totalDays?: number;
+  lastReviewSummary?: string;
 }
 
 export interface ArchivedGoal {
@@ -118,6 +120,7 @@ export interface ArchivedGoal {
 
 export interface ManualDataStore {
   version: 1;
+  activeGoalId?: string;
   goals: Goal[];
   tasks: ActionTask[];
   checkins: DailyCheckin[];

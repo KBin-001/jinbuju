@@ -1,10 +1,41 @@
 <view class="page goal-page">
-  <view class="growth-hero goal-hero"><view class="hero-kicker">LONG-TERM GOAL</view><view class="hero-title">创建长期目标</view><view class="hero-copy">先定一个方向，再把每天真正想做的行动加进来。</view></view>
-  <view wx:if="{{existingGoal}}" class="card existing-card"><view class="section-title">当前已有目标</view><view class="existing-title">{{existingGoal}}</view><view class="helper">基础版同一时间只推进一个目标。</view><button class="primary-button" bindtap="goToday">回到今日行动</button></view>
-  <block wx:else>
-    <view class="section-shell"><view class="section-title">选择目标方向</view><view class="chip-grid"><button wx:for="{{options}}" wx:key="value" class="choice-chip {{category === item.value ? 'choice-chip-active' : ''}}" data-value="{{item.value}}" bindtap="selectCategory">{{item.label}}</button></view></view>
-    <view class="card form-card"><view class="field-label">目标名称</view><input class="text-input" value="{{title}}" maxlength="30" placeholder="例如：完成个人博客" bindinput="inputTitle"/><view class="counter">{{title.length}} / 30</view><view class="field-label field-gap">简单说明（可选）</view><textarea class="description" value="{{description}}" maxlength="150" placeholder="写下你希望达成的结果" bindinput="inputDescription"/><view class="counter">{{description.length}} / 150</view></view>
-    <view class="manual-note"><view class="note-mark">+</view><view><view class="note-title">目标创建后直接开始行动</view><view class="helper">本版本不会生成 AI 计划，你可以自由添加每日待办。</view></view></view>
-    <button class="primary-button submit-button" loading="{{submitting}}" disabled="{{submitting || title.length < 2}}" bindtap="submit">{{submitting ? '正在创建' : '创建目标并进入今日'}}</button>
-  </block>
+  <view class="growth-hero goal-hero">
+    <view class="hero-kicker">LONG-TERM GOAL</view>
+    <view class="hero-title">创建长期目标</view>
+    <view class="hero-copy">先定一个方向，再把每天真正想做的行动加进来。</view>
+  </view>
+
+  <view wx:if="{{activeGoalCount > 0}}" class="manual-note">
+    <view class="note-mark">✓</view>
+    <view>
+      <view class="note-title">你已有 {{activeGoalCount}} 个进行中目标</view>
+      <view class="helper">新目标会成为当前目标，旧目标仍会保留在“我的目标”里。</view>
+    </view>
+  </view>
+
+  <view class="section-shell">
+    <view class="section-title">选择目标方向</view>
+    <view class="chip-grid">
+      <button wx:for="{{options}}" wx:key="value" class="choice-chip {{category === item.value ? 'choice-chip-active' : ''}}" data-value="{{item.value}}" bindtap="selectCategory">{{item.label}}</button>
+    </view>
+  </view>
+
+  <view class="card form-card">
+    <view class="field-label">目标名称</view>
+    <input class="text-input" value="{{title}}" maxlength="30" placeholder="例如：完成个人博客" bindinput="inputTitle" />
+    <view class="counter">{{title.length}} / 30</view>
+    <view class="field-label field-gap">简单说明（可选）</view>
+    <textarea class="description" value="{{description}}" maxlength="150" placeholder="写下你希望达成的结果" bindinput="inputDescription" />
+    <view class="counter">{{description.length}} / 150</view>
+  </view>
+
+  <view class="manual-note">
+    <view class="note-mark">+</view>
+    <view>
+      <view class="note-title">目标创建后直接开始行动</view>
+      <view class="helper">本版本不会生成 AI 计划，你可以自由添加每日待办。</view>
+    </view>
+  </view>
+
+  <button class="primary-button submit-button" loading="{{submitting}}" disabled="{{submitting || title.length < 2}}" bindtap="submit">{{submitting ? '正在创建' : '创建目标并进入今日'}}</button>
 </view>

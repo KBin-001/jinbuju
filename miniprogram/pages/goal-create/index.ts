@@ -1,5 +1,5 @@
 import { FEATURE_FLAGS } from "../../config/features";
-import { createGoal, getActiveGoal } from "../../services/manualGoal";
+import { createGoal, getActiveGoals } from "../../services/manualGoal";
 import { GoalCategory } from "../../types/manual";
 import { getUiEventString, UiComponentEvent } from "../../utils/ui-event";
 
@@ -13,16 +13,34 @@ const OPTIONS: Array<{ value: GoalCategory; label: string; title: string }> = [
 ];
 
 Page({
-  data: { options: OPTIONS, category: "cet" as GoalCategory, title: OPTIONS[0].title, description: "", submitting: false, existingGoal: "", aiEnabled: FEATURE_FLAGS.ENABLE_AI_PLANNER },
-  onLoad() { const goal = getActiveGoal(); if (goal) this.setData({ existingGoal: goal.title }); },
+  data: {
+    options: OPTIONS,
+    category: "cet" as GoalCategory,
+    title: OPTIONS[0].title,
+    description: "",
+    submitting: false,
+    activeGoalCount: 0,
+    aiEnabled: FEATURE_FLAGS.ENABLE_AI_PLANNER,
+  },
+
+  onLoad() {
+    this.setData({ activeGoalCount: getActiveGoals().length });
+  },
+
   selectCategory(event: { currentTarget: { dataset: { value?: string } } }) {
     const category = String(event.currentTarget.dataset.value || "custom") as GoalCategory;
     const option = OPTIONS.find((item) => item.value === category);
     this.setData({ category, title: option?.title || "" });
   },
-  inputTitle(event: UiComponentEvent<unknown>) { this.setData({ title: getUiEventString(event).slice(0, 30) }); },
-  inputDescription(event: { detail: { value?: string } }) { this.setData({ description: String(event.detail.value || "").slice(0, 150) }); },
-  goToday() { wx.switchTab({ url: "/pages/index/index" }); },
+
+  inputTitle(event: UiComponentEvent<unknown>) {
+    this.setData({ title: getUiEventString(event).slice(0, 30) });
+  },
+
+  inputDescription(event: { detail: { value?: string } }) {
+    this.setData({ description: String(event.detail.value || "").slice(0, 150) });
+  },
+
   submit() {
     if (this.data.submitting) return;
     this.setData({ submitting: true });

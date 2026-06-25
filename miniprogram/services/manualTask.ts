@@ -27,6 +27,12 @@ export function getTask(taskId: string): ActionTask | null {
   return readManualStore().tasks.find((task) => task.id === taskId) || null;
 }
 
+export function getTasksByGoal(goalId: string): ActionTask[] {
+  return readManualStore().tasks
+    .filter((task) => task.goalId === goalId && task.status !== "rescheduled")
+    .sort((a, b) => b.currentDate.localeCompare(a.currentDate) || b.createdAt.localeCompare(a.createdAt));
+}
+
 export function updateTask(input: SaveTaskInput): ActionTask {
   validate(input);
   const store = readManualStore();

@@ -20,6 +20,7 @@ export function readManualStore(): ManualDataStore {
 
   return {
     version: 1,
+    activeGoalId: typeof value.activeGoalId === "string" ? value.activeGoalId : undefined,
     goals,
     tasks,
     checkins: Array.isArray(value.checkins) ? value.checkins as DailyCheckin[] : [],

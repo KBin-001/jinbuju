@@ -1,22 +1,21 @@
-import { FEATURE_FLAGS } from "../../config/features";
-import { endActiveGoal, getActiveGoal, getArchivedGoals } from "../../services/manualGoal";
+import { getActiveGoals, getArchivedGoals } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { getLocalUserProfile, saveLocalUserProfile } from "../../services/profile";
-import { ActionTask, ArchivedGoal, Goal, ProgressSummary } from "../../types/manual";
+import { Goal, ProgressSummary } from "../../types/manual";
 import { UserDisplayProfile, UserProfileSource } from "../../types/profile";
 
-interface ViewAction extends ActionTask {
-  statusLabel: string;
-  statusTone: "done" | "todo";
-  createdDate: string;
-  completedDate: string;
-  actualMinutesText: string;
+interface GoalCardView {
+  id: string;
+  title: string;
+  days: number;
+  progressPercent: number;
+  isCurrent: boolean;
 }
 
-interface ViewArchivedGoal extends ArchivedGoal {
-  dateRange: string;
-  statusLabel: string;
-  actions: ViewAction[];
+interface FunctionEntry {
+  key: string;
+  title: string;
+  icon: string;
 }
 
 function shortDate(value?: string): string {
@@ -26,17 +25,10 @@ function shortDate(value?: string): string {
 function daysSince(value?: string): number {
   if (!value) return 1;
   const start = new Date(`${shortDate(value)}T00:00:00`).getTime();
-  if (!Number.isFinite(start)) return 1;
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (!Number.isFinite(start)) return 1;
   return Math.max(1, Math.floor((today - start) / (24 * 60 * 60 * 1000)) + 1);
-}
-
-function levelTitle(actionDays: number): string {
-  if (actionDays >= 30) return "Lv.4 · 稳定推进者";
-  if (actionDays >= 14) return "Lv.3 · 行动熟手";
-  if (actionDays >= 7) return "Lv.2 · 自律练习生";
-  return "Lv.1 · 自律新兵";
 }
 
 function progressPercent(summary: ProgressSummary | null): number {
@@ -44,75 +36,39 @@ function progressPercent(summary: ProgressSummary | null): number {
   return Math.min(100, Math.round((summary.completedTasks / summary.totalTasks) * 100));
 }
 
-function goalProgressCopy(summary: ProgressSummary | null): string {
-  const days = summary?.totalActionDays || 0;
-  const completed = summary?.completedTasks || 0;
-  return `已坚持 ${days} 天 · 完成 ${completed} 项行动`;
-}
-
-function getGoalDateRange(goal: ArchivedGoal): string {
-  const start = shortDate(goal.startedAt || goal.createdAt);
-  const end = shortDate(goal.endedAt || goal.archivedAt);
-  return start && end ? `${start} ~ ${end}` : start || end || "未记录";
-}
-
-function getStatusLabel(status: ArchivedGoal["status"]): string {
-  if (status === "completed") return "已完成";
-  if (status === "ended") return "已结束";
-  return "已归档";
-}
-
-function toViewAction(action: ActionTask): ViewAction {
-  const isDone = action.status === "completed";
+function toGoalCard(goal: Goal, currentGoalId: string): GoalCardView {
+  const summary = getProgressSummary(goal.id);
   return {
-    ...action,
-    statusLabel: isDone ? "已完成" : "未完成",
-    statusTone: isDone ? "done" : "todo",
-    createdDate: shortDate(action.createdAt),
-    completedDate: shortDate(action.completedAt),
-    actualMinutesText: action.actualMinutes === undefined ? "-" : `${action.actualMinutes} 分钟`,
+    id: goal.id,
+    title: goal.title,
+    days: Math.max(daysSince(goal.startedAt || goal.createdAt), summary.totalActionDays || 0),
+    progressPercent: progressPercent(summary),
+    isCurrent: goal.id === currentGoalId,
   };
 }
 
-function toViewArchivedGoal(goal: ArchivedGoal): ViewArchivedGoal {
-  return {
-    ...goal,
-    dateRange: getGoalDateRange(goal),
-    statusLabel: getStatusLabel(goal.status),
-    actions: goal.actions
-      .filter((action) => action.status !== "rescheduled")
-      .map(toViewAction)
-      .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
-  };
-}
+const FUNCTION_ENTRIES: FunctionEntry[] = [
+  { key: "history", title: "历史数据", icon: "↺" },
+  { key: "badges", title: "成就徽章", icon: "☆" },
+  { key: "focus", title: "专注报告", icon: "▧" },
+  { key: "settings", title: "数据设置", icon: "⚙" },
+];
 
 Page({
   data: {
-    goal: null as Goal | null,
-    goalCreatedDate: "",
-    summary: null as ProgressSummary | null,
-    archivedGoals: [] as ViewArchivedGoal[],
-    historyCount: 0,
-    historyVisible: false,
-    historyDetailVisible: false,
-    selectedArchivedGoal: null as ViewArchivedGoal | null,
-    historyEmptyTitle: "暂无历史目标",
-    historyEmptyDescription: "创建并完成一个目标后，这里会展示你的目标复盘。",
-    hasGrowthData: false,
-    lifecycleSubmitting: false,
-    teamEnabled: FEATURE_FLAGS.ENABLE_TEAM,
+    goals: [] as GoalCardView[],
+    activeGoalCount: 0,
     userProfile: null as UserDisplayProfile | null,
-    displayName: "未设置展示名称",
+    displayName: "阿岚",
     displayAvatarUrl: "",
-    displayAvatarText: "进",
+    displayAvatarText: "岚",
+    levelLabel: "Lv.2 自律新星",
     joinedDays: 1,
-    levelLabel: "Lv.1 · 自律新兵",
-    goalProgressPercent: 0,
-    goalProgressText: "已坚持 0 天 · 完成 0 项行动",
+    functionEntries: FUNCTION_ENTRIES,
     profileEditorVisible: false,
     profileDraftNickname: "",
     profileDraftAvatarUrl: "",
-    profileDraftAvatarText: "进",
+    profileDraftAvatarText: "岚",
     profileDraftSource: "custom" as UserProfileSource,
     profileDraftUseInTeam: true,
   },
@@ -123,44 +79,33 @@ Page({
 
   loadProfile() {
     try {
-      const goal = getActiveGoal();
-      const archivedGoals = getArchivedGoals().map(toViewArchivedGoal);
-      const summary = goal ? getProgressSummary(goal.id) : null;
+      const activeGoals = getActiveGoals();
+      const currentGoalId = activeGoals[0]?.id || "";
+      const goals = activeGoals.map((goal) => toGoalCard(goal, currentGoalId));
       const userProfile = getLocalUserProfile();
-      const joinedDays = daysSince(userProfile?.updatedAt || goal?.createdAt || archivedGoals[0]?.createdAt);
+      const firstGoal = activeGoals[activeGoals.length - 1];
       this.setData({
-        goal,
-        goalCreatedDate: goal ? shortDate(goal.createdAt) : "",
-        summary,
-        archivedGoals,
-        historyCount: archivedGoals.length,
-        hasGrowthData: Boolean(summary && (summary.totalActionDays > 0 || summary.completedTasks > 0 || summary.totalActualMinutes > 0)),
+        goals,
+        activeGoalCount: goals.length,
         userProfile,
-        displayName: userProfile?.nickname || "未设置展示名称",
+        displayName: userProfile?.nickname || "阿岚",
         displayAvatarUrl: userProfile?.avatarUrl || "",
-        displayAvatarText: userProfile?.nickname ? userProfile.nickname.slice(0, 1) : "进",
-        joinedDays,
-        levelLabel: levelTitle(summary?.totalActionDays || 0),
-        goalProgressPercent: progressPercent(summary),
-        goalProgressText: goalProgressCopy(summary),
-        historyEmptyDescription: goal
-          ? "当前目标仍在进行中。结束或更换目标后，它会保存到这里用于复盘。"
-          : "创建并完成一个目标后，这里会展示你的目标复盘。",
-        lifecycleSubmitting: false,
+        displayAvatarText: userProfile?.nickname ? userProfile.nickname.slice(0, 1) : "岚",
+        joinedDays: daysSince(userProfile?.updatedAt || firstGoal?.createdAt),
       });
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "个人数据读取失败", icon: "none" });
-      this.setData({ lifecycleSubmitting: false });
     }
   },
 
   openProfileEditor() {
     const userProfile = this.data.userProfile;
+    const nickname = userProfile?.nickname || this.data.displayName;
     this.setData({
       profileEditorVisible: true,
-      profileDraftNickname: userProfile?.nickname || "",
+      profileDraftNickname: nickname,
       profileDraftAvatarUrl: userProfile?.avatarUrl || "",
-      profileDraftAvatarText: userProfile?.nickname ? userProfile.nickname.slice(0, 1) : "进",
+      profileDraftAvatarText: nickname ? nickname.slice(0, 1) : "岚",
       profileDraftSource: userProfile?.profileSource || "custom",
       profileDraftUseInTeam: userProfile?.useProfileInTeam !== false,
     });
@@ -170,38 +115,41 @@ Page({
     this.setData({ profileEditorVisible: false });
   },
 
+  noop() {},
+
   onChooseAvatar(event: { detail: { avatarUrl?: string } }) {
     const avatarUrl = String(event.detail.avatarUrl || "");
     if (!avatarUrl) return;
-    if (!this.data.profileEditorVisible) {
-      const nickname = this.data.userProfile?.nickname || this.data.displayName;
-      try {
-        const userProfile = saveLocalUserProfile({
-          nickname,
-          avatarUrl,
-          profileSource: "wechat",
-          useProfileInTeam: this.data.userProfile?.useProfileInTeam !== false,
-        });
-        this.setData({
-          userProfile,
-          displayName: userProfile.nickname,
-          displayAvatarUrl: userProfile.avatarUrl,
-          displayAvatarText: userProfile.nickname.slice(0, 1) || "进",
-        });
-        wx.showToast({ title: "头像已更新", icon: "success" });
-      } catch (error) {
-        wx.showToast({ title: error instanceof Error ? error.message : "头像保存失败", icon: "none" });
-      }
+    if (this.data.profileEditorVisible) {
+      this.setData({ profileDraftAvatarUrl: avatarUrl, profileDraftSource: "wechat" });
       return;
     }
-    this.setData({ profileDraftAvatarUrl: avatarUrl, profileDraftSource: "wechat" });
+
+    try {
+      const nickname = this.data.userProfile?.nickname || this.data.displayName;
+      const userProfile = saveLocalUserProfile({
+        nickname,
+        avatarUrl,
+        profileSource: "wechat",
+        useProfileInTeam: this.data.userProfile?.useProfileInTeam !== false,
+      });
+      this.setData({
+        userProfile,
+        displayName: userProfile.nickname,
+        displayAvatarUrl: userProfile.avatarUrl,
+        displayAvatarText: userProfile.nickname.slice(0, 1) || "岚",
+      });
+      wx.showToast({ title: "头像已更新", icon: "success" });
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "头像保存失败", icon: "none" });
+    }
   },
 
   inputProfileNickname(event: { detail: { value?: string } }) {
     const nickname = String(event.detail.value || "").slice(0, 16);
     this.setData({
       profileDraftNickname: nickname,
-      profileDraftAvatarText: nickname ? nickname.slice(0, 1) : "进",
+      profileDraftAvatarText: nickname ? nickname.slice(0, 1) : "岚",
     });
   },
 
@@ -212,7 +160,7 @@ Page({
   saveProfileEditor() {
     try {
       const userProfile = saveLocalUserProfile({
-        nickname: this.data.profileDraftNickname,
+        nickname: this.data.profileDraftNickname || "阿岚",
         avatarUrl: this.data.profileDraftAvatarUrl,
         profileSource: this.data.profileDraftSource,
         useProfileInTeam: this.data.profileDraftUseInTeam,
@@ -221,7 +169,7 @@ Page({
         userProfile,
         displayName: userProfile.nickname,
         displayAvatarUrl: userProfile.avatarUrl,
-        displayAvatarText: userProfile.nickname.slice(0, 1) || "进",
+        displayAvatarText: userProfile.nickname.slice(0, 1) || "岚",
         profileEditorVisible: false,
       });
       wx.showToast({ title: "资料已保存", icon: "success" });
@@ -234,91 +182,26 @@ Page({
     wx.navigateTo({ url: "/pages/goal-create/index" });
   },
 
-  goProgress() {
-    wx.switchTab({ url: "/pages/plan/index" });
-  },
-
-  openDataSettings() {
-    wx.navigateTo({ url: "/pages/data-management/index" });
-  },
-
-  showHistory() {
-    this.setData({ historyVisible: true, historyDetailVisible: false, selectedArchivedGoal: null });
-  },
-
-  closeHistory() {
-    this.setData({ historyVisible: false, historyDetailVisible: false, selectedArchivedGoal: null });
-  },
-
-  noop() {},
-
-  openArchivedGoal(event: { currentTarget: { dataset: { id?: string } } }) {
+  openGoal(event: { currentTarget: { dataset: { id?: string } } }) {
     const id = String(event.currentTarget.dataset.id || "");
-    const selectedArchivedGoal = this.data.archivedGoals.find((goal) => goal.id === id) || null;
-    if (!selectedArchivedGoal) return;
-    this.setData({ selectedArchivedGoal, historyDetailVisible: true });
+    if (!id) return;
+    wx.navigateTo({ url: `/pages/goal-detail/index?id=${id}` });
   },
 
-  backToHistoryList() {
-    this.setData({ historyDetailVisible: false, selectedArchivedGoal: null });
-  },
-
-  endCurrentGoal() {
-    if (this.data.lifecycleSubmitting || !this.data.goal) return;
-    wx.showModal({
-      title: "结束当前目标？",
-      content: "结束后，该目标会保存到历史目标中，你可以在历史目标里查看行动记录和复盘数据。",
-      cancelText: "取消",
-      confirmText: "确认结束",
-      confirmColor: "#356859",
-      success: (result) => {
-        if (!result.confirm) return;
-        this.setData({ lifecycleSubmitting: true });
-        try {
-          endActiveGoal();
-          wx.showToast({ title: "目标已保存到历史", icon: "success" });
-          this.loadProfile();
-        } catch (error) {
-          wx.showToast({ title: error instanceof Error ? error.message : "结束目标失败", icon: "none" });
-          this.setData({ lifecycleSubmitting: false });
-        }
-      },
-    });
-  },
-
-  replaceCurrentGoal() {
-    if (this.data.lifecycleSubmitting || !this.data.goal) return;
-    wx.showModal({
-      title: "更换目标？",
-      content: "更换目标会结束当前目标，并将它保存到历史目标中，之后你可以创建新的当前目标。",
-      cancelText: "取消",
-      confirmText: "确认更换",
-      confirmColor: "#356859",
-      success: (result) => {
-        if (!result.confirm) return;
-        this.setData({ lifecycleSubmitting: true });
-        try {
-          endActiveGoal();
-          wx.showToast({ title: "旧目标已归档", icon: "success" });
-          this.loadProfile();
-          setTimeout(() => wx.navigateTo({ url: "/pages/goal-create/index" }), 300);
-        } catch (error) {
-          wx.showToast({ title: error instanceof Error ? error.message : "更换目标失败", icon: "none" });
-          this.setData({ lifecycleSubmitting: false });
-        }
-      },
-    });
-  },
-
-  openPrivacy() {
-    wx.navigateTo({ url: "/pages/legal/privacy/index" });
-  },
-
-  openTerms() {
-    wx.navigateTo({ url: "/pages/legal/terms/index" });
-  },
-
-  openAbout() {
-    wx.navigateTo({ url: "/pages/about/index" });
+  openFunction(event: { currentTarget: { dataset: { key?: string } } }) {
+    const key = String(event.currentTarget.dataset.key || "");
+    if (key === "settings") {
+      wx.navigateTo({ url: "/pages/data-management/index" });
+      return;
+    }
+    if (key === "history") {
+      const archivedGoal = getArchivedGoals()[0];
+      if (archivedGoal) wx.navigateTo({ url: `/pages/goal-review/index?id=${archivedGoal.id}` });
+      else wx.showToast({ title: "暂无历史目标", icon: "none" });
+      return;
+    }
+    if (key === "badges" || key === "focus") {
+      wx.switchTab({ url: "/pages/plan/index" });
+    }
   },
 });
