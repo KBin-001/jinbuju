@@ -14,7 +14,7 @@
   <block wx:else>
     <view class="today-topbar">
       <view>
-        <view class="today-greeting">早上好，阿岚 👋</view>
+        <view class="today-greeting">早上好，{{displayName}} 👋</view>
         <view class="today-subtitle">坚持的每一步，都是成长的证据</view>
       </view>
     </view>

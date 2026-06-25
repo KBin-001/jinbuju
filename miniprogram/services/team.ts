@@ -234,7 +234,7 @@ function calculateDailyStats(teamId: string, members: TeamMember[]): TeamDailySt
   };
 }
 
-function persistTeam(team: Team, members: TeamMember[]): TeamPageData {
+export function persistTeam(team: Team, members: TeamMember[]): TeamPageData {
   const sortedMembers = members.slice().sort((a, b) => {
     if (a.isSelf !== b.isSelf) return a.isSelf ? -1 : 1;
     return statusRank(a.todayStatus) - statusRank(b.todayStatus);

@@ -1,111 +1,181 @@
 <view class="page progress-page">
-  <view wx:if="{{status === 'loading'}}" class="card state-card">
-    <view class="loading-dot"></view>
-    <view class="state-title">正在整理成长档案</view>
+  <view wx:if="{{status === 'loading'}}" class="state-card">
+    <view class="state-orbit"></view>
+    <view class="state-title">正在整理成长记录</view>
+    <view class="state-description">把最近的行动、投入和里程碑收拢到一起。</view>
   </view>
 
-  <view wx:elif="{{status === 'error'}}" class="card state-card">
+  <view wx:elif="{{status === 'error'}}" class="state-card">
     <view class="state-mark">!</view>
     <view class="state-title">进度读取失败</view>
     <view class="state-description">{{errorMessage}}</view>
-    <button class="primary-button" bindtap="retry">重新加载</button>
+    <button class="primary-action" bindtap="retry">重新加载</button>
   </view>
 
-  <view wx:elif="{{!goal}}" class="card state-card">
+  <view wx:elif="{{!goal}}" class="state-card">
     <view class="state-mark">0</view>
-    <view class="state-title">还没有行动目标</view>
-    <view class="state-description">创建目标后，这里会沉淀你的每次行动。</view>
-    <button class="primary-button" bindtap="createGoal">创建目标</button>
+    <view class="state-title">还没有当前目标</view>
+    <view class="state-description">创建目标后，这里会记录你的完成率、趋势和成长里程碑。</view>
+    <button class="primary-action" bindtap="createGoal">创建目标</button>
   </view>
 
   <block wx:else>
-    <view class="progress-title">我的进度</view>
-
-    <view class="progress-hero">
-      <view class="progress-hero-copy">
-        <view class="progress-goal-title">{{goal.title}}</view>
-        <view class="level-pill">{{levelLabel}}</view>
-        <view class="goal-period">{{goalPeriod}}</view>
-      </view>
-      <view class="hero-trophy">奖</view>
+    <view class="progress-header">
+      <view class="page-title">我的进度</view>
+      <view class="page-subtitle">记录每一次坚持，看见长期变化</view>
     </view>
 
-    <view class="total-progress">
-      <view class="progress-track">
-        <view class="progress-fill" style="width: {{completionRate}}%;"></view>
+    <view class="goal-card">
+      <view class="goal-card-main">
+        <view class="goal-copy">
+          <view class="section-eyebrow">当前目标</view>
+          <view class="goal-title">{{goal.title}}</view>
+          <view class="goal-meta-row">
+            <view class="level-chip">{{levelLabel}}</view>
+            <view class="status-chip">{{goalStatusText}}</view>
+          </view>
+          <view class="goal-period">{{goalPeriod}}</view>
+        </view>
+
+        <view class="medal {{medalState.achieved ? 'is-achieved' : ''}}">
+          <view class="medal-spark spark-a"></view>
+          <view class="medal-spark spark-b"></view>
+          <view class="medal-leaf leaf-left"></view>
+          <view class="medal-leaf leaf-right"></view>
+          <view class="medal-face">
+            <view class="medal-star">★</view>
+          </view>
+          <view class="medal-ribbon"></view>
+        </view>
       </view>
-      <view class="progress-copy-row">
-        <text>{{progressText}}</text>
-        <text class="progress-percent">{{completionRate}}%</text>
+
+      <view class="goal-progress-block">
+        <view class="goal-progress-head">
+          <text>{{progressExplain}}</text>
+          <text class="goal-percent">{{completionRate}}%</text>
+        </view>
+        <view class="goal-progress-track">
+          <view class="goal-progress-fill" style="width: {{completionRate}}%;"></view>
+        </view>
+        <view class="goal-next-step">{{nextStepText}}</view>
       </view>
     </view>
 
-    <view class="stats-card">
-      <view class="stat-item">
-        <view class="stat-value">{{summary.totalActionDays}}<text> 天</text></view>
-        <view class="stat-label">坚持天数</view>
+    <view class="overview-card">
+      <view class="card-title-row">
+        <view>
+          <view class="card-title">进度总览</view>
+          <view class="card-subtitle">用行动完成率记录真实推进</view>
+        </view>
       </view>
-      <view class="stat-item">
-        <view class="stat-value">{{summary.completedTasks}}<text> / {{summary.totalTasks}}</text></view>
-        <view class="stat-label">完成项数</view>
-      </view>
-      <view class="stat-item">
-        <view class="stat-value">{{todayActualMinutes}}<text> 分钟</text></view>
-        <view class="stat-label">今日投入</view>
+      <view class="overview-grid">
+        <view wx:for="{{overviewStats}}" wx:key="label" class="overview-item">
+          <view class="overview-value">{{item.value}}<text>{{item.unit}}</text></view>
+          <view class="overview-label">{{item.label}}</view>
+        </view>
       </view>
     </view>
 
     <view class="trend-card">
-      <view class="card-head">
-        <view class="card-title">成长趋势</view>
-      </view>
-      <view class="trend-tabs">
-        <view
-          wx:for="{{trendTabs}}"
-          wx:key="key"
-          class="trend-tab {{item.active ? 'is-active' : ''}}"
-          data-key="{{item.key}}"
-          bindtap="switchTrendTab"
-        >{{item.label}}</view>
+      <view class="card-title-row">
+        <view>
+          <view class="card-title">成长趋势</view>
+          <view class="card-subtitle">按投入分钟观察最近节奏</view>
+        </view>
+        <view class="trend-tabs">
+          <view
+            wx:for="{{trendTabs}}"
+            wx:key="key"
+            class="trend-tab {{item.active ? 'is-active' : ''}}"
+            data-key="{{item.key}}"
+            bindtap="switchTrendTab"
+          >{{item.label}}</view>
+        </view>
       </view>
 
-      <view class="chart-area">
-        <view class="chart-grid">
-          <view></view>
-          <view></view>
-          <view></view>
+      <view class="chart-shell">
+        <view class="y-axis">
+          <text>{{trendMaxLabel}}</text>
+          <text>{{trendMidLabel}}</text>
+          <text>0</text>
         </view>
-        <view
-          wx:for="{{trendSegments}}"
-          wx:key="key"
-          class="chart-segment"
-          style="left: {{item.left}}%; bottom: {{item.bottom}}%; width: {{item.width}}%; transform: rotate({{item.rotate}}deg);"
-        ></view>
-        <view
-          wx:for="{{trendPoints}}"
-          wx:key="date"
-          class="chart-point {{item.active ? 'is-active' : ''}}"
-          style="left: {{item.x}}%; bottom: {{item.y}}%;"
-          data-date="{{item.date}}"
-          bindtap="selectTrendPoint"
-        >
-          <view wx:if="{{item.active}}" class="chart-tooltip">{{item.value}} 分钟</view>
+        <view class="chart-area">
+          <view class="chart-grid">
+            <view></view>
+            <view></view>
+            <view></view>
+          </view>
+          <view
+            wx:for="{{trendSegments}}"
+            wx:key="key"
+            class="chart-segment"
+            style="left: {{item.left}}%; bottom: {{item.bottom}}%; width: {{item.width}}%; transform: rotate({{item.rotate}}deg);"
+          ></view>
+          <view
+            wx:for="{{trendPoints}}"
+            wx:key="key"
+            class="chart-point {{item.active ? 'is-active' : ''}} {{item.value === 0 ? 'is-zero' : ''}}"
+            style="left: {{item.x}}%; bottom: {{item.y}}%;"
+            data-key="{{item.key}}"
+            bindtap="selectTrendPoint"
+          >
+            <view wx:if="{{item.active && !trendEmpty}}" class="chart-tooltip tooltip-{{item.tooltipAlign}}">
+              <view>{{item.value}} 分钟</view>
+              <text>{{item.completedCount}} 项完成</text>
+            </view>
+          </view>
+          <view wx:if="{{trendEmpty}}" class="chart-empty">
+            <view>暂无投入曲线</view>
+            <text>完成一次行动后，这里会开始记录变化。</text>
+          </view>
         </view>
       </view>
       <view class="chart-labels">
-        <text wx:for="{{trendPoints}}" wx:key="date">{{item.label}}</text>
+        <text wx:for="{{trendPoints}}" wx:key="key">{{item.label}}</text>
       </view>
+      <view class="trend-summary">{{trendSummaryText}}</view>
     </view>
 
     <view class="milestone-card">
-      <view class="card-title">成长里程碑</view>
-      <view class="milestone-row">
-        <view wx:for="{{milestones}}" wx:key="days" class="milestone-item {{item.achieved ? 'is-achieved' : ''}} {{item.next ? 'is-next' : ''}}">
-          <view class="milestone-line"></view>
-          <view class="milestone-icon">奖</view>
-          <view class="milestone-bar"></view>
-          <view class="milestone-label">{{item.label}}</view>
+      <view class="card-title-row">
+        <view>
+          <view class="card-title">成长里程碑</view>
+          <view class="card-subtitle">{{nextMilestoneText}}</view>
         </view>
+      </view>
+      <view class="milestone-row">
+        <view wx:for="{{milestones}}" wx:key="days" class="milestone-item state-{{item.state}}">
+          <view class="milestone-line"></view>
+          <view class="mini-medal">
+            <view class="mini-medal-face">★</view>
+            <view class="mini-medal-ribbon"></view>
+          </view>
+          <view class="milestone-label">{{item.label}}</view>
+          <view class="milestone-status">{{item.statusText}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="record-card">
+      <view class="card-title-row">
+        <view>
+          <view class="card-title">最近记录</view>
+          <view class="card-subtitle">今天完成了什么</view>
+        </view>
+        <button class="review-link" bindtap="openHistoryReview">查看历史复盘</button>
+      </view>
+
+      <view wx:if="{{recentRecords.length}}" class="record-list">
+        <view wx:for="{{recentRecords}}" wx:key="id" class="record-item">
+          <view class="record-check">✓</view>
+          <view class="record-copy">
+            <view class="record-title">{{item.title}}</view>
+            <view class="record-meta">{{item.statusText}} · {{item.minutesText}}</view>
+          </view>
+        </view>
+      </view>
+      <view wx:else class="record-empty">
+        今天还没有完成记录。先完成一项小行动，进度页会替你记下来。
       </view>
     </view>
   </block>

@@ -60,6 +60,22 @@
   border: 0;
 }
 
+.mock-button {
+  width: 100%;
+  min-height: 82rpx;
+  margin-top: 24rpx;
+  border: 1rpx solid rgba(53, 104, 89, 0.28);
+  border-radius: 999rpx;
+  background: #eaf5ef;
+  color: #356859;
+  font-size: 28rpx;
+  font-weight: 650;
+}
+
+.mock-button::after {
+  border: 0;
+}
+
 .danger-outline-button,
 .danger-button {
   width: 100%;

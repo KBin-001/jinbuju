@@ -6,6 +6,7 @@ import {
   UserDisplayProfile,
   UserProfileSource,
 } from "../types/profile";
+import { emit } from "../utils/eventBus";
 
 const READ_TIMEOUT = 12000;
 const WRITE_TIMEOUT = 30000;
@@ -138,9 +139,11 @@ export function saveLocalUserProfile(input: {
     updatedAt: new Date().toISOString(),
   };
   wx.setStorageSync(LOCAL_PROFILE_KEY, profile);
+  emit("profile:update", profile);
   return profile;
 }
 
 export function clearLocalUserProfile(): void {
   wx.removeStorageSync(LOCAL_PROFILE_KEY);
+  emit("profile:update", null);
 }

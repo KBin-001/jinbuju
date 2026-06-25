@@ -1,8 +1,10 @@
 import { getActiveGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { calculateTodaySummary, createTask, deleteTask, getTodayPageTasks, rescheduleTask, updateTaskStatus } from "../../services/manualTask";
+import { getLocalUserProfile } from "../../services/profile";
 import { ActionIssueReason, ActionTask, Goal, TodaySummary } from "../../types/manual";
 import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
+import { off, on } from "../../utils/eventBus";
 import { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask } from "../../utils/taskStatus";
 
 const REASONS: Array<{ label: string; value: ActionIssueReason }> = [{ label: "时间不够", value: "not_enough_time" }, { label: "难度太高", value: "too_difficult" }, { label: "缺少资源", value: "resource_unavailable" }, { label: "身体或状态不适", value: "physical_condition" }, { label: "临时有事", value: "temporary_event" }, { label: "任务不符合实际", value: "not_practical" }, { label: "其他", value: "other" }];
@@ -99,6 +101,7 @@ Page({
   data: {
     status: "loading",
     errorMessage: "",
+    displayName: "阿岚",
     goal: null as Goal | null,
     tasks: [] as ViewTask[],
     taskGroups: [] as ViewTaskGroup[],
@@ -137,14 +140,25 @@ Page({
     quickAddTouchDeltaY: 0,
     currentScrollTop: 0,
   },
+  profileHandler: null as null | (() => void),
   onPageScroll(event: { scrollTop: number }) {
     this.setData({ currentScrollTop: event.scrollTop });
+  },
+  onLoad() {
+    this.profileHandler = () => this.load();
+    on("profile:update", this.profileHandler);
+  },
+  onUnload() {
+    if (this.profileHandler) {
+      off("profile:update", this.profileHandler);
+      this.profileHandler = null;
+    }
   },
   onShow() { this.load(); },
   load() {
     this.setData({ status: "loading", errorMessage: "" });
     try {
-      const today = getTodayBusinessDate(); const goal = getActiveGoal(); const copy = dateCopy(today);
+      const today = getTodayBusinessDate(); const goal = getActiveGoal(); const copy = dateCopy(today); const userProfile = getLocalUserProfile(); const displayName = userProfile?.nickname || "阿岚";
       const sourceTasks = goal ? getTodayPageTasks(goal.id, today) : [];
       const todayTasks = sourceTasks.filter((task) => task.currentDate === today);
       const taskGroups = groupTodayTasks(sourceTasks, today).map((group) => ({ ...group, tasks: group.tasks.map((task) => toViewTask(task, today)) }));
@@ -156,6 +170,7 @@ Page({
       const week = buildWeekDays(today, this.data.weekOffset);
       this.setData({
         status: "ready",
+        displayName,
         goal,
         tasks,
         taskGroups,

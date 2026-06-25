@@ -3,6 +3,7 @@ import {
   ProfileServiceError,
 } from "../../services/profile";
 import { clearManualStore } from "../../services/manualStore";
+import { isMockSeeded, seedMockData } from "../../utils/mockData";
 
 interface InputEvent {
   detail: {
@@ -16,6 +17,25 @@ Page({
     confirmation: "",
     deleting: false,
     errorMessage: "",
+    mockSeeded: false,
+  },
+
+  onShow() {
+    this.setData({ mockSeeded: isMockSeeded() });
+  },
+
+  loadMockData() {
+    wx.showModal({
+      title: "载入演示数据？",
+      content: "会覆盖当前本地数据，写入 1 个目标、约 10 天行动记录和 20 位小队成员。仅用于预览体验。",
+      confirmText: "载入",
+      success: (result: { confirm: boolean }) => {
+        if (!result.confirm) return;
+        seedMockData();
+        wx.showToast({ title: "演示数据已载入", icon: "success" });
+        setTimeout(() => wx.switchTab({ url: "/pages/index/index" }), 350);
+      },
+    });
   },
 
   startDelete() {
