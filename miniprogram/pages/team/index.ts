@@ -20,7 +20,7 @@ import {
   TeamMember,
   TeamMemberActionDetail,
 } from "../../types/team";
-import { formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
+import { getTodayBusinessDate } from "../../utils/date";
 
 type PageStatus = "loading" | "empty" | "ready" | "error";
 
@@ -29,10 +29,7 @@ interface MemberView extends TeamMember {
   avatarText: string;
   privacyText: string;
   statusText: string;
-  statusClass: string;
   actionText: string;
-  metaText: string;
-  buttonText: string;
   compactButtonText: string;
   canMarkComplete: boolean;
   canEncourage: boolean;
@@ -48,6 +45,24 @@ interface ActivitySnapshot {
   todayActionDetails: TeamMemberActionDetail[];
   todayStatus: MemberTodayStatus;
 }
+
+interface ActivityFeedItem {
+  id: string;
+  memberId: string;
+  name: string;
+  avatar: string;
+  avatarText: string;
+  timeText: string;
+}
+
+const TEAM_LEVEL = "Lv.3";
+const TEAM_MOOD = "团结奋进";
+const TEAM_NAME = "自律同行 TQLR 队";
+const WEEKLY_FOCUS_MINUTES = 165;
+const WEEKLY_FOCUS_GOAL = 300;
+const WEEKLY_FOCUS_DELTA = "+20%";
+const HONOR_TITLE = "团结之星";
+const HONOR_SUBTITLE = "连续 3 周达成目标";
 
 const ENCOURAGEMENT_OPTIONS: Array<{ type: EncouragementType; label: string }> = [
   { type: "keep_going", label: "今天也要加油" },
@@ -76,11 +91,13 @@ function buildActivitySnapshot(): ActivitySnapshot {
   const summary = calculateTodaySummary(tasks);
   const todayAction = tasks.find((task) => task.status !== "completed") || tasks[0];
   let todayStatus: MemberTodayStatus = "not_started";
+
   if (summary.totalCount > 0 && summary.completedCount === summary.totalCount) {
     todayStatus = "completed";
   } else if (summary.completedCount > 0 || summary.partialCount > 0) {
     todayStatus = "partial";
   }
+
   return {
     goal,
     tasks,
@@ -97,11 +114,6 @@ function buildActivitySnapshot(): ActivitySnapshot {
   };
 }
 
-function phaseDateRange(team: Team | null): string {
-  if (!team) return "";
-  return `${formatDisplayDate(team.phaseStartDate)} 至 ${formatDisplayDate(team.phaseEndDate)}`;
-}
-
 function privacyText(mode: TeamDisplayMode): string {
   if (mode === "public") return "公开";
   if (mode === "anonymous") return "匿名";
@@ -113,7 +125,7 @@ function statusText(status: MemberTodayStatus): string {
     not_started: "今日未记录",
     completed: "今日已完成",
     partial: "完成一部分",
-    missed: "今日未完成",
+    missed: "今天不做",
   };
   return labels[status];
 }
@@ -130,24 +142,14 @@ function toMemberView(member: TeamMember): MemberView {
       : goalText;
   const canMarkComplete = member.isSelf && member.todayStatus !== "completed";
   const canOpenDetail = member.displayMode !== "anonymous";
+
   return {
     ...member,
     displayName,
     avatarText: displayName.slice(0, 1),
     privacyText: privacyText(member.displayMode),
     statusText: statusText(member.todayStatus),
-    statusClass: `status-${member.todayStatus}`,
     actionText,
-    metaText: `预计 ${member.estimatedMinutes || 0} 分钟 · 成长 ${member.growthMinutes || 0} 分钟 · 鼓励 ${member.encouragementCount}`,
-    buttonText: member.isSelf
-      ? member.todayStatus === "completed"
-        ? "已完成"
-        : member.todayStatus === "partial"
-          ? "继续记录"
-          : "标记完成"
-      : member.encouragedByMeToday
-        ? "已鼓励"
-        : "鼓励",
     compactButtonText: member.isSelf
       ? member.todayStatus === "completed"
         ? "已完成"
@@ -161,9 +163,36 @@ function toMemberView(member: TeamMember): MemberView {
     canEncourage: !member.isSelf && !member.encouragedByMeToday,
     canOpenDetail,
     detailHiddenText: member.displayMode === "anonymous"
-      ? "匿名成员不会公开行动明细"
-      : "这位成员暂未开放行动明细",
+      ? "匿名成员不会公开行动明细。"
+      : "这位成员暂未开放行动明细。",
   };
+}
+
+function createFeed(members: MemberView[]): ActivityFeedItem[] {
+  const completedMembers = members.filter((member) => member.todayStatus === "completed" && !member.isSelf);
+  const source = completedMembers.length > 0 ? completedMembers : members.filter((member) => !member.isSelf);
+  const fallbackNames = ["阿岚", "小柏"];
+  const feedSource = source.slice(0, 2);
+
+  if (feedSource.length === 0) {
+    return fallbackNames.map((name, index) => ({
+      id: `fallback_${index}`,
+      memberId: "",
+      name,
+      avatar: "",
+      avatarText: name.slice(0, 1),
+      timeText: `${index + 1} 小时前`,
+    }));
+  }
+
+  return feedSource.map((member, index) => ({
+    id: `feed_${member.id}`,
+    memberId: member.id,
+    name: index < fallbackNames.length ? fallbackNames[index] : member.displayName,
+    avatar: member.avatar || "",
+    avatarText: (index < fallbackNames.length ? fallbackNames[index] : member.displayName).slice(0, 1),
+    timeText: `${index + 1} 小时前`,
+  }));
 }
 
 Page({
@@ -172,15 +201,24 @@ Page({
     errorMessage: "",
     team: null as Team | null,
     members: [] as MemberView[],
-    visibleMembers: [] as MemberView[],
     dailyStats: null as TeamDailyStats | null,
-    phaseDateRange: "",
+    displayTeamName: TEAM_NAME,
+    teamLevel: TEAM_LEVEL,
+    teamMood: TEAM_MOOD,
+    weeklyFocusMinutes: WEEKLY_FOCUS_MINUTES,
+    weeklyFocusGoal: WEEKLY_FOCUS_GOAL,
+    weeklyFocusDeltaText: WEEKLY_FOCUS_DELTA,
+    weeklyFocusRate: Math.round((WEEKLY_FOCUS_MINUTES / WEEKLY_FOCUS_GOAL) * 100),
+    honorTitle: HONOR_TITLE,
+    honorSubtitle: HONOR_SUBTITLE,
+    avatarMembers: [] as MemberView[],
+    extraAvatarCount: 0,
+    activityFeed: [] as ActivityFeedItem[],
     roomCodeInput: "",
     joinPopupVisible: false,
-    reviewPopupVisible: false,
+    teamInfoVisible: false,
     memberDetailVisible: false,
     selectedMember: null as MemberView | null,
-    showAllMembers: false,
     creating: false,
     joining: false,
     markingComplete: false,
@@ -231,14 +269,17 @@ Page({
 
   applyTeamData(team: Team | null, members: TeamMember[], dailyStats: TeamDailyStats | null) {
     const memberViews = members.map(toMemberView);
-    const showAllMembers = this.data.showAllMembers;
+    const avatarMembers = memberViews.slice(0, 7);
+
     this.setData({
       status: team ? "ready" : "empty",
       team,
       members: memberViews,
-      visibleMembers: showAllMembers ? memberViews : memberViews.slice(0, 10),
       dailyStats,
-      phaseDateRange: phaseDateRange(team),
+      displayTeamName: TEAM_NAME,
+      avatarMembers,
+      extraAvatarCount: Math.max(0, memberViews.length - avatarMembers.length),
+      activityFeed: createFeed(memberViews),
       errorMessage: "",
       creating: false,
       joining: false,
@@ -312,6 +353,14 @@ Page({
       this.setData({ joining: false });
       wx.showToast({ title: error instanceof Error ? error.message : "加入失败", icon: "none" });
     }
+  },
+
+  openTeamInfo() {
+    this.setData({ teamInfoVisible: true });
+  },
+
+  closeTeamInfo() {
+    this.setData({ teamInfoVisible: false });
   },
 
   copyRoomCode() {
@@ -437,22 +486,6 @@ Page({
       this.setData({ encouragingMemberId: "" });
       wx.showToast({ title: error instanceof Error ? error.message : "鼓励失败", icon: "none" });
     }
-  },
-
-  toggleAllMembers() {
-    const showAllMembers = !this.data.showAllMembers;
-    this.setData({
-      showAllMembers,
-      visibleMembers: showAllMembers ? this.data.members : this.data.members.slice(0, 10),
-    });
-  },
-
-  openReview() {
-    this.setData({ reviewPopupVisible: true });
-  },
-
-  closeReview() {
-    this.setData({ reviewPopupVisible: false });
   },
 
   openMemberDetail(event: { currentTarget: { dataset: { id?: string } } }) {
