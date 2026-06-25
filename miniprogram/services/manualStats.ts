@@ -1,5 +1,5 @@
 import { addDays, formatDate } from "../utils/date";
-import { DailyActionSummary, DailyCheckin, ProgressSummary } from "../types/manual";
+import { DailyActionSummary, DailyCheckin, GrowthBadge, GrowthHeatmapDay, ProgressSummary } from "../types/manual";
 import { createLocalId, readManualStore, writeManualStore } from "./manualStore";
 import { calculateTodaySummary } from "./manualTask";
 
@@ -13,7 +13,40 @@ export function getProgressSummary(goalId: string, today = formatDate(new Date()
     recentDays.push({ date, label: offset === 0 ? "今天" : `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`, completedCount: dayTasks.filter((task) => task.status === "completed").length, partialCount: dayTasks.filter((task) => task.status === "partially_completed").length, totalCount: dayTasks.length, isToday: offset === 0 });
   }
   const actionDates = new Set(tasks.filter((task) => task.status === "completed" || task.status === "partially_completed").map((task) => task.currentDate));
-  return { totalTasks: tasks.length, completedTasks: tasks.filter((task) => task.status === "completed").length, totalActualMinutes: tasks.reduce((sum, task) => sum + (task.actualMinutes || 0), 0), totalActionDays: actionDates.size, todayCompleted: todayTasks.filter((task) => task.status === "completed").length, todayTotal: todayTasks.length, recentDays, unfinishedTasks: tasks.filter((task) => task.status === "pending" || task.status === "partially_completed").sort((a, b) => a.currentDate.localeCompare(b.currentDate)).slice(0, 8) };
+  const completedTasks = tasks.filter((task) => task.status === "completed").length;
+  const totalActualMinutes = tasks.reduce((sum, task) => sum + (task.actualMinutes || 0), 0);
+  let currentStreakDays = 0;
+  for (let offset = 0; offset > -365; offset -= 1) {
+    const date = formatDate(addDays(new Date(`${today}T00:00:00`), offset));
+    if (!actionDates.has(date)) break;
+    currentStreakDays += 1;
+  }
+  const heatmapDays: GrowthHeatmapDay[] = [];
+  for (let offset = -27; offset <= 0; offset += 1) {
+    const date = formatDate(addDays(new Date(`${today}T00:00:00`), offset));
+    const dayTasks = tasks.filter((task) => task.currentDate === date);
+    const dayCompleted = dayTasks.filter((task) => task.status === "completed").length;
+    const dayPartial = dayTasks.filter((task) => task.status === "partially_completed").length;
+    const activeCount = dayCompleted + dayPartial;
+    const completionRate = dayTasks.length ? Math.round((dayCompleted / dayTasks.length) * 100) : 0;
+    let level: GrowthHeatmapDay["level"] = 0;
+    if (dayTasks.length > 0) {
+      if (completionRate >= 100) level = 3;
+      else if (completionRate >= 50) level = 2;
+      else if (activeCount > 0) level = 1;
+      else level = 0;
+    }
+    heatmapDays.push({ date, label: `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`, completedCount: dayCompleted, partialCount: dayPartial, totalCount: dayTasks.length, completionRate, level, isToday: date === today });
+  }
+  const heatmapWeeks: GrowthHeatmapDay[][] = [];
+  for (let index = 0; index < heatmapDays.length; index += 7) heatmapWeeks.push(heatmapDays.slice(index, index + 7));
+  const badges: GrowthBadge[] = [
+    { key: "first_action", title: "开局行动", description: "完成第 1 件行动", unlocked: completedTasks >= 1, progressText: completedTasks >= 1 ? "已解锁" : `${completedTasks}/1` },
+    { key: "streak_3", title: "三天不断", description: "连续行动 3 天", unlocked: currentStreakDays >= 3, progressText: currentStreakDays >= 3 ? "已解锁" : `${currentStreakDays}/3 天` },
+    { key: "streak_7", title: "一周稳住", description: "连续行动 7 天", unlocked: currentStreakDays >= 7, progressText: currentStreakDays >= 7 ? "已解锁" : `${currentStreakDays}/7 天` },
+    { key: "minutes_600", title: "十小时养成", description: "累计投入 600 分钟", unlocked: totalActualMinutes >= 600, progressText: totalActualMinutes >= 600 ? "已解锁" : `${Math.min(totalActualMinutes, 600)}/600 分钟` },
+  ];
+  return { totalTasks: tasks.length, completedTasks, totalActualMinutes, totalActionDays: actionDates.size, todayCompleted: todayTasks.filter((task) => task.status === "completed").length, todayTotal: todayTasks.length, currentStreakDays, recentDays, heatmapWeeks, badges, unfinishedTasks: tasks.filter((task) => task.status === "pending" || task.status === "partially_completed").sort((a, b) => a.currentDate.localeCompare(b.currentDate)).slice(0, 8) };
 }
 
 export function recordDailyCheckin(goalId: string, businessDate: string): DailyCheckin {

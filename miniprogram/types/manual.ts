@@ -54,6 +54,25 @@ export interface DailyActionSummary {
   isToday: boolean;
 }
 
+export interface GrowthHeatmapDay {
+  date: string;
+  label: string;
+  completedCount: number;
+  partialCount: number;
+  totalCount: number;
+  completionRate: number;
+  level: 0 | 1 | 2 | 3;
+  isToday: boolean;
+}
+
+export interface GrowthBadge {
+  key: string;
+  title: string;
+  description: string;
+  unlocked: boolean;
+  progressText: string;
+}
+
 export interface ProgressSummary {
   totalTasks: number;
   completedTasks: number;
@@ -61,7 +80,10 @@ export interface ProgressSummary {
   totalActionDays: number;
   todayCompleted: number;
   todayTotal: number;
+  currentStreakDays: number;
   recentDays: DailyActionSummary[];
+  heatmapWeeks: GrowthHeatmapDay[][];
+  badges: GrowthBadge[];
   unfinishedTasks: ActionTask[];
 }
 

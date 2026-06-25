@@ -9,20 +9,62 @@
       <view class="hero-rate"><text>{{completionRate}}</text><text class="rate-unit">%</text></view><view class="hero-copy">累计行动完成率</view>
     </view>
 
-    <view class="metric-grid">
-      <view class="metric-card green"><view class="metric-value">{{summary.totalTasks}}</view><view class="metric-label">累计行动</view></view>
-      <view class="metric-card gold"><view class="metric-value">{{summary.completedTasks}}</view><view class="metric-label">已完成</view></view>
-      <view class="metric-card coral"><view class="metric-value">{{summary.totalActualMinutes}}</view><view class="metric-label">投入分钟</view></view>
-      <view class="metric-card blue"><view class="metric-value">{{summary.totalActionDays}}</view><view class="metric-label">行动天数</view></view>
+    <view class="archive-overview card">
+      <view class="overview-main">
+        <view class="overview-value">{{summary.completedTasks}}</view>
+        <view class="overview-copy">
+          <view class="overview-title">已完成行动</view>
+          <view class="overview-desc">从长期目标里真实推进过的每一步。</view>
+        </view>
+      </view>
+      <view class="overview-stats">
+        <view class="overview-stat"><text>{{summary.totalActionDays}}</text><view>行动天数</view></view>
+        <view class="overview-stat"><text>{{summary.currentStreakDays}}</text><view>连续天数</view></view>
+        <view class="overview-stat"><text>{{summary.totalActualMinutes}}</text><view>投入分钟</view></view>
+      </view>
     </view>
 
-    <view class="card today-card"><view class="section-title">今日完成情况</view><view class="today-count"><text>{{summary.todayCompleted}}</text> / {{summary.todayTotal}} 项</view><view class="progress-track"><view class="progress-fill" style="width: {{summary.todayTotal ? summary.todayCompleted / summary.todayTotal * 100 : 0}}%"></view></view></view>
+    <view class="section-head section-gap">
+      <view>
+        <view class="section-title">贡献热力图</view>
+        <view class="section-copy">颜色越深，代表当天完成度越高。</view>
+      </view>
+      <view class="heatmap-range">近 4 周</view>
+    </view>
+    <view class="heatmap-card card">
+      <view wx:for="{{summary.heatmapWeeks}}" wx:for-item="week" wx:key="*this" class="heatmap-row">
+        <view
+          wx:for="{{week}}"
+          wx:for-item="day"
+          wx:key="date"
+          class="heatmap-cell heat-level-{{day.level}} {{day.isToday ? 'heat-today' : ''}}"
+          aria-label="{{day.label}} 完成 {{day.completedCount}} / {{day.totalCount}} 项"
+        >
+          <view wx:if="{{day.isToday}}" class="heat-today-dot"></view>
+        </view>
+      </view>
+      <view class="heatmap-footer">
+        <text>留白</text>
+        <view class="heat-legend heat-level-0"></view>
+        <view class="heat-legend heat-level-1"></view>
+        <view class="heat-legend heat-level-2"></view>
+        <view class="heat-legend heat-level-3"></view>
+        <text>高完成</text>
+      </view>
+    </view>
 
-    <view class="section-title section-gap">最近 7 天行动记录</view>
-    <view class="week-card card">
-      <view wx:for="{{summary.recentDays}}" wx:key="date" class="day-column {{item.isToday ? 'day-today' : ''}}">
-        <view class="day-bar-wrap"><view class="day-bar {{item.completedCount ? 'day-done' : item.partialCount ? 'day-partial' : ''}}" style="height: {{item.totalCount ? 28 + (item.completedCount + item.partialCount) * 16 : 12}}rpx"></view></view>
-        <view class="day-label">{{item.label}}</view><view class="day-state">{{item.completedCount ? '完成' : item.partialCount ? '部分' : '未记录'}}</view>
+    <view class="section-head section-gap">
+      <view>
+        <view class="section-title">成就收藏册</view>
+        <view class="section-copy">让长期坚持变成可以被看见的勋章。</view>
+      </view>
+    </view>
+    <view class="badge-grid">
+      <view wx:for="{{summary.badges}}" wx:key="key" class="badge-card {{item.unlocked ? 'badge-unlocked' : 'badge-locked'}}">
+        <view class="badge-medal">{{item.unlocked ? '✓' : '·'}}</view>
+        <view class="badge-title">{{item.title}}</view>
+        <view class="badge-desc">{{item.description}}</view>
+        <view class="badge-progress">{{item.progressText}}</view>
       </view>
     </view>
 

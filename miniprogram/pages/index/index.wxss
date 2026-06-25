@@ -13,8 +13,8 @@
 }
 
 .today-hero {
-  margin-bottom: 24rpx;
-  padding: 34rpx 34rpx 32rpx;
+  margin-bottom: 18rpx;
+  padding: 34rpx 34rpx 30rpx;
   border-radius: 32rpx;
   box-shadow: var(--today-shadow);
 }
@@ -71,7 +71,13 @@
 
 .hero-focus {
   position: relative;
-  margin-top: 26rpx;
+  margin-top: 24rpx;
+}
+
+.hero-day-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
 }
 
 .hero-day {
@@ -79,6 +85,21 @@
   font-size: 28rpx;
   font-weight: 800;
   letter-spacing: 2rpx;
+  line-height: 1;
+}
+
+.hero-status-pill {
+  min-height: 36rpx;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 14rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.22);
+  border-radius: 999rpx;
+  background: rgba(220, 235, 228, 0.18);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 20rpx;
+  font-weight: 650;
   line-height: 1;
 }
 
@@ -154,10 +175,24 @@
 .hero-progress-track {
   width: 100%;
   height: 10rpx;
-  overflow: hidden;
+  display: flex;
+  gap: 8rpx;
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
+}
+
+.hero-progress-segment {
+  height: 100%;
+  flex: 1;
+  min-width: 0;
   border-radius: 999rpx;
-  background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0 24rpx, rgba(255, 255, 255, 0.1) 24rpx 30rpx);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.hero-progress-segment.is-active {
+  background: linear-gradient(90deg, #9ad9b0 0%, #5db98a 100%);
+  animation: todayProgressFill 0.6s ease-out both;
 }
 
 .hero-progress-fill {
@@ -229,7 +264,7 @@
 }
 
 .today-data-card {
-  margin-top: 22rpx;
+  margin-top: 18rpx;
   padding: 24rpx 26rpx;
   box-sizing: border-box;
   border: 1rpx solid rgba(230, 236, 232, 0.9);
@@ -245,10 +280,23 @@
   gap: 20rpx;
 }
 
+.today-data-header > view:first-child {
+  min-width: 0;
+  flex: 1;
+}
+
 .today-data-title {
   color: var(--today-text);
   font-size: 30rpx;
   font-weight: 700;
+}
+
+.today-data-mood {
+  margin-top: 6rpx;
+  color: #b08a35;
+  font-size: 23rpx;
+  font-weight: 650;
+  line-height: 1.35;
 }
 
 .today-data-badge {
@@ -268,7 +316,7 @@
 
 .today-data-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
   margin-top: 20rpx;
   border-top: 1rpx solid #edf1ee;
@@ -285,7 +333,7 @@
 
 .today-data-value {
   color: var(--today-text);
-  font-size: 29rpx;
+  font-size: 28rpx;
   font-weight: 750;
   line-height: 1.2;
 }
@@ -383,8 +431,8 @@
   display: flex;
   align-items: flex-start;
   gap: 18rpx;
-  margin-top: 22rpx;
-  padding: 22rpx 26rpx;
+  margin-top: 16rpx;
+  padding: 18rpx 22rpx;
   box-sizing: border-box;
   border: 1rpx solid rgba(230, 236, 232, 0.82);
   border-radius: 26rpx;
@@ -432,7 +480,7 @@
   gap: 24rpx;
   width: 100%;
   box-sizing: border-box;
-  margin: 32rpx 0 18rpx;
+  margin: 20rpx 0 16rpx;
 }
 
 .action-section-left {
@@ -521,7 +569,7 @@
 }
 
 .action-card-tap {
-  margin-bottom: 16rpx;
+  margin-bottom: 14rpx;
 }
 
 .action-card {
@@ -541,8 +589,8 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 22rpx;
-  min-height: 124rpx;
+  gap: 20rpx;
+  min-height: 118rpx;
 }
 
 .action-status-rail {
@@ -589,7 +637,7 @@
 .status-neutral { --tag-primary-color: #46627a; --tag-primary-light-color: #e8f0f7; }
 
 .action-title {
-  margin-top: 14rpx;
+  margin-top: 12rpx;
   color: var(--today-text);
   font-size: 31rpx;
   font-weight: 700;
@@ -619,7 +667,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10rpx 18rpx;
-  margin-top: 18rpx;
+  margin-top: 12rpx;
   color: var(--today-secondary);
   font-size: 22rpx;
 }
@@ -636,22 +684,22 @@
 }
 
 .action-complete-btn {
-  width: auto;
-  min-width: 106rpx;
-  max-width: 132rpx;
-  height: 50rpx;
+  width: 56rpx;
+  min-width: 56rpx;
+  max-width: 56rpx;
+  height: 56rpx;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8rpx;
+  gap: 0;
   flex: none;
   box-sizing: border-box;
   margin: 0;
-  padding: 0 18rpx;
-  border: 2rpx solid #2f6f61;
+  padding: 0;
+  border: 3rpx solid #d4d9d3;
   border-radius: 999rpx;
-  background: #eff7f2;
-  color: #2f6f61;
+  background: #ffffff;
+  color: transparent;
   font-size: 24rpx;
   font-weight: 600;
   line-height: 1;
@@ -662,6 +710,7 @@
 }
 
 .action-complete-btn:active {
+  border-color: #2f6f61;
   background: #eef7f2;
   transform: scale(0.98);
 }
@@ -678,6 +727,17 @@
   color: #ffffff;
   font-size: 30rpx;
   box-shadow: 0 8rpx 20rpx rgba(47, 111, 97, 0.2);
+}
+
+.action-list-toggle {
+  min-height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2rpx 0 16rpx;
+  color: var(--today-muted);
+  font-size: 23rpx;
+  line-height: 1;
 }
 
 .empty-action-card {
