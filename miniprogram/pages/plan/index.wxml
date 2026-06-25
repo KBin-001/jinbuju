@@ -1,98 +1,112 @@
 <view class="page progress-page">
-  <view wx:if="{{status === 'loading'}}" class="card state-card"><view class="loading-dot"></view><view class="state-title">正在整理行动档案</view></view>
-  <view wx:elif="{{status === 'error'}}" class="card state-card"><view class="state-mark">!</view><view class="state-title">进度读取失败</view><view class="state-description">{{errorMessage}}</view><button class="primary-button" bindtap="retry">重新加载</button></view>
-  <view wx:elif="{{!goal}}" class="card state-card"><view class="state-mark">0</view><view class="state-title">还没有行动目标</view><view class="state-description">创建目标后，这里会沉淀你的每次行动。</view><button class="primary-button" bindtap="createGoal">创建目标</button></view>
+  <view wx:if="{{status === 'loading'}}" class="card state-card">
+    <view class="loading-dot"></view>
+    <view class="state-title">正在整理成长档案</view>
+  </view>
+
+  <view wx:elif="{{status === 'error'}}" class="card state-card">
+    <view class="state-mark">!</view>
+    <view class="state-title">进度读取失败</view>
+    <view class="state-description">{{errorMessage}}</view>
+    <button class="primary-button" bindtap="retry">重新加载</button>
+  </view>
+
+  <view wx:elif="{{!goal}}" class="card state-card">
+    <view class="state-mark">0</view>
+    <view class="state-title">还没有行动目标</view>
+    <view class="state-description">创建目标后，这里会沉淀你的每次行动。</view>
+    <button class="primary-button" bindtap="createGoal">创建目标</button>
+  </view>
 
   <block wx:else>
-    <view class="growth-hero archive-hero">
-      <view class="hero-kicker">GROWTH ARCHIVE</view><view class="hero-title">成长档案</view><view class="hero-goal">{{goal.title}}</view>
-      <view class="archive-medal">奖</view>
-      <view class="hero-rate"><text>{{completionRate}}</text><text class="rate-unit">%</text></view><view class="hero-copy">累计行动完成率</view>
+    <view class="progress-title">我的进度</view>
+
+    <view class="progress-hero">
+      <view class="progress-hero-copy">
+        <view class="progress-goal-title">{{goal.title}}</view>
+        <view class="level-pill">{{levelLabel}}</view>
+        <view class="goal-period">{{goalPeriod}}</view>
+      </view>
+      <view class="hero-trophy">奖</view>
     </view>
 
-    <view class="archive-overview card">
-      <view class="overview-main">
-        <view class="overview-value">{{summary.completedTasks}}</view>
-        <view class="overview-copy">
-          <view class="overview-title">已完成行动</view>
-          <view class="overview-desc">从长期目标里真实推进过的每一步。</view>
-        </view>
+    <view class="total-progress">
+      <view class="progress-track">
+        <view class="progress-fill" style="width: {{completionRate}}%;"></view>
       </view>
-      <view class="overview-stats">
-        <view class="overview-stat"><text>{{summary.totalActionDays}}</text><view>行动天数</view></view>
-        <view class="overview-stat"><text>{{summary.currentStreakDays}}</text><view>连续天数</view></view>
-        <view class="overview-stat"><text>{{summary.totalActualMinutes}}</text><view>投入分钟</view></view>
+      <view class="progress-copy-row">
+        <text>{{progressText}}</text>
+        <text class="progress-percent">{{completionRate}}%</text>
       </view>
     </view>
 
-    <view class="section-head section-gap">
-      <view>
-        <view class="section-title">贡献热力图</view>
-        <view class="section-copy">颜色越深，代表当天完成度越高。</view>
+    <view class="stats-card">
+      <view class="stat-item">
+        <view class="stat-value">{{summary.totalActionDays}}<text> 天</text></view>
+        <view class="stat-label">坚持天数</view>
       </view>
-      <view class="heatmap-range">近 4 周</view>
+      <view class="stat-item">
+        <view class="stat-value">{{summary.completedTasks}}<text> / {{summary.totalTasks}}</text></view>
+        <view class="stat-label">完成项数</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-value">{{todayActualMinutes}}<text> 分钟</text></view>
+        <view class="stat-label">今日投入</view>
+      </view>
     </view>
-    <view class="heatmap-card card">
-      <view wx:for="{{summary.heatmapWeeks}}" wx:for-item="week" wx:key="*this" class="heatmap-row">
+
+    <view class="trend-card">
+      <view class="card-head">
+        <view class="card-title">成长趋势</view>
+      </view>
+      <view class="trend-tabs">
         <view
-          wx:for="{{week}}"
-          wx:for-item="day"
+          wx:for="{{trendTabs}}"
+          wx:key="key"
+          class="trend-tab {{item.active ? 'is-active' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="switchTrendTab"
+        >{{item.label}}</view>
+      </view>
+
+      <view class="chart-area">
+        <view class="chart-grid">
+          <view></view>
+          <view></view>
+          <view></view>
+        </view>
+        <view
+          wx:for="{{trendSegments}}"
+          wx:key="key"
+          class="chart-segment"
+          style="left: {{item.left}}%; bottom: {{item.bottom}}%; width: {{item.width}}%; transform: rotate({{item.rotate}}deg);"
+        ></view>
+        <view
+          wx:for="{{trendPoints}}"
           wx:key="date"
-          class="heatmap-cell heat-level-{{day.level}} {{day.isToday ? 'heat-today' : ''}}"
-          aria-label="{{day.label}} 完成 {{day.completedCount}} / {{day.totalCount}} 项"
+          class="chart-point {{item.active ? 'is-active' : ''}}"
+          style="left: {{item.x}}%; bottom: {{item.y}}%;"
+          data-date="{{item.date}}"
+          bindtap="selectTrendPoint"
         >
-          <view wx:if="{{day.isToday}}" class="heat-today-dot"></view>
+          <view wx:if="{{item.active}}" class="chart-tooltip">{{item.value}} 分钟</view>
         </view>
       </view>
-      <view class="heatmap-footer">
-        <text>留白</text>
-        <view class="heat-legend heat-level-0"></view>
-        <view class="heat-legend heat-level-1"></view>
-        <view class="heat-legend heat-level-2"></view>
-        <view class="heat-legend heat-level-3"></view>
-        <text>高完成</text>
+      <view class="chart-labels">
+        <text wx:for="{{trendPoints}}" wx:key="date">{{item.label}}</text>
       </view>
     </view>
 
-    <view class="section-head section-gap">
-      <view>
-        <view class="section-title">成就收藏册</view>
-        <view class="section-copy">让长期坚持变成可以被看见的勋章。</view>
-      </view>
-    </view>
-    <view class="badge-grid">
-      <view wx:for="{{summary.badges}}" wx:key="key" class="badge-card {{item.unlocked ? 'badge-unlocked' : 'badge-locked'}}">
-        <view class="badge-medal">{{item.unlocked ? '✓' : '·'}}</view>
-        <view class="badge-title">{{item.title}}</view>
-        <view class="badge-desc">{{item.description}}</view>
-        <view class="badge-progress">{{item.progressText}}</view>
-      </view>
-    </view>
-
-    <view class="pending-section-header">
-      <view class="pending-section-left">
-        <view class="section-title">待继续行动</view>
-        <view class="section-copy">给尚未完成的事情留一个清晰位置</view>
-      </view>
-      <view class="pending-section-right">
-        <view class="mini-add" catchtap="addTask">＋ 添加</view>
-        <view class="pending-count">{{summary.unfinishedTasks.length}} 项</view>
-      </view>
-    </view>
-    <view wx:if="{{summary.unfinishedTasks.length === 0}}" class="card empty-copy">当前没有待继续的行动，给自己留一点空间也很好。</view>
-    <view wx:for="{{summary.unfinishedTasks}}" wx:key="id" class="card pending-card" data-id="{{item.id}}" bindtap="editTask">
-      <view class="pending-main">
-        <view class="pending-tags">
-          <view class="pending-status">{{item.status === 'partially_completed' ? '完成一部分' : '待继续'}}</view>
-          <view class="pending-date">{{item.currentDate}}</view>
-        </view>
-        <view class="pending-title">{{item.title}}</view>
-        <view wx:if="{{item.description}}" class="pending-description">{{item.description}}</view>
-        <view class="pending-meta">
-          <text>预计 {{item.estimatedMinutes}} 分钟</text>
+    <view class="milestone-card">
+      <view class="card-title">成长里程碑</view>
+      <view class="milestone-row">
+        <view wx:for="{{milestones}}" wx:key="days" class="milestone-item {{item.achieved ? 'is-achieved' : ''}} {{item.next ? 'is-next' : ''}}">
+          <view class="milestone-line"></view>
+          <view class="milestone-icon">奖</view>
+          <view class="milestone-bar"></view>
+          <view class="milestone-label">{{item.label}}</view>
         </view>
       </view>
-      <view class="pending-arrow">›</view>
     </view>
   </block>
 </view>
