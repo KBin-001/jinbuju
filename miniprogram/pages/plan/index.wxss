@@ -303,7 +303,7 @@
   flex: none;
   padding: 0 18rpx;
   border-radius: 23rpx;
-  background: #356859;
+  background: var(--progress-primary);
   color: #ffffff;
   font-size: 22rpx;
   font-weight: 700;
@@ -311,7 +311,7 @@
 
 .goal-option.is-active .goal-option-action {
   background: #dcebe4;
-  color: #356859;
+  color: var(--progress-primary);
 }
 
 .medal {

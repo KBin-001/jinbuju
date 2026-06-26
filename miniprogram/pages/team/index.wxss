@@ -1,14 +1,14 @@
 .team-page {
-  --team-primary: #356859;
-  --team-deep: #1f5b4a;
-  --team-text: #233b34;
-  --team-secondary: #71827a;
-  --team-muted: #9aa6a1;
-  --team-border: #e6eee9;
-  --team-soft: #eaf5ef;
-  --team-sun: #f8d26a;
-  --team-bg: #f5f7f2;
-  --team-shadow: 0 16rpx 40rpx rgba(31, 70, 58, 0.08);
+  --team-primary: #145243;
+  --team-deep: #0f4035;
+  --team-text: #173c34;
+  --team-secondary: #6f7f78;
+  --team-muted: #a8b0aa;
+  --team-border: #e8efeb;
+  --team-soft: #f3f8f5;
+  --team-sun: #f5b94e;
+  --team-bg: #f7f8f5;
+  --team-shadow: 0 8rpx 30rpx rgba(20, 82, 67, 0.08);
   min-height: 100vh;
   padding: 32rpx 32rpx calc(156rpx + env(safe-area-inset-bottom));
   background: var(--team-bg);
@@ -34,7 +34,7 @@
   box-sizing: border-box;
   margin-top: 24rpx;
   padding: 28rpx;
-  border: 1rpx solid rgba(230, 238, 233, 0.92);
+  border: 1rpx solid rgba(232, 239, 235, 0.92);
   border-radius: 28rpx;
   background: #ffffff;
   box-shadow: var(--team-shadow);
@@ -102,7 +102,7 @@
 }
 
 .my-team-tag {
-  background: #edf4f0;
+  background: #eef7f2;
   color: var(--team-primary);
 }
 
@@ -115,12 +115,12 @@
 
 .level-tag {
   background: var(--team-sun);
-  color: #7b5a1e;
+  color: #5f4518;
 }
 
 .mood-tag,
 .soft-tag {
-  background: var(--team-soft);
+  background: #eef7f2;
   color: var(--team-primary);
 }
 
@@ -144,7 +144,7 @@
 }
 
 .card-arrow {
-  color: #a6b3ad;
+  color: #879790;
   font-size: 42rpx;
   line-height: 1;
 }
@@ -224,7 +224,7 @@
 }
 
 .outline-button {
-  border: 1rpx solid #d7e4de;
+  border: 1rpx solid #d8e5df;
   background: #ffffff;
   color: var(--team-primary);
 }
@@ -232,7 +232,7 @@
 .solid-button {
   background: var(--team-primary);
   color: #ffffff;
-  box-shadow: 0 10rpx 24rpx rgba(31, 91, 74, 0.16);
+  box-shadow: 0 10rpx 24rpx rgba(20, 82, 67, 0.18);
 }
 
 .card-title {
@@ -341,7 +341,7 @@
   justify-content: center;
   flex: none;
   border-radius: 50%;
-  background: #f8d26a;
+  background: #f5b94e;
   box-shadow: inset 0 0 0 8rpx rgba(255, 255, 255, 0.55);
 }
 
@@ -352,7 +352,7 @@
   width: 20rpx;
   height: 30rpx;
   border-radius: 0 0 8rpx 8rpx;
-  background: #e5b85e;
+  background: #d99b35;
   content: "";
 }
 
@@ -491,7 +491,7 @@
   right: 0;
   bottom: 0;
   left: 0;
-  background: rgba(31, 45, 42, 0.42);
+  background: rgba(31, 45, 42, 0.34);
 }
 
 .team-popup {
@@ -504,7 +504,7 @@
   padding: 28rpx 28rpx calc(28rpx + env(safe-area-inset-bottom));
   border-radius: 32rpx;
   background: #ffffff;
-  box-shadow: 0 -18rpx 52rpx rgba(21, 63, 54, 0.18);
+  box-shadow: 0 -18rpx 48rpx rgba(21, 63, 54, 0.18);
 }
 
 .popup-handle {
@@ -512,7 +512,7 @@
   height: 8rpx;
   margin: 0 auto 26rpx;
   border-radius: 999rpx;
-  background: #cbd8d2;
+  background: #cbd6d0;
 }
 
 .popup-title {
@@ -533,7 +533,7 @@
   padding: 0 26rpx;
   border: 1rpx solid var(--team-border);
   border-radius: 24rpx;
-  background: #fbfdfb;
+  background: #fbfcfa;
   color: var(--team-text);
   font-size: 32rpx;
   font-weight: 700;
@@ -621,7 +621,7 @@
   padding: 20rpx 22rpx;
   border: 1rpx solid var(--team-border);
   border-radius: 22rpx;
-  background: #f8faf8;
+  background: #f7faf8;
 }
 
 .task-detail-title {
