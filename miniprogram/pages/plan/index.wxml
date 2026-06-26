@@ -143,6 +143,7 @@
                   ></view>
                 </view>
               </view>
+              <canvas type="2d" id="trendLine" class="line-canvas"></canvas>
             </view>
           </view>
           <view class="bar-labels">

@@ -804,6 +804,8 @@ Page({
         medalState: milestoneResult.medalState,
         recentRecords: buildRecentRecords(todayTasks),
         hasHistoryReview: getArchivedGoals().length > 0,
+      }, () => {
+        this.drawTrendLine();
       });
     } catch (error) {
       this.setData({
@@ -838,6 +840,8 @@ Page({
       yearHighlights: trendView.yearHighlights,
       selectedTrendItem: null,
       selectedHeatmapDay: null,
+    }, () => {
+      this.drawTrendLine();
     });
   },
 
@@ -895,6 +899,59 @@ Page({
     this.setData({
       heatmapWeeks: weeks,
       selectedHeatmapDay: selected,
+    });
+  },
+
+  drawTrendLine() {
+    if (this.data.trendRange === "year") return;
+    const bars = this.data.barChart.bars;
+    if (bars.length === 0 || this.data.barChart.insufficient) return;
+
+    const query = wx.createSelectorQuery();
+    query.select("#trendLine").fields({ node: true, size: true }).exec((res) => {
+      if (!res || !res[0] || !res[0].node) return;
+      const canvas = res[0].node as WechatMiniprogram.Canvas;
+      const ctx = canvas.getContext("2d");
+      const dpr = wx.getWindowInfo().pixelRatio;
+      const width = res[0].width;
+      const height = res[0].height;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, width, height);
+
+      const maxValue = this.data.barChart.maxValue;
+      const count = bars.length;
+      const points = bars.map((bar, index) => {
+        const heightPercent = bar.minutes <= 0 ? 0 : Math.max(4, (bar.minutes / maxValue) * 78);
+        return {
+          x: ((index + 0.5) / count) * width,
+          y: height - (heightPercent / 100) * height,
+        };
+      });
+
+      // 折线
+      ctx.beginPath();
+      ctx.strokeStyle = "#f5b94e";
+      ctx.lineWidth = 3;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      points.forEach((point, index) => {
+        if (index === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
+      ctx.stroke();
+
+      // 数据点
+      points.forEach((point) => {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        ctx.strokeStyle = "#f5b94e";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
     });
   },
 
