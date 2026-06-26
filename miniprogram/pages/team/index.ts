@@ -488,6 +488,10 @@ Page({
     }
   },
 
+  openAllMembers() {
+    wx.navigateTo({ url: "/pages/team-members/index" });
+  },
+
   openMemberDetail(event: { currentTarget: { dataset: { id?: string } } }) {
     const memberId = String(event.currentTarget.dataset.id || "");
     let member = this.data.members.find((item) => item.id === memberId);

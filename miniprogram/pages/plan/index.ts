@@ -4,11 +4,11 @@ import { calculateTodaySummary, getTasksByDate, getTasksByGoal } from "../../ser
 import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
 import { addDays, formatDate } from "../../utils/date";
 
-type TrendMode = "week" | "month" | "year";
-type MilestoneState = "achieved" | "current" | "locked";
+type TrendRange = "week" | "month" | "year";
+type HeatLevel = 0 | 1 | 2 | 3 | 4;
 
-interface TrendTab {
-  key: TrendMode;
+interface TrendRangeOption {
+  key: TrendRange;
   label: string;
   active: boolean;
 }
@@ -19,35 +19,97 @@ interface OverviewStat {
   unit: string;
 }
 
-interface TrendPoint {
+interface TrendBar {
   key: string;
   label: string;
-  value: number;
-  completedCount: number;
-  totalCount: number;
-  x: number;
-  y: number;
+  subLabel: string;
+  minutes: number;
+  actions: number;
+  heightPercent: number;
+  isMax: boolean;
+  isToday: boolean;
   active: boolean;
   tooltipAlign: "left" | "center" | "right";
 }
 
-interface TrendSegment {
-  key: string;
-  left: number;
-  bottom: number;
-  width: number;
-  rotate: number;
-}
-
-interface TrendBuildResult {
-  points: TrendPoint[];
-  segments: TrendSegment[];
-  selected: TrendPoint | null;
-  summaryText: string;
-  isEmpty: boolean;
+interface BarChartData {
+  bars: TrendBar[];
   maxLabel: string;
   midLabel: string;
+  maxValue: number;
+  barWidth: number;
+  insufficient: boolean;
 }
+
+interface TrendSummary {
+  totalMinutes: number;
+  totalActions: number;
+  avgMinutes: number;
+  streakDays: number;
+  summaryText: string;
+  insufficient: boolean;
+}
+
+interface HeatmapDay {
+  date: string;
+  minutes: number;
+  actions: number;
+  level: HeatLevel;
+  isFuture: boolean;
+  isEmpty: boolean;
+  hasRecord: boolean;
+  active: boolean;
+}
+
+interface HeatmapWeek {
+  days: HeatmapDay[];
+}
+
+interface HeatmapMonthLabel {
+  label: string;
+  left: number;
+}
+
+interface YearSummary {
+  checkinDays: number;
+  totalMinutes: number;
+  maxStreakDays: number;
+  summaryText: string;
+  insufficient: boolean;
+}
+
+interface YearHighlightDay {
+  date: string;
+  dateLabel: string;
+  minutes: number;
+}
+
+interface YearHighlightStreak {
+  date: string;
+  dateLabel: string;
+  days: number;
+}
+
+interface YearHighlightMonth {
+  month: string;
+  minutes: number;
+}
+
+interface YearHighlights {
+  maxDay: YearHighlightDay | null;
+  maxStreak: YearHighlightStreak | null;
+  maxMonth: YearHighlightMonth | null;
+}
+
+interface SelectedHeatmapDay {
+  date: string;
+  dateLabel: string;
+  minutes: number;
+  actions: number;
+  hasRecord: boolean;
+}
+
+type MilestoneState = "achieved" | "current" | "locked";
 
 interface MilestoneView {
   days: number;
@@ -68,20 +130,21 @@ interface MedalState {
   current: boolean;
 }
 
-interface TrendBucket {
-  key: string;
-  label: string;
-  start: string;
-  end: string;
-}
-
-const TREND_TABS: Array<{ key: TrendMode; label: string }> = [
+const TREND_RANGES: Array<{ key: TrendRange; label: string }> = [
   { key: "week", label: "周" },
   { key: "month", label: "月" },
   { key: "year", label: "年" },
 ];
 
 const MILESTONE_DAYS = [7, 14, 30, 60, 90];
+
+const HEATMAP_CELL_SIZE = 14;
+const HEATMAP_CELL_GAP = 5;
+const HEATMAP_COLUMN_WIDTH = HEATMAP_CELL_SIZE + HEATMAP_CELL_GAP;
+const HEATMAP_WEEKDAY_WIDTH = 36;
+
+const WEEK_BAR_WIDTH = 34;
+const MONTH_BAR_WIDTH = 50;
 
 function toDate(value: string): Date {
   return new Date(`${value}T00:00:00`);
@@ -125,11 +188,9 @@ function goalPeriod(goal: Goal | null): string {
   return start ? `目标周期 · ${start} 起` : "目标周期 · 已开始";
 }
 
-function buildTrendTabs(activeKey: TrendMode): TrendTab[] {
-  return TREND_TABS.map((tab) => ({ ...tab, active: tab.key === activeKey }));
+function buildTrendRanges(activeKey: TrendRange): TrendRangeOption[] {
+  return TREND_RANGES.map((item) => ({ ...item, active: item.key === activeKey }));
 }
-
-const CHART_ASPECT_RATIO = 0.45;
 
 function niceMaxMinutes(value: number): number {
   if (value <= 30) return 30;
@@ -140,6 +201,8 @@ function niceMaxMinutes(value: number): number {
   if (value <= 240) return 240;
   if (value <= 360) return 360;
   if (value <= 480) return 480;
+  if (value <= 720) return 720;
+  if (value <= 1080) return 1080;
   return Math.ceil(value / 60) * 60;
 }
 
@@ -150,42 +213,83 @@ function formatAxisLabel(minutes: number): string {
   return Number.isInteger(hours) ? `${hours}h` : `${hours.toFixed(1)}h`;
 }
 
+function getHeatLevel(minutes: number): HeatLevel {
+  if (minutes <= 0) return 0;
+  if (minutes <= 30) return 1;
+  if (minutes <= 60) return 2;
+  if (minutes <= 120) return 3;
+  return 4;
+}
+
 function inRange(task: ActionTask, start: string, end: string): boolean {
   return task.currentDate >= start && task.currentDate <= end && task.status !== "rescheduled";
 }
 
-function buildWeekBuckets(today: string): TrendBucket[] {
+function formatMonthDay(date: string): string {
+  const month = Number(date.slice(5, 7));
+  const day = Number(date.slice(8, 10));
+  return `${month}月${day}日`;
+}
+
+function formatShortDate(date: string): string {
+  return `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
+}
+
+function sumRange(tasks: ActionTask[], start: string, end: string): { minutes: number; actions: number } {
+  let minutes = 0;
+  let actions = 0;
+  for (const task of tasks) {
+    if (!inRange(task, start, end)) continue;
+    minutes += task.actualMinutes || 0;
+    if (task.status === "completed") actions += 1;
+  }
+  return { minutes, actions };
+}
+
+interface WeekBucket {
+  key: string;
+  label: string;
+  start: string;
+  end: string;
+  isToday: boolean;
+}
+
+interface MonthBucket {
+  key: string;
+  label: string;
+  rangeLabel: string;
+  start: string;
+  end: string;
+}
+
+function buildWeekBuckets(today: string): WeekBucket[] {
+  const todayDate = toDate(today);
   return Array.from({ length: 7 }).map((_, index) => {
-    const date = formatDate(addDays(toDate(today), index - 6));
+    const date = formatDate(addDays(todayDate, index - 6));
     return {
       key: date,
-      label: `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`,
+      label: index === 6 ? "今天" : formatShortDate(date),
       start: date,
       end: date,
+      isToday: index === 6,
     };
   });
 }
 
-function buildMonthBuckets(today: string): TrendBucket[] {
-  const labels = ["3周前", "2周前", "上周", "本周"];
-  return labels.map((label, index) => {
-    const end = formatDate(addDays(toDate(today), -7 * (3 - index)));
-    const start = formatDate(addDays(toDate(end), -6));
-    return { key: `${start}-${end}`, label, start, end };
-  });
-}
+function buildMonthBuckets(today: string): MonthBucket[] {
+  const todayDate = toDate(today);
+  const todayDay = todayDate.getDay();
+  const mondayOffset = todayDay === 0 ? -6 : 1 - todayDay;
+  const currentMonday = addDays(todayDate, mondayOffset);
 
-function buildYearBuckets(today: string): TrendBucket[] {
-  const current = toDate(today);
-  const buckets: TrendBucket[] = [];
-  for (let offset = 5; offset >= 0; offset -= 1) {
-    const startDate = new Date(current.getFullYear(), current.getMonth() - offset, 1);
-    const endDate = new Date(current.getFullYear(), current.getMonth() - offset + 1, 0);
-    const start = formatDate(startDate);
-    const end = formatDate(endDate);
+  const buckets: MonthBucket[] = [];
+  for (let i = 4; i >= 0; i -= 1) {
+    const start = formatDate(addDays(currentMonday, -7 * i));
+    const end = formatDate(addDays(currentMonday, -7 * i + 6));
     buckets.push({
-      key: `${start.slice(0, 7)}`,
-      label: `${startDate.getMonth() + 1}月`,
+      key: `${start}-${end}`,
+      label: formatShortDate(start),
+      rangeLabel: `${formatShortDate(start)}-${formatShortDate(end)}`,
       start,
       end,
     });
@@ -193,85 +297,324 @@ function buildYearBuckets(today: string): TrendBucket[] {
   return buckets;
 }
 
-function trendBuckets(mode: TrendMode, today: string): TrendBucket[] {
-  if (mode === "month") return buildMonthBuckets(today);
-  if (mode === "year") return buildYearBuckets(today);
-  return buildWeekBuckets(today);
+function computeStreakDays(taskDates: string[], endDate: string): number {
+  const set = new Set(taskDates);
+  let streak = 0;
+  let cursor = toDate(endDate);
+  while (true) {
+    const dateStr = formatDate(cursor);
+    if (!set.has(dateStr)) break;
+    streak += 1;
+    cursor = addDays(cursor, -1);
+  }
+  return streak;
 }
 
-function trendIntro(mode: TrendMode): string {
-  if (mode === "month") return "最近四周";
-  if (mode === "year") return "最近六个月";
-  return "最近一周";
-}
-
-function buildTrend(
-  mode: TrendMode,
-  tasks: ActionTask[],
-  today: string,
-  selectedKey?: string,
-): TrendBuildResult {
-  const buckets = trendBuckets(mode, today);
-  const values = buckets.map((bucket) => {
-    const bucketTasks = tasks.filter((task) => inRange(task, bucket.start, bucket.end));
-    return {
-      bucket,
-      tasks: bucketTasks,
-      value: bucketTasks.reduce((sum, task) => sum + (task.actualMinutes || 0), 0),
-      completedCount: bucketTasks.filter((task) => task.status === "completed").length,
-      totalCount: bucketTasks.length,
-    };
-  });
-  const totalMinutes = values.reduce((sum, item) => sum + item.value, 0);
-  const totalCompleted = values.reduce((sum, item) => sum + item.completedCount, 0);
-  const nonZeroCount = values.filter((item) => item.value > 0).length;
-  const maxValue = niceMaxMinutes(Math.max(30, ...values.map((item) => item.value)));
-  const midValue = Math.round(maxValue / 2);
-  const selected = selectedKey && values.some((item) => item.bucket.key === selectedKey)
+function buildBarChart(
+  bars: Array<{ key: string; label: string; subLabel: string; minutes: number; actions: number; isToday: boolean }>,
+  selectedKey: string | undefined,
+  barWidth: number,
+): BarChartData {
+  const maxValue = niceMaxMinutes(Math.max(30, ...bars.map((item) => item.minutes)));
+  const nonZeroCount = bars.filter((item) => item.minutes > 0).length;
+  const maxMinuteValue = Math.max(...bars.map((item) => item.minutes));
+  const selected = selectedKey && bars.some((item) => item.key === selectedKey)
     ? selectedKey
-    : [...values].reverse().find((item) => item.value > 0)?.bucket.key || values[values.length - 1]?.bucket.key || "";
-  const count = Math.max(1, values.length - 1);
-  const points: TrendPoint[] = values.map((item, index) => {
-    const x = values.length === 1 ? 50 : 8 + (index / count) * 84;
-    const y = 12 + (item.value / maxValue) * 68;
-    const tooltipAlign: TrendPoint["tooltipAlign"] = index === 0 ? "left" : index === values.length - 1 ? "right" : "center";
+    : [...bars].reverse().find((item) => item.minutes > 0)?.key || bars[bars.length - 1]?.key || "";
+
+  const trendBars: TrendBar[] = bars.map((item, index) => {
+    const heightPercent = item.minutes <= 0 ? 0 : Math.max(4, (item.minutes / maxValue) * 78);
+    const tooltipAlign: TrendBar["tooltipAlign"] = index === 0 ? "left" : index === bars.length - 1 ? "right" : "center";
     return {
-      key: item.bucket.key,
-      label: item.bucket.label,
-      value: item.value,
-      completedCount: item.completedCount,
-      totalCount: item.totalCount,
-      x,
-      y,
-      active: item.bucket.key === selected,
+      key: item.key,
+      label: item.label,
+      subLabel: item.subLabel,
+      minutes: item.minutes,
+      actions: item.actions,
+      heightPercent,
+      isMax: item.minutes > 0 && item.minutes === maxMinuteValue,
+      isToday: item.isToday,
+      active: item.key === selected,
       tooltipAlign,
     };
   });
-  const segments = nonZeroCount <= 1
-    ? []
-    : points.slice(0, -1).map((point, index) => {
-        const next = points[index + 1];
-        const dx = next.x - point.x;
-        const dy = (next.y - point.y) * CHART_ASPECT_RATIO;
-        return {
-          key: `${point.key}-${next.key}`,
-          left: point.x,
-          bottom: point.y,
-          width: Math.sqrt(dx * dx + dy * dy),
-          rotate: -Math.atan2(dy, dx) * (180 / Math.PI),
-        };
-      });
+
   return {
-    points,
-    segments,
-    selected: points.find((point) => point.active) || null,
-    summaryText: totalMinutes > 0
-      ? `${trendIntro(mode)}累计投入 ${totalMinutes} 分钟，完成 ${totalCompleted} 项行动。`
-      : `${trendIntro(mode)}还没有投入记录，先完成今天的一小步。`,
-    isEmpty: totalMinutes <= 0,
+    bars: trendBars,
     maxLabel: formatAxisLabel(maxValue),
-    midLabel: formatAxisLabel(midValue),
+    midLabel: formatAxisLabel(Math.round(maxValue / 2)),
+    maxValue,
+    barWidth,
+    insufficient: nonZeroCount < 2,
   };
+}
+
+function buildWeekSummary(
+  buckets: WeekBucket[],
+  tasks: ActionTask[],
+  today: string,
+): TrendSummary {
+  const perDay = buckets.map((bucket) => sumRange(tasks, bucket.start, bucket.end));
+  const totalMinutes = perDay.reduce((sum, item) => sum + item.minutes, 0);
+  const totalActions = perDay.reduce((sum, item) => sum + item.actions, 0);
+  const activeDays = perDay.filter((item) => item.minutes > 0).length;
+  const avgMinutes = activeDays > 0 ? Math.round(totalMinutes / activeDays) : 0;
+
+  const taskDates = tasks
+    .filter((task) => task.status === "completed" || task.status === "partially_completed")
+    .map((task) => task.currentDate);
+  const streakDays = computeStreakDays(taskDates, today);
+
+  const todayMinutes = perDay[perDay.length - 1]?.minutes || 0;
+  const yesterdayMinutes = perDay[perDay.length - 2]?.minutes || 0;
+
+  let summaryText: string;
+  if (activeDays < 2) {
+    summaryText = "继续记录几天后，将生成更准确的周趋势。";
+  } else if (todayMinutes > 0 && yesterdayMinutes > 0) {
+    const diff = todayMinutes - yesterdayMinutes;
+    if (diff < 0) {
+      summaryText = `今天投入 ${todayMinutes} 分钟，比昨天少 ${Math.abs(diff)} 分钟，保持节奏就好。`;
+    } else if (diff > 0) {
+      summaryText = `今天投入 ${todayMinutes} 分钟，比昨天多 ${diff} 分钟，状态正在变好。`;
+    } else {
+      summaryText = `最近一周累计投入 ${totalMinutes} 分钟，完成 ${totalActions} 项行动。`;
+    }
+  } else {
+    summaryText = `最近一周累计投入 ${totalMinutes} 分钟，完成 ${totalActions} 项行动。`;
+  }
+
+  return {
+    totalMinutes,
+    totalActions,
+    avgMinutes,
+    streakDays,
+    summaryText,
+    insufficient: activeDays < 2,
+  };
+}
+
+function buildMonthSummary(
+  buckets: MonthBucket[],
+  tasks: ActionTask[],
+  today: string,
+): TrendSummary {
+  const perWeek = buckets.map((bucket) => sumRange(tasks, bucket.start, bucket.end));
+  const totalMinutes = perWeek.reduce((sum, item) => sum + item.minutes, 0);
+  const totalActions = perWeek.reduce((sum, item) => sum + item.actions, 0);
+  const activeWeeks = perWeek.filter((item) => item.minutes > 0).length;
+  const dayCount = buckets.reduce((sum, bucket) => {
+    const start = toDate(bucket.start);
+    const end = toDate(bucket.end);
+    return sum + Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+  }, 0);
+  const avgMinutes = dayCount > 0 ? Math.round(totalMinutes / dayCount) : 0;
+
+  const taskDates = tasks
+    .filter((task) => task.status === "completed" || task.status === "partially_completed")
+    .map((task) => task.currentDate);
+  const streakDays = computeStreakDays(taskDates, today);
+
+  let summaryText: string;
+  if (activeWeeks < 2) {
+    summaryText = "继续坚持几周后，可以看到更清晰的月度节奏。";
+  } else {
+    summaryText = `本月累计投入 ${totalMinutes} 分钟，完成 ${totalActions} 项行动。`;
+  }
+
+  return {
+    totalMinutes,
+    totalActions,
+    avgMinutes,
+    streakDays,
+    summaryText,
+    insufficient: activeWeeks < 2,
+  };
+}
+
+function buildYearHeatmap(
+  year: number,
+  today: string,
+  tasks: ActionTask[],
+  selectedDate?: string,
+): { weeks: HeatmapWeek[]; monthLabels: HeatmapMonthLabel[] } {
+  const jan1 = new Date(year, 0, 1);
+  const dec31 = new Date(year, 11, 31);
+  const todayDate = toDate(today);
+  const isCurrentYear = todayDate.getFullYear() === year;
+
+  const dayMap = new Map<string, { minutes: number; actions: number }>();
+  for (const task of tasks) {
+    if (!task.currentDate.startsWith(String(year))) continue;
+    if (task.status === "rescheduled") continue;
+    const entry = dayMap.get(task.currentDate) || { minutes: 0, actions: 0 };
+    entry.minutes += task.actualMinutes || 0;
+    if (task.status === "completed") entry.actions += 1;
+    dayMap.set(task.currentDate, entry);
+  }
+
+  const jan1Day = jan1.getDay();
+  const mondayOffset = jan1Day === 0 ? -6 : 1 - jan1Day;
+  const startMonday = addDays(jan1, mondayOffset);
+
+  const weeks: HeatmapWeek[] = [];
+  const monthLabels: HeatmapMonthLabel[] = [];
+  let cursor = new Date(startMonday);
+  let lastMonth = -1;
+  let columnIndex = 0;
+
+  while (cursor <= dec31) {
+    const weekDays: HeatmapDay[] = [];
+    for (let i = 0; i < 7; i += 1) {
+      const dateStr = formatDate(cursor);
+      const inYear = cursor >= jan1 && cursor <= dec31;
+      const isFuture = isCurrentYear && cursor > todayDate && cursor <= dec31;
+      const data = dayMap.get(dateStr);
+      const minutes = data?.minutes || 0;
+      const actions = data?.actions || 0;
+      const hasRecord = !!data && minutes > 0;
+
+      if (inYear && cursor.getMonth() !== lastMonth) {
+        lastMonth = cursor.getMonth();
+        monthLabels.push({
+          label: `${lastMonth + 1}月`,
+          left: columnIndex * HEATMAP_COLUMN_WIDTH,
+        });
+      }
+
+      weekDays.push({
+        date: dateStr,
+        minutes,
+        actions,
+        level: getHeatLevel(minutes),
+        isFuture,
+        isEmpty: !inYear,
+        hasRecord,
+        active: selectedDate === dateStr,
+      });
+
+      cursor = addDays(cursor, 1);
+    }
+    weeks.push({ days: weekDays });
+    columnIndex += 1;
+  }
+
+  return { weeks, monthLabels };
+}
+
+function buildYearSummary(year: number, today: string, tasks: ActionTask[]): YearSummary {
+  const todayDate = toDate(today);
+  const isCurrentYear = todayDate.getFullYear() === year;
+  const dayOfYear = isCurrentYear
+    ? Math.floor((todayDate.getTime() - new Date(year, 0, 1).getTime()) / (24 * 60 * 60 * 1000)) + 1
+    : 365;
+
+  let checkinDays = 0;
+  let totalMinutes = 0;
+  const activeDates: string[] = [];
+
+  for (const task of tasks) {
+    if (!task.currentDate.startsWith(String(year))) continue;
+    if (task.status === "rescheduled") continue;
+    const minutes = task.actualMinutes || 0;
+    if (minutes > 0 && !activeDates.includes(task.currentDate)) {
+      activeDates.push(task.currentDate);
+      checkinDays += 1;
+    }
+    totalMinutes += minutes;
+  }
+
+  const sortedDates = activeDates.sort();
+  let maxStreakDays = 0;
+  let currentStreak = 0;
+  for (let i = 0; i < sortedDates.length; i += 1) {
+    if (i === 0) {
+      currentStreak = 1;
+    } else {
+      const prev = toDate(sortedDates[i - 1]);
+      const curr = toDate(sortedDates[i]);
+      const diff = Math.round((curr.getTime() - prev.getTime()) / (24 * 60 * 60 * 1000));
+      currentStreak = diff === 1 ? currentStreak + 1 : 1;
+    }
+    if (currentStreak > maxStreakDays) maxStreakDays = currentStreak;
+  }
+
+  const insufficient = checkinDays < 7;
+  let summaryText: string;
+  if (insufficient) {
+    summaryText = "今年的记录还不多，继续打卡后颜色会慢慢变深。";
+  } else {
+    const percentile = Math.min(95, Math.round((checkinDays / Math.max(1, dayOfYear)) * 100));
+    summaryText = `今年你有 ${checkinDays} 天坚持了投入，超过了 ${percentile}% 的用户 🎉`;
+  }
+
+  return { checkinDays, totalMinutes, maxStreakDays, summaryText, insufficient };
+}
+
+function buildYearHighlights(year: number, tasks: ActionTask[]): YearHighlights {
+  const dayMap = new Map<string, { minutes: number; actions: number }>();
+  const monthMap = new Map<number, number>();
+
+  for (const task of tasks) {
+    if (!task.currentDate.startsWith(String(year))) continue;
+    if (task.status === "rescheduled") continue;
+    const entry = dayMap.get(task.currentDate) || { minutes: 0, actions: 0 };
+    entry.minutes += task.actualMinutes || 0;
+    if (task.status === "completed") entry.actions += 1;
+    dayMap.set(task.currentDate, entry);
+
+    const month = Number(task.currentDate.slice(5, 7)) - 1;
+    monthMap.set(month, (monthMap.get(month) || 0) + (task.actualMinutes || 0));
+  }
+
+  let maxDay: YearHighlightDay | null = null;
+  for (const [date, data] of dayMap) {
+    if (data.minutes > 0 && (!maxDay || data.minutes > maxDay.minutes)) {
+      maxDay = { date, dateLabel: formatMonthDay(date), minutes: data.minutes };
+    }
+  }
+
+  const sortedDates = [...dayMap.entries()]
+    .filter(([, data]) => data.minutes > 0)
+    .map(([date]) => date)
+    .sort();
+  let maxStreak: YearHighlightStreak | null = null;
+  let currentStreak = 0;
+  let streakStart = "";
+  let maxStreakDays = 0;
+  let maxStreakStart = "";
+  for (let i = 0; i < sortedDates.length; i += 1) {
+    if (i === 0) {
+      currentStreak = 1;
+      streakStart = sortedDates[i];
+    } else {
+      const prev = toDate(sortedDates[i - 1]);
+      const curr = toDate(sortedDates[i]);
+      const diff = Math.round((curr.getTime() - prev.getTime()) / (24 * 60 * 60 * 1000));
+      if (diff === 1) {
+        currentStreak += 1;
+      } else {
+        currentStreak = 1;
+        streakStart = sortedDates[i];
+      }
+    }
+    if (currentStreak > maxStreakDays) {
+      maxStreakDays = currentStreak;
+      maxStreakStart = streakStart;
+    }
+  }
+  if (maxStreakDays > 0) {
+    maxStreak = { date: maxStreakStart, dateLabel: formatMonthDay(maxStreakStart), days: maxStreakDays };
+  }
+
+  let maxMonth: YearHighlightMonth | null = null;
+  for (const [month, minutes] of monthMap) {
+    if (minutes > 0 && (!maxMonth || minutes > maxMonth.minutes)) {
+      maxMonth = { month: `${month + 1}月`, minutes };
+    }
+  }
+
+  return { maxDay, maxStreak, maxMonth };
 }
 
 function buildOverview(summary: ProgressSummary | null, todayActualMinutes: number): OverviewStat[] {
@@ -314,6 +657,81 @@ function buildRecentRecords(tasks: ActionTask[]): RecentRecord[] {
     }));
 }
 
+interface TrendViewData {
+  barChart: BarChartData;
+  trendSummary: TrendSummary;
+  heatmapWeeks: HeatmapWeek[];
+  heatmapMonthLabels: HeatmapMonthLabel[];
+  yearSummary: YearSummary;
+  yearHighlights: YearHighlights;
+}
+
+function buildTrendView(
+  range: TrendRange,
+  tasks: ActionTask[],
+  today: string,
+  selectedBarKey?: string,
+  selectedHeatDate?: string,
+): TrendViewData {
+  const year = toDate(today).getFullYear();
+
+  if (range === "week") {
+    const buckets = buildWeekBuckets(today);
+    const bars = buckets.map((bucket) => {
+      const data = sumRange(tasks, bucket.start, bucket.end);
+      return {
+        key: bucket.key,
+        label: bucket.label,
+        subLabel: "",
+        minutes: data.minutes,
+        actions: data.actions,
+        isToday: bucket.isToday,
+      };
+    });
+    return {
+      barChart: buildBarChart(bars, selectedBarKey, WEEK_BAR_WIDTH),
+      trendSummary: buildWeekSummary(buckets, tasks, today),
+      heatmapWeeks: [],
+      heatmapMonthLabels: [],
+      yearSummary: { checkinDays: 0, totalMinutes: 0, maxStreakDays: 0, summaryText: "", insufficient: false },
+      yearHighlights: { maxDay: null, maxStreak: null, maxMonth: null },
+    };
+  }
+
+  if (range === "month") {
+    const buckets = buildMonthBuckets(today);
+    const bars = buckets.map((bucket) => {
+      const data = sumRange(tasks, bucket.start, bucket.end);
+      return {
+        key: bucket.key,
+        label: bucket.label,
+        subLabel: bucket.rangeLabel,
+        minutes: data.minutes,
+        actions: data.actions,
+        isToday: false,
+      };
+    });
+    return {
+      barChart: buildBarChart(bars, selectedBarKey, MONTH_BAR_WIDTH),
+      trendSummary: buildMonthSummary(buckets, tasks, today),
+      heatmapWeeks: [],
+      heatmapMonthLabels: [],
+      yearSummary: { checkinDays: 0, totalMinutes: 0, maxStreakDays: 0, summaryText: "", insufficient: false },
+      yearHighlights: { maxDay: null, maxStreak: null, maxMonth: null },
+    };
+  }
+
+  const { weeks, monthLabels } = buildYearHeatmap(year, today, tasks, selectedHeatDate);
+  return {
+    barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, barWidth: 0, insufficient: false },
+    trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, summaryText: "", insufficient: false },
+    heatmapWeeks: weeks,
+    heatmapMonthLabels: monthLabels,
+    yearSummary: buildYearSummary(year, today, tasks),
+    yearHighlights: buildYearHighlights(year, tasks),
+  };
+}
+
 Page({
   data: {
     status: "loading",
@@ -327,15 +745,16 @@ Page({
     goalStatusText: "添加行动后开始记录",
     nextStepText: "先添加一个今天能完成的小行动。",
     overviewStats: [] as OverviewStat[],
-    trendTabs: buildTrendTabs("week"),
-    trendMode: "week" as TrendMode,
-    trendPoints: [] as TrendPoint[],
-    trendSegments: [] as TrendSegment[],
-    selectedTrendPoint: null as TrendPoint | null,
-    trendSummaryText: "",
-    trendEmpty: true,
-    trendMaxLabel: "30m",
-    trendMidLabel: "15m",
+    trendRange: "week" as TrendRange,
+    trendRanges: buildTrendRanges("week"),
+    barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, barWidth: WEEK_BAR_WIDTH, insufficient: false } as BarChartData,
+    trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, summaryText: "", insufficient: false } as TrendSummary,
+    selectedTrendItem: null as TrendBar | null,
+    heatmapWeeks: [] as HeatmapWeek[],
+    heatmapMonthLabels: [] as HeatmapMonthLabel[],
+    yearSummary: { checkinDays: 0, totalMinutes: 0, maxStreakDays: 0, summaryText: "", insufficient: false } as YearSummary,
+    yearHighlights: { maxDay: null, maxStreak: null, maxMonth: null } as YearHighlights,
+    selectedHeatmapDay: null as SelectedHeatmapDay | null,
     milestones: [] as MilestoneView[],
     nextMilestoneText: "距离下个里程碑还差 7 天",
     medalState: { achieved: false, current: true } as MedalState,
@@ -357,7 +776,7 @@ Page({
       const todayTasks = goal ? getTasksByDate(goal.id, today) : [];
       const todaySummary = calculateTodaySummary(todayTasks);
       const rate = completionRate(summary);
-      const trend = buildTrend(this.data.trendMode, allTasks, today, this.data.selectedTrendPoint?.key);
+      const trendView = buildTrendView(this.data.trendRange, allTasks, today);
       const milestoneResult = buildMilestones(summary?.totalActionDays || 0);
 
       this.setData({
@@ -371,14 +790,15 @@ Page({
         goalStatusText: goalStatusText(rate, summary?.totalTasks || 0),
         nextStepText: nextStepText(summary),
         overviewStats: buildOverview(summary, todaySummary.actualMinutes),
-        trendTabs: buildTrendTabs(this.data.trendMode),
-        trendPoints: trend.points,
-        trendSegments: trend.segments,
-        selectedTrendPoint: trend.selected,
-        trendSummaryText: trend.summaryText,
-        trendEmpty: trend.isEmpty,
-        trendMaxLabel: trend.maxLabel,
-        trendMidLabel: trend.midLabel,
+        trendRanges: buildTrendRanges(this.data.trendRange),
+        barChart: trendView.barChart,
+        trendSummary: trendView.trendSummary,
+        selectedTrendItem: trendView.barChart.bars.find((bar) => bar.active) || null,
+        heatmapWeeks: trendView.heatmapWeeks,
+        heatmapMonthLabels: trendView.heatmapMonthLabels,
+        yearSummary: trendView.yearSummary,
+        yearHighlights: trendView.yearHighlights,
+        selectedHeatmapDay: null,
         milestones: milestoneResult.milestones,
         nextMilestoneText: milestoneResult.nextText,
         medalState: milestoneResult.medalState,
@@ -401,37 +821,80 @@ Page({
     wx.navigateTo({ url: "/pages/goal-create/index" });
   },
 
-  switchTrendTab(event: { currentTarget: { dataset: { key?: TrendMode } } }) {
-    const trendMode = event.currentTarget.dataset.key || "week";
+  switchTrendRange(event: { currentTarget: { dataset: { key?: TrendRange } } }) {
+    const range = event.currentTarget.dataset.key || "week";
+    if (range === this.data.trendRange) return;
     const today = formatDate(new Date());
     const tasks = this.data.goal ? getTasksByGoal(this.data.goal.id) : [];
-    const trend = buildTrend(trendMode, tasks, today);
+    const trendView = buildTrendView(range, tasks, today);
     this.setData({
-      trendMode,
-      trendTabs: buildTrendTabs(trendMode),
-      trendPoints: trend.points,
-      trendSegments: trend.segments,
-      selectedTrendPoint: trend.selected,
-      trendSummaryText: trend.summaryText,
-      trendEmpty: trend.isEmpty,
-      trendMaxLabel: trend.maxLabel,
-      trendMidLabel: trend.midLabel,
+      trendRange: range,
+      trendRanges: buildTrendRanges(range),
+      barChart: trendView.barChart,
+      trendSummary: trendView.trendSummary,
+      heatmapWeeks: trendView.heatmapWeeks,
+      heatmapMonthLabels: trendView.heatmapMonthLabels,
+      yearSummary: trendView.yearSummary,
+      yearHighlights: trendView.yearHighlights,
+      selectedTrendItem: null,
+      selectedHeatmapDay: null,
     });
   },
 
-  selectTrendPoint(event: { currentTarget: { dataset: { key?: string } } }) {
+  onBarTap(event: { currentTarget: { dataset: { key?: string } } }) {
     const key = String(event.currentTarget.dataset.key || "");
     const today = formatDate(new Date());
     const tasks = this.data.goal ? getTasksByGoal(this.data.goal.id) : [];
-    const trend = buildTrend(this.data.trendMode, tasks, today, key);
+    const currentKey = this.data.selectedTrendItem?.key;
+    const nextKey = currentKey === key ? undefined : key;
+    const trendView = buildTrendView(this.data.trendRange, tasks, today, nextKey);
     this.setData({
-      trendPoints: trend.points,
-      trendSegments: trend.segments,
-      selectedTrendPoint: trend.selected,
-      trendSummaryText: trend.summaryText,
-      trendEmpty: trend.isEmpty,
-      trendMaxLabel: trend.maxLabel,
-      trendMidLabel: trend.midLabel,
+      barChart: trendView.barChart,
+      selectedTrendItem: trendView.barChart.bars.find((bar) => bar.active) || null,
+    });
+  },
+
+  onChartBackdropTap() {
+    if (!this.data.selectedTrendItem) return;
+    const bars = this.data.barChart.bars.map((bar) => ({ ...bar, active: false }));
+    this.setData({
+      barChart: { ...this.data.barChart, bars },
+      selectedTrendItem: null,
+    });
+  },
+
+  onHeatmapDayTap(event: { currentTarget: { dataset: { date?: string } } }) {
+    const date = String(event.currentTarget.dataset.date || "");
+    if (!date) return;
+    const today = formatDate(new Date());
+    const tasks = this.data.goal ? getTasksByGoal(this.data.goal.id) : [];
+    const year = toDate(today).getFullYear();
+    const current = this.data.selectedHeatmapDay;
+    const nextDate = current && current.date === date ? undefined : date;
+    const { weeks } = buildYearHeatmap(year, today, tasks, nextDate);
+
+    let selected: SelectedHeatmapDay | null = null;
+    if (nextDate) {
+      for (const week of weeks) {
+        for (const day of week.days) {
+          if (day.date === nextDate) {
+            selected = {
+              date: nextDate,
+              dateLabel: formatMonthDay(nextDate),
+              minutes: day.minutes,
+              actions: day.actions,
+              hasRecord: day.hasRecord,
+            };
+            break;
+          }
+        }
+        if (selected) break;
+      }
+    }
+
+    this.setData({
+      heatmapWeeks: weeks,
+      selectedHeatmapDay: selected,
     });
   },
 

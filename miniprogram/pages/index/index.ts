@@ -1,6 +1,6 @@
 import { getActiveGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
-import { calculateTodaySummary, createTask, deleteTask, getTodayPageTasks, rescheduleTask, updateTaskStatus } from "../../services/manualTask";
+import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTaskStatus } from "../../services/manualTask";
 import { getLocalUserProfile } from "../../services/profile";
 import { ActionIssueReason, ActionTask, Goal, TodaySummary } from "../../types/manual";
 import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
@@ -25,9 +25,15 @@ interface ViewTask extends ActionTask { displayTitle: string; statusLabel: strin
 interface ViewTaskGroup { key: "today" | "continue"; title: string; tasks: ViewTask[]; }
 interface TodayMood { title: string; copy: string; tone: "empty" | "low" | "half" | "done"; mark: string; }
 interface ProgressSegment { active: boolean; }
-interface WeekDayView { label: string; date: string; day: string; isToday: boolean; isCurrentMonth: boolean; }
+interface WeekDayView { label: string; date: string; day: string; isToday: boolean; isSelected: boolean; isCurrentMonth: boolean; }
+interface CalendarDayView extends WeekDayView { hasAction: boolean; isCompleted: boolean; }
+interface CalendarView { title: string; days: CalendarDayView[]; }
 
-function dateCopy(value: string): { title: string; weekday: string } { const date = new Date(`${value}T00:00:00`); return { title: `今天，${date.getMonth() + 1} 月 ${date.getDate()} 日`, weekday: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"][date.getDay()] }; }
+function dateCopy(value: string, today: string): { title: string; weekday: string } {
+  const date = new Date(`${value}T00:00:00`);
+  const title = value === today ? `今天，${date.getMonth() + 1} 月 ${date.getDate()} 日` : `${date.getMonth() + 1} 月 ${date.getDate()} 日`;
+  return { title, weekday: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"][date.getDay()] };
+}
 function emptySummary(): TodaySummary { return { estimatedMinutes: 0, actualMinutes: 0, completedCount: 0, partialCount: 0, unfinishedCount: 0, totalCount: 0 }; }
 function completionPercent(summary: TodaySummary): number { return summary.totalCount ? Math.round(summary.completedCount / summary.totalCount * 100) : 0; }
 function focusPercent(summary: TodaySummary): number { return completionPercent(summary); }
@@ -57,10 +63,10 @@ function dailyNudge(summary: TodaySummary): string {
   if (percent > 0) return "启动之后，今天就已经站在前进的一边。";
   return "先做 5 分钟也算，别把今天让给犹豫。";
 }
-function buildWeekDays(today: string, weekOffset: number): { weekTitle: string; weekDays: WeekDayView[] } {
-  const todayDate = new Date(`${today}T00:00:00`);
-  const mondayOffset = (todayDate.getDay() + 6) % 7;
-  const monday = addDays(todayDate, weekOffset * 7 - mondayOffset);
+function buildWeekDays(today: string, selectedDate: string, weekOffset: number): { weekTitle: string; weekDays: WeekDayView[] } {
+  const selected = new Date(`${selectedDate}T00:00:00`);
+  const mondayOffset = (selected.getDay() + 6) % 7;
+  const monday = addDays(selected, weekOffset * 7 - mondayOffset);
   const weekDays = ["一", "二", "三", "四", "五", "六", "日"].map((label, index) => {
     const date = addDays(monday, index);
     const value = formatDate(date);
@@ -69,12 +75,47 @@ function buildWeekDays(today: string, weekOffset: number): { weekTitle: string; 
       date: value,
       day: String(date.getDate()),
       isToday: value === today,
-      isCurrentMonth: date.getMonth() === todayDate.getMonth(),
+      isSelected: value === selectedDate,
+      isCurrentMonth: date.getMonth() === selected.getMonth(),
     };
   });
+  const title = selectedDate === today ? "今天" : `${selected.getMonth() + 1} 月 ${selected.getDate()} 日`;
   return {
-    weekTitle: weekOffset === 0 ? "今天" : `${monday.getMonth() + 1} 月 ${monday.getDate()} 日起`,
+    weekTitle: title,
     weekDays,
+  };
+}
+function monthStart(value: string): string {
+  const date = new Date(`${value}T00:00:00`);
+  return formatDate(new Date(date.getFullYear(), date.getMonth(), 1));
+}
+function addMonths(value: string, delta: number): string {
+  const date = new Date(`${value}T00:00:00`);
+  return formatDate(new Date(date.getFullYear(), date.getMonth() + delta, 1));
+}
+function buildCalendar(today: string, selectedDate: string, monthValue: string, tasks: ActionTask[]): CalendarView {
+  const monthDate = new Date(`${monthStart(monthValue)}T00:00:00`);
+  const month = monthDate.getMonth();
+  const startOffset = (monthDate.getDay() + 6) % 7;
+  const firstCell = addDays(monthDate, -startOffset);
+  const actionDates = new Set(tasks.filter((task) => task.status !== "rescheduled").map((task) => task.currentDate));
+  const completedDates = new Set(tasks.filter((task) => task.status === "completed").map((task) => task.currentDate));
+  return {
+    title: `${monthDate.getFullYear()} 年 ${monthDate.getMonth() + 1} 月`,
+    days: Array.from({ length: 42 }, (_, index) => {
+      const date = addDays(firstCell, index);
+      const value = formatDate(date);
+      return {
+        label: ["一", "二", "三", "四", "五", "六", "日"][(date.getDay() + 6) % 7],
+        date: value,
+        day: String(date.getDate()),
+        isToday: value === today,
+        isSelected: value === selectedDate,
+        isCurrentMonth: date.getMonth() === month,
+        hasAction: actionDates.has(value),
+        isCompleted: completedDates.has(value),
+      };
+    }),
   };
 }
 function displayTaskTitle(task: ActionTask): string {
@@ -124,9 +165,16 @@ Page({
     dateTitle: "",
     weekday: "",
     weekdayShort: "",
+    selectedDate: "",
+    todayDate: "",
     weekOffset: 0,
     weekTitle: "今天",
     weekDays: [] as WeekDayView[],
+    calendarVisible: false,
+    calendarMonth: "",
+    calendarTitle: "",
+    calendarWeekLabels: ["一", "二", "三", "四", "五", "六", "日"],
+    calendarDays: [] as CalendarDayView[],
     navigating: false,
     quickAddVisible: false,
     quickAddTitle: "",
@@ -158,20 +206,25 @@ Page({
   load() {
     this.setData({ status: "loading", errorMessage: "" });
     try {
-      const today = getTodayBusinessDate(); const goal = getActiveGoal(); const copy = dateCopy(today); const userProfile = getLocalUserProfile(); const displayName = userProfile?.nickname || "阿岚";
-      const sourceTasks = goal ? getTodayPageTasks(goal.id, today) : [];
-      const todayTasks = sourceTasks.filter((task) => task.currentDate === today);
-      const taskGroups = groupTodayTasks(sourceTasks, today).map((group) => ({ ...group, tasks: group.tasks.map((task) => toViewTask(task, today)) }));
+      const today = getTodayBusinessDate(); const selectedDate = this.data.selectedDate || today; const goal = getActiveGoal(); const copy = dateCopy(selectedDate, today); const userProfile = getLocalUserProfile(); const displayName = userProfile?.nickname || "阿岚";
+      const goalTasks = goal ? getTasksByGoal(goal.id) : [];
+      const sourceTasks = goal ? getTodayPageTasks(goal.id, selectedDate) : [];
+      const selectedTasks = sourceTasks.filter((task) => task.currentDate === selectedDate);
+      const taskGroups = groupTodayTasks(sourceTasks, selectedDate).map((group) => ({ ...group, tasks: group.tasks.map((task) => toViewTask(task, selectedDate)) }));
       const tasks = taskGroups.reduce<ViewTask[]>((all, group) => all.concat(group.tasks), []);
-      const summary = calculateTodaySummary(todayTasks);
-      const progress = goal ? getProgressSummary(goal.id, today) : null;
+      const summary = calculateTodaySummary(selectedTasks);
+      const progress = goal ? getProgressSummary(goal.id, selectedDate) : null;
       const mood = todayMood(summary);
       const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 3);
-      const week = buildWeekDays(today, this.data.weekOffset);
+      const week = buildWeekDays(today, selectedDate, this.data.weekOffset);
+      const calendarMonth = this.data.calendarMonth || monthStart(selectedDate);
+      const calendar = buildCalendar(today, selectedDate, calendarMonth, goalTasks);
       this.setData({
         status: "ready",
         displayName,
         goal,
+        selectedDate,
+        todayDate: today,
         tasks,
         taskGroups,
         visibleTasks,
@@ -179,7 +232,7 @@ Page({
         completionPercent: completionPercent(summary),
         focusPercent: focusPercent(summary),
         remainingCount: remainingCount(summary),
-        remainingEstimatedMinutes: remainingEstimatedMinutes(tasks, today),
+        remainingEstimatedMinutes: remainingEstimatedMinutes(tasks, selectedDate),
         progressSegments: progressSegments(summary),
         hiddenActionCount: Math.max(0, tasks.length - visibleTasks.length),
         heroDayLabel: `DAY ${Math.max(1, progress?.totalActionDays || (summary.completedCount > 0 ? 1 : 0))}`,
@@ -194,6 +247,9 @@ Page({
         weekdayShort: copy.weekday.replace("星期", "周"),
         weekTitle: week.weekTitle,
         weekDays: week.weekDays,
+        calendarMonth,
+        calendarTitle: calendar.title,
+        calendarDays: calendar.days,
         navigating: false,
       });
     } catch (error) { this.setData({ status: "error", errorMessage: error instanceof Error ? error.message : "本地数据读取失败" }); }
@@ -208,8 +264,44 @@ Page({
     const direction = Number(event.currentTarget.dataset.direction || 0);
     const weekOffset = this.data.weekOffset + direction;
     const today = getTodayBusinessDate();
-    const week = buildWeekDays(today, weekOffset);
+    const selectedDate = this.data.selectedDate || today;
+    const week = buildWeekDays(today, selectedDate, weekOffset);
     this.setData({ weekOffset, weekTitle: week.weekTitle, weekDays: week.weekDays });
+  },
+  selectWeekDate(event: { currentTarget: { dataset: { date?: string } } }) {
+    const selectedDate = String(event.currentTarget.dataset.date || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate) || selectedDate === this.data.selectedDate) return;
+    this.setData({ selectedDate, calendarMonth: monthStart(selectedDate), actionListExpanded: false, currentScrollTop: 0 });
+    this.load();
+  },
+  openCalendar() {
+    const selectedDate = this.data.selectedDate || getTodayBusinessDate();
+    const calendarMonth = monthStart(selectedDate);
+    this.setData({ calendarVisible: true, calendarMonth });
+    this.load();
+  },
+  closeCalendar() {
+    this.setData({ calendarVisible: false });
+  },
+  switchCalendarMonth(event: { currentTarget: { dataset: { delta?: string | number } } }) {
+    const delta = Number(event.currentTarget.dataset.delta || 0);
+    const calendarMonth = addMonths(this.data.calendarMonth || monthStart(this.data.selectedDate || getTodayBusinessDate()), delta);
+    const today = getTodayBusinessDate();
+    const goal = getActiveGoal();
+    const tasks = goal ? getTasksByGoal(goal.id) : [];
+    const calendar = buildCalendar(today, this.data.selectedDate || today, calendarMonth, tasks);
+    this.setData({ calendarMonth, calendarTitle: calendar.title, calendarDays: calendar.days });
+  },
+  selectCalendarDate(event: { currentTarget: { dataset: { date?: string } } }) {
+    const selectedDate = String(event.currentTarget.dataset.date || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) return;
+    this.setData({ selectedDate, calendarMonth: monthStart(selectedDate), calendarVisible: false, actionListExpanded: false, weekOffset: 0, currentScrollTop: 0 });
+    this.load();
+  },
+  jumpTodayFromCalendar() {
+    const selectedDate = getTodayBusinessDate();
+    this.setData({ selectedDate, calendarMonth: monthStart(selectedDate), calendarVisible: false, actionListExpanded: false, weekOffset: 0, currentScrollTop: 0 });
+    this.load();
   },
   goCreateGoal() { if (this.data.navigating) return; this.setData({ navigating: true }); wx.navigateTo({ url: "/pages/goal-create/index", fail: () => this.setData({ navigating: false }) }); },
   addTask() {
@@ -261,7 +353,7 @@ Page({
         title: this.data.quickAddTitle,
         description: this.data.quickAddDescription,
         estimatedMinutes: DURATION_OPTIONS[this.data.quickAddMinuteIndex]?.value || 30,
-        currentDate: getTodayBusinessDate(),
+        currentDate: this.data.selectedDate || getTodayBusinessDate(),
       });
       wx.showToast({ title: "行动已添加", icon: "success" });
       this.setData({ quickAddVisible: false, quickAddTitle: "", quickAddDescription: "", quickAddMinutes: 30, quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX, quickDurationVisible: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
@@ -279,11 +371,12 @@ Page({
   },
   applyTaskPatch(updatedTask: ViewTask, prevScrollTop: number) {
     const today = getTodayBusinessDate();
+    const selectedDate = this.data.selectedDate || today;
     const tasks = this.data.tasks.map((item) => (item.id === updatedTask.id ? updatedTask : item));
     const taskGroups = this.data.taskGroups.map((group) => ({ ...group, tasks: group.tasks.map((item) => (item.id === updatedTask.id ? updatedTask : item)) }));
-    const todayTasks = tasks.filter((item) => item.currentDate === today);
+    const todayTasks = tasks.filter((item) => item.currentDate === selectedDate);
     const summary = calculateTodaySummary(todayTasks);
-    const progress = this.data.goal ? getProgressSummary(this.data.goal.id, today) : null;
+    const progress = this.data.goal ? getProgressSummary(this.data.goal.id, selectedDate) : null;
     const mood = todayMood(summary);
     const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 3);
     this.setData({
@@ -294,7 +387,7 @@ Page({
       completionPercent: completionPercent(summary),
       focusPercent: focusPercent(summary),
       remainingCount: remainingCount(summary),
-      remainingEstimatedMinutes: remainingEstimatedMinutes(tasks, today),
+      remainingEstimatedMinutes: remainingEstimatedMinutes(tasks, selectedDate),
       progressSegments: progressSegments(summary),
       hiddenActionCount: Math.max(0, tasks.length - visibleTasks.length),
       heroDayLabel: `DAY ${Math.max(1, progress?.totalActionDays || (summary.completedCount > 0 ? 1 : 0))}`,
@@ -315,7 +408,7 @@ Page({
       const today = getTodayBusinessDate();
       const nextStatus = task.status === "completed" ? "pending" : "completed";
       const nextActual = nextStatus === "completed" ? task.actualMinutes || task.estimatedMinutes : undefined;
-      const updatedTask = toViewTask(updateTaskStatus(task.id, nextStatus, nextActual), today);
+      const updatedTask = toViewTask(updateTaskStatus(task.id, nextStatus, nextActual), this.data.selectedDate || today);
       this.applyTaskPatch(updatedTask, prevScrollTop);
       if (nextStatus === "completed") {
         wx.vibrateShort({ type: "light" });
@@ -331,7 +424,7 @@ Page({
     const prevScrollTop = this.data.currentScrollTop;
     try {
       const today = getTodayBusinessDate();
-      const updatedTask = toViewTask(updateTaskStatus(task.id, "completed", task.actualMinutes || task.estimatedMinutes), today);
+      const updatedTask = toViewTask(updateTaskStatus(task.id, "completed", task.actualMinutes || task.estimatedMinutes), this.data.selectedDate || today);
       this.applyTaskPatch(updatedTask, prevScrollTop);
       wx.showToast({ title: "行动已完成", icon: "success" });
     } catch (error) {

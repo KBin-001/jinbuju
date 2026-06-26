@@ -79,61 +79,201 @@
     <view class="trend-card">
       <view class="card-title-row">
         <view>
-          <view class="card-title">成长趋势</view>
+          <view class="card-title">投入趋势</view>
           <view class="card-subtitle">按投入分钟观察最近节奏</view>
         </view>
-        <view class="trend-tabs">
+        <view class="trend-range-tabs">
           <view
-            wx:for="{{trendTabs}}"
+            wx:for="{{trendRanges}}"
             wx:key="key"
-            class="trend-tab {{item.active ? 'is-active' : ''}}"
+            class="trend-range-tab {{item.active ? 'is-active' : ''}}"
             data-key="{{item.key}}"
-            bindtap="switchTrendTab"
+            bindtap="switchTrendRange"
           >{{item.label}}</view>
         </view>
       </view>
 
-      <view class="chart-shell">
-        <view class="y-axis">
-          <text>{{trendMaxLabel}}</text>
-          <text>{{trendMidLabel}}</text>
-          <text>0</text>
-        </view>
-        <view class="chart-area">
-          <view class="chart-grid">
-            <view></view>
-            <view></view>
-            <view></view>
+      <!-- 周 / 月 柱状图 -->
+      <block wx:if="{{trendRange !== 'year'}}">
+        <view class="trend-headline">
+          <view class="trend-headline-item">
+            <view class="trend-headline-value">{{trendSummary.totalMinutes}}<text>分钟</text></view>
+            <view class="trend-headline-label">{{trendRange === 'week' ? '累计投入' : '本月投入'}}</view>
           </view>
-          <view
-            wx:for="{{trendSegments}}"
-            wx:key="key"
-            class="chart-segment"
-            style="left: {{item.left}}%; bottom: {{item.bottom}}%; width: {{item.width}}%; transform: rotate({{item.rotate}}deg);"
-          ></view>
-          <view
-            wx:for="{{trendPoints}}"
-            wx:key="key"
-            class="chart-point {{item.active ? 'is-active' : ''}} {{item.value === 0 ? 'is-zero' : ''}}"
-            style="left: {{item.x}}%; bottom: {{item.y}}%;"
-            data-key="{{item.key}}"
-            bindtap="selectTrendPoint"
-          >
-            <view wx:if="{{item.active && !trendEmpty}}" class="chart-tooltip tooltip-{{item.tooltipAlign}}">
-              <view>{{item.value}} 分钟</view>
-              <text>{{item.completedCount}} 项完成</text>
+          <view class="trend-headline-divider"></view>
+          <view class="trend-headline-item">
+            <view class="trend-headline-value">{{trendSummary.totalActions}}<text>项</text></view>
+            <view class="trend-headline-label">完成行动</view>
+          </view>
+        </view>
+
+        <view wx:if="{{trendSummary.insufficient}}" class="trend-insufficient">
+          {{trendSummary.summaryText}}
+        </view>
+
+        <block wx:else>
+          <view class="bar-chart" bindtap="onChartBackdropTap">
+            <view class="bar-y-axis">
+              <text>{{barChart.maxLabel}}</text>
+              <text>{{barChart.midLabel}}</text>
+              <text>0</text>
+            </view>
+            <view class="bar-area">
+              <view class="bar-grid">
+                <view></view>
+                <view></view>
+                <view></view>
+                <view></view>
+              </view>
+              <view class="bar-columns">
+                <view
+                  wx:for="{{barChart.bars}}"
+                  wx:key="key"
+                  class="bar-column {{item.active ? 'is-active' : ''}}"
+                  catchtap="onBarTap"
+                  data-key="{{item.key}}"
+                >
+                  <view wx:if="{{item.active}}" class="bar-tooltip tooltip-{{item.tooltipAlign}}" style="bottom: calc({{item.heightPercent}}% + 12rpx);">
+                    <view>{{item.minutes}} 分钟</view>
+                    <text>{{item.actions}} 项完成</text>
+                  </view>
+                  <view
+                    class="bar-fill {{item.isMax ? 'is-max' : ''}} {{item.isToday ? 'is-today' : ''}}"
+                    style="width: {{barChart.barWidth}}rpx; height: {{item.heightPercent}}%;"
+                  ></view>
+                </view>
+              </view>
             </view>
           </view>
-          <view wx:if="{{trendEmpty}}" class="chart-empty">
-            <view>暂无投入曲线</view>
-            <text>完成一次行动后，这里会开始记录变化。</text>
+          <view class="bar-labels">
+            <text wx:for="{{barChart.bars}}" wx:key="key">{{item.label}}</text>
+          </view>
+          <view class="trend-summary">{{trendSummary.summaryText}}</view>
+        </block>
+
+        <view class="trend-stats-grid">
+          <view class="trend-stat-item">
+            <view class="trend-stat-value">{{trendSummary.totalMinutes}}<text>分钟</text></view>
+            <view class="trend-stat-label">{{trendRange === 'week' ? '本周累计投入' : '本月累计投入'}}</view>
+          </view>
+          <view class="trend-stat-item">
+            <view class="trend-stat-value">{{trendSummary.totalActions}}<text>项</text></view>
+            <view class="trend-stat-label">完成行动</view>
+          </view>
+          <view class="trend-stat-item">
+            <view class="trend-stat-value">{{trendSummary.avgMinutes}}<text>分钟</text></view>
+            <view class="trend-stat-label">日均投入</view>
+          </view>
+          <view class="trend-stat-item">
+            <view class="trend-stat-value">{{trendSummary.streakDays}}<text>天</text></view>
+            <view class="trend-stat-label">连续坚持</view>
           </view>
         </view>
-      </view>
-      <view class="chart-labels">
-        <text wx:for="{{trendPoints}}" wx:key="key">{{item.label}}</text>
-      </view>
-      <view class="trend-summary">{{trendSummaryText}}</view>
+      </block>
+
+      <!-- 年 热力图 -->
+      <block wx:else>
+        <view class="year-top-stats">
+          <view class="year-stat-item">
+            <view class="year-stat-value">{{yearSummary.checkinDays}}<text>天</text></view>
+            <view class="year-stat-label">打卡</view>
+          </view>
+          <view class="year-stat-divider"></view>
+          <view class="year-stat-item">
+            <view class="year-stat-value">{{yearSummary.totalMinutes}}<text>分钟</text></view>
+            <view class="year-stat-label">累计投入</view>
+          </view>
+          <view class="year-stat-divider"></view>
+          <view class="year-stat-item">
+            <view class="year-stat-value">{{yearSummary.maxStreakDays}}<text>天</text></view>
+            <view class="year-stat-label">最长连续</view>
+          </view>
+        </view>
+
+        <scroll-view scroll-x class="heatmap-scroll" enhanced show-scrollbar="{{false}}">
+          <view class="heatmap-inner">
+            <view class="heatmap-months-row">
+              <view class="heatmap-weekday-spacer"></view>
+              <view class="heatmap-months">
+                <text
+                  wx:for="{{heatmapMonthLabels}}"
+                  wx:key="label"
+                  class="heatmap-month-label"
+                  style="left: {{item.left}}rpx;"
+                >{{item.label}}</text>
+              </view>
+            </view>
+            <view class="heatmap-body-row">
+              <view class="heatmap-weekdays">
+                <text class="heatmap-weekday" style="top: 0;">一</text>
+                <text class="heatmap-weekday" style="top: 38rpx;">三</text>
+                <text class="heatmap-weekday" style="top: 76rpx;">五</text>
+              </view>
+              <view class="heatmap-grid">
+                <view
+                  wx:for="{{heatmapWeeks}}"
+                  wx:for-item="week"
+                  wx:for-index="weekIndex"
+                  wx:key="weekIndex"
+                  class="heatmap-column"
+                >
+                  <view
+                    wx:for="{{week.days}}"
+                    wx:for-item="day"
+                    wx:for-index="dayIndex"
+                    wx:key="date"
+                    class="heatmap-cell level-{{day.level}} {{day.active ? 'is-active' : ''}} {{day.isEmpty ? 'is-empty' : ''}} {{day.isFuture ? 'is-future' : ''}}"
+                    data-date="{{day.date}}"
+                    catchtap="onHeatmapDayTap"
+                  ></view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
+
+        <view wx:if="{{selectedHeatmapDay}}" class="heatmap-tooltip">
+          <view class="heatmap-tooltip-date">{{selectedHeatmapDay.dateLabel}}</view>
+          <block wx:if="{{selectedHeatmapDay.hasRecord}}">
+            <view class="heatmap-tooltip-row">投入 {{selectedHeatmapDay.minutes}} 分钟</view>
+            <text class="heatmap-tooltip-sub">完成 {{selectedHeatmapDay.actions}} 项行动</text>
+          </block>
+          <text wx:else class="heatmap-tooltip-empty">暂无记录</text>
+        </view>
+
+        <view class="heatmap-legend">
+          <text class="heatmap-legend-text">少</text>
+          <view class="legend-cell level-0"></view>
+          <view class="legend-cell level-1"></view>
+          <view class="legend-cell level-2"></view>
+          <view class="legend-cell level-3"></view>
+          <view class="legend-cell level-4"></view>
+          <text class="heatmap-legend-text">多</text>
+        </view>
+
+        <view class="trend-summary">{{yearSummary.summaryText}}</view>
+
+        <view wx:if="{{yearHighlights.maxDay || yearHighlights.maxStreak || yearHighlights.maxMonth}}" class="year-highlights">
+          <view class="highlights-title">年度亮点</view>
+          <view class="highlights-grid">
+            <view wx:if="{{yearHighlights.maxDay}}" class="highlight-item">
+              <view class="highlight-icon highlight-icon-target">◎</view>
+              <view class="highlight-date">{{yearHighlights.maxDay.dateLabel}}</view>
+              <view class="highlight-label">单日最高 {{yearHighlights.maxDay.minutes}} 分钟</view>
+            </view>
+            <view wx:if="{{yearHighlights.maxStreak}}" class="highlight-item">
+              <view class="highlight-icon highlight-icon-trophy">★</view>
+              <view class="highlight-date">{{yearHighlights.maxStreak.dateLabel}}</view>
+              <view class="highlight-label">连续打卡 {{yearHighlights.maxStreak.days}} 天</view>
+            </view>
+            <view wx:if="{{yearHighlights.maxMonth}}" class="highlight-item">
+              <view class="highlight-icon highlight-icon-trend">↗</view>
+              <view class="highlight-date">{{yearHighlights.maxMonth.month}}</view>
+              <view class="highlight-label">投入最多的月份</view>
+            </view>
+          </view>
+        </view>
+      </block>
     </view>
 
     <view class="milestone-card">

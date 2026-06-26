@@ -22,12 +22,18 @@
     <view class="week-card">
       <view class="week-head">
         <view class="week-title">{{weekTitle}} <text>{{weekdayShort}}</text></view>
-        <view class="week-switch">
+        <view class="week-switch" catchtap="openCalendar">
           <view class="week-chevron">⌄</view>
         </view>
       </view>
       <view class="week-grid">
-        <view wx:for="{{weekDays}}" wx:key="date" class="week-day {{item.isToday ? 'is-today' : ''}} {{item.isCurrentMonth ? '' : 'is-muted'}}">
+        <view
+          wx:for="{{weekDays}}"
+          wx:key="date"
+          class="week-day {{item.isToday ? 'is-today' : ''}} {{item.isSelected ? 'is-selected' : ''}} {{item.isCurrentMonth ? '' : 'is-muted'}}"
+          data-date="{{item.date}}"
+          bindtap="selectWeekDate"
+        >
           <view class="week-label">{{item.label}}</view>
           <view class="week-number">{{item.day}}</view>
         </view>
@@ -121,6 +127,36 @@
 
     </block>
   </block>
+
+  <view wx:if="{{calendarVisible}}" class="calendar-layer" catchtouchmove="noop">
+    <view class="calendar-mask" catchtap="closeCalendar"></view>
+    <view class="calendar-panel" catchtap="noop">
+      <view class="calendar-head">
+        <view class="calendar-nav" data-delta="-1" catchtap="switchCalendarMonth">‹</view>
+        <view class="calendar-title">{{calendarTitle}}</view>
+        <view class="calendar-nav" data-delta="1" catchtap="switchCalendarMonth">›</view>
+      </view>
+      <view class="calendar-week-row">
+        <view wx:for="{{calendarWeekLabels}}" wx:key="*this" class="calendar-week-label">{{item}}</view>
+      </view>
+      <view class="calendar-grid">
+        <view
+          wx:for="{{calendarDays}}"
+          wx:key="date"
+          class="calendar-day {{item.isCurrentMonth ? '' : 'is-outside'}} {{item.isToday ? 'is-today' : ''}} {{item.isSelected ? 'is-selected' : ''}} {{item.hasAction ? 'has-action' : ''}}"
+          data-date="{{item.date}}"
+          catchtap="selectCalendarDate"
+        >
+          <view class="calendar-day-number">{{item.day}}</view>
+          <view wx:if="{{item.hasAction}}" class="calendar-dot {{item.isCompleted ? 'is-completed' : ''}}"></view>
+        </view>
+      </view>
+      <view class="calendar-footer">
+        <view class="calendar-today" catchtap="jumpTodayFromCalendar">今天</view>
+        <view class="calendar-confirm" catchtap="closeCalendar">确定</view>
+      </view>
+    </view>
+  </view>
 
   <view wx:if="{{quickAddVisible}}" class="quick-add-layer" catchtouchmove="noop">
     <view class="quick-add-mask" catchtap="closeQuickAdd"></view>

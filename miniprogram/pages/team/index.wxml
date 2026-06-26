@@ -44,18 +44,16 @@
         </view>
       </view>
 
-      <view class="member-count-row">
+      <view class="member-count-row" catchtap="openAllMembers">
         <view class="member-count">{{team.memberCount}} / {{team.maxMembers}} 成员</view>
         <view class="card-arrow">›</view>
       </view>
 
-      <view class="avatar-row">
+      <view class="avatar-row" catchtap="openAllMembers">
         <view
           wx:for="{{avatarMembers}}"
           wx:key="id"
           class="avatar-item"
-          data-id="{{item.id}}"
-          catchtap="openMemberDetail"
         >
           <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
           <text wx:else>{{item.avatarText}}</text>
