@@ -1,71 +1,97 @@
+@import "./styles/theme.wxss";
+
 page {
-  --color-primary: #145243;
-  --color-primary-deep: #0f4035;
-  --color-primary-soft: #f3f8f5;
-  --color-primary-light: #eef7f2;
-  --color-growth: #7dbb69;
-  --color-accent: #55b98b;
-  --color-sun: #f5b94e;
-  --color-coral: #d98a76;
-  --color-blue: #8fb5c8;
-  --color-purple: #9e96c8;
-  --color-text: #173c34;
-  --color-text-secondary: #6f7f78;
-  --color-text-light: #a8b0aa;
-  --color-background: #f7f8f5;
-  --color-background-warm: #fff4cf;
-  --color-surface: #ffffff;
-  --color-border: #e8efeb;
-  --color-danger: #a46d61;
-  --color-danger-light: #fbf1ed;
-  --shadow-card: 0 8rpx 30rpx rgba(20, 82, 67, 0.08);
-  --shadow-float: 0 18rpx 48rpx rgba(21, 63, 54, 0.18);
-  --gradient-hero: linear-gradient(145deg, #145243 0%, #1d604f 58%, #2c755e 100%);
-  --gradient-gold: linear-gradient(135deg, #fff3b7, #f5b94e);
-  --gradient-ai: linear-gradient(135deg, #5c78d6, #7567c8);
-  --button-primary-background-color: #145243;
-  --button-primary-border-color: #145243;
-  --button-primary-color: #ffffff;
-  --button-default-background-color: #ffffff;
-  --button-default-border-color: #d8e5df;
-  --button-default-color: #145243;
-  --button-primary-danger-background-color: #b45c55;
-  --button-primary-danger-border-color: #b45c55;
+  /* 主色系（与 theme 保持一致，便于组件覆盖） */
+  --color-primary: #3F8F72;
+  --color-primary-deep: #24584A;
+  --color-primary-soft: #E6F4EC;
+  --color-primary-light: #7CC6A0;
+  --color-growth: #68BE8F;
+  --color-accent: #68BE8F;
+  --color-sun: #F4C95D;
+  --color-coral: #D98A76;
+  --color-blue: #6FA8DC;
+  --color-purple: #9E96C8;
+
+  /* 文字 */
+  --color-text: #244C43;
+  --color-text-secondary: #6F827B;
+  --color-text-light: #9AA8A3;
+
+  /* 背景 */
+  --color-background: #F6FAF7;
+  --color-background-warm: #FFF4D8;
+  --color-surface: #FFFFFF;
+
+  /* 边框 */
+  --color-border: #E2EEE8;
+
+  /* 危险态（柔和表达） */
+  --color-danger: #D98A76;
+  --color-danger-light: #FBF1ED;
+
+  /* 阴影 */
+  --shadow-card: 0 8rpx 28rpx rgba(36, 88, 74, 0.08);
+  --shadow-float: 0 16rpx 40rpx rgba(36, 88, 74, 0.12);
+
+  /* 渐变（取代大面积深绿） */
+  --gradient-hero: var(--gradient-card-mint);
+  --gradient-gold: linear-gradient(135deg, #FFF3B7, #F4C95D);
+  --gradient-ai: linear-gradient(135deg, #6FA8DC, #9E96C8);
+
+  /* TDesign / Ant 组件兼容变量（映射到新色） */
+  --button-primary-background-color: #3F8F72;
+  --button-primary-border-color: #3F8F72;
+  --button-primary-color: #FFFFFF;
+  --button-default-background-color: #FFFFFF;
+  --button-default-border-color: #E2EEE8;
+  --button-default-color: #3F8F72;
+  --button-primary-danger-background-color: #D98A76;
+  --button-primary-danger-border-color: #D98A76;
   --button-disabled-opacity: 0.5;
-  --ant-card-bg: #ffffff;
-  --ant-card-divider-color: #e8efeb;
-  --ant-card-header-title-color: #173c34;
-  --tag-primary-color: #145243;
-  --tag-primary-light-color: #eff7f2;
-  --tag-success-color: #145243;
-  --tag-success-light-color: #eff7f2;
-  --progress-stroke-color: #145243;
-  --progress-success-color: #7dbb69;
-  --progress-trail-color: #e8efeb;
-  --notice-primary-background-color: #eff7f2;
-  --notice-primary-color: #145243;
-  --notice-info-background-color: #eef0fb;
-  --notice-info-text-color: #495ca8;
-  --steps-finish-bg: #145243;
-  --steps-default-bg: #dcebe4;
-  --steps-non-active-bg: #e8efeb;
-  --steps-title-color: #173c34;
-  --steps-desc-color: #6f7f78;
-  --popup-background: #ffffff;
-  --popup-color: #173c34;
-  --dialog-background-color: #ffffff;
-  --dialog-title-color: #173c34;
-  --dialog-content-color: #6f7f78;
-  --input-background-color: #fbfcfa;
-  --input-item-color: #173c34;
-  --input-item-placeholder-color: #a8b0aa;
-  --radio-background-color: #145243;
-  --radio-border-color: #c9d7d1;
-  --radio-icon-color: #145243;
-  --radio-text-color: #173c34;
-  --checkbox-background-color: #145243;
-  --checkbox-border-color: #c9d7d1;
-  --checkbox-text-color: #173c34;
+
+  --ant-card-bg: #FFFFFF;
+  --ant-card-divider-color: #E2EEE8;
+  --ant-card-header-title-color: #244C43;
+
+  --tag-primary-color: #3F8F72;
+  --tag-primary-light-color: #E6F4EC;
+  --tag-success-color: #3F8F72;
+  --tag-success-light-color: #E6F4EC;
+
+  --progress-stroke-color: #3F8F72;
+  --progress-success-color: #68BE8F;
+  --progress-trail-color: #E2EEE8;
+
+  --notice-primary-background-color: #E6F4EC;
+  --notice-primary-color: #24584A;
+  --notice-info-background-color: #E8F1FB;
+  --notice-info-text-color: #4A6E97;
+
+  --steps-finish-bg: #3F8F72;
+  --steps-default-bg: #D7E8DF;
+  --steps-non-active-bg: #E2EEE8;
+  --steps-title-color: #244C43;
+  --steps-desc-color: #6F827B;
+
+  --popup-background: #FFFFFF;
+  --popup-color: #244C43;
+  --dialog-background-color: #FFFFFF;
+  --dialog-title-color: #244C43;
+  --dialog-content-color: #6F827B;
+
+  --input-background-color: #F8FBF9;
+  --input-item-color: #244C43;
+  --input-item-placeholder-color: #9AA8A3;
+
+  --radio-background-color: #3F8F72;
+  --radio-border-color: #C9D8D1;
+  --radio-icon-color: #3F8F72;
+  --radio-text-color: #244C43;
+  --checkbox-background-color: #3F8F72;
+  --checkbox-border-color: #C9D8D1;
+  --checkbox-text-color: #244C43;
+
   background: var(--color-background);
   color: var(--color-text);
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -207,9 +233,9 @@ button[disabled] {
   min-height: 92rpx;
   border-radius: 999rpx;
   font-weight: 650;
-  --button-primary-background-color: #153f36;
-  --button-primary-border-color: #153f36;
-  box-shadow: 0 14rpx 32rpx rgba(21, 63, 54, 0.24);
+  --button-primary-background-color: #3F8F72;
+  --button-primary-border-color: #3F8F72;
+  box-shadow: 0 10rpx 24rpx rgba(63, 143, 114, 0.22);
 }
 
 .growth-ant-card {
@@ -223,9 +249,9 @@ button[disabled] {
   overflow: hidden;
   padding: 38rpx;
   border-radius: 40rpx;
-  background: var(--gradient-hero);
-  color: #ffffff;
-  box-shadow: var(--shadow-float);
+  background: var(--gradient-card-mint);
+  color: var(--color-text);
+  box-shadow: var(--shadow-card);
 }
 
 .growth-hero::after {
@@ -240,7 +266,7 @@ button[disabled] {
   bottom: -120rpx;
   width: 210rpx;
   height: 210rpx;
-  background: rgba(92, 120, 214, 0.17);
+  background: rgba(63, 143, 114, 0.12);
 }
 
 .bento-grid {
@@ -267,8 +293,8 @@ button[disabled] {
   margin-top: 28rpx;
   padding: 30rpx;
   border-radius: 34rpx;
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 10rpx 36rpx rgba(21, 63, 54, 0.07);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-card);
   backdrop-filter: blur(16rpx);
 }
 
@@ -293,9 +319,9 @@ button[disabled] {
   justify-content: center;
   min-height: 88rpx;
   padding: 22rpx 34rpx;
-  border: 2rpx solid rgba(53, 104, 89, 0.22);
+  border: 2rpx solid rgba(63, 143, 114, 0.22);
   border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.92);
   color: var(--color-primary);
   font-weight: 650;
 }
@@ -318,13 +344,13 @@ button[disabled] {
   height: 16rpx;
   overflow: hidden;
   border-radius: 8rpx;
-  background: #e8efea;
+  background: #E2EEE8;
 }
 
 .progress-bar-inner {
   height: 100%;
   border-radius: 8rpx;
-  background: var(--color-growth);
+  background: linear-gradient(90deg, #7CC6A0 0%, #3F8F72 100%);
 }
 
 .danger-button {
@@ -333,7 +359,7 @@ button[disabled] {
   justify-content: center;
   min-height: 88rpx;
   padding: 22rpx 34rpx;
-  border: 2rpx solid rgba(180, 92, 85, 0.22);
+  border: 2rpx solid rgba(217, 138, 118, 0.22);
   border-radius: 999rpx;
   background: var(--color-danger-light);
   color: var(--color-danger);
@@ -349,15 +375,15 @@ button[disabled] {
 }
 
 .ai-notice {
-  border: 1rpx solid rgba(123, 167, 201, 0.22);
-  background: #f2f7fb;
-  color: #49677d;
+  border: 1rpx solid rgba(111, 168, 220, 0.22);
+  background: #F2F7FB;
+  color: #4A6E97;
 }
 
 .safety-notice {
-  border: 1rpx solid rgba(243, 199, 106, 0.28);
+  border: 1rpx solid rgba(244, 201, 93, 0.32);
   background: var(--color-background-warm);
-  color: #765f37;
+  color: #8A6B1F;
 }
 
 .ui-tag {

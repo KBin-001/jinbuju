@@ -231,9 +231,9 @@
 .review-hero .page-subtitle { color:rgba(255,255,255,.68); }
 .stats-card { border:0; border-radius:36rpx; background:linear-gradient(145deg,#fff,#f2ead8); }
 .stats-grid { gap:14rpx; }
-.stat-item { border-radius:24rpx; background:#153f36; color:#fff; }
-.stat-item:nth-child(2) { background:linear-gradient(145deg,#5c78d6,#7567c8); }
-.stat-item:nth-child(3) { background:linear-gradient(145deg,#e67861,#d8a84e); }
+.stat-item { border-radius:24rpx; background:#3F8F72; color:#fff; }
+.stat-item:nth-child(2) { background:linear-gradient(145deg,#7CC6A0,#3F8F72); }
+.stat-item:nth-child(3) { background:linear-gradient(145deg,#F4C95D,#E0B04A); }
 .stat-item .stat-label { color:rgba(255,255,255,.7); }
 .summary-card { border-left:7rpx solid #7567c8; background:#f7f8ff; }
 .summary-bar-fill { background:linear-gradient(90deg,#5c78d6,#7567c8); }
@@ -256,8 +256,8 @@
   text-align: center;
   border: 0;
   border-radius: 36rpx;
-  background: linear-gradient(145deg, #153f36, #356859);
-  color: #fff;
+  background: linear-gradient(135deg, #E6F4EC 0%, #F7FBF8 60%, #FFFFFF 100%);
+  color: #244C43;
   box-shadow: 0 22rpx 56rpx rgba(21, 63, 54, 0.22);
 }
 
@@ -414,8 +414,8 @@
 }
 
 .duration-choice-active {
-  border-color: #356859;
-  background: #e7f1ec;
-  color: #1f4d42;
+  border-color: #3F8F72;
+  background: #E6F4EC;
+  color: #24584A;
   font-weight: 650;
 }

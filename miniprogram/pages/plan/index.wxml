@@ -195,11 +195,23 @@
           </view>
         </block>
 
-        <view class="trend-advice-card">
-          <view class="trend-advice-icon">
-            <view class="leaf-shape"></view>
+        <view class="ai-coach-card">
+          <view class="ai-coach-head">
+            <view class="ai-coach-title-wrap">
+              <view class="ai-coach-icon">✦</view>
+              <view class="ai-coach-title">AI 进度教练</view>
+            </view>
+            <view class="ai-coach-period">{{aiCoach.periodLabel}}</view>
           </view>
-          <view class="trend-advice-text">{{trendSummary.adviceText || trendSummary.summaryText}}</view>
+          <view class="ai-coach-point">
+            <text class="ai-coach-point-icon">↗</text>
+            <text>{{aiCoach.summary}}</text>
+          </view>
+          <view class="ai-coach-point ai-coach-point-warning">
+            <text class="ai-coach-point-icon">!</text>
+            <text>{{aiCoach.suggestion}}</text>
+          </view>
+          <view class="ai-coach-action">查看完整分析与建议 →</view>
         </view>
 
         <view class="trend-stats-grid">

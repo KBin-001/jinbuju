@@ -20,6 +20,12 @@ interface OverviewStat {
   unit: string;
 }
 
+interface AiCoachView {
+  periodLabel: string;
+  summary: string;
+  suggestion: string;
+}
+
 interface GoalOption {
   id: string;
   title: string;
@@ -197,6 +203,23 @@ function goalPeriod(goal: Goal | null): string {
 
 function buildTrendRanges(activeKey: TrendRange): TrendRangeOption[] {
   return TREND_RANGES.map((item) => ({ ...item, active: item.key === activeKey }));
+}
+
+function buildAiCoachView(goal: Goal | null, trendRange: TrendRange, trendSummary: TrendSummary): AiCoachView {
+  const periodLabel = trendRange === "month" ? "本月复盘" : trendRange === "year" ? "年度复盘" : "本周复盘";
+  const goalTitle = goal?.title || "当前目标";
+  if (trendSummary.insufficient || trendSummary.totalActions <= 0) {
+    return {
+      periodLabel,
+      summary: `当前「${goalTitle}」的数据还在积累中，先保持每天一小步。`,
+      suggestion: "等完成更多行动后，这里会展示节奏变化、薄弱时段和下一步建议。",
+    };
+  }
+  return {
+    periodLabel,
+    summary: `${periodLabel}显示，${trendSummary.compareText}，累计完成 ${trendSummary.totalActions} 项行动。`,
+    suggestion: trendSummary.adviceText || `继续围绕「${goalTitle}」保持稳定输出，优先安排最容易启动的一小步。`,
+  };
 }
 
 function buildGoalOptions(goals: Goal[], activeGoalId: string, today: string): GoalOption[] {
@@ -808,6 +831,7 @@ Page({
     overviewStats: [] as OverviewStat[],
     trendRange: "week" as TrendRange,
     trendRanges: buildTrendRanges("week"),
+    aiCoach: { periodLabel: "本周复盘", summary: "数据正在整理中。", suggestion: "完成更多行动后，这里会展示 AI 进度教练建议。" } as AiCoachView,
     barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, barWidth: WEEK_BAR_WIDTH, insufficient: false } as BarChartData,
     trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, completionRate: 0, compareText: "", compareTone: "flat", bestInvestLabel: "-", adviceText: "", summaryText: "", insufficient: false } as TrendSummary,
     selectedTrendItem: null as TrendBar | null,
@@ -865,6 +889,7 @@ Page({
         goalStatusText: goalStatusText(rate, summary?.totalTasks || 0),
         overviewStats: buildOverview(summary, todaySummary.actualMinutes),
         trendRanges: buildTrendRanges(this.data.trendRange),
+        aiCoach: buildAiCoachView(goal, this.data.trendRange, trendView.trendSummary),
         barChart: trendView.barChart,
         trendSummary: trendView.trendSummary,
         selectedTrendItem: trendView.barChart.bars.find((bar) => bar.active) || null,
@@ -934,6 +959,7 @@ Page({
     this.setData({
       trendRange: range,
       trendRanges: buildTrendRanges(range),
+      aiCoach: buildAiCoachView(this.data.goal, range, trendView.trendSummary),
       barChart: trendView.barChart,
       trendSummary: trendView.trendSummary,
       heatmapWeeks: trendView.heatmapWeeks,

@@ -1,4 +1,4 @@
-import { getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } from "../../services/manualGoal";
+import { endGoal, getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { getLocalUserProfile, saveLocalUserProfile } from "../../services/profile";
 import { Goal, ProgressSummary } from "../../types/manual";
@@ -85,7 +85,7 @@ function buildGrowthStats(goals: Goal[]): GrowthStats {
 const FUNCTION_ENTRIES: FunctionEntry[] = [
   { key: "history", title: "历史数据", emoji: "📊", iconClass: "func-icon-wrap--history" },
   { key: "badges",  title: "成就徽章", emoji: "🏆", iconClass: "func-icon-wrap--badges" },
-  { key: "focus",   title: "专注报告", emoji: "📈", iconClass: "func-icon-wrap--focus" },
+  { key: "ai",      title: "AI 教练", emoji: "✦", iconClass: "func-icon-wrap--ai" },
   { key: "settings",title: "数据设置", emoji: "⚙️", iconClass: "func-icon-wrap--settings" },
 ];
 
@@ -114,6 +114,7 @@ Page({
     profileDraftAvatarText: "岚",
     profileDraftSource: "custom" as UserProfileSource,
     profileDraftUseInTeam: true,
+    endingGoalId: "",
   },
 
   onShow() {
@@ -132,6 +133,7 @@ Page({
       this.setData({
         goals,
         activeGoalCount: goals.length,
+        endingGoalId: "",
         userProfile,
         displayName: userProfile?.nickname || "阿岚",
         displayAvatarUrl: userProfile?.avatarUrl || "",
@@ -237,6 +239,32 @@ Page({
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "目标切换失败", icon: "none" });
     }
+  },
+
+  endCurrentGoal(event: { currentTarget: { dataset: { id?: string } } }) {
+    const id = String(event.currentTarget.dataset.id || "");
+    const goal = this.data.goals.find((item) => item.id === id && item.isCurrent);
+    if (!goal || this.data.endingGoalId) return;
+    wx.showModal({
+      title: "结束当前目标？",
+      content: "结束后会保存到历史目标，行动记录和复盘数据都会保留。",
+      cancelText: "取消",
+      confirmText: "确认结束",
+      confirmColor: "#3F8F72",
+      success: (result) => {
+        if (!result.confirm) return;
+        this.setData({ endingGoalId: id });
+        try {
+          const archivedGoal = endGoal(id);
+          wx.showToast({ title: "目标已保存到历史", icon: "success" });
+          this.loadProfile();
+          setTimeout(() => wx.navigateTo({ url: `/pages/goal-review/index?id=${archivedGoal.id}` }), 300);
+        } catch (error) {
+          wx.showToast({ title: error instanceof Error ? error.message : "结束失败", icon: "none" });
+          this.setData({ endingGoalId: "" });
+        }
+      },
+    });
   },
 
   /** 管理目标 — 跳转到目标创建（复用原有 createGoal 路由） */

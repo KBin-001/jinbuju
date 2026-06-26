@@ -2,7 +2,7 @@
 
   <!-- Loading state -->
   <view wx:if="{{status === 'loading'}}" class="card state-card page-state">
-    <ant-loading type="spin" size="large" color="#356859" />
+    <ant-loading type="spin" size="large" color="#3F8F72" />
     <view class="state-title">正在加载行动记录</view>
     <view class="state-description">稍等一下，马上回来。</view>
   </view>

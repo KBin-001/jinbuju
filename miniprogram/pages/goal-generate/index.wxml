@@ -1,7 +1,7 @@
 <view class="generate-page">
   <!-- Analyzing state -->
   <view wx:if="{{flowState === 'analyzing' && !showClarification}}" class="gen-center">
-    <ant-loading type="spin" size="x-large" color="#356859" />
+    <ant-loading type="spin" size="x-large" color="#3F8F72" />
     <view class="gen-title">正在理解你的目标</view>
     <view class="gen-sub">AI 分析完成后将自动进入下一步</view>
   </view>

@@ -1,18 +1,18 @@
 .goal-detail-page {
-  background: #f5f7f2;
-  color: #233b34;
+  background: #F6FAF7;
+  color: #244C43;
 }
 
 .detail-hero {
   padding: 34rpx;
   border-radius: 32rpx;
-  background: linear-gradient(145deg, #1f5b4a 0%, #2f735f 58%, #356859 100%);
-  color: #ffffff;
-  box-shadow: 0 18rpx 44rpx rgba(31, 91, 74, 0.16);
+  background: linear-gradient(135deg, #E6F4EC 0%, #F7FBF8 60%, #FFFFFF 100%);
+  color: #244C43;
+  box-shadow: 0 8rpx 24rpx rgba(36, 88, 74, 0.08);
 }
 
 .hero-kicker {
-  color: rgba(248, 210, 106, 0.96);
+  color: #F4C95D;
   font-size: 22rpx;
   font-weight: 800;
   letter-spacing: 3rpx;
@@ -27,7 +27,7 @@
 
 .hero-subtitle {
   margin-top: 10rpx;
-  color: rgba(255, 255, 255, 0.72);
+  color: #6F827B;
   font-size: 25rpx;
 }
 
@@ -39,7 +39,7 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 14rpx;
-  color: rgba(255, 255, 255, 0.88);
+  color: #244C43;
   font-size: 24rpx;
   font-weight: 700;
 }
@@ -48,13 +48,13 @@
   height: 16rpx;
   overflow: hidden;
   border-radius: 8rpx;
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(63, 143, 114, 0.16);
 }
 
 .progress-bar-inner {
   height: 100%;
   border-radius: inherit;
-  background: #f8d26a;
+  background: linear-gradient(90deg, #7CC6A0 0%, #3F8F72 100%);
 }
 
 .stat-grid {
@@ -66,10 +66,10 @@
 
 .stat-card,
 .section-card {
-  border: 1rpx solid rgba(230, 238, 233, 0.92);
+  border: 1rpx solid #E2EEE8;
   border-radius: 28rpx;
-  background: #ffffff;
-  box-shadow: 0 16rpx 40rpx rgba(31, 70, 58, 0.08);
+  background: #FFFFFF;
+  box-shadow: 0 8rpx 28rpx rgba(36, 88, 74, 0.08);
 }
 
 .stat-card {
@@ -78,7 +78,7 @@
 }
 
 .stat-value {
-  color: #233b34;
+  color: #244C43;
   font-size: 34rpx;
   font-weight: 800;
   line-height: 42rpx;
@@ -86,7 +86,7 @@
 
 .stat-label {
   margin-top: 8rpx;
-  color: #71827a;
+  color: #6F827B;
   font-size: 23rpx;
 }
 
@@ -119,13 +119,13 @@
 }
 
 .section-title {
-  color: #233b34;
+  color: #244C43;
   font-size: 30rpx;
   font-weight: 800;
 }
 
 .section-count {
-  color: #71827a;
+  color: #6F827B;
   font-size: 23rpx;
 }
 
@@ -133,8 +133,8 @@
   margin-top: 22rpx;
   padding: 28rpx;
   border-radius: 22rpx;
-  background: #f8faf8;
-  color: #71827a;
+  background: #F8FBF9;
+  color: #6F827B;
   font-size: 25rpx;
   line-height: 36rpx;
   text-align: center;
@@ -149,13 +149,13 @@
 
 .record-card {
   padding: 22rpx;
-  border: 1rpx solid #e6eee9;
+  border: 1rpx solid #E2EEE8;
   border-radius: 22rpx;
-  background: #ffffff;
+  background: #FFFFFF;
 }
 
 .done-card {
-  background: #fbfdfb;
+  background: #FBFCFA;
 }
 
 .record-head {
@@ -168,7 +168,7 @@
 .record-title {
   min-width: 0;
   flex: 1;
-  color: #233b34;
+  color: #244C43;
   font-size: 27rpx;
   font-weight: 750;
   line-height: 38rpx;
@@ -176,7 +176,7 @@
 
 .record-meta {
   margin-top: 10rpx;
-  color: #71827a;
+  color: #6F827B;
   font-size: 23rpx;
   line-height: 34rpx;
 }
@@ -188,25 +188,25 @@
   flex: none;
   padding: 0 18rpx;
   border-radius: 20rpx;
-  background: #eaf5ef;
-  color: #356859;
+  background: #E6F4EC;
+  color: #3F8F72;
   font-size: 22rpx;
   font-weight: 700;
 }
 
 .status-chip.warning {
-  background: #fff6d8;
-  color: #806632;
+  background: #FFF4D8;
+  color: #8A6B1F;
 }
 
 .status-chip.muted {
-  background: #f0f3f1;
-  color: #71827a;
+  background: #F1F4F2;
+  color: #6F827B;
 }
 
 .status-chip.neutral {
-  background: #eef6fb;
-  color: #52748a;
+  background: #E8F1FB;
+  color: #4A6E97;
 }
 
 .danger-actions {

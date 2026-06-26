@@ -1,0 +1,71 @@
+/* =========================================================
+ * 进步局 · 全局主题颜色 Token
+ * 设计方向：浅绿、干净、轻量、成长感、高级感
+ * --------------------------------------------------------
+ * 使用方法：在 app.wxss 的 page 块内 @import 此文件后，
+ *           各页面/组件可直接使用 var(--color-primary) 等。
+ * ========================================================= */
+
+page {
+  /* 背景 */
+  --color-bg: #F6FAF7;            /* 页面柔和浅灰绿 */
+  --color-bg-warm: #FBF7EC;       /* 暖色提示背景 */
+  --color-card: #FFFFFF;          /* 主卡片白 */
+  --color-card-soft: #EFF8F3;     /* 次级卡片（极浅薄荷绿） */
+  --color-card-soft-2: #EAF7EF;   /* 更浅薄荷（用于顶部渐变） */
+  --color-card-hover: #F1F8F4;    /* 已完成/悬停态 */
+
+  /* 主色系 */
+  --color-primary: #3F8F72;       /* 中低饱和度绿色（品牌主色） */
+  --color-primary-light: #7CC6A0; /* 浅绿（进度条/图表） */
+  --color-primary-soft: #E6F4EC;  /* 极浅绿（按钮底/标签底） */
+  --color-primary-deep: #24584A;  /* 深绿（标题/重点数字） */
+  --color-primary-dark: #1F5B4A;  /* 更深绿（极少使用，按需） */
+
+  /* 文字 */
+  --color-text-main: #244C43;     /* 主文字：深青绿（不纯黑） */
+  --color-text-secondary: #6F827B;/* 次级文字 */
+  --color-text-muted: #9AA8A3;    /* 辅助/提示文字 */
+  --color-text-inverse: #FFFFFF;  /* 反向文字 */
+
+  /* 边框/分割线 */
+  --color-border: #E2EEE8;        /* 统一边框 */
+  --color-border-soft: #EDF3EF;   /* 更细分割线 */
+  --color-divider: #EDF3EF;
+
+  /* 状态色 */
+  --color-success: #68BE8F;       /* 成功（已完成的勾选） */
+  --color-success-soft: #E6F4EC;
+  --color-warning: #F4C95D;       /* 黄色（徽章/等级/成就） */
+  --color-warning-soft: #FFF4D8;
+  --color-info: #6FA8DC;
+  --color-info-soft: #E8F1FB;
+  --color-danger: #D98A76;        /* 柔和珊瑚色（避免强烈红色） */
+  --color-danger-soft: #FBF1ED;
+
+  /* 渐变（取代大面积深绿背景） */
+  --gradient-card-mint: linear-gradient(135deg, #EAF7EF 0%, #F7FBF8 100%);
+  --gradient-card-soft: linear-gradient(135deg, #F4FBF7 0%, #FFFFFF 60%);
+  --gradient-card-sun: linear-gradient(135deg, #FFF6DC 0%, #FFF1BF 100%);
+  --gradient-progress: linear-gradient(90deg, #7CC6A0 0%, #68BE8F 100%);
+  --gradient-ring: linear-gradient(135deg, #9BD9B7 0%, #68BE8F 100%);
+
+  /* 阴影（轻柔） */
+  --shadow-card: 0 8rpx 28rpx rgba(36, 88, 74, 0.08);
+  --shadow-card-soft: 0 4rpx 18rpx rgba(36, 88, 74, 0.06);
+  --shadow-float: 0 16rpx 40rpx rgba(36, 88, 74, 0.12);
+  --shadow-button: 0 10rpx 24rpx rgba(63, 143, 114, 0.22);
+  --shadow-button-soft: 0 6rpx 16rpx rgba(63, 143, 114, 0.16);
+
+  /* 圆角 */
+  --radius-card: 28rpx;
+  --radius-card-sm: 20rpx;
+  --radius-pill: 999rpx;
+  --radius-button: 999rpx;
+  --radius-tag: 18rpx;
+
+  /* 间距（统一参考，可选用） */
+  --gap-card: 20rpx;
+  --gap-section: 36rpx;
+  --padding-page: 24rpx 32rpx 160rpx;
+}

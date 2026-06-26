@@ -153,7 +153,7 @@ Page({
       content: "终止后会进入历史目标，行动记录和复盘数据都会保留。",
       cancelText: "取消",
       confirmText: "确认终止",
-      confirmColor: "#356859",
+      confirmColor: "#3F8F72",
       success: (result) => {
         if (!result.confirm) return;
         this.setData({ lifecycleSubmitting: true });
@@ -177,7 +177,7 @@ Page({
       content: "旧目标会保存到历史目标，可继续查看复盘；不会覆盖旧目标数据。",
       cancelText: "取消",
       confirmText: "保留并更换",
-      confirmColor: "#356859",
+      confirmColor: "#3F8F72",
       success: (result) => {
         if (!result.confirm) return;
         this.setData({ lifecycleSubmitting: true });

@@ -522,11 +522,11 @@
   color: #899087;
 }
 /* Check-in dashboard */
-.checkin-page { background: #edf1ee; }
-.checkin-hero { position:relative; overflow:hidden; padding:38rpx; border:0; border-radius:40rpx; background:linear-gradient(145deg,#153f36,#356859); color:#fff; box-shadow:0 22rpx 56rpx rgba(21,63,54,.22); }
-.checkin-hero::after { position:absolute; right:-60rpx; bottom:-100rpx; width:250rpx; height:250rpx; border-radius:50%; background:rgba(216,168,78,.16); content:""; }
-.checkin-hero .section-eyebrow { color:#e8c97f; }
-.checkin-hero .summary-subtitle, .checkin-hero .summary-date, .checkin-hero .progress-count, .checkin-hero .progress-rate { position:relative; z-index:1; color:#fff; }
+.checkin-page { background: #F6FAF7; }
+.checkin-hero { position:relative; overflow:hidden; padding:38rpx; border:0; border-radius:40rpx; background:linear-gradient(135deg,#E6F4EC 0%,#F7FBF8 60%,#FFFFFF 100%); color:#244C43; box-shadow:0 8rpx 24rpx rgba(36,88,74,.08); }
+.checkin-hero::after { position:absolute; right:-60rpx; bottom:-100rpx; width:250rpx; height:250rpx; border-radius:50%; background:rgba(244,201,93,.18); content:""; }
+.checkin-hero .section-eyebrow { color:#8A6B1F; }
+.checkin-hero .summary-subtitle, .checkin-hero .summary-date, .checkin-hero .progress-count, .checkin-hero .progress-rate { position:relative; z-index:1; color:#244C43; }
 .task-status-card { border:0; border-left:7rpx solid #5c78d6; border-radius:28rpx; background:linear-gradient(145deg,#fff,#f4f6ff); }
 .task-status-card:nth-child(3n+2) { border-left-color:#e67861; background:linear-gradient(145deg,#fff,#fff6f3); }
 .task-status-card:nth-child(3n) { border-left-color:#d8a84e; background:linear-gradient(145deg,#fff,#fffaf0); }
@@ -534,6 +534,6 @@
 .reason-card { background:linear-gradient(145deg,#fffaf0,#f4e5c4); }
 .feeling-card { background:linear-gradient(145deg,#faf8ff,#e8e3fa); }
 .note-card { background:linear-gradient(145deg,#fff,#eef4f0); }
-.success-card { border:0; background:linear-gradient(145deg,#153f36,#356859); color:#fff; box-shadow:var(--shadow-float); }
-.success-card .success-title, .success-card .stat-value { color:#fff; }
-.success-card .success-encouragement, .success-card .stat-label { color:rgba(255,255,255,.7); }
+.success-card { border:0; background:linear-gradient(135deg,#E6F4EC 0%,#F7FBF8 60%,#FFFFFF 100%); color:#244C43; box-shadow:var(--shadow-float); }
+.success-card .success-title, .success-card .stat-value { color:#244C43; }
+.success-card .success-encouragement, .success-card .stat-label { color:rgba(36,76,67,.7); }

@@ -52,7 +52,7 @@
 .about-footnote {
   font-size: 23rpx;
 }
-.about-page { background:linear-gradient(180deg,#153f36 0,#285f51 390rpx,#edf1ee 390rpx); }
-.about-mark { background:linear-gradient(145deg,#f0d28c,#d8a84e); color:#153f36; box-shadow:0 18rpx 44rpx rgba(0,0,0,.2); }
-.about-title, .about-version { color:#fff; }
-.about-card { border:0; border-radius:36rpx; background:rgba(255,255,255,.94); box-shadow:0 22rpx 56rpx rgba(21,63,54,.18); }
+.about-page { background:linear-gradient(180deg,#E6F4EC 0,#F7FBF8 390rpx,#F6FAF7 390rpx); }
+.about-mark { background:linear-gradient(135deg,#F4C95D,#E0B04A); color:#244C43; box-shadow:0 18rpx 44rpx rgba(244,201,93,.24); }
+.about-title, .about-version { color:#244C43; }
+.about-card { border:0; border-radius:36rpx; background:#FFFFFF; box-shadow:0 8rpx 24rpx rgba(36,88,74,.08); }

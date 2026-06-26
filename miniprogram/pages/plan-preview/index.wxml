@@ -6,7 +6,7 @@
   </view>
 
   <view wx:if="{{status === 'loading'}}" class="preview-state">
-    <ant-loading type="spin" size="large" color="#356859" />
+    <ant-loading type="spin" size="large" color="#3F8F72" />
     <view class="state-title">{{isV2Create ? '正在读取行动方案' : '正在读取行动计划'}}</view>
     <view class="state-description">请稍等，正在加载方案内容。</view>
   </view>
@@ -24,7 +24,7 @@
       <view class="plan-content">
         <!-- Regenerating overlay -->
         <view wx:if="{{regenerating}}" class="regen-overlay">
-          <ant-loading type="spin" size="large" color="#356859" />
+          <ant-loading type="spin" size="large" color="#3F8F72" />
           <view class="regen-title">正在根据你的反馈调整行动方案</view>
           <view class="regen-subtitle">我们会重新检查任务量、难度、行动方式和时间安排。</view>
         </view>

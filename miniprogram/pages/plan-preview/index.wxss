@@ -206,9 +206,9 @@
 .feedback-cancel { flex: 1; height: 80rpx; display: flex; align-items: center; justify-content: center; border-radius: 999rpx; border: 2rpx solid var(--color-border); font-size: 28rpx; }
 .feedback-submit { flex: 2; height: 80rpx; display: flex; align-items: center; justify-content: center; border-radius: 999rpx; background: var(--color-primary); color: #fff; font-weight: 650; font-size: 28rpx; }
 /* AI plan studio */
-.preview-page { background: radial-gradient(circle at 100% 10%,rgba(117,103,200,.14),transparent 28%),#edf1ee; }
-.preview-header { margin: 0 24rpx; padding: 22rpx 28rpx; border-radius: 28rpx; background: #153f36; color: #fff; box-shadow: 0 16rpx 38rpx rgba(21,63,54,.18); }
-.preview-back, .preview-header-title { color: #fff; }
+.preview-page { background: radial-gradient(circle at 100% 10%,rgba(124,198,160,.14),transparent 28%),#F6FAF7; }
+.preview-header { margin: 0 24rpx; padding: 22rpx 28rpx; border-radius: 28rpx; background: #FFFFFF; color: #244C43; box-shadow: 0 8rpx 24rpx rgba(36,88,74,.08); }
+.preview-back, .preview-header-title { color: #244C43; }
 .plan-content { padding-top: 24rpx; }
 .preview-ai-hero { border: 0; border-radius: 32rpx; background: linear-gradient(135deg,#5c78d6,#7567c8); color: #fff; box-shadow: 0 18rpx 44rpx rgba(92,120,214,.25); }
 .preview-ai-hero .ai-ready-mark { background: rgba(255,255,255,.18); color:#fff; }
@@ -219,7 +219,7 @@
 .plan-hero .weekly-goal { border-color:rgba(255,255,255,.12); background:rgba(255,255,255,.08); }
 .plan-hero .weekly-goal-label, .plan-hero .stage-summary { color:rgba(255,255,255,.68); }
 .week-card { overflow:hidden; border:0; border-radius:32rpx; background:rgba(255,255,255,.84); box-shadow:0 14rpx 38rpx rgba(21,63,54,.08); }
-.week-header { background:linear-gradient(90deg,#f2dfb4,#f8f3e9); color:#153f36; }
+.week-header { background:linear-gradient(90deg,#F4C95D,#F8D779); color:#244C43; }
 .day-card { position:relative; margin:16rpx 20rpx; padding:22rpx; border:0; border-left:7rpx solid #5c78d6; border-radius:24rpx; background:#f8f9ff; }
 .day-card:nth-child(3n+2) { border-left-color:#e67861; background:#fff8f5; }
 .day-card:nth-child(3n) { border-left-color:#d8a84e; background:#fffbf1; }
@@ -234,9 +234,9 @@
   margin-bottom: 24rpx;
   padding: 28rpx 30rpx;
   border-radius: 28rpx;
-  background: linear-gradient(135deg, #153f36 0%, #285f51 60%, #356859 100%);
-  color: #fff;
-  box-shadow: 0 18rpx 44rpx rgba(21, 63, 54, 0.28);
+  background: linear-gradient(135deg, #E6F4EC 0%, #F7FBF8 60%, #FFFFFF 100%);
+  color: #244C43;
+  box-shadow: 0 8rpx 24rpx rgba(36, 88, 74, 0.10);
   animation: plan-ready-enter 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -389,7 +389,7 @@
 }
 .plan-outline-card { margin:14rpx 0 18rpx; padding:20rpx 0 20rpx 20rpx; border-radius:24rpx; background:linear-gradient(145deg,#fff,#eef1fb); box-shadow:var(--shadow-card); overflow:hidden; }
 .outline-head { display:flex; align-items:center; justify-content:space-between; gap:16rpx; padding-right:20rpx; }
-.outline-title { color:#153f36; font-size:28rpx; font-weight:700; }
+.outline-title { color:#244C43; font-size:28rpx; font-weight:700; }
 .outline-hint { color:var(--color-text-secondary); font-size:21rpx; }
 .outline-scroll { width:100%; margin-top:16rpx; white-space:nowrap; }
 .outline-track { display:inline-flex; gap:14rpx; padding-right:20rpx; }

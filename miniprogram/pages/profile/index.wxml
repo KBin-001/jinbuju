@@ -114,7 +114,15 @@
                 </view>
                 <text class="goal-progress-pct">{{item.progressPercent}}%</text>
               </view>
-              <view class="goal-focus-action">{{item.isCurrent ? '查看成长档案' : '设为当前目标'}}</view>
+              <view class="goal-action-row">
+                <view class="goal-focus-action">{{item.isCurrent ? '查看成长档案' : '设为当前目标'}}</view>
+                <view
+                  wx:if="{{item.isCurrent}}"
+                  class="goal-end-action {{endingGoalId === item.id ? 'is-disabled' : ''}}"
+                  data-id="{{item.id}}"
+                  catchtap="endCurrentGoal"
+                >{{endingGoalId === item.id ? '正在结束' : '结束目标'}}</view>
+              </view>
             </view>
           </view>
         </view>

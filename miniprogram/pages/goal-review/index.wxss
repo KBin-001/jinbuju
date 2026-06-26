@@ -12,7 +12,7 @@
 }
 
 .hero-kicker {
-  color: #356859;
+  color: #3F8F72;
   font-size: 22rpx;
   font-weight: 800;
   letter-spacing: 3rpx;
@@ -37,8 +37,8 @@
   margin-top: 28rpx;
   padding: 24rpx;
   border-radius: 22rpx;
-  background: #eaf5ef;
-  color: #356859;
+  background: #E6F4EC;
+  color: #3F8F72;
   font-size: 26rpx;
   line-height: 38rpx;
 }

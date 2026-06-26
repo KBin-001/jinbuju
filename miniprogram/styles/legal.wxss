@@ -48,12 +48,12 @@
 .legal-page .page-header {
   padding: 36rpx;
   border-radius: 36rpx;
-  background: linear-gradient(145deg,#153f36,#356859);
-  box-shadow: 0 20rpx 50rpx rgba(21,63,54,.2);
+  background: linear-gradient(135deg,#E6F4EC 0%,#F7FBF8 60%,#FFFFFF 100%);
+  box-shadow: 0 8rpx 24rpx rgba(36,88,74,.08);
 }
 
-.legal-page .page-eyebrow { color:#e8c97f; }
-.legal-page .page-title { color:#fff; }
-.legal-page .page-subtitle { color:rgba(255,255,255,.68); }
-.legal-page .card, .legal-section { border:0; border-radius:30rpx; background:rgba(255,255,255,.86); box-shadow:0 12rpx 34rpx rgba(21,63,54,.07); }
+.legal-page .page-eyebrow { color:#8A6B1F; }
+.legal-page .page-title { color:#244C43; }
+.legal-page .page-subtitle { color:#6F827B; }
+.legal-page .card, .legal-section { border:0; border-radius:30rpx; background:rgba(255,255,255,.86); box-shadow:0 8rpx 24rpx rgba(36,88,74,.08); }
 .legal-page .card:nth-of-type(even), .legal-section:nth-of-type(even) { background:linear-gradient(145deg,#fff,#eef1fb); }
