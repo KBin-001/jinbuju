@@ -22,8 +22,8 @@
     <view class="week-card">
       <view class="week-head">
         <view class="week-title">{{weekTitle}} <text>{{weekdayShort}}</text></view>
-        <view class="week-switch" catchtap="openCalendar">
-          <view class="week-chevron">⌄</view>
+        <view class="week-switch" catchtap="openCalendar" aria-label="展开日历">
+          <view class="week-chevron"></view>
         </view>
       </view>
       <view class="week-grid">

@@ -48,17 +48,6 @@
           <view class="medal-ribbon"></view>
         </view>
       </view>
-
-      <view class="goal-progress-block">
-        <view class="goal-progress-head">
-          <text>{{progressExplain}}</text>
-          <text class="goal-percent">{{completionRate}}%</text>
-        </view>
-        <view class="goal-progress-track">
-          <view class="goal-progress-fill" style="width: {{completionRate}}%;"></view>
-        </view>
-        <view class="goal-next-step">{{nextStepText}}</view>
-      </view>
     </view>
 
     <view class="overview-card">
@@ -95,15 +84,23 @@
 
       <!-- 周 / 月 柱状图 -->
       <block wx:if="{{trendRange !== 'year'}}">
-        <view class="trend-headline">
-          <view class="trend-headline-item">
-            <view class="trend-headline-value">{{trendSummary.totalMinutes}}<text>分钟</text></view>
-            <view class="trend-headline-label">{{trendRange === 'week' ? '累计投入' : '本月投入'}}</view>
+        <view class="trend-metric-panel">
+          <view class="trend-metric-item">
+            <view class="trend-metric-row">
+              <view class="metric-icon metric-clock"></view>
+              <view class="trend-metric-name">{{trendRange === 'week' ? '本周投入' : '本月投入'}}</view>
+            </view>
+            <view class="trend-metric-value">{{trendSummary.totalMinutes}}<text>分钟</text></view>
+            <view class="trend-metric-compare compare-{{trendSummary.compareTone}}">{{trendSummary.compareText}}</view>
           </view>
-          <view class="trend-headline-divider"></view>
-          <view class="trend-headline-item">
-            <view class="trend-headline-value">{{trendSummary.totalActions}}<text>项</text></view>
-            <view class="trend-headline-label">完成行动</view>
+          <view class="trend-metric-divider"></view>
+          <view class="trend-metric-item">
+            <view class="trend-metric-row">
+              <view class="metric-icon metric-check"></view>
+              <view class="trend-metric-name">完成行动</view>
+            </view>
+            <view class="trend-metric-value">{{trendSummary.totalActions}}<text>项</text></view>
+            <view class="trend-metric-compare">完成率 <text>{{trendSummary.completionRate}}%</text></view>
           </view>
         </view>
 
@@ -112,6 +109,13 @@
         </view>
 
         <block wx:else>
+          <view class="chart-title-row">
+            <view class="chart-title">投入分钟数</view>
+            <view class="chart-legend">
+              <view class="legend-line"></view>
+              <text>趋势线</text>
+            </view>
+          </view>
           <view class="bar-chart" bindtap="onChartBackdropTap">
             <view class="bar-y-axis">
               <text>{{barChart.maxLabel}}</text>
@@ -149,25 +153,35 @@
           <view class="bar-labels">
             <text wx:for="{{barChart.bars}}" wx:key="key">{{item.label}}</text>
           </view>
-          <view class="trend-summary">{{trendSummary.summaryText}}</view>
         </block>
+
+        <view class="trend-advice-card">
+          <view class="trend-advice-icon">
+            <view class="leaf-shape"></view>
+          </view>
+          <view class="trend-advice-text">{{trendSummary.adviceText || trendSummary.summaryText}}</view>
+        </view>
 
         <view class="trend-stats-grid">
           <view class="trend-stat-item">
-            <view class="trend-stat-value">{{trendSummary.totalMinutes}}<text>分钟</text></view>
-            <view class="trend-stat-label">{{trendRange === 'week' ? '本周累计投入' : '本月累计投入'}}</view>
-          </view>
-          <view class="trend-stat-item">
-            <view class="trend-stat-value">{{trendSummary.totalActions}}<text>项</text></view>
-            <view class="trend-stat-label">完成行动</view>
-          </view>
-          <view class="trend-stat-item">
-            <view class="trend-stat-value">{{trendSummary.avgMinutes}}<text>分钟</text></view>
+            <view class="trend-stat-icon stat-bars"></view>
             <view class="trend-stat-label">日均投入</view>
+            <view class="trend-stat-value">{{trendSummary.avgMinutes}}<text>分钟</text></view>
           </view>
           <view class="trend-stat-item">
-            <view class="trend-stat-value">{{trendSummary.streakDays}}<text>天</text></view>
+            <view class="trend-stat-icon stat-pie"></view>
+            <view class="trend-stat-label">完成率</view>
+            <view class="trend-stat-value">{{trendSummary.completionRate}}<text>%</text></view>
+          </view>
+          <view class="trend-stat-item">
+            <view class="trend-stat-icon stat-fire"></view>
             <view class="trend-stat-label">连续坚持</view>
+            <view class="trend-stat-value">{{trendSummary.streakDays}}<text>天</text></view>
+          </view>
+          <view class="trend-stat-item">
+            <view class="trend-stat-icon stat-calendar"></view>
+            <view class="trend-stat-label">最佳投入日</view>
+            <view class="trend-stat-value">{{trendSummary.bestInvestLabel}}</view>
           </view>
         </view>
       </block>

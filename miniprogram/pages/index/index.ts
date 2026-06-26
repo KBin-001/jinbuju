@@ -208,7 +208,7 @@ Page({
     try {
       const today = getTodayBusinessDate(); const selectedDate = this.data.selectedDate || today; const goal = getActiveGoal(); const copy = dateCopy(selectedDate, today); const userProfile = getLocalUserProfile(); const displayName = userProfile?.nickname || "阿岚";
       const goalTasks = goal ? getTasksByGoal(goal.id) : [];
-      const sourceTasks = goal ? getTodayPageTasks(goal.id, selectedDate) : [];
+      const sourceTasks = goal ? getTodayPageTasks(goal.id, selectedDate, today) : [];
       const selectedTasks = sourceTasks.filter((task) => task.currentDate === selectedDate);
       const taskGroups = groupTodayTasks(sourceTasks, selectedDate).map((group) => ({ ...group, tasks: group.tasks.map((task) => toViewTask(task, selectedDate)) }));
       const tasks = taskGroups.reduce<ViewTask[]>((all, group) => all.concat(group.tasks), []);

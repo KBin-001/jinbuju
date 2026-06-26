@@ -50,12 +50,14 @@ export function getTasksByDate(goalId: string, date: string): ActionTask[] {
 }
 
 /** 今日页只展示今天的行动，以及过去仍需继续的行动；未来行动不进入主列表。 */
-export function getTodayPageTasks(goalId: string, today: string): ActionTask[] {
+export function getTodayPageTasks(goalId: string, selectedDate: string, realToday?: string): ActionTask[] {
+  const today = realToday || selectedDate;
   return readManualStore().tasks
     .filter((task) => {
       if (task.goalId !== goalId) return false;
-      if (task.currentDate === today) return true;
-      return task.currentDate < today && (task.status === "pending" || task.status === "partially_completed");
+      if (task.currentDate === selectedDate) return true;
+      if (selectedDate === today && task.currentDate < today && (task.status === "pending" || task.status === "partially_completed")) return true;
+      return false;
     })
     .sort((a, b) => a.currentDate.localeCompare(b.currentDate) || a.createdAt.localeCompare(b.createdAt));
 }

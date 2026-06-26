@@ -2406,18 +2406,29 @@
 }
 
 .week-switch {
-  width: 42rpx;
-  height: 40rpx;
+  width: 48rpx;
+  height: 48rpx;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
+  flex: none;
+  border-radius: 50%;
+  background: #145243;
+  box-shadow: 0 8rpx 18rpx rgba(20, 82, 67, 0.18);
 }
 
 .week-chevron {
-  width: 36rpx;
-  height: 36rpx;
-  color: #9aa5a0;
-  font-size: 28rpx;
+  width: 12rpx;
+  height: 12rpx;
+  box-sizing: border-box;
+  border-right: 3rpx solid #ffffff;
+  border-bottom: 3rpx solid #ffffff;
+  transform: translateY(-2rpx) rotate(45deg);
+}
+
+.week-switch:active {
+  opacity: 0.86;
+  transform: scale(0.96);
 }
 
 .week-grid {

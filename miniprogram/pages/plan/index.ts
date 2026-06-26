@@ -46,6 +46,11 @@ interface TrendSummary {
   totalActions: number;
   avgMinutes: number;
   streakDays: number;
+  completionRate: number;
+  compareText: string;
+  compareTone: "up" | "down" | "flat";
+  bestInvestLabel: string;
+  adviceText: string;
   summaryText: string;
   insufficient: boolean;
 }
@@ -175,13 +180,6 @@ function goalStatusText(rate: number, totalTasks: number): string {
   return "刚开始";
 }
 
-function nextStepText(summary: ProgressSummary | null): string {
-  if (!summary || summary.totalTasks <= 0) return "先添加一个今天能完成的小行动。";
-  if (summary.completedTasks >= summary.totalTasks) return "这一轮行动已经收好，可以继续添加下一步。";
-  const rest = Math.max(0, summary.totalTasks - summary.completedTasks);
-  return `还有 ${rest} 项行动在路上，保持这个节奏就好。`;
-}
-
 function goalPeriod(goal: Goal | null): string {
   if (!goal) return "";
   const start = shortDate(goal.startedAt || goal.createdAt);
@@ -235,15 +233,32 @@ function formatShortDate(date: string): string {
   return `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
 }
 
-function sumRange(tasks: ActionTask[], start: string, end: string): { minutes: number; actions: number } {
+function sumRange(tasks: ActionTask[], start: string, end: string): { minutes: number; actions: number; totalActions: number } {
   let minutes = 0;
   let actions = 0;
+  let totalActions = 0;
   for (const task of tasks) {
     if (!inRange(task, start, end)) continue;
+    totalActions += 1;
     minutes += task.actualMinutes || 0;
     if (task.status === "completed") actions += 1;
   }
-  return { minutes, actions };
+  return { minutes, actions, totalActions };
+}
+
+function compareText(current: number, previous: number, label: string): { text: string; tone: TrendSummary["compareTone"] } {
+  if (previous <= 0 && current <= 0) return { text: `${label}暂无对比`, tone: "flat" };
+  if (previous <= 0) return { text: `${label}新增记录`, tone: "up" };
+  const rate = Math.round(((current - previous) / previous) * 100);
+  if (rate > 0) return { text: `${label} +${rate}%`, tone: "up" };
+  if (rate < 0) return { text: `${label} ${rate}%`, tone: "down" };
+  return { text: `${label} 持平`, tone: "flat" };
+}
+
+function buildAdviceText(todayMinutes: number, avgMinutes: number, range: TrendRange): string {
+  if (todayMinutes <= 0 && avgMinutes <= 0) return "先记录一次投入，趋势线就会开始出现。建议明天保持 30 分钟以上。";
+  const target = Math.max(45, avgMinutes ? Math.ceil(avgMinutes / 5) * 5 : 45);
+  return `今日投入 ${todayMinutes} 分钟，低于${range === "week" ? "本周" : "本月"}日均 ${avgMinutes} 分钟。建议明天保持 ${target} 分钟以上。`;
 }
 
 interface WeekBucket {
@@ -357,8 +372,10 @@ function buildWeekSummary(
   const perDay = buckets.map((bucket) => sumRange(tasks, bucket.start, bucket.end));
   const totalMinutes = perDay.reduce((sum, item) => sum + item.minutes, 0);
   const totalActions = perDay.reduce((sum, item) => sum + item.actions, 0);
+  const totalActionCount = perDay.reduce((sum, item) => sum + item.totalActions, 0);
   const activeDays = perDay.filter((item) => item.minutes > 0).length;
   const avgMinutes = activeDays > 0 ? Math.round(totalMinutes / activeDays) : 0;
+  const completionRate = totalActionCount > 0 ? Math.round((totalActions / totalActionCount) * 100) : 0;
 
   const taskDates = tasks
     .filter((task) => task.status === "completed" || task.status === "partially_completed")
@@ -367,6 +384,11 @@ function buildWeekSummary(
 
   const todayMinutes = perDay[perDay.length - 1]?.minutes || 0;
   const yesterdayMinutes = perDay[perDay.length - 2]?.minutes || 0;
+  const previousStart = formatDate(addDays(toDate(buckets[0].start), -7));
+  const previousEnd = formatDate(addDays(toDate(buckets[0].start), -1));
+  const compare = compareText(totalMinutes, sumRange(tasks, previousStart, previousEnd).minutes, "较上周");
+  const maxIndex = perDay.reduce((best, item, index) => item.minutes > perDay[best].minutes ? index : best, 0);
+  const bestInvestLabel = perDay[maxIndex]?.minutes > 0 ? buckets[maxIndex].label : "-";
 
   let summaryText: string;
   if (activeDays < 2) {
@@ -389,6 +411,11 @@ function buildWeekSummary(
     totalActions,
     avgMinutes,
     streakDays,
+    completionRate,
+    compareText: compare.text,
+    compareTone: compare.tone,
+    bestInvestLabel,
+    adviceText: buildAdviceText(todayMinutes, avgMinutes, "week"),
     summaryText,
     insufficient: activeDays < 2,
   };
@@ -402,7 +429,9 @@ function buildMonthSummary(
   const perWeek = buckets.map((bucket) => sumRange(tasks, bucket.start, bucket.end));
   const totalMinutes = perWeek.reduce((sum, item) => sum + item.minutes, 0);
   const totalActions = perWeek.reduce((sum, item) => sum + item.actions, 0);
+  const totalActionCount = perWeek.reduce((sum, item) => sum + item.totalActions, 0);
   const activeWeeks = perWeek.filter((item) => item.minutes > 0).length;
+  const completionRate = totalActionCount > 0 ? Math.round((totalActions / totalActionCount) * 100) : 0;
   const dayCount = buckets.reduce((sum, bucket) => {
     const start = toDate(bucket.start);
     const end = toDate(bucket.end);
@@ -414,6 +443,11 @@ function buildMonthSummary(
     .filter((task) => task.status === "completed" || task.status === "partially_completed")
     .map((task) => task.currentDate);
   const streakDays = computeStreakDays(taskDates, today);
+  const previousStart = formatDate(addDays(toDate(buckets[0].start), -35));
+  const previousEnd = formatDate(addDays(toDate(buckets[0].start), -1));
+  const compare = compareText(totalMinutes, sumRange(tasks, previousStart, previousEnd).minutes, "较上月");
+  const maxIndex = perWeek.reduce((best, item, index) => item.minutes > perWeek[best].minutes ? index : best, 0);
+  const bestInvestLabel = perWeek[maxIndex]?.minutes > 0 ? buckets[maxIndex].label : "-";
 
   let summaryText: string;
   if (activeWeeks < 2) {
@@ -427,6 +461,11 @@ function buildMonthSummary(
     totalActions,
     avgMinutes,
     streakDays,
+    completionRate,
+    compareText: compare.text,
+    compareTone: compare.tone,
+    bestInvestLabel,
+    adviceText: buildAdviceText(totalMinutes, avgMinutes, "month"),
     summaryText,
     insufficient: activeWeeks < 2,
   };
@@ -724,7 +763,7 @@ function buildTrendView(
   const { weeks, monthLabels } = buildYearHeatmap(year, today, tasks, selectedHeatDate);
   return {
     barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, barWidth: 0, insufficient: false },
-    trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, summaryText: "", insufficient: false },
+    trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, completionRate: 0, compareText: "", compareTone: "flat", bestInvestLabel: "-", adviceText: "", summaryText: "", insufficient: false },
     heatmapWeeks: weeks,
     heatmapMonthLabels: monthLabels,
     yearSummary: buildYearSummary(year, today, tasks),
@@ -738,17 +777,14 @@ Page({
     errorMessage: "",
     goal: null as Goal | null,
     summary: null as ProgressSummary | null,
-    completionRate: 0,
-    progressExplain: "行动完成率 0%",
     levelLabel: "Lv.1 · 自律新兵",
     goalPeriod: "",
     goalStatusText: "添加行动后开始记录",
-    nextStepText: "先添加一个今天能完成的小行动。",
     overviewStats: [] as OverviewStat[],
     trendRange: "week" as TrendRange,
     trendRanges: buildTrendRanges("week"),
     barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, barWidth: WEEK_BAR_WIDTH, insufficient: false } as BarChartData,
-    trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, summaryText: "", insufficient: false } as TrendSummary,
+    trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, completionRate: 0, compareText: "", compareTone: "flat", bestInvestLabel: "-", adviceText: "", summaryText: "", insufficient: false } as TrendSummary,
     selectedTrendItem: null as TrendBar | null,
     heatmapWeeks: [] as HeatmapWeek[],
     heatmapMonthLabels: [] as HeatmapMonthLabel[],
@@ -783,12 +819,9 @@ Page({
         status: "ready",
         goal,
         summary,
-        completionRate: rate,
-        progressExplain: summary && summary.totalTasks > 0 ? `行动完成率 ${rate}%` : "添加行动后开始记录",
         levelLabel: levelLabel(summary?.totalActionDays || 0),
         goalPeriod: goalPeriod(goal),
         goalStatusText: goalStatusText(rate, summary?.totalTasks || 0),
-        nextStepText: nextStepText(summary),
         overviewStats: buildOverview(summary, todaySummary.actualMinutes),
         trendRanges: buildTrendRanges(this.data.trendRange),
         barChart: trendView.barChart,
@@ -910,7 +943,7 @@ Page({
     const query = wx.createSelectorQuery();
     query.select("#trendLine").fields({ node: true, size: true }).exec((res) => {
       if (!res || !res[0] || !res[0].node) return;
-      const canvas = res[0].node as WechatMiniprogram.Canvas;
+      const canvas = res[0].node as { width: number; height: number; getContext: (type: "2d") => CanvasRenderingContext2D };
       const ctx = canvas.getContext("2d");
       const dpr = wx.getWindowInfo().pixelRatio;
       const width = res[0].width;
