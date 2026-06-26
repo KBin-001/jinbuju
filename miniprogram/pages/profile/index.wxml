@@ -1,4 +1,4 @@
-<view class="profile-page">
+<view class="profile-page" style="{{themeStyle}}">
 
   <!-- ======= 一、用户成长 Hero 卡 ======= -->
   <view class="hero-card">
@@ -211,6 +211,65 @@
       <view class="profile-editor-actions">
         <button class="profile-cancel-btn" bindtap="closeProfileEditor">取消</button>
         <button class="profile-save-btn" bindtap="saveProfileEditor">保存</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- ======= 主题皮肤弹窗 ======= -->
+  <view wx:if="{{themePickerVisible}}" class="theme-picker-layer">
+    <view class="theme-picker-mask" catchtap="closeThemePicker"></view>
+    <view class="theme-picker-panel" catchtap="noop">
+      <view class="popup-handle"></view>
+
+      <view class="editor-head">
+        <view>
+          <view class="editor-kicker">THEME</view>
+          <view class="editor-title">主题皮肤</view>
+        </view>
+        <view class="panel-close" catchtap="closeThemePicker">×</view>
+      </view>
+
+      <view class="theme-picker-desc">选择一套喜欢的色彩，让进步局更贴合你的心情。点击卡片可实时预览。</view>
+
+      <view class="theme-list">
+        <view
+          wx:for="{{themeList}}"
+          wx:key="id"
+          class="theme-card {{previewThemeId === item.id ? 'is-selected' : ''}} {{currentThemeId === item.id ? 'is-current' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="previewTheme"
+          hover-class="theme-card--pressed"
+          hover-stay-time="120"
+        >
+          <!-- 主题卡头部：名称 + 主色圆点 + 当前标记 -->
+          <view class="theme-card-head">
+            <view class="theme-card-title-row">
+              <view class="theme-color-dot" style="background: {{item.primary}}"></view>
+              <text class="theme-card-name">{{item.name}}</text>
+              <view wx:if="{{currentThemeId === item.id}}" class="theme-current-tag">当前</view>
+            </view>
+            <text class="theme-card-desc">{{item.desc}}</text>
+          </view>
+
+          <!-- 浅色背景 + 按钮预览 -->
+          <view class="theme-preview" style="background: {{item.heroGradient}}">
+            <view class="theme-preview-row">
+              <view class="theme-preview-chip" style="background: {{item.primarySoft}}; color: {{item.primary}}">进行中</view>
+              <view class="theme-preview-dot" style="background: {{item.accent}}"></view>
+            </view>
+            <view class="theme-preview-track">
+              <view class="theme-preview-fill" style="background: {{item.progressGradient}}; width: 60%;"></view>
+            </view>
+            <view class="theme-preview-btn" style="background: {{item.primary}}">主按钮预览</view>
+          </view>
+
+          <!-- 卡片底部操作 -->
+          <view class="theme-card-actions">
+            <view wx:if="{{currentThemeId === item.id}}" class="theme-applied-tag">✓ 已应用</view>
+            <view wx:elif="{{previewThemeId === item.id}}" class="theme-apply-btn" data-id="{{item.id}}" catchtap="applyTheme">设为当前主题</view>
+            <view wx:else class="theme-tap-hint">点击预览</view>
+          </view>
+        </view>
       </view>
     </view>
   </view>

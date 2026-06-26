@@ -1,6 +1,16 @@
 import { endGoal, getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { getLocalUserProfile, saveLocalUserProfile } from "../../services/profile";
+import {
+  getCurrentTheme,
+  getCurrentThemeId,
+  getThemeById,
+  setCurrentTheme,
+  themeToProfileCssVars,
+  THEME_PRESETS,
+  ThemeId,
+  ThemePreset,
+} from "../../services/theme";
 import { Goal, ProgressSummary } from "../../types/manual";
 import { UserDisplayProfile, UserProfileSource } from "../../types/profile";
 
@@ -17,6 +27,20 @@ interface FunctionEntry {
   title: string;
   emoji: string;
   iconClass: string;
+}
+
+interface ThemeCardView {
+  id: ThemeId;
+  name: string;
+  desc: string;
+  primary: string;
+  primaryDeep: string;
+  primaryLight: string;
+  primarySoft: string;
+  accent: string;
+  bg: string;
+  heroGradient: string;
+  progressGradient: string;
 }
 
 /** 成长概览统计 */
@@ -86,8 +110,25 @@ const FUNCTION_ENTRIES: FunctionEntry[] = [
   { key: "history", title: "历史数据", emoji: "📊", iconClass: "func-icon-wrap--history" },
   { key: "badges",  title: "成就徽章", emoji: "🏆", iconClass: "func-icon-wrap--badges" },
   { key: "ai",      title: "AI 教练", emoji: "✦", iconClass: "func-icon-wrap--ai" },
+  { key: "theme",   title: "主题皮肤", emoji: "🎨", iconClass: "func-icon-wrap--theme" },
   { key: "settings",title: "数据设置", emoji: "⚙️", iconClass: "func-icon-wrap--settings" },
 ];
+
+function toThemeCard(theme: ThemePreset): ThemeCardView {
+  return {
+    id: theme.id,
+    name: theme.name,
+    desc: theme.desc,
+    primary: theme.primary,
+    primaryDeep: theme.primaryDeep,
+    primaryLight: theme.primaryLight,
+    primarySoft: theme.primarySoft,
+    accent: theme.accent,
+    bg: theme.bg,
+    heroGradient: theme.heroGradient,
+    progressGradient: theme.progressGradient,
+  };
+}
 
 Page({
   data: {
@@ -115,10 +156,26 @@ Page({
     profileDraftSource: "custom" as UserProfileSource,
     profileDraftUseInTeam: true,
     endingGoalId: "",
+    themeList: THEME_PRESETS.map(toThemeCard) as ThemeCardView[],
+    currentThemeId: getCurrentThemeId() as ThemeId,
+    previewThemeId: getCurrentThemeId() as ThemeId,
+    themeStyle: themeToProfileCssVars(getCurrentTheme()),
+    themePickerVisible: false,
   },
 
   onShow() {
+    this.applyThemeFromStorage();
     this.loadProfile();
+  },
+
+  /** 从本地 storage 读取当前主题并应用到根节点 */
+  applyThemeFromStorage() {
+    const theme = getCurrentTheme();
+    this.setData({
+      currentThemeId: theme.id,
+      previewThemeId: theme.id,
+      themeStyle: themeToProfileCssVars(theme),
+    });
   },
 
   loadProfile() {
@@ -290,6 +347,10 @@ Page({
       wx.navigateTo({ url: "/pages/data-management/index" });
       return;
     }
+    if (key === "theme") {
+      this.openThemePicker();
+      return;
+    }
     if (key === "history") {
       const archivedGoal = getArchivedGoals()[0];
       if (archivedGoal) wx.navigateTo({ url: `/pages/goal-review/index?id=${archivedGoal.id}` });
@@ -299,5 +360,50 @@ Page({
     if (key === "badges" || key === "focus") {
       wx.switchTab({ url: "/pages/plan/index" });
     }
+  },
+
+  /* ======= 主题皮肤弹窗 ======= */
+
+  openThemePicker() {
+    const id = getCurrentThemeId();
+    this.setData({
+      themePickerVisible: true,
+      previewThemeId: id,
+      themeStyle: themeToProfileCssVars(getCurrentTheme()),
+    });
+  },
+
+  closeThemePicker() {
+    // 关闭时若未保存，回退到当前已保存主题，避免预览残留
+    const theme = getCurrentTheme();
+    this.setData({
+      themePickerVisible: false,
+      previewThemeId: theme.id,
+      themeStyle: themeToProfileCssVars(theme),
+    });
+  },
+
+  /** 点击主题卡片：实时预览，不写入 storage */
+  previewTheme(event: { currentTarget: { dataset: { id?: string } } }) {
+    const id = String(event.currentTarget.dataset.id || "") as ThemeId;
+    if (!id) return;
+    const theme = getThemeById(id);
+    this.setData({
+      previewThemeId: id,
+      themeStyle: themeToProfileCssVars(theme),
+    });
+  },
+
+  /** 点击"设为当前主题"：保存到 storage 并全局生效 */
+  applyTheme(event: { currentTarget: { dataset: { id?: string } } }) {
+    const id = String(event.currentTarget.dataset.id || "") as ThemeId;
+    if (!id) return;
+    const theme = setCurrentTheme(id);
+    this.setData({
+      currentThemeId: id,
+      previewThemeId: id,
+      themeStyle: themeToProfileCssVars(theme),
+    });
+    wx.showToast({ title: "已设为当前主题", icon: "success" });
   },
 });
