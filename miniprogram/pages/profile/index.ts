@@ -1,4 +1,4 @@
-import { getActiveGoals, getArchivedGoals } from "../../services/manualGoal";
+import { getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { getLocalUserProfile, saveLocalUserProfile } from "../../services/profile";
 import { Goal, ProgressSummary } from "../../types/manual";
@@ -15,7 +15,20 @@ interface GoalCardView {
 interface FunctionEntry {
   key: string;
   title: string;
-  icon: string;
+  emoji: string;
+  iconClass: string;
+}
+
+/** 成长概览统计 */
+interface GrowthStats {
+  streakDays: number;
+  completedActions: number;
+  totalMinutes: number;
+}
+
+/** 本周小结 */
+interface WeekSummary {
+  beatPercent: number;
 }
 
 function shortDate(value?: string): string {
@@ -47,11 +60,33 @@ function toGoalCard(goal: Goal, currentGoalId: string): GoalCardView {
   };
 }
 
+/** 聚合所有 active 目标的统计数据 */
+function buildGrowthStats(goals: Goal[]): GrowthStats {
+  let maxStreak = 0;
+  let completedActions = 0;
+  let totalMinutes = 0;
+
+  for (const goal of goals) {
+    const summary = getProgressSummary(goal.id);
+    if ((summary.currentStreakDays || 0) > maxStreak) {
+      maxStreak = summary.currentStreakDays || 0;
+    }
+    completedActions += summary.completedTasks || 0;
+    totalMinutes += summary.totalActualMinutes || 0;
+  }
+
+  return {
+    streakDays: maxStreak,
+    completedActions,
+    totalMinutes,
+  };
+}
+
 const FUNCTION_ENTRIES: FunctionEntry[] = [
-  { key: "history", title: "历史数据", icon: "↺" },
-  { key: "badges", title: "成就徽章", icon: "☆" },
-  { key: "focus", title: "专注报告", icon: "▧" },
-  { key: "settings", title: "数据设置", icon: "⚙" },
+  { key: "history", title: "历史数据", emoji: "📊", iconClass: "func-icon-wrap--history" },
+  { key: "badges",  title: "成就徽章", emoji: "🏆", iconClass: "func-icon-wrap--badges" },
+  { key: "focus",   title: "专注报告", emoji: "📈", iconClass: "func-icon-wrap--focus" },
+  { key: "settings",title: "数据设置", emoji: "⚙️", iconClass: "func-icon-wrap--settings" },
 ];
 
 Page({
@@ -65,6 +100,14 @@ Page({
     levelLabel: "Lv.2 自律新星",
     joinedDays: 1,
     functionEntries: FUNCTION_ENTRIES,
+    stats: {
+      streakDays: 0,
+      completedActions: 0,
+      totalMinutes: 0,
+    } as GrowthStats,
+    weekSummary: {
+      beatPercent: 72, // TODO: 接入真实排名数据后替换
+    } as WeekSummary,
     profileEditorVisible: false,
     profileDraftNickname: "",
     profileDraftAvatarUrl: "",
@@ -80,10 +123,12 @@ Page({
   loadProfile() {
     try {
       const activeGoals = getActiveGoals();
-      const currentGoalId = activeGoals[0]?.id || "";
+      const currentGoalId = getActiveGoal()?.id || activeGoals[0]?.id || "";
       const goals = activeGoals.map((goal) => toGoalCard(goal, currentGoalId));
       const userProfile = getLocalUserProfile();
       const firstGoal = activeGoals[activeGoals.length - 1];
+      const stats = buildGrowthStats(activeGoals);
+
       this.setData({
         goals,
         activeGoalCount: goals.length,
@@ -92,6 +137,7 @@ Page({
         displayAvatarUrl: userProfile?.avatarUrl || "",
         displayAvatarText: userProfile?.nickname ? userProfile.nickname.slice(0, 1) : "岚",
         joinedDays: daysSince(userProfile?.updatedAt || firstGoal?.createdAt),
+        stats,
       });
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "个人数据读取失败", icon: "none" });
@@ -185,7 +231,29 @@ Page({
   openGoal(event: { currentTarget: { dataset: { id?: string } } }) {
     const id = String(event.currentTarget.dataset.id || "");
     if (!id) return;
-    wx.navigateTo({ url: `/pages/goal-detail/index?id=${id}` });
+    try {
+      setCurrentGoal(id);
+      wx.switchTab({ url: "/pages/plan/index" });
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "目标切换失败", icon: "none" });
+    }
+  },
+
+  /** 管理目标 — 跳转到目标创建（复用原有 createGoal 路由） */
+  manageGoals() {
+    wx.navigateTo({ url: "/pages/goal-create/index" });
+  },
+
+  /** 查看全部统计（暂时跳转到进度 Tab） */
+  viewAllStats() {
+    // TODO: 后续可跳转专属统计页
+    wx.switchTab({ url: "/pages/plan/index" });
+  },
+
+  /** 查看本周小结详情 */
+  viewWeekDetail() {
+    // TODO: 接入真实周报页面
+    wx.showToast({ title: "功能开发中", icon: "none" });
   },
 
   openFunction(event: { currentTarget: { dataset: { key?: string } } }) {

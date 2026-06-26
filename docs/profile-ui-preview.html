@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>进步局 · 我的页面 UI 预览</title>
+<style>
+  /* 模拟 iPhone 15 Pro 尺寸 */
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+  body {
+    background: #1a1a1a;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+    font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  }
+
+  .phone-frame {
+    width: 393px;
+    min-height: 852px;
+    border-radius: 48px;
+    background: #F6FAF7;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 10px #2a2a2a,
+      0 0 0 12px #3a3a3a,
+      0 40px 80px rgba(0,0,0,0.6);
+    position: relative;
+  }
+
+  /* 状态栏 */
+  .status-bar {
+    height: 54px;
+    background: #0F4B3D;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 28px 0;
+    position: relative;
+    z-index: 10;
+  }
+  .status-time { color: #fff; font-size: 15px; font-weight: 700; }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+  .status-icons span { color: #fff; font-size: 13px; }
+
+  /* 导航栏 */
+  .nav-bar {
+    height: 44px;
+    background: #0F4B3D;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .nav-title { color: #fff; font-size: 17px; font-weight: 600; }
+  .nav-actions {
+    position: absolute;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .nav-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+  }
+
+  /* 可滚动内容 */
+  .page-scroll {
+    height: calc(852px - 54px - 44px - 68px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .page-scroll::-webkit-scrollbar { display: none; }
+
+  /* ===== Hero 卡 ===== */
+  .hero-card {
+    position: relative;
+    overflow: hidden;
+    padding: 22px 16px 18px;
+    background: linear-gradient(145deg, #0F4B3D 0%, #145F4E 60%, #1A7260 100%);
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 6px 20px rgba(15,75,61,0.28);
+  }
+  .hero-deco-circle {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .hero-deco-circle--1 {
+    top: -30px; right: -25px;
+    width: 130px; height: 130px;
+    background: rgba(255,255,255,0.04);
+  }
+  .hero-deco-circle--2 {
+    bottom: -40px; left: -20px;
+    width: 100px; height: 100px;
+    background: rgba(255,255,255,0.03);
+  }
+  .hero-deco-leaf {
+    position: absolute;
+    top: 8px; right: 12px;
+    color: rgba(255,255,255,0.08);
+    font-size: 60px;
+    line-height: 1;
+    pointer-events: none;
+    transform: rotate(20deg);
+    font-style: normal;
+  }
+
+  .hero-top-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-avatar {
+    flex-shrink: 0;
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    background: #F8D26A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(255,255,255,0.3);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    position: relative;
+    cursor: pointer;
+  }
+  .hero-avatar-text {
+    color: #1F5B4A;
+    font-size: 22px;
+    font-weight: 800;
+  }
+  .hero-avatar-badge {
+    position: absolute;
+    right: -1px; bottom: 1px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #D9A441;
+    border: 1.5px solid rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 8px;
+  }
+
+  .hero-info { flex: 1; min-width: 0; padding-top: 2px; }
+  .hero-name-row { display: flex; align-items: center; gap: 4px; }
+  .hero-name { color: #fff; font-size: 19px; font-weight: 800; line-height: 1.2; }
+  .hero-caret { color: rgba(255,255,255,0.5); font-size: 14px; }
+
+  .hero-level-pill {
+    display: inline-flex;
+    align-items: center;
+    height: 19px;
+    padding: 0 8px;
+    margin-top: 6px;
+    border-radius: 9.5px;
+    background: rgba(217,164,65,0.22);
+    border: 1px solid rgba(217,164,65,0.5);
+    color: #F8D26A;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .hero-joined {
+    margin-top: 5px;
+    color: rgba(255,255,255,0.62);
+    font-size: 12px;
+  }
+
+  .hero-edit-btn {
+    flex-shrink: 0;
+    height: 27px;
+    padding: 0 10px;
+    border: 1px solid rgba(255,255,255,0.36);
+    border-radius: 14px;
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.9);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    margin-top: 2px;
+  }
+
+  .hero-motto {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.72);
+    font-size: 13px;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== 内容区 ===== */
+  .page-content {
+    padding: 14px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* 通用卡片 */
+  .section-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(20,60,50,0.07);
+    padding: 14px;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    color: #19332D;
+    font-size: 17px;
+    font-weight: 800;
+  }
+  .card-link {
+    color: #145F4E;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ===== 成长概览 ===== */
+  .overview-stats {
+    display: flex;
+    align-items: stretch;
+  }
+  .stat-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .stat-divider {
+    width: 1px;
+    background: #E6EEE9;
+    margin: 2px 0;
+  }
+  .stat-icon-wrap {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+    font-size: 16px;
+  }
+  .stat-icon-wrap--green { background: #EAF5EF; }
+  .stat-icon-wrap--teal  { background: #E4F3EE; }
+  .stat-icon-wrap--gold  { background: #FDF4E3; }
+
+  .stat-num {
+    color: #19332D;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .stat-row {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+  }
+  .stat-unit {
+    color: #7B8B86;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .stat-label {
+    color: #7B8B86;
+    font-size: 11px;
+    margin-top: 1px;
+  }
+
+  /* ===== 我的目标 ===== */
+  .goal-item {
+    padding: 11px 10px;
+    border: 1px solid #EAF5EF;
+    border-radius: 10px;
+    background: #FAFCFA;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s;
+    margin-bottom: 9px;
+  }
+  .goal-item:hover { opacity: 0.85; transform: scale(0.99); }
+  .goal-item:last-of-type { margin-bottom: 0; }
+
+  .goal-item-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+  }
+  .goal-icon-wrap {
+    flex-shrink: 0;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #EAF5EF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+  }
+  .goal-body { flex: 1; min-width: 0; }
+  .goal-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .goal-item-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #19332D;
+    font-size: 15px;
+    font-weight: 800;
+  }
+  .goal-status-chip {
+    flex-shrink: 0;
+    height: 18px;
+    padding: 0 7px;
+    border-radius: 9px;
+    background: #EAF5EF;
+    color: #145F4E;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+  }
+  .goal-sub {
+    display: block;
+    margin-top: 4px;
+    color: #7B8B86;
+    font-size: 12px;
+  }
+  .goal-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 7px;
+  }
+  .goal-progress-track {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: #E8F0EB;
+    overflow: hidden;
+  }
+  .goal-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #145F4E 0%, #2D8A6C 100%);
+  }
+  .goal-pct {
+    color: #145F4E;
+    font-size: 13px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .add-goal-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 38px;
+    margin-top: 10px;
+    border-radius: 19px;
+    border: 1.5px dashed #B8D4C8;
+    background: #F6FAF7;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .add-goal-btn:hover { opacity: 0.75; }
+  .add-goal-plus { color: #145F4E; font-size: 16px; line-height: 1; }
+  .add-goal-text { color: #145F4E; font-size: 13px; font-weight: 600; }
+
+  /* ===== 功能入口 ===== */
+  .func-card {
+    padding: 12px 8px 10px;
+    display: flex;
+    align-items: stretch;
+  }
+  .func-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 4px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s;
+    position: relative;
+  }
+  .func-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 15%;
+    right: 0;
+    width: 1px;
+    height: 70%;
+    background: #E6EEE9;
+  }
+  .func-item:hover { opacity: 0.75; transform: scale(0.94); }
+
+  .func-icon-wrap {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .func-icon-wrap--history { background: #EAF5EF; }
+  .func-icon-wrap--badges  { background: #FDF4E3; }
+  .func-icon-wrap--focus   { background: #E8F3FF; }
+  .func-icon-wrap--settings { background: #F3F3F3; }
+
+  .func-label {
+    color: #19332D;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  /* ===== 本周小结 ===== */
+  .week-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: linear-gradient(110deg, #FFFBEF 0%, #FFF9E8 100%);
+    border: 1px solid rgba(217,164,65,0.2);
+    box-shadow: 0 3px 12px rgba(180,130,30,0.08);
+  }
+  .week-badge-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+  }
+  .week-badge {
+    flex-shrink: 0;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #145F4E 0%, #0F4B3D 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 2px 7px rgba(15,75,61,0.25);
+  }
+  .week-text { flex: 1; min-width: 0; }
+  .week-title {
+    display: block;
+    color: #19332D;
+    font-size: 15px;
+    font-weight: 800;
+  }
+  .week-desc {
+    display: block;
+    margin-top: 3px;
+    color: #7B8B86;
+    font-size: 12px;
+  }
+  .week-progress-track {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(217,164,65,0.2);
+    overflow: hidden;
+    margin-top: 7px;
+  }
+  .week-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #D9A441 0%, #F0C060 100%);
+    width: 72%;
+  }
+  .week-detail-btn {
+    flex-shrink: 0;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 16px;
+    background: #145F4E;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .week-detail-btn:hover { opacity: 0.82; }
+
+  /* ===== TabBar ===== */
+  .tab-bar {
+    height: 68px;
+    background: #fff;
+    border-top: 1px solid #E6EEE9;
+    display: flex;
+    align-items: stretch;
+    box-shadow: 0 -2px 12px rgba(20,60,50,0.06);
+  }
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    padding-bottom: 8px;
+  }
+  .tab-icon { font-size: 22px; }
+  .tab-label { font-size: 10px; font-weight: 500; color: #7B8B86; }
+  .tab-item--active .tab-label { color: #145F4E; font-weight: 700; }
+  .tab-item--active .tab-icon { filter: none; }
+
+  /* 标注 */
+  .info-panel {
+    width: 393px;
+    margin-top: 24px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  }
+  .info-panel h2 { font-size: 16px; font-weight: 700; color: #19332D; margin-bottom: 12px; }
+  .info-panel ul { padding-left: 16px; }
+  .info-panel li { font-size: 13px; color: #555; line-height: 1.8; }
+  .info-panel li strong { color: #145F4E; }
+</style>
+</head>
+<body>
+
+<div style="display:flex;flex-direction:column;align-items:center;gap:0">
+
+  <!-- 手机外框 -->
+  <div class="phone-frame">
+
+    <!-- 状态栏 -->
+    <div class="status-bar">
+      <span class="status-time">9:41</span>
+      <div class="status-icons">
+        <span>▮▮▮</span>
+        <span>WiFi</span>
+        <span>🔋</span>
+      </div>
+    </div>
+
+    <!-- 导航栏 -->
+    <div class="nav-bar">
+      <span class="nav-title">我的</span>
+      <div class="nav-actions">
+        <div class="nav-btn">···</div>
+        <div class="nav-btn">◎</div>
+      </div>
+    </div>
+
+    <!-- 可滚动区域 -->
+    <div class="page-scroll">
+
+      <!-- Hero 卡片 -->
+      <div class="hero-card">
+        <div class="hero-deco-circle hero-deco-circle--1"></div>
+        <div class="hero-deco-circle hero-deco-circle--2"></div>
+        <div class="hero-deco-leaf">❧</div>
+
+        <div class="hero-top-row">
+          <!-- 头像 -->
+          <div class="hero-avatar">
+            <span class="hero-avatar-text">岚</span>
+            <div class="hero-avatar-badge">★</div>
+          </div>
+
+          <!-- 信息 -->
+          <div class="hero-info">
+            <div class="hero-name-row">
+              <span class="hero-name">阿岚</span>
+              <span class="hero-caret">›</span>
+            </div>
+            <div class="hero-level-pill">⭐ Lv.2 自律新星</div>
+            <div class="hero-joined">入驻第 12 天</div>
+          </div>
+
+          <!-- 编辑按钮 -->
+          <div class="hero-edit-btn">✎ 编辑资料</div>
+        </div>
+
+        <div class="hero-motto">自律，是改变人生的开始。</div>
+      </div>
+
+      <!-- 页面内容 -->
+      <div class="page-content">
+
+        <!-- 成长概览 -->
+        <div class="section-card">
+          <div class="card-head">
+            <span class="card-title">成长概览</span>
+            <span class="card-link">查看全部 ›</span>
+          </div>
+          <div class="overview-stats">
+            <div class="stat-col">
+              <div class="stat-icon-wrap stat-icon-wrap--green">📅</div>
+              <div class="stat-row">
+                <span class="stat-num">12</span>
+                <span class="stat-unit">天</span>
+              </div>
+              <span class="stat-label">连续坚持</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-col">
+              <div class="stat-icon-wrap stat-icon-wrap--teal">✅</div>
+              <div class="stat-row">
+                <span class="stat-num">18</span>
+                <span class="stat-unit">项</span>
+              </div>
+              <span class="stat-label">完成行动</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-col">
+              <div class="stat-icon-wrap stat-icon-wrap--gold">⏱</div>
+              <div class="stat-row">
+                <span class="stat-num">405</span>
+                <span class="stat-unit">分钟</span>
+              </div>
+              <span class="stat-label">累计投入</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 我的目标 -->
+        <div class="section-card">
+          <div class="card-head">
+            <span class="card-title">我的目标</span>
+            <span class="card-link">管理目标 ›</span>
+          </div>
+
+          <!-- 目标卡片 -->
+          <div class="goal-item">
+            <div class="goal-item-main">
+              <div class="goal-icon-wrap">🎯</div>
+              <div class="goal-body">
+                <div class="goal-item-head">
+                  <span class="goal-item-title">通过英语四六级</span>
+                  <span class="goal-status-chip">进行中</span>
+                </div>
+                <span class="goal-sub">已坚持 12 天</span>
+                <div class="goal-progress-row">
+                  <div class="goal-progress-track">
+                    <div class="goal-progress-fill" style="width:76%"></div>
+                  </div>
+                  <span class="goal-pct">76%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 添加目标 -->
+          <div class="add-goal-btn">
+            <span class="add-goal-plus">+</span>
+            <span class="add-goal-text">添加目标</span>
+          </div>
+        </div>
+
+        <!-- 功能入口 -->
+        <div class="section-card func-card">
+          <div class="func-item">
+            <div class="func-icon-wrap func-icon-wrap--history">📊</div>
+            <span class="func-label">历史数据</span>
+          </div>
+          <div class="func-item">
+            <div class="func-icon-wrap func-icon-wrap--badges">🏆</div>
+            <span class="func-label">成就徽章</span>
+          </div>
+          <div class="func-item">
+            <div class="func-icon-wrap func-icon-wrap--focus">📈</div>
+            <span class="func-label">专注报告</span>
+          </div>
+          <div class="func-item">
+            <div class="func-icon-wrap func-icon-wrap--settings">⚙️</div>
+            <span class="func-label">数据设置</span>
+          </div>
+        </div>
+
+        <!-- 本周小结 -->
+        <div class="section-card week-card">
+          <div class="week-badge-wrap">
+            <div class="week-badge">🌿</div>
+            <div class="week-text">
+              <span class="week-title">本周小结</span>
+              <span class="week-desc">你超过了 72% 的同伴，加油！</span>
+              <div class="week-progress-track">
+                <div class="week-progress-fill"></div>
+              </div>
+            </div>
+          </div>
+          <div class="week-detail-btn">查看详情</div>
+        </div>
+
+      </div>
+    </div><!-- /page-scroll -->
+
+    <!-- TabBar -->
+    <div class="tab-bar">
+      <div class="tab-item">
+        <span class="tab-icon">📋</span>
+        <span class="tab-label">今日</span>
+      </div>
+      <div class="tab-item">
+        <span class="tab-icon">📊</span>
+        <span class="tab-label">进度</span>
+      </div>
+      <div class="tab-item">
+        <span class="tab-icon">👥</span>
+        <span class="tab-label">小队</span>
+      </div>
+      <div class="tab-item tab-item--active">
+        <span class="tab-icon" style="filter:drop-shadow(0 0 2px #145F4E)">👤</span>
+        <span class="tab-label">我的</span>
+      </div>
+    </div>
+
+  </div><!-- /phone-frame -->
+
+  <!-- 标注说明 -->
+  <div class="info-panel">
+    <h2>🎨 本次重构修改文件</h2>
+    <ul>
+      <li><strong>miniprogram/pages/profile/index.wxml</strong> — 全量重写 HTML 结构</li>
+      <li><strong>miniprogram/pages/profile/index.wxss</strong> — 全量重写样式（深绿渐变 Hero / 三色系统 / 金色点缀）</li>
+      <li><strong>miniprogram/pages/profile/index.ts</strong> — 新增 stats / weekSummary 数据字段，功能入口升级 emoji+iconClass</li>
+    </ul>
+    <br/>
+    <h2>✅ 保留内容</h2>
+    <ul>
+      <li>所有业务逻辑：路由跳转、数据读取、tabBar 不变</li>
+      <li>编辑资料弹层：结构与交互完整保留，仅升级配色</li>
+      <li>目标数据：复用 <strong>getActiveGoals / getProgressSummary</strong>，不写死</li>
+    </ul>
+    <br/>
+    <h2>📝 TODO 标注</h2>
+    <ul>
+      <li>weekSummary.beatPercent 目前为静态 mock 值 72%，后续接入真实排名数据</li>
+      <li>viewAllStats / viewWeekDetail 暂时跳转进度 Tab，后续可接专属页面</li>
+    </ul>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,8 +1,9 @@
-import { getActiveGoal, getArchivedGoals } from "../../services/manualGoal";
+import { getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { calculateTodaySummary, getTasksByDate, getTasksByGoal } from "../../services/manualTask";
 import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
 import { addDays, formatDate } from "../../utils/date";
+import { off, on } from "../../utils/eventBus";
 
 type TrendRange = "week" | "month" | "year";
 type HeatLevel = 0 | 1 | 2 | 3 | 4;
@@ -17,6 +18,14 @@ interface OverviewStat {
   label: string;
   value: string;
   unit: string;
+}
+
+interface GoalOption {
+  id: string;
+  title: string;
+  progressPercent: number;
+  statusText: string;
+  active: boolean;
 }
 
 interface TrendBar {
@@ -188,6 +197,20 @@ function goalPeriod(goal: Goal | null): string {
 
 function buildTrendRanges(activeKey: TrendRange): TrendRangeOption[] {
   return TREND_RANGES.map((item) => ({ ...item, active: item.key === activeKey }));
+}
+
+function buildGoalOptions(goals: Goal[], activeGoalId: string, today: string): GoalOption[] {
+  return goals.map((goal) => {
+    const summary = getProgressSummary(goal.id, today);
+    const rate = completionRate(summary);
+    return {
+      id: goal.id,
+      title: goal.title,
+      progressPercent: rate,
+      statusText: goalStatusText(rate, summary.totalTasks),
+      active: goal.id === activeGoalId,
+    };
+  });
 }
 
 function niceMaxMinutes(value: number): number {
@@ -776,6 +799,8 @@ Page({
     status: "loading",
     errorMessage: "",
     goal: null as Goal | null,
+    goalOptions: [] as GoalOption[],
+    goalPickerVisible: false,
     summary: null as ProgressSummary | null,
     levelLabel: "Lv.1 · 自律新兵",
     goalPeriod: "",
@@ -797,6 +822,19 @@ Page({
     recentRecords: [] as RecentRecord[],
     hasHistoryReview: false,
   },
+  focusGoalHandler: null as null | (() => void),
+
+  onLoad() {
+    this.focusGoalHandler = () => this.load();
+    on("goal:focus:update", this.focusGoalHandler);
+  },
+
+  onUnload() {
+    if (this.focusGoalHandler) {
+      off("goal:focus:update", this.focusGoalHandler);
+      this.focusGoalHandler = null;
+    }
+  },
 
   onShow() {
     this.load();
@@ -807,6 +845,7 @@ Page({
     try {
       const today = formatDate(new Date());
       const goal = getActiveGoal();
+      const activeGoals = getActiveGoals();
       const summary = goal ? getProgressSummary(goal.id, today) : null;
       const allTasks = goal ? getTasksByGoal(goal.id) : [];
       const todayTasks = goal ? getTasksByDate(goal.id, today) : [];
@@ -818,6 +857,8 @@ Page({
       this.setData({
         status: "ready",
         goal,
+        goalOptions: buildGoalOptions(activeGoals, goal?.id || "", today),
+        goalPickerVisible: false,
         summary,
         levelLabel: levelLabel(summary?.totalActionDays || 0),
         goalPeriod: goalPeriod(goal),
@@ -852,8 +893,36 @@ Page({
     this.load();
   },
 
+  noop() {},
+
   createGoal() {
     wx.navigateTo({ url: "/pages/goal-create/index" });
+  },
+
+  openGoalPicker() {
+    if (this.data.goalOptions.length <= 1) return;
+    this.setData({ goalPickerVisible: true });
+  },
+
+  closeGoalPicker() {
+    this.setData({ goalPickerVisible: false }, () => {
+      this.drawTrendLine();
+    });
+  },
+
+  switchGoal(event: { currentTarget: { dataset: { id?: string } } }) {
+    const id = String(event.currentTarget.dataset.id || "");
+    if (!id || id === this.data.goal?.id) {
+      this.closeGoalPicker();
+      return;
+    }
+    try {
+      setCurrentGoal(id);
+      this.setData({ goalPickerVisible: false, trendRange: "week", trendRanges: buildTrendRanges("week") });
+      this.load();
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "目标切换失败", icon: "none" });
+    }
   },
 
   switchTrendRange(event: { currentTarget: { dataset: { key?: TrendRange } } }) {

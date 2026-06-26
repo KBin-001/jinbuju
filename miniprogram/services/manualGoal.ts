@@ -1,4 +1,5 @@
 import { ActionTask, ArchivedGoal, ArchivedGoalStats, Goal, GoalCategory } from "../types/manual";
+import { emit } from "../utils/eventBus";
 import { createLocalId, readManualStore, writeManualStore } from "./manualStore";
 
 export interface CreateGoalInput {
@@ -122,6 +123,7 @@ export function createGoal(input: CreateGoalInput): Goal {
   store.goals.push(goal);
   store.activeGoalId = goal.id;
   writeManualStore(store);
+  emit("goal:focus:update", { goalId: goal.id });
   return goal;
 }
 
@@ -132,6 +134,7 @@ export function setCurrentGoal(goalId: string): Goal {
   goal.updatedAt = new Date().toISOString();
   store.activeGoalId = goal.id;
   writeManualStore(store);
+  emit("goal:focus:update", { goalId: goal.id });
   return goal;
 }
 
@@ -155,6 +158,7 @@ export function archiveGoal(goalId: string, nextStatus: ArchivedGoal["status"] =
     store.activeGoalId = nextActive?.id;
   }
   writeManualStore(store);
+  emit("goal:focus:update", { goalId: store.activeGoalId });
 
   return archivedGoal;
 }

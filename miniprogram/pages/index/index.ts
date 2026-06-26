@@ -189,17 +189,24 @@ Page({
     currentScrollTop: 0,
   },
   profileHandler: null as null | (() => void),
+  focusGoalHandler: null as null | (() => void),
   onPageScroll(event: { scrollTop: number }) {
     this.setData({ currentScrollTop: event.scrollTop });
   },
   onLoad() {
     this.profileHandler = () => this.load();
+    this.focusGoalHandler = () => this.load();
     on("profile:update", this.profileHandler);
+    on("goal:focus:update", this.focusGoalHandler);
   },
   onUnload() {
     if (this.profileHandler) {
       off("profile:update", this.profileHandler);
       this.profileHandler = null;
+    }
+    if (this.focusGoalHandler) {
+      off("goal:focus:update", this.focusGoalHandler);
+      this.focusGoalHandler = null;
     }
   },
   onShow() { this.load(); },

@@ -25,7 +25,7 @@
       <view class="page-subtitle">记录每一次坚持，看见长期变化</view>
     </view>
 
-    <view class="goal-card">
+    <view class="goal-card" bindtap="openGoalPicker">
       <view class="goal-card-main">
         <view class="goal-copy">
           <view class="section-eyebrow">当前目标</view>
@@ -37,7 +37,12 @@
           <view class="goal-period">{{goalPeriod}}</view>
         </view>
 
-        <view class="medal {{medalState.achieved ? 'is-achieved' : ''}}">
+        <view wx:if="{{goalOptions.length > 1}}" class="goal-switch-button" catchtap="openGoalPicker">
+          <text>切换目标</text>
+          <view class="goal-switch-arrow"></view>
+        </view>
+
+        <view wx:else class="medal {{medalState.achieved ? 'is-achieved' : ''}}">
           <view class="medal-spark spark-a"></view>
           <view class="medal-spark spark-b"></view>
           <view class="medal-leaf leaf-left"></view>
@@ -46,6 +51,41 @@
             <view class="medal-star">★</view>
           </view>
           <view class="medal-ribbon"></view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{goalPickerVisible}}" class="goal-picker-layer" catchtouchmove="noop">
+      <view class="goal-picker-mask" catchtap="closeGoalPicker"></view>
+      <view class="goal-picker-panel" catchtap="noop">
+        <view class="goal-picker-grabber"></view>
+        <view class="goal-picker-header">
+          <view>
+            <view class="goal-picker-kicker">FOCUS GOAL</view>
+            <view class="goal-picker-title">切换当前聚焦目标</view>
+          </view>
+          <view class="goal-picker-close" catchtap="closeGoalPicker">×</view>
+        </view>
+        <view class="goal-picker-list">
+          <view
+            wx:for="{{goalOptions}}"
+            wx:key="id"
+            class="goal-option {{item.active ? 'is-active' : ''}}"
+            data-id="{{item.id}}"
+            catchtap="switchGoal"
+          >
+            <view class="goal-option-main">
+              <view class="goal-option-title">{{item.title}}</view>
+              <view class="goal-option-meta">
+                <text>{{item.progressPercent}}%</text>
+                <text>{{item.statusText}}</text>
+              </view>
+              <view class="goal-option-track">
+                <view class="goal-option-fill" style="width: {{item.progressPercent}}%;"></view>
+              </view>
+            </view>
+            <view class="goal-option-action">{{item.active ? '当前' : '切换'}}</view>
+          </view>
         </view>
       </view>
     </view>
@@ -147,7 +187,7 @@
                   ></view>
                 </view>
               </view>
-              <canvas type="2d" id="trendLine" class="line-canvas"></canvas>
+              <canvas wx:if="{{!goalPickerVisible}}" type="2d" id="trendLine" class="line-canvas"></canvas>
             </view>
           </view>
           <view class="bar-labels">

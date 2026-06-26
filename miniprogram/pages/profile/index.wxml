@@ -1,61 +1,170 @@
-<view class="page profile-page">
-  <view class="user-card">
-    <view class="avatar-wrap">
-      <image wx:if="{{displayAvatarUrl}}" class="avatar-image" src="{{displayAvatarUrl}}" mode="aspectFill" />
-      <text wx:else>{{displayAvatarText}}</text>
-      <view class="avatar-badge">●</view>
-      <button class="avatar-hitarea" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></button>
-    </view>
-    <view class="user-main">
-      <view class="name-row">
-        <view class="profile-name">{{displayName}}</view>
-        <view class="name-caret">⌄</view>
+<view class="profile-page">
+
+  <!-- ======= 一、用户成长 Hero 卡 ======= -->
+  <view class="hero-card">
+    <!-- 背景装饰纹理圆 -->
+    <view class="hero-deco-circle hero-deco-circle--1"></view>
+    <view class="hero-deco-circle hero-deco-circle--2"></view>
+    <view class="hero-deco-leaf">❧</view>
+
+    <!-- 顶部行：头像 + 姓名信息 + 编辑按钮 -->
+    <view class="hero-top-row">
+      <view class="hero-avatar-wrap">
+        <image wx:if="{{displayAvatarUrl}}" class="hero-avatar-img" src="{{displayAvatarUrl}}" mode="aspectFill" />
+        <text wx:else class="hero-avatar-text">{{displayAvatarText}}</text>
+        <!-- 金色徽章小点 -->
+        <view class="hero-avatar-badge">★</view>
+        <!-- 微信头像选取热区 -->
+        <button class="avatar-hitarea" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></button>
       </view>
-      <view class="level-row">
-        <view class="level-pill">{{levelLabel}}</view>
-        <view class="joined-days">入驻第 {{joinedDays}} 天</view>
+
+      <view class="hero-user-info">
+        <view class="hero-name-row">
+          <text class="hero-name">{{displayName}}</text>
+          <text class="hero-name-caret">›</text>
+        </view>
+        <view class="hero-level-pill">⭐ {{levelLabel}}</view>
+        <view class="hero-joined">入驻第 {{joinedDays}} 天</view>
       </view>
+
+      <button class="hero-edit-btn" bindtap="openProfileEditor">✎ 编辑资料</button>
     </view>
-    <button class="edit-profile-btn" bindtap="openProfileEditor">编辑资料</button>
+
+    <!-- 成长文案 -->
+    <view class="hero-motto">自律，是改变人生的开始。</view>
   </view>
 
-  <view class="goal-panel">
-    <view class="panel-head">
-      <view class="panel-title">我的目标</view>
-      <view class="panel-status">进行中 {{activeGoalCount}} ›</view>
-    </view>
+  <!-- 内容区 -->
+  <view class="page-content">
 
-    <view wx:if="{{goals.length === 0}}" class="empty-goal">
-      <view class="empty-title">还没有进行中的目标</view>
-      <view class="empty-desc">从一个想持续推进的小目标开始。</view>
-    </view>
-
-    <view wx:else class="goal-list">
-      <view wx:for="{{goals}}" wx:key="id" class="goal-item" data-id="{{item.id}}" bindtap="openGoal">
-        <view class="goal-item-head">
-          <view class="goal-title">{{item.title}}</view>
-          <view wx:if="{{item.isCurrent}}" class="current-chip">当前</view>
+    <!-- ======= 二、成长概览卡 ======= -->
+    <view class="section-card overview-card">
+      <view class="card-head">
+        <text class="card-title">成长概览</text>
+        <view class="card-link" bindtap="viewAllStats">查看全部 ›</view>
+      </view>
+      <view class="overview-stats">
+        <view class="stat-col">
+          <view class="stat-icon-wrap stat-icon-wrap--green">
+            <text class="stat-icon">📅</text>
+          </view>
+          <text class="stat-num">{{stats.streakDays}}</text>
+          <text class="stat-unit">天</text>
+          <text class="stat-label">连续坚持</text>
         </view>
-        <view class="goal-meta-row">
-          <text>已坚持 {{item.days}} 天</text>
-          <text class="goal-percent">{{item.progressPercent}}%</text>
+        <view class="stat-divider"></view>
+        <view class="stat-col">
+          <view class="stat-icon-wrap stat-icon-wrap--teal">
+            <text class="stat-icon">✅</text>
+          </view>
+          <text class="stat-num">{{stats.completedActions}}</text>
+          <text class="stat-unit">项</text>
+          <text class="stat-label">完成行动</text>
         </view>
-        <view class="progress-track">
-          <view class="progress-fill" style="width: {{item.progressPercent}}%;"></view>
+        <view class="stat-divider"></view>
+        <view class="stat-col">
+          <view class="stat-icon-wrap stat-icon-wrap--gold">
+            <text class="stat-icon">⏱</text>
+          </view>
+          <text class="stat-num">{{stats.totalMinutes}}</text>
+          <text class="stat-unit">分钟</text>
+          <text class="stat-label">累计投入</text>
         </view>
       </view>
     </view>
 
-    <button class="add-goal-btn" bindtap="createGoal">+ 添加目标</button>
-  </view>
+    <!-- ======= 三、我的目标卡 ======= -->
+    <view class="section-card goal-card">
+      <view class="card-head">
+        <text class="card-title">我的目标</text>
+        <view class="card-link" bindtap="manageGoals">管理目标 ›</view>
+      </view>
 
-  <view class="function-grid">
-    <view wx:for="{{functionEntries}}" wx:key="key" class="function-item" data-key="{{item.key}}" bindtap="openFunction">
-      <view class="function-icon">{{item.icon}}</view>
-      <view class="function-title">{{item.title}}</view>
+      <!-- 空状态 -->
+      <view wx:if="{{goals.length === 0}}" class="goal-empty">
+        <view class="goal-empty-icon">🎯</view>
+        <view class="goal-empty-title">还没有进行中的目标</view>
+        <view class="goal-empty-desc">从一个想持续推进的小目标开始。</view>
+      </view>
+
+      <!-- 目标列表 -->
+      <view wx:else class="goal-list">
+        <view
+          wx:for="{{goals}}"
+          wx:key="id"
+          class="goal-item"
+          data-id="{{item.id}}"
+          bindtap="openGoal"
+          hover-class="goal-item--pressed"
+          hover-stay-time="120"
+        >
+          <view class="goal-item-main">
+            <view class="goal-item-icon-wrap">
+              <text class="goal-item-icon">🎯</text>
+            </view>
+            <view class="goal-item-body">
+              <view class="goal-item-head">
+                <text class="goal-item-title">{{item.title}}</text>
+                <view class="goal-status-chip">{{item.isCurrent ? '进行中' : '待续'}}</view>
+              </view>
+              <text class="goal-item-sub">已坚持 {{item.days}} 天</text>
+              <view class="goal-progress-row">
+                <view class="goal-progress-track">
+                  <view class="goal-progress-fill" style="width: {{item.progressPercent}}%;"></view>
+                </view>
+                <text class="goal-progress-pct">{{item.progressPercent}}%</text>
+              </view>
+              <view class="goal-focus-action">{{item.isCurrent ? '查看成长档案' : '设为当前目标'}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 添加目标按钮 -->
+      <view class="add-goal-btn" bindtap="createGoal" hover-class="add-goal-btn--pressed" hover-stay-time="120">
+        <text class="add-goal-plus">+</text>
+        <text class="add-goal-text">添加目标</text>
+      </view>
     </view>
+
+    <!-- ======= 四、功能入口卡 ======= -->
+    <view class="section-card func-card">
+      <view
+        wx:for="{{functionEntries}}"
+        wx:key="key"
+        class="func-item"
+        data-key="{{item.key}}"
+        bindtap="openFunction"
+        hover-class="func-item--pressed"
+        hover-stay-time="120"
+      >
+        <view class="func-icon-wrap {{item.iconClass}}">
+          <text class="func-icon-emoji">{{item.emoji}}</text>
+        </view>
+        <text class="func-label">{{item.title}}</text>
+      </view>
+    </view>
+
+    <!-- ======= 五、本周小结卡 ======= -->
+    <view class="section-card week-card">
+      <view class="week-badge-wrap">
+        <view class="week-badge">
+          <text class="week-badge-icon">🌿</text>
+        </view>
+        <view class="week-text">
+          <text class="week-title">本周小结</text>
+          <text class="week-desc">你超过了 {{weekSummary.beatPercent}}% 的同伴，加油！</text>
+          <view class="week-progress-track">
+            <view class="week-progress-fill" style="width: {{weekSummary.beatPercent}}%;"></view>
+          </view>
+        </view>
+      </view>
+      <view class="week-detail-btn" bindtap="viewWeekDetail" hover-class="week-detail-btn--pressed" hover-stay-time="120">查看详情</view>
+    </view>
+
   </view>
 
+  <!-- ======= 编辑资料弹层（保留原有逻辑） ======= -->
   <view wx:if="{{profileEditorVisible}}" class="profile-editor-layer">
     <view class="profile-editor-mask" catchtap="closeProfileEditor"></view>
     <view class="profile-editor-panel" catchtap="noop">
@@ -87,7 +196,7 @@
             <view class="profile-label">在小队中使用该资料</view>
             <view class="profile-helper">匿名模式下仍会隐藏头像和名称。</view>
           </view>
-          <switch checked="{{profileDraftUseInTeam}}" color="#356859" bindchange="toggleProfileUseInTeam" />
+          <switch checked="{{profileDraftUseInTeam}}" color="#145F4E" bindchange="toggleProfileUseInTeam" />
         </view>
       </view>
 
@@ -97,4 +206,5 @@
       </view>
     </view>
   </view>
+
 </view>
