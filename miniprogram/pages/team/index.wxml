@@ -33,14 +33,19 @@
     <!-- 1. 小队状态卡（紧凑身份卡） -->
     <view class="team-card team-status-card">
       <view class="team-title-row">
-        <view class="team-info-block">
-          <view class="team-name-row">
-            <view class="team-name">{{displayTeamName}}</view>
-            <view class="my-team-tag">我的小队</view>
+        <view class="team-identity-row">
+          <view class="team-hero-avatar">
+            <image wx:if="{{teamAvatar}}" src="{{teamAvatar}}" mode="aspectFill" />
+            <text wx:else>{{teamAvatarText}}</text>
           </view>
-          <view class="team-tags">
-            <view class="level-tag">{{teamLevel}}</view>
-            <view class="mood-tag">{{teamMood}}</view>
+          <view class="team-info-block">
+            <view class="team-name-row">
+              <view class="team-name">{{displayTeamName}}</view>
+            </view>
+            <view class="team-tags">
+              <view class="level-tag">{{teamLevel}}</view>
+              <view class="mood-tag">{{teamMood}}</view>
+            </view>
           </view>
         </view>
         <view class="team-member-preview" catchtap="openAllMembers">
@@ -65,8 +70,24 @@
       <view class="team-slogan-row">一起自律，各自成长</view>
 
       <view class="team-action-buttons">
-        <button class="pill-button" catchtap="inviteFriends">邀请好友</button>
-        <button class="pill-button" catchtap="openTeamSettings">小队设置</button>
+        <view
+          class="team-action-btn team-action-btn--primary"
+          catchtap="inviteFriends"
+          hover-class="team-action-btn--pressed"
+          hover-stay-time="120"
+        >
+          <text class="team-action-btn__icon">＋</text>
+          <text class="team-action-btn__label">邀请好友</text>
+        </view>
+        <view
+          class="team-action-btn team-action-btn--secondary"
+          catchtap="openTeamSettings"
+          hover-class="team-action-btn--pressed"
+          hover-stay-time="120"
+        >
+          <text class="team-action-btn__icon">⚙</text>
+          <text class="team-action-btn__label">小队设置</text>
+        </view>
       </view>
     </view>
 
@@ -125,10 +146,6 @@
           </view>
         </view>
       </view>
-
-      <button class="solid-button common-action-button" catchtap="goToTodayAction">
-        {{commonAction.myDone ? '今日行动已完成' : '去完成今日任务'}}
-      </button>
     </view>
 
     <!-- 4. 成员状态 -->
@@ -244,6 +261,140 @@
         </view>
       </view>
       <button class="solid-button popup-full-button" bindtap="closeTeamInfo">知道了</button>
+    </view>
+  </view>
+
+  <view wx:if="{{settingsVisible}}" class="team-settings-layer" catchtouchmove="noop">
+    <view class="team-settings-mask" catchtap="closeTeamSettings"></view>
+    <view class="team-settings-dialog" catchtap="noop">
+      <view class="settings-header">
+        <view>
+          <view class="settings-eyebrow">TEAM SETTINGS</view>
+          <view class="settings-title">小队设置</view>
+        </view>
+        <view class="settings-close" catchtap="closeTeamSettings" aria-label="关闭小队设置">
+          <ant-icon type="CloseOutline" />
+        </view>
+      </view>
+
+      <scroll-view scroll-y class="settings-scroll" enhanced show-scrollbar="{{false}}">
+        <view wx:if="{{!settingsCanEditTeam}}" class="settings-readonly-tip">
+          小队资料和房间权限仅创建者可修改，你仍可以调整自己的展示方式。
+        </view>
+
+        <view class="settings-section {{!settingsCanEditTeam ? 'settings-section--readonly' : ''}}">
+          <view class="settings-section-title">小队资料</view>
+          <view class="team-profile-setting">
+            <button
+              class="team-avatar-picker"
+              open-type="chooseAvatar"
+              bindchooseavatar="chooseTeamAvatar"
+              disabled="{{!settingsCanEditTeam}}"
+            >
+              <image wx:if="{{settingsDraft.avatar}}" src="{{settingsDraft.avatar}}" mode="aspectFill" />
+              <text wx:else>{{teamAvatarText}}</text>
+              <view wx:if="{{settingsCanEditTeam}}" class="avatar-edit-mark">换</view>
+            </button>
+            <view class="team-name-field">
+              <view class="setting-label">小队名称</view>
+              <input
+                class="settings-input"
+                maxlength="20"
+                value="{{settingsDraft.name}}"
+                placeholder="输入 2-20 个字符"
+                disabled="{{!settingsCanEditTeam}}"
+                bindinput="inputTeamName"
+              />
+            </view>
+          </view>
+
+          <view class="room-code-card">
+            <view>
+              <view class="setting-label">小队房间号</view>
+              <view class="room-code-value">{{team.roomCode}}</view>
+            </view>
+            <button class="copy-code-button" bindtap="copyRoomCode">复制</button>
+          </view>
+          <view class="setting-help">房间号创建时随机生成，为保证邀请链接稳定，暂不支持修改。</view>
+        </view>
+
+        <view class="settings-section {{!settingsCanEditTeam ? 'settings-section--readonly' : ''}}">
+          <view class="settings-section-title">房间与隐私</view>
+          <view class="setting-block">
+            <view class="setting-label">房间状态</view>
+            <view class="setting-segments">
+              <view
+                class="setting-segment {{settingsDraft.visibility === 'public' ? 'setting-segment--active' : ''}}"
+                data-value="public"
+                bindtap="selectRoomVisibility"
+              >公开房间</view>
+              <view
+                class="setting-segment {{settingsDraft.visibility === 'private' ? 'setting-segment--active' : ''}}"
+                data-value="private"
+                bindtap="selectRoomVisibility"
+              >私密房间</view>
+            </view>
+            <view class="setting-help">{{settingsDraft.visibility === 'public' ? '其他人可以发现并申请加入。' : '只有获得房间号的伙伴可以加入。'}}</view>
+          </view>
+
+          <view class="setting-toggle-row" bindtap="toggleAnonymousParticipation">
+            <view class="setting-toggle-copy">
+              <view class="setting-label">允许匿名参与</view>
+              <view class="setting-help">成员可隐藏昵称与行动明细，减少展示压力。</view>
+            </view>
+            <view class="custom-switch {{settingsDraft.allowAnonymous ? 'custom-switch--on' : ''}}">
+              <view class="custom-switch-dot"></view>
+            </view>
+          </view>
+
+          <view class="setting-block setting-block--last">
+            <view class="setting-label">行动详情可见范围</view>
+            <view class="detail-visibility-list">
+              <view
+                wx:for="{{actionDetailOptions}}"
+                wx:key="value"
+                class="detail-visibility-option {{settingsDraft.actionDetailVisibility === item.value ? 'detail-visibility-option--active' : ''}}"
+                data-value="{{item.value}}"
+                bindtap="selectActionDetailVisibility"
+              >
+                <view class="option-radio"><view></view></view>
+                <view>
+                  <view class="option-title">{{item.label}}</view>
+                  <view class="option-desc">{{item.desc}}</view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="settings-section">
+          <view class="settings-section-title">我的展示方式</view>
+          <view class="setting-segments setting-segments--three">
+            <view
+              wx:for="{{displayModeOptions}}"
+              wx:key="value"
+              class="setting-segment {{settingsDraft.displayMode === item.value ? 'setting-segment--active' : ''}} {{item.value === 'anonymous' && !settingsDraft.allowAnonymous ? 'setting-segment--disabled' : ''}}"
+              data-value="{{item.value}}"
+              bindtap="selectSelfDisplayMode"
+            >{{item.label}}</view>
+          </view>
+
+          <view class="setting-toggle-row personal-detail-toggle" bindtap="toggleDraftTaskDetailVisible">
+            <view class="setting-toggle-copy">
+              <view class="setting-label">展示我的行动详情</view>
+              <view class="setting-help">仅在小队可见范围允许时生效。</view>
+            </view>
+            <view class="custom-switch {{settingsDraft.taskDetailVisible ? 'custom-switch--on' : ''}} {{settingsDraft.displayMode === 'anonymous' || settingsDraft.actionDetailVisibility === 'hidden' ? 'custom-switch--disabled' : ''}}">
+              <view class="custom-switch-dot"></view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+
+      <view class="settings-footer">
+        <button class="settings-cancel-button" bindtap="closeTeamSettings">取消</button>
+        <button class="settings-save-button" loading="{{savingSettings}}" disabled="{{savingSettings}}" bindtap="saveTeamSettings">保存设置</button>
+      </view>
     </view>
   </view>
 

@@ -239,7 +239,12 @@ function seedTeamStore(selfGoalTitle: string): void {
   const team: Team = {
     id: teamId,
     name: "自律同行 TQLR 队",
+    avatar: "",
     roomCode: "TQLR26",
+    ownerId: "local_user",
+    visibility: "private",
+    allowAnonymous: true,
+    actionDetailVisibility: "all_members",
     maxMembers: 50,
     memberCount: 0,
     createdAt: daysAgoISO(10),

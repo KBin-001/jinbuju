@@ -9,12 +9,15 @@ import {
   SendEncouragementInput,
   SendEncouragementResult,
   Team,
+  TeamActionDetailVisibility,
   TeamDailyStats,
   TeamDisplayMode,
   TeamMember,
   TeamMemberActionDetail,
   TeamPageData,
+  TeamVisibility,
   UpdateSelfActivityInput,
+  UpdateTeamSettingsInput,
 } from "../types/team";
 
 const STORAGE_KEY = "JINBUJU_LOCAL_TEAM_V1";
@@ -46,9 +49,21 @@ function readStore(): LocalTeamStore {
   const value = wx.getStorageSync(STORAGE_KEY) as Partial<LocalTeamStore> | undefined;
   if (!value || value.version !== 1) return emptyStore();
   const rawMembers = Array.isArray(value.teamMembers) ? value.teamMembers as TeamMember[] : [];
+  const rawTeam = value.currentTeam as Partial<Team> | null | undefined;
+  const currentTeam = rawTeam ? {
+    ...rawTeam,
+    avatar: rawTeam.avatar || "",
+    ownerId: rawTeam.ownerId || SELF_USER_ID,
+    visibility: rawTeam.visibility === "private" ? "private" : "public" as TeamVisibility,
+    allowAnonymous: typeof rawTeam.allowAnonymous === "boolean" ? rawTeam.allowAnonymous : true,
+    actionDetailVisibility: (["all_members", "admins_only", "hidden"] as TeamActionDetailVisibility[])
+      .includes(rawTeam.actionDetailVisibility as TeamActionDetailVisibility)
+      ? rawTeam.actionDetailVisibility as TeamActionDetailVisibility
+      : "all_members",
+  } as Team : null;
   return {
     version: 1,
-    currentTeam: value.currentTeam || null,
+    currentTeam,
     teamMembers: rawMembers.map((member) => ({
       ...member,
       todayActionDetails: Array.isArray(member.todayActionDetails) ? member.todayActionDetails : [],
@@ -57,7 +72,7 @@ function readStore(): LocalTeamStore {
         : member.displayMode === "public",
     })),
     teamDailyStats: value.teamDailyStats || null,
-    teamRoomCode: value.teamRoomCode || value.currentTeam?.roomCode || "",
+    teamRoomCode: value.teamRoomCode || currentTeam?.roomCode || "",
   };
 }
 
@@ -254,7 +269,7 @@ export function persistTeam(team: Team, members: TeamMember[]): TeamPageData {
   return { team: nextTeam, members: sortedMembers, dailyStats };
 }
 
-function createTeamWithRoomCode(roomCode: string, input: CreateTeamInput): TeamPageData {
+function createTeamWithRoomCode(roomCode: string, input: CreateTeamInput, ownerId: string): TeamPageData {
   const now = new Date();
   const teamId = createLocalId("team");
   const phaseStartDate = getTodayBusinessDate(now);
@@ -262,7 +277,12 @@ function createTeamWithRoomCode(roomCode: string, input: CreateTeamInput): TeamP
   const team: Team = {
     id: teamId,
     name: `自律同行 ${roomCode.slice(-4)} 队`,
+    avatar: "",
     roomCode,
+    ownerId,
+    visibility: "private",
+    allowAnonymous: true,
+    actionDetailVisibility: "all_members",
     maxMembers: MAX_MEMBERS,
     memberCount: 0,
     createdAt: now.toISOString(),
@@ -285,14 +305,14 @@ export function getMyTeam(): TeamPageData {
 export function createTeam(input: CreateTeamInput = {}): TeamPageData {
   const existing = getMyTeam();
   if (existing.team) return existing;
-  return createTeamWithRoomCode(generateRoomCode(), input);
+  return createTeamWithRoomCode(generateRoomCode(), input, SELF_USER_ID);
 }
 
 export function joinRoom(input: JoinRoomInput): TeamPageData {
   const roomCode = validateRoomCode(input.roomCode);
   const existing = getMyTeam();
   if (existing.team) return existing;
-  return createTeamWithRoomCode(roomCode, input);
+  return createTeamWithRoomCode(roomCode, input, "room_owner");
 }
 
 export function updateSelfActivity(input: UpdateSelfActivityInput): TeamPageData {
@@ -321,6 +341,9 @@ export function updateSelfActivity(input: UpdateSelfActivityInput): TeamPageData
 export function updateSelfDisplayMode(displayMode: TeamDisplayMode): TeamPageData {
   const store = readStore();
   if (!store.currentTeam) throw createError("TEAM_NOT_FOUND", "请先创建或加入小队");
+  if (displayMode === "anonymous" && !store.currentTeam.allowAnonymous) {
+    throw createError("ANONYMOUS_NOT_ALLOWED", "当前小队未开放匿名参与");
+  }
   const members = store.teamMembers.map((member) => member.isSelf ? {
     ...member,
     displayMode,
@@ -343,6 +366,39 @@ export function updateSelfTaskDetailVisible(taskDetailVisible: boolean): TeamPag
     updatedAt: new Date().toISOString(),
   } : member);
   return persistTeam(store.currentTeam, members);
+}
+
+export function canManageTeam(team: Team | null): boolean {
+  return Boolean(team && team.ownerId === SELF_USER_ID);
+}
+
+export function updateTeamSettings(input: UpdateTeamSettingsInput): TeamPageData {
+  const store = readStore();
+  if (!store.currentTeam) throw createError("TEAM_NOT_FOUND", "请先创建或加入小队");
+  if (!canManageTeam(store.currentTeam)) {
+    throw createError("TEAM_PERMISSION_DENIED", "只有小队创建者可以修改这些设置");
+  }
+
+  const name = input.name.trim().replace(/\s+/g, " ");
+  if (name.length < 2 || name.length > 20) {
+    throw createError("INVALID_TEAM_NAME", "小队名称需为 2 至 20 个字符");
+  }
+  if (input.visibility !== "public" && input.visibility !== "private") {
+    throw createError("INVALID_TEAM_VISIBILITY", "请选择有效的房间状态");
+  }
+  if (!["all_members", "admins_only", "hidden"].includes(input.actionDetailVisibility)) {
+    throw createError("INVALID_DETAIL_VISIBILITY", "请选择有效的详情可见范围");
+  }
+
+  const nextTeam: Team = {
+    ...store.currentTeam,
+    name,
+    avatar: input.avatar || "",
+    visibility: input.visibility,
+    allowAnonymous: Boolean(input.allowAnonymous),
+    actionDetailVisibility: input.actionDetailVisibility,
+  };
+  return persistTeam(nextTeam, store.teamMembers);
 }
 
 export function sendEncouragement(input: SendEncouragementInput): SendEncouragementResult {

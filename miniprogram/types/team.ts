@@ -1,4 +1,6 @@
 export type TeamStatus = "active" | "closed";
+export type TeamVisibility = "public" | "private";
+export type TeamActionDetailVisibility = "all_members" | "admins_only" | "hidden";
 export type TeamDisplayMode = "public" | "nicknameOnly" | "anonymous";
 export type MemberTodayStatus = "not_started" | "completed" | "partial" | "missed";
 export type EncouragementType =
@@ -10,7 +12,12 @@ export type EncouragementType =
 export interface Team {
   id: string;
   name: string;
+  avatar?: string;
   roomCode: string;
+  ownerId: string;
+  visibility: TeamVisibility;
+  allowAnonymous: boolean;
+  actionDetailVisibility: TeamActionDetailVisibility;
   maxMembers: number;
   memberCount: number;
   createdAt: string;
@@ -96,6 +103,14 @@ export interface UpdateSelfActivityInput {
   estimatedMinutes: number;
   growthMinutes: number;
   todayStatus: MemberTodayStatus;
+}
+
+export interface UpdateTeamSettingsInput {
+  name: string;
+  avatar?: string;
+  visibility: TeamVisibility;
+  allowAnonymous: boolean;
+  actionDetailVisibility: TeamActionDetailVisibility;
 }
 
 export interface SendEncouragementInput {
