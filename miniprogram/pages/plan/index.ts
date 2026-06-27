@@ -1,6 +1,6 @@
 import { getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
-import { calculateTodaySummary, getTasksByDate, getTasksByGoal } from "../../services/manualTask";
+import { getTasksByDate, getTasksByGoal } from "../../services/manualTask";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
 import { addDays, formatDate } from "../../utils/date";
@@ -703,13 +703,12 @@ function buildYearHighlights(year: number, tasks: ActionTask[]): YearHighlights 
   return { maxDay, maxStreak, maxMonth };
 }
 
-function buildOverview(summary: ProgressSummary | null, todayActualMinutes: number): OverviewStat[] {
+function buildOverview(summary: ProgressSummary | null): OverviewStat[] {
   const completed = summary?.completedTasks || 0;
-  const total = summary?.totalTasks || 0;
   return [
     { label: "坚持天数", value: String(summary?.totalActionDays || 0), unit: "天" },
-    { label: "完成项数", value: `${completed}/${total}`, unit: "" },
-    { label: "今日投入", value: String(todayActualMinutes), unit: "分钟" },
+    { label: "完成项数", value: String(completed), unit: "项" },
+    { label: "累计投入", value: String(summary?.totalActualMinutes || 0), unit: "分钟" },
   ];
 }
 
@@ -876,7 +875,6 @@ Page(withAppTheme({
       const summary = goal ? getProgressSummary(goal.id, today) : null;
       const allTasks = goal ? getTasksByGoal(goal.id) : [];
       const todayTasks = goal ? getTasksByDate(goal.id, today) : [];
-      const todaySummary = calculateTodaySummary(todayTasks);
       const rate = completionRate(summary);
       const trendView = buildTrendView(this.data.trendRange, allTasks, today);
       const milestoneResult = buildMilestones(summary?.totalActionDays || 0);
@@ -890,7 +888,7 @@ Page(withAppTheme({
         levelLabel: levelLabel(summary?.totalActionDays || 0),
         goalPeriod: goalPeriod(goal),
         goalStatusText: goalStatusText(rate, summary?.totalTasks || 0),
-        overviewStats: buildOverview(summary, todaySummary.actualMinutes),
+        overviewStats: buildOverview(summary),
         trendRanges: buildTrendRanges(this.data.trendRange),
         aiCoach: buildAiCoachView(goal, this.data.trendRange, trendView.trendSummary),
         barChart: trendView.barChart,
@@ -928,7 +926,10 @@ Page(withAppTheme({
   },
 
   openGoalPicker() {
-    if (this.data.goalOptions.length <= 1) return;
+    if (this.data.goalOptions.length <= 1) {
+      if (this.data.goal?.id) wx.navigateTo({ url: `/pages/goal-detail/index?id=${this.data.goal.id}` });
+      return;
+    }
     this.setData({ goalPickerVisible: true });
   },
 
@@ -1051,10 +1052,10 @@ Page(withAppTheme({
       ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, width, height);
 
-      const maxValue = this.data.barChart.maxValue;
+      const maxValue = Math.max(1, ...bars.map((bar) => bar.actions));
       const count = bars.length;
       const points = bars.map((bar, index) => {
-        const heightPercent = bar.minutes <= 0 ? 0 : Math.max(4, (bar.minutes / maxValue) * 78);
+        const heightPercent = bar.actions <= 0 ? 0 : Math.max(4, (bar.actions / maxValue) * 78);
         return {
           x: ((index + 0.5) / count) * width,
           y: height - (heightPercent / 100) * height,

@@ -1336,3 +1336,266 @@
   border-color: rgba(31, 91, 74, 0.10);
   background: #FFFFFF;
 }
+
+/* =========================================================
+ * V3 轻盈暖白最终覆盖：与今日页统一
+ * ========================================================= */
+.profile-page[data-theme="inkGreen"] {
+  --profile-primary: #356859;
+  --profile-deep: #1F5B4A;
+  --profile-primary-soft: #EAF3EA;
+  --profile-primary-light: #7FAA91;
+  --profile-accent: #356859;
+  --profile-growth: #356859;
+  --profile-gold: #F4C95D;
+  --profile-gold-soft: #FFF1C7;
+  --profile-text: #1F2D28;
+  --profile-secondary: #71827A;
+  --profile-muted: #9AA8A3;
+  --profile-border: #E5EAE3;
+  --profile-soft: #EEF2EB;
+  --profile-bg: #F7F8F3;
+  --profile-shadow: 0 14rpx 34rpx rgba(47, 107, 87, 0.075);
+  --profile-hero-gradient: linear-gradient(140deg, #E4F0E6 0%, #EAF3EA 66%, #F7FAF5 100%);
+  --profile-progress-gradient: linear-gradient(90deg, #7FAA91 0%, #356859 100%);
+  background:
+    radial-gradient(circle at 12% 4%, rgba(221, 235, 221, 0.78), transparent 30%),
+    radial-gradient(circle at 94% 18%, rgba(244, 201, 93, 0.12), transparent 28%),
+    linear-gradient(180deg, #FCFCF8 0%, #F7F8F3 46%, #F5F7F2 100%);
+  color: #1F2D28;
+}
+
+.profile-page[data-theme="inkGreen"] .hero-card {
+  border: 1rpx solid #DDEBDD;
+  background:
+    radial-gradient(circle at 88% 20%, rgba(244, 201, 93, 0.12), transparent 30%),
+    radial-gradient(circle at 10% 92%, rgba(255, 255, 255, 0.66), transparent 34%),
+    var(--profile-hero-gradient);
+  color: #1F2D28;
+  box-shadow: 0 16rpx 38rpx rgba(31, 45, 40, 0.07);
+}
+
+.profile-page[data-theme="inkGreen"] .hero-deco-circle--1 {
+  background: rgba(127, 170, 145, 0.16);
+}
+
+.profile-page[data-theme="inkGreen"] .hero-deco-circle--2 {
+  background: rgba(244, 201, 93, 0.12);
+}
+
+.profile-page[data-theme="inkGreen"] .hero-deco-leaf {
+  color: rgba(53, 104, 89, 0.10);
+}
+
+.profile-page[data-theme="inkGreen"] .hero-name {
+  color: #1F2D28;
+}
+
+.profile-page[data-theme="inkGreen"] .hero-joined,
+.profile-page[data-theme="inkGreen"] .hero-motto,
+.profile-page[data-theme="inkGreen"] .hero-meta-dot {
+  color: #71827A;
+}
+
+.profile-page[data-theme="inkGreen"] .hero-level-pill {
+  background: rgba(255, 255, 255, 0.78);
+  color: #8A6B1F;
+}
+
+.profile-page[data-theme="inkGreen"] .hero-avatar-wrap {
+  border-color: rgba(255, 255, 255, 0.92);
+  background: #FFFFFF;
+  color: #356859;
+  box-shadow: 0 6rpx 18rpx rgba(47, 107, 87, 0.12);
+}
+
+.profile-page[data-theme="inkGreen"] .hero-edit-btn {
+  border-color: #CFE2D2;
+  background: rgba(255, 255, 255, 0.78);
+  color: #356859;
+}
+
+.profile-page[data-theme="inkGreen"] .section-card,
+.profile-page[data-theme="inkGreen"] .overview-card,
+.profile-page[data-theme="inkGreen"] .goal-card,
+.profile-page[data-theme="inkGreen"] .func-card {
+  border-color: rgba(229, 234, 227, 0.94);
+  background: rgba(255, 255, 252, 0.88);
+  box-shadow: var(--profile-shadow);
+}
+
+.profile-page[data-theme="inkGreen"] .card-title,
+.profile-page[data-theme="inkGreen"] .stat-num,
+.profile-page[data-theme="inkGreen"] .goal-item-title,
+.profile-page[data-theme="inkGreen"] .goal-empty-title,
+.profile-page[data-theme="inkGreen"] .func-label,
+.profile-page[data-theme="inkGreen"] .week-title,
+.profile-page[data-theme="inkGreen"] .editor-title,
+.profile-page[data-theme="inkGreen"] .theme-panel__title {
+  color: #1F2D28;
+}
+
+.profile-page[data-theme="inkGreen"] .card-link,
+.profile-page[data-theme="inkGreen"] .stat-unit,
+.profile-page[data-theme="inkGreen"] .stat-label,
+.profile-page[data-theme="inkGreen"] .goal-item-sub,
+.profile-page[data-theme="inkGreen"] .goal-empty-desc,
+.profile-page[data-theme="inkGreen"] .week-desc,
+.profile-page[data-theme="inkGreen"] .profile-helper,
+.profile-page[data-theme="inkGreen"] .theme-panel__subtitle {
+  color: #71827A;
+}
+
+.profile-page[data-theme="inkGreen"] .stat-divider,
+.profile-page[data-theme="inkGreen"] .func-item + .func-item,
+.profile-page[data-theme="inkGreen"] .goal-item + .goal-item {
+  border-color: #E5EAE3;
+  background-color: #E5EAE3;
+}
+
+.profile-page[data-theme="inkGreen"] .stat-icon-wrap--green,
+.profile-page[data-theme="inkGreen"] .stat-icon-wrap--teal,
+.profile-page[data-theme="inkGreen"] .goal-item-icon-wrap,
+.profile-page[data-theme="inkGreen"] .func-icon-wrap--focus,
+.profile-page[data-theme="inkGreen"] .func-icon-wrap--settings,
+.profile-page[data-theme="inkGreen"] .func-icon-wrap--goal,
+.profile-page[data-theme="inkGreen"] .func-icon-wrap--help {
+  background: #EAF3EA;
+  color: #356859;
+}
+
+.profile-page[data-theme="inkGreen"] .stat-icon-wrap--gold,
+.profile-page[data-theme="inkGreen"] .week-badge,
+.profile-page[data-theme="inkGreen"] .gold-icon,
+.profile-page[data-theme="inkGreen"] .badge-icon,
+.profile-page[data-theme="inkGreen"] .achievement-icon {
+  background: #FFF1C7;
+  color: #A37D1B;
+  box-shadow: none;
+}
+
+.profile-page[data-theme="inkGreen"] .goal-item,
+.profile-page[data-theme="inkGreen"] .func-item {
+  border-color: #E5EAE3;
+  background: rgba(255, 255, 255, 0.70);
+}
+
+.profile-page[data-theme="inkGreen"] .goal-status-chip {
+  border-color: #CFE2D2;
+  background: #EAF3EA;
+  color: #356859;
+}
+
+.profile-page[data-theme="inkGreen"] .goal-progress-track,
+.profile-page[data-theme="inkGreen"] .week-progress-track,
+.profile-page[data-theme="inkGreen"] .progress-track,
+.profile-page[data-theme="inkGreen"] .progress-bar,
+.profile-page[data-theme="inkGreen"] .empty-progress {
+  background: #DDEBDD;
+}
+
+.profile-page[data-theme="inkGreen"] .goal-progress-fill,
+.profile-page[data-theme="inkGreen"] .week-progress-fill,
+.profile-page[data-theme="inkGreen"] .progress-fill,
+.profile-page[data-theme="inkGreen"] .progress-bar-inner {
+  background: var(--profile-progress-gradient);
+}
+
+.profile-page[data-theme="inkGreen"] .goal-progress-pct,
+.profile-page[data-theme="inkGreen"] .goal-focus-action,
+.profile-page[data-theme="inkGreen"] .add-goal-text,
+.profile-page[data-theme="inkGreen"] .add-goal-plus {
+  color: #356859;
+}
+
+.profile-page[data-theme="inkGreen"] .goal-end-action {
+  color: #9A675F;
+}
+
+.profile-page[data-theme="inkGreen"] .add-goal-btn,
+.profile-page[data-theme="inkGreen"] .week-detail-btn,
+.profile-page[data-theme="inkGreen"] .secondary-button,
+.profile-page[data-theme="inkGreen"] .ghost-button,
+.profile-page[data-theme="inkGreen"] .profile-cancel-btn {
+  border-color: #CFE2D2;
+  background: #F3FAF3;
+  color: #356859;
+}
+
+.profile-page[data-theme="inkGreen"] .primary-button,
+.profile-page[data-theme="inkGreen"] .action-button,
+.profile-page[data-theme="inkGreen"] .save-button,
+.profile-page[data-theme="inkGreen"] .confirm-button,
+.profile-page[data-theme="inkGreen"] .theme-confirm,
+.profile-page[data-theme="inkGreen"] .profile-button,
+.profile-page[data-theme="inkGreen"] .profile-save-btn {
+  border-color: #356859;
+  background: #356859;
+  color: #FFFFFF;
+  box-shadow: 0 10rpx 24rpx rgba(53, 104, 89, 0.18);
+}
+
+.profile-page[data-theme="inkGreen"] .week-card {
+  border-color: #F5DFA5;
+  background: #FFF1C7;
+  box-shadow: 0 10rpx 22rpx rgba(244, 201, 93, 0.10);
+}
+
+.profile-page[data-theme="inkGreen"] .week-title {
+  color: #4D3B1F;
+}
+
+.profile-page[data-theme="inkGreen"] .week-desc {
+  color: #745F31;
+}
+
+.profile-page[data-theme="inkGreen"] .week-progress-track {
+  background: rgba(163, 125, 27, 0.16);
+}
+
+.profile-page[data-theme="inkGreen"] .week-progress-fill {
+  background: #C99A24;
+}
+
+.profile-page[data-theme="inkGreen"] .profile-editor-mask,
+.profile-page[data-theme="inkGreen"] .theme-modal__mask,
+.profile-page[data-theme="inkGreen"] .layer-mask,
+.profile-page[data-theme="inkGreen"] .popup-mask,
+.profile-page[data-theme="inkGreen"] .theme-mask {
+  background: rgba(31, 45, 40, 0.26);
+  backdrop-filter: blur(8rpx);
+}
+
+.profile-page[data-theme="inkGreen"] .profile-editor-panel,
+.profile-page[data-theme="inkGreen"] .theme-panel,
+.profile-page[data-theme="inkGreen"] .quick-task-popup,
+.profile-page[data-theme="inkGreen"] .feedback-popup,
+.profile-page[data-theme="inkGreen"] .management-popup,
+.profile-page[data-theme="inkGreen"] .theme-popup {
+  --popup-background: #F7F8F3;
+  border-color: rgba(229, 234, 227, 0.94);
+  background: #F7F8F3;
+  box-shadow: 0 -18rpx 48rpx rgba(31, 45, 40, 0.16);
+}
+
+.profile-page[data-theme="inkGreen"] .profile-form-card,
+.profile-page[data-theme="inkGreen"] .profile-setting-row,
+.profile-page[data-theme="inkGreen"] .theme-card,
+.profile-page[data-theme="inkGreen"] .theme-grid-card {
+  border-color: #E5EAE3;
+  background: rgba(255, 255, 252, 0.90);
+  box-shadow: 0 8rpx 20rpx rgba(31, 45, 40, 0.05);
+}
+
+.profile-page[data-theme="inkGreen"] .theme-card--active,
+.profile-page[data-theme="inkGreen"] .theme-grid-card.is-active {
+  border-color: #BFD8C8;
+  background: #EAF3EA;
+  box-shadow: 0 8rpx 22rpx rgba(53, 104, 89, 0.10);
+}
+
+.profile-page[data-theme="inkGreen"] .profile-input {
+  border-color: #E5EAE3;
+  background: #FFFFFF;
+  color: #1F2D28;
+}

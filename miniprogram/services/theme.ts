@@ -1,7 +1,7 @@
 /**
  * 进步局 · 主题皮肤服务
  * ------------------------------------------------
- * 提供 4 套低压力主题：薄荷绿（默认）/ 奶油黄 / 墨绿成长 / 奶油杏桃
+ * 提供 4 套低压力主题：薄荷绿 / 奶油黄 / 墨绿成长（默认）/ 奶油杏桃
  * - 当前主题持久化到本地 storage
  * - 通过 eventBus 广播 "theme:change" 事件，便于其它页面在 onShow 时同步
  * - themeToProfileCssVars() 生成可绑定到页面根节点 style 的 CSS 变量字符串
@@ -40,14 +40,15 @@ export interface ThemePreset {
 }
 
 export const THEME_EVENT = "theme:change";
-const THEME_STORAGE_KEY = "APP_THEME_V1";
-export const DEFAULT_THEME_ID: ThemeId = "mint";
+// V2 设计启用新的主题偏好键，让旧版默认薄荷绿缓存自然迁移到墨绿色默认值。
+const THEME_STORAGE_KEY = "APP_THEME_V2";
+export const DEFAULT_THEME_ID: ThemeId = "inkGreen";
 
 export const THEME_PRESETS: ThemePreset[] = [
   {
     id: "mint",
     name: "薄荷绿",
-    desc: "默认 · 清新成长感",
+    desc: "清新 · 轻盈成长感",
     primary: "#3F8F72",
     primaryDeep: "#24584A",
     primaryLight: "#7CC6A0",
@@ -79,7 +80,7 @@ export const THEME_PRESETS: ThemePreset[] = [
   {
     id: "inkGreen",
     name: "墨绿成长",
-    desc: "沉静 · 自律成长感",
+    desc: "默认 · 沉静自律成长感",
     primary: "#356859",
     primaryDeep: "#1F5B4A",
     primaryLight: "#7FAA91",

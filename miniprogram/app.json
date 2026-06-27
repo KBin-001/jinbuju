@@ -20,15 +20,15 @@
     "pages/about/index"
   ],
   "window": {
-    "backgroundColor": "#F6FAF7",
+    "backgroundColor": "#F5F7F2",
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#F6FAF7",
+    "navigationBarBackgroundColor": "#F5F7F2",
     "navigationBarTitleText": "进步局",
     "navigationBarTextStyle": "black"
   },
   "tabBar": {
-    "color": "#9AA8A3",
-    "selectedColor": "#3F8F72",
+    "color": "#71827A",
+    "selectedColor": "#356859",
     "backgroundColor": "#FFFFFF",
     "borderStyle": "white",
     "list": [

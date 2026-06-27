@@ -23,6 +23,7 @@
       <view class="week-head">
         <view class="week-title">{{weekTitle}} <text>{{weekdayShort}}</text></view>
         <view class="week-switch" catchtap="openCalendar" aria-label="展开日历">
+          <text>展开</text>
           <view class="week-chevron"></view>
         </view>
       </view>
@@ -59,7 +60,7 @@
             </view>
             <view class="action-hero-goal">{{goal.title}}</view>
           </view>
-          <view class="progress-ring" style="background: conic-gradient(#ffffff 0% {{completionPercent}}%, rgba(255,255,255,0.24) {{completionPercent}}% 100%);">
+          <view class="progress-ring" style="background: conic-gradient(#356859 0% {{completionPercent}}%, #DCEAE3 {{completionPercent}}% 100%);">
             <view class="progress-ring-inner">
               <view>{{completionPercent}}%</view>
               <text>进度</text>
@@ -81,15 +82,13 @@
             bindtap="toggleTaskDone"
             bindlongpress="openTask"
           >
-            <view class="task-box">
-              <ant-icon wx:if="{{task.status === 'completed'}}" type="CheckOutline" />
-            </view>
+            <view class="task-type-icon icon-{{task.actionIconType}}"><view></view></view>
             <view class="task-copy">
               <view class="task-title">{{task.displayTitle}}</view>
               <view class="task-desc">{{task.actionSubtext}}</view>
             </view>
-            <view wx:if="{{task.status === 'completed'}}" class="task-tail-check">
-              <ant-icon type="CheckOutline" />
+            <view class="task-tail-check {{task.status === 'completed' ? 'is-done' : ''}}">
+              <ant-icon wx:if="{{task.status === 'completed'}}" type="CheckOutline" />
             </view>
           </view>
           <view wx:if="{{hiddenActionCount > 0 || actionListExpanded}}" class="action-list-toggle" bindtap="toggleActionList">
@@ -123,6 +122,7 @@
       <view class="daily-nudge-card">
         <view class="quote-mark">“</view>
         <view class="daily-nudge-text">{{dailyNudge}}</view>
+        <view class="daily-nudge-star">★</view>
       </view>
 
     </block>

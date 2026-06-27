@@ -22,7 +22,7 @@ const DURATION_OPTIONS = [
 ];
 const DEFAULT_QUICK_ADD_MINUTE_INDEX = DURATION_OPTIONS.findIndex((option) => option.value === 30);
 const EXAMPLE_ACTION_TITLES = ["背单词 30 个", "阅读 30 分钟", "听力练习 20 分钟", "真题复盘 1 套"];
-interface ViewTask extends ActionTask { displayTitle: string; statusLabel: string; statusTone: string; rescheduled: boolean; dateLabel: string; partialHint: boolean; actionSubtext: string; }
+interface ViewTask extends ActionTask { displayTitle: string; statusLabel: string; statusTone: string; rescheduled: boolean; dateLabel: string; partialHint: boolean; actionSubtext: string; actionIconType: "book" | "audio" | "note"; }
 interface ViewTaskGroup { key: "today" | "continue"; title: string; tasks: ViewTask[]; }
 interface TodayMood { title: string; copy: string; tone: "empty" | "low" | "half" | "done"; mark: string; }
 interface ProgressSegment { active: boolean; }
@@ -124,6 +124,12 @@ function displayTaskTitle(task: ActionTask): string {
   const seed = task.id.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
   return EXAMPLE_ACTION_TITLES[seed % EXAMPLE_ACTION_TITLES.length];
 }
+function taskIconType(task: ActionTask): ViewTask["actionIconType"] {
+  const copy = `${task.title} ${task.description || ""}`;
+  if (/听|音频|口语|跟读/.test(copy)) return "audio";
+  if (/背|单词|词汇|记忆/.test(copy)) return "book";
+  return "note";
+}
 function toViewTask(task: ActionTask, today: string): ViewTask {
   const displayStatus = getActionTaskDisplayStatus(task, today);
   const displayTitle = displayTaskTitle(task);
@@ -136,6 +142,7 @@ function toViewTask(task: ActionTask, today: string): ViewTask {
     dateLabel: task.currentDate === today ? "今天" : formatDisplayDate(task.currentDate),
     partialHint: displayStatus.badge === "待继续",
     actionSubtext: task.description || `学习 ${task.estimatedMinutes} 分钟`,
+    actionIconType: taskIconType(task),
   };
 }
 

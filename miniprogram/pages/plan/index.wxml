@@ -20,12 +20,9 @@
   </view>
 
   <block wx:else>
-    <view class="progress-header">
-      <view class="page-title">我的进度</view>
-      <view class="page-subtitle">记录每一次坚持，看见长期变化</view>
-    </view>
-
     <view class="goal-card" bindtap="openGoalPicker">
+      <image class="goal-card-bg" src="/images/progress-hero-v2.jpg" mode="aspectFill" />
+      <view class="goal-card-shade"></view>
       <view class="goal-card-main">
         <view class="goal-copy">
           <view class="section-eyebrow">当前目标</view>
@@ -37,20 +34,9 @@
           <view class="goal-period">{{goalPeriod}}</view>
         </view>
 
-        <view wx:if="{{goalOptions.length > 1}}" class="goal-switch-button" catchtap="openGoalPicker">
-          <text>切换目标</text>
+        <view class="goal-switch-button" catchtap="openGoalPicker">
+          <text>{{goalOptions.length > 1 ? '切换目标' : '查看目标'}}</text>
           <view class="goal-switch-arrow"></view>
-        </view>
-
-        <view wx:else class="medal {{medalState.achieved ? 'is-achieved' : ''}}">
-          <view class="medal-spark spark-a"></view>
-          <view class="medal-spark spark-b"></view>
-          <view class="medal-leaf leaf-left"></view>
-          <view class="medal-leaf leaf-right"></view>
-          <view class="medal-face">
-            <view class="medal-star">★</view>
-          </view>
-          <view class="medal-ribbon"></view>
         </view>
       </view>
     </view>
@@ -150,10 +136,13 @@
 
         <block wx:else>
           <view class="chart-title-row">
-            <view class="chart-title">投入分钟数</view>
-            <view class="chart-legend">
+            <view class="chart-legend chart-legend--minutes">
+              <view class="legend-dot"></view>
+              <text>投入分钟</text>
+            </view>
+            <view class="chart-legend chart-legend--actions">
               <view class="legend-line"></view>
-              <text>趋势线</text>
+              <text>完成项数</text>
             </view>
           </view>
           <view class="bar-chart" bindtap="onChartBackdropTap">
@@ -193,9 +182,10 @@
           <view class="bar-labels">
             <text wx:for="{{barChart.bars}}" wx:key="key">{{item.label}}</text>
           </view>
+          <view class="trend-summary-strip">✦ {{trendSummary.adviceText}}</view>
         </block>
 
-        <view class="ai-coach-card">
+        <view class="ai-coach-card ai-coach-card--inside">
           <view class="ai-coach-head">
             <view class="ai-coach-title-wrap">
               <view class="ai-coach-icon">✦</view>
@@ -341,6 +331,17 @@
           </view>
         </view>
       </block>
+    </view>
+
+    <view class="ai-coach-card ai-coach-card--summary">
+      <view class="ai-coach-head">
+        <view class="ai-coach-title-wrap">
+          <view class="ai-coach-icon">✦</view>
+          <view class="ai-coach-title">AI 进度教练</view>
+        </view>
+        <view class="ai-coach-period">{{aiCoach.periodLabel}} ›</view>
+      </view>
+      <view class="ai-coach-summary">{{aiCoach.summary}}</view>
     </view>
 
     <view class="milestone-card">

@@ -1686,3 +1686,221 @@ button[disabled] {
   border-color: #D7E4DE;
   background: #FFFFFF;
 }
+
+/* =========================================================
+ * V3 轻盈暖白最终覆盖：与今日页统一
+ * ========================================================= */
+.team-page[data-theme="inkGreen"] {
+  --team-primary: #356859;
+  --team-primary-deep: #1F5B4A;
+  --team-primary-light: #7FAA91;
+  --team-primary-soft: #EAF3EA;
+  --team-text: #1F2D28;
+  --team-secondary: #71827A;
+  --team-muted: #9AA8A3;
+  --team-border: #E5EAE3;
+  --team-soft: #EEF2EB;
+  --team-sun: #F4C95D;
+  --team-sun-soft: #FFF1C7;
+  --team-bg: #F7F8F3;
+  --team-shadow: 0 14rpx 34rpx rgba(47, 107, 87, 0.075);
+  background:
+    radial-gradient(circle at 12% 4%, rgba(221, 235, 221, 0.78), transparent 30%),
+    radial-gradient(circle at 94% 18%, rgba(244, 201, 93, 0.12), transparent 28%),
+    linear-gradient(180deg, #FCFCF8 0%, #F7F8F3 46%, #F5F7F2 100%);
+  color: #1F2D28;
+}
+
+.team-page[data-theme="inkGreen"] .page-title,
+.team-page[data-theme="inkGreen"] .card-title,
+.team-page[data-theme="inkGreen"] .dashboard-title,
+.team-page[data-theme="inkGreen"] .common-title,
+.team-page[data-theme="inkGreen"] .member-section-title,
+.team-page[data-theme="inkGreen"] .activity-title,
+.team-page[data-theme="inkGreen"] .team-name,
+.team-page[data-theme="inkGreen"] .activity-name,
+.team-page[data-theme="inkGreen"] .member-name,
+.team-page[data-theme="inkGreen"] .honor-title,
+.team-page[data-theme="inkGreen"] .state-title,
+.team-page[data-theme="inkGreen"] .empty-title,
+.team-page[data-theme="inkGreen"] .popup-title,
+.team-page[data-theme="inkGreen"] .settings-title,
+.team-page[data-theme="inkGreen"] .settings-section-title {
+  color: #1F2D28;
+}
+
+.team-page[data-theme="inkGreen"] .page-subtitle,
+.team-page[data-theme="inkGreen"] .team-slogan-row,
+.team-page[data-theme="inkGreen"] .team-sub-info,
+.team-page[data-theme="inkGreen"] .stat-label,
+.team-page[data-theme="inkGreen"] .member-copy,
+.team-page[data-theme="inkGreen"] .activity-copy,
+.team-page[data-theme="inkGreen"] .state-copy,
+.team-page[data-theme="inkGreen"] .empty-copy {
+  color: #71827A;
+}
+
+.team-page[data-theme="inkGreen"] .team-card,
+.team-page[data-theme="inkGreen"] .team-dashboard-card,
+.team-page[data-theme="inkGreen"] .team-common-action,
+.team-page[data-theme="inkGreen"] .team-member-status,
+.team-page[data-theme="inkGreen"] .team-activity-card,
+.team-page[data-theme="inkGreen"] .team-honor-card,
+.team-page[data-theme="inkGreen"] .state-card,
+.team-page[data-theme="inkGreen"] .empty-card {
+  border-color: rgba(229, 234, 227, 0.94);
+  background: rgba(255, 255, 252, 0.88);
+  box-shadow: var(--team-shadow);
+}
+
+.team-page[data-theme="inkGreen"] .team-status-card {
+  border-color: #DDEBDD;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(244, 201, 93, 0.12), transparent 30%),
+    radial-gradient(circle at 92% 86%, rgba(255, 255, 255, 0.72), transparent 34%),
+    linear-gradient(140deg, #E4F0E6 0%, #EAF3EA 66%, #F7FAF5 100%);
+  box-shadow: 0 16rpx 38rpx rgba(31, 45, 40, 0.07);
+}
+
+.team-page[data-theme="inkGreen"] .team-status-card .team-name {
+  color: #1F2D28;
+}
+
+.team-page[data-theme="inkGreen"] .team-status-card .team-slogan-row,
+.team-page[data-theme="inkGreen"] .team-status-card .team-sub-info {
+  color: #71827A;
+}
+
+.team-page[data-theme="inkGreen"] .team-status-card .team-sub-info .dot {
+  color: #9AA8A3;
+}
+
+.team-page[data-theme="inkGreen"] .team-status-card .my-team-tag,
+.team-page[data-theme="inkGreen"] .team-status-card .mood-tag,
+.team-page[data-theme="inkGreen"] .my-team-tag,
+.team-page[data-theme="inkGreen"] .mood-tag,
+.team-page[data-theme="inkGreen"] .soft-tag {
+  border-color: rgba(53, 104, 89, 0.10);
+  background: rgba(255, 255, 255, 0.76);
+  color: #356859;
+}
+
+.team-page[data-theme="inkGreen"] .team-status-card .level-tag {
+  background: #FFF1C7;
+  color: #8A6B1F;
+}
+
+.team-page[data-theme="inkGreen"] .team-status-card .preview-avatar,
+.team-page[data-theme="inkGreen"] .team-status-card .preview-more {
+  border-color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.90);
+  color: #356859;
+  box-shadow: 0 4rpx 12rpx rgba(47, 107, 87, 0.08);
+}
+
+.team-page[data-theme="inkGreen"] .team-status-card .team-action-btn--secondary,
+.team-page[data-theme="inkGreen"] .outline-button,
+.team-page[data-theme="inkGreen"] .pill-button {
+  border-color: #CFE2D2;
+  background: rgba(255, 255, 255, 0.82);
+  color: #356859;
+}
+
+.team-page[data-theme="inkGreen"] .team-status-card .team-action-btn--primary,
+.team-page[data-theme="inkGreen"] .solid-button {
+  border-color: #356859;
+  background: #356859;
+  color: #FFFFFF;
+  box-shadow: 0 10rpx 24rpx rgba(53, 104, 89, 0.18);
+}
+
+.team-page[data-theme="inkGreen"] .progress-track {
+  background: #DDEBDD;
+}
+
+.team-page[data-theme="inkGreen"] .progress-fill {
+  background: linear-gradient(90deg, #7FAA91 0%, #356859 100%);
+  box-shadow: 0 2rpx 8rpx rgba(53, 104, 89, 0.14);
+}
+
+.team-page[data-theme="inkGreen"] .stat-value,
+.team-page[data-theme="inkGreen"] .common-progress-value,
+.team-page[data-theme="inkGreen"] .progress-current,
+.team-page[data-theme="inkGreen"] .cpv-current,
+.team-page[data-theme="inkGreen"] .cpv-current--done,
+.team-page[data-theme="inkGreen"] .ms-completed {
+  color: #356859;
+}
+
+.team-page[data-theme="inkGreen"] .team-common-progress,
+.team-page[data-theme="inkGreen"] .honor-badge-card {
+  border-color: #E5EAE3;
+  background: #F3F8F3;
+}
+
+.team-page[data-theme="inkGreen"] .member-avatar,
+.team-page[data-theme="inkGreen"] .activity-avatar,
+.team-page[data-theme="inkGreen"] .member-detail-avatar {
+  background: #EAF3EA;
+  color: #356859;
+}
+
+.team-page[data-theme="inkGreen"] .member-avatar--doing {
+  background: #FFF1C7;
+  color: #8A6B1F;
+}
+
+.team-page[data-theme="inkGreen"] .member-avatar--pending {
+  background: #EEF2EB;
+  color: #9AA8A3;
+}
+
+.team-page[data-theme="inkGreen"] .avatar-check {
+  background: #356859;
+  color: #FFFFFF;
+}
+
+.team-page[data-theme="inkGreen"] .honor-icon {
+  background: #FFF1C7;
+  color: #A37D1B;
+}
+
+.team-page[data-theme="inkGreen"] .solid-button[disabled] {
+  background: #C9D8D1;
+  color: #FFFFFF;
+  box-shadow: none;
+}
+
+.team-page[data-theme="inkGreen"] .team-popup-mask {
+  background: rgba(31, 45, 40, 0.26);
+  backdrop-filter: blur(8rpx);
+}
+
+.team-page[data-theme="inkGreen"] .team-popup,
+.team-page[data-theme="inkGreen"] .settings-panel {
+  border-color: rgba(229, 234, 227, 0.94);
+  background: #F7F8F3;
+  box-shadow: 0 -18rpx 48rpx rgba(31, 45, 40, 0.16);
+}
+
+.team-page[data-theme="inkGreen"] .popup-handle {
+  background: #C9D8D1;
+}
+
+.team-page[data-theme="inkGreen"] .room-input,
+.team-page[data-theme="inkGreen"] .task-detail-item,
+.team-page[data-theme="inkGreen"] .detail-private-card,
+.team-page[data-theme="inkGreen"] .settings-section,
+.team-page[data-theme="inkGreen"] .room-code-card,
+.team-page[data-theme="inkGreen"] .detail-visibility-option,
+.team-page[data-theme="inkGreen"] .setting-segment {
+  border-color: #E5EAE3;
+  background: rgba(255, 255, 252, 0.90);
+}
+
+.team-page[data-theme="inkGreen"] .detail-visibility-option--active,
+.team-page[data-theme="inkGreen"] .setting-segment--active {
+  border-color: #BFD8C8;
+  background: #EAF3EA;
+  color: #356859;
+}
