@@ -32,73 +32,74 @@
 }
 
 /* =============================================
-   Hero 卡 — 浅薄荷绿渐变
+   Hero 卡 — 卡片式 Header
+   - 高度固定 200rpx（区间 180-220rpx）
+   - 左右各 24rpx 边距
+   - 四角 32rpx 圆角
+   - 背景装饰弱化
    ============================================= */
 .hero-card {
   position: relative;
   overflow: hidden;
-  padding: 44rpx 32rpx 36rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  height: 200rpx;
+  margin: 24rpx 24rpx 0;
+  padding: 24rpx 28rpx;
   background: var(--profile-hero-gradient);
-  border-radius: 0 0 40rpx 40rpx;
-  box-shadow: 0 8rpx 24rpx rgba(36, 88, 74, 0.06);
+  border-radius: 32rpx;
+  box-shadow: 0 10rpx 28rpx rgba(36, 88, 74, 0.08);
   color: var(--profile-text);
 }
 
-/* 背景装饰圆 */
+/* 背景装饰圆（弱化处理：缩小 + 降低不透明度） */
 .hero-deco-circle {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
 }
 .hero-deco-circle--1 {
-  top: -60rpx;
-  right: -50rpx;
-  width: 260rpx;
-  height: 260rpx;
-  background: rgba(124, 198, 160, 0.18);
+  top: -30rpx;
+  right: -30rpx;
+  width: 160rpx;
+  height: 160rpx;
+  background: rgba(124, 198, 160, 0.14);
 }
 .hero-deco-circle--2 {
-  bottom: -80rpx;
-  left: -40rpx;
-  width: 200rpx;
-  height: 200rpx;
-  background: rgba(244, 201, 93, 0.12);
+  bottom: -50rpx;
+  left: -25rpx;
+  width: 130rpx;
+  height: 130rpx;
+  background: rgba(244, 201, 93, 0.10);
 }
 
-/* 叶子装饰文字 */
+/* 叶子装饰文字（弱化） */
 .hero-deco-leaf {
   position: absolute;
-  top: 16rpx;
-  right: 24rpx;
-  color: rgba(63, 143, 114, 0.08);
-  font-size: 120rpx;
+  top: 8rpx;
+  right: 16rpx;
+  color: rgba(63, 143, 114, 0.06);
+  font-size: 80rpx;
   line-height: 1;
   pointer-events: none;
   transform: rotate(20deg);
 }
 
-/* 顶部行 */
-.hero-top-row {
-  display: flex;
-  align-items: center;
-  gap: 24rpx;
-  position: relative;
-  z-index: 1;
-}
-
-/* 头像 */
+/* 头像（紧凑化） */
 .hero-avatar-wrap {
   position: relative;
   flex-shrink: 0;
-  width: 112rpx;
-  height: 112rpx;
+  width: 88rpx;
+  height: 88rpx;
   border-radius: 50%;
   background: var(--profile-gold-soft);
   display: flex;
   align-items: center;
   justify-content: center;
   border: 4rpx solid #FFFFFF;
-  box-shadow: 0 6rpx 18rpx rgba(36, 88, 74, 0.12);
+  box-shadow: 0 4rpx 12rpx rgba(36, 88, 74, 0.10);
   overflow: hidden;
 }
 .hero-avatar-img {
@@ -109,7 +110,7 @@
 }
 .hero-avatar-text {
   color: var(--profile-primary);
-  font-size: 46rpx;
+  font-size: 38rpx;
   font-weight: 800;
   line-height: 1;
 }
@@ -134,14 +135,13 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: 10rpx;
   justify-content: center;
-  padding: 4rpx 0;
 }
 
 .hero-name {
   color: var(--profile-text);
-  font-size: 40rpx;
+  font-size: 36rpx;
   font-weight: 800;
   line-height: 1.2;
   max-width: 100%;
@@ -160,13 +160,13 @@
 .hero-level-pill {
   display: inline-flex;
   align-items: center;
-  height: 34rpx;
-  padding: 0 14rpx;
-  border-radius: 17rpx;
+  height: 32rpx;
+  padding: 0 12rpx;
+  border-radius: 16rpx;
   background: var(--profile-gold-soft);
   border: 1rpx solid rgba(244, 201, 93, 0.48);
   color: #8A6B1F;
-  font-size: 21rpx;
+  font-size: 20rpx;
   font-weight: 700;
   line-height: 1;
   flex-shrink: 0;
@@ -174,52 +174,36 @@
 
 .hero-meta-dot {
   color: var(--profile-muted);
-  font-size: 22rpx;
+  font-size: 20rpx;
   line-height: 1;
 }
 
 .hero-joined {
   color: var(--profile-secondary);
-  font-size: 24rpx;
+  font-size: 22rpx;
   font-weight: 500;
   line-height: 1;
 }
 
-/* 编辑资料按钮 */
+/* 编辑按钮（圆形图标按钮） */
 .hero-edit-btn {
   flex-shrink: 0;
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  border: 1rpx solid rgba(63, 143, 114, 0.32);
+  background: rgba(255, 255, 255, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6rpx;
-  height: 50rpx;
-  padding: 0 20rpx;
-  border: 1rpx solid rgba(63, 143, 114, 0.32);
-  border-radius: 25rpx;
-  background: rgba(255, 255, 255, 0.6);
   color: var(--profile-primary);
-  font-size: 22rpx;
-  font-weight: 600;
+  font-size: 24rpx;
   line-height: 1;
   transition: opacity 0.15s, transform 0.15s;
 }
 .hero-edit-btn::after { border: 0; }
-.hero-edit-btn--pressed { opacity: 0.78; transform: scale(0.96); }
-.hero-edit-icon { font-size: 22rpx; line-height: 1; }
-.hero-edit-text { line-height: 1; }
-
-/* 成长文案 */
-.hero-motto {
-  margin-top: 28rpx;
-  padding-top: 22rpx;
-  border-top: 1rpx solid rgba(63, 143, 114, 0.14);
-  color: var(--profile-secondary);
-  font-size: 26rpx;
-  font-weight: 400;
-  line-height: 1.6;
-  position: relative;
-  z-index: 1;
-}
+.hero-edit-btn--pressed { opacity: 0.78; transform: scale(0.94); }
+.hero-edit-icon { font-size: 24rpx; line-height: 1; }
 
 /* =============================================
    页面主内容区

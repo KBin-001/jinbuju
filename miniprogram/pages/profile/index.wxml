@@ -1,43 +1,37 @@
 <view class="profile-page" style="{{themeStyle}}" data-theme="{{currentThemeId}}">
 
-  <!-- ======= 一、用户成长 Hero 卡 ======= -->
+  <!-- ======= 一、用户成长 Hero 卡（卡片式 Header） ======= -->
   <view class="hero-card">
     <!-- 背景装饰纹理圆 -->
     <view class="hero-deco-circle hero-deco-circle--1"></view>
     <view class="hero-deco-circle hero-deco-circle--2"></view>
     <view class="hero-deco-leaf">❧</view>
 
-    <!-- 顶部行：头像 + 姓名信息 + 编辑按钮 -->
-    <view class="hero-top-row">
-      <view class="hero-avatar-wrap">
-        <image wx:if="{{displayAvatarUrl}}" class="hero-avatar-img" src="{{displayAvatarUrl}}" mode="aspectFill" />
-        <text wx:else class="hero-avatar-text">{{displayAvatarText}}</text>
-        <!-- 微信头像选取热区 -->
-        <button class="avatar-hitarea" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></button>
-      </view>
+    <view class="hero-avatar-wrap">
+      <image wx:if="{{displayAvatarUrl}}" class="hero-avatar-img" src="{{displayAvatarUrl}}" mode="aspectFill" />
+      <text wx:else class="hero-avatar-text">{{displayAvatarText}}</text>
+      <!-- 微信头像选取热区 -->
+      <button class="avatar-hitarea" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></button>
+    </view>
 
-      <view class="hero-user-info">
-        <view class="hero-name">{{displayName}}</view>
-        <view class="hero-meta-row">
-          <view class="hero-level-pill">⭐ {{levelLabel}}</view>
-          <text class="hero-meta-dot">·</text>
-          <text class="hero-joined">入驻第 {{joinedDays}} 天</text>
-        </view>
-      </view>
-
-      <view
-        class="hero-edit-btn"
-        bindtap="openProfileEditor"
-        hover-class="hero-edit-btn--pressed"
-        hover-stay-time="120"
-      >
-        <text class="hero-edit-icon">✎</text>
-        <text class="hero-edit-text">编辑</text>
+    <view class="hero-user-info">
+      <view class="hero-name">{{displayName}}</view>
+      <view class="hero-meta-row">
+        <view class="hero-level-pill">⭐ {{levelLabel}}</view>
+        <text class="hero-meta-dot">·</text>
+        <text class="hero-joined">入驻第 {{joinedDays}} 天</text>
       </view>
     </view>
 
-    <!-- 成长文案 -->
-    <view class="hero-motto">自律，是改变人生的开始。</view>
+    <view
+      class="hero-edit-btn"
+      bindtap="openProfileEditor"
+      hover-class="hero-edit-btn--pressed"
+      hover-stay-time="120"
+      aria-label="编辑资料"
+    >
+      <text class="hero-edit-icon">✎</text>
+    </view>
   </view>
 
   <!-- 内容区 -->
