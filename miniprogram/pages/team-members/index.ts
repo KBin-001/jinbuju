@@ -193,6 +193,16 @@ function buildMemberViews(members: TeamMember[]): MemberView[] {
   return members.map((member) => toMemberView(member, firstNonSelfId));
 }
 
+/** 按本周专注时长从高到低排序（带稳定 tie-breaker） */
+function sortByFocus(members: MemberView[]): MemberView[] {
+  return members.slice().sort((a, b) => {
+    if (b.weeklyFocusMinutes !== a.weeklyFocusMinutes) {
+      return b.weeklyFocusMinutes - a.weeklyFocusMinutes;
+    }
+    return a.id.localeCompare(b.id);
+  });
+}
+
 function applyFilter(members: MemberView[], filter: FilterKey, keyword: string): MemberView[] {
   const trimmed = keyword.trim();
   let list = members;
@@ -203,21 +213,20 @@ function applyFilter(members: MemberView[], filter: FilterKey, keyword: string):
     case "active":
       list = list.filter((member) => member.status === "checked" || member.status === "active");
       break;
-    case "weekly":
-      list = list.slice().sort((a, b) => b.weeklyFocusMinutes - a.weeklyFocusMinutes);
-      break;
     case "admin":
       list = list.filter((member) => member.role === "leader" || member.role === "admin");
       break;
+    case "weekly":
     case "all":
     default:
       break;
   }
-  return list;
+  // 任何筛选结果都按本周专注时长从高到低排序，确保排行榜顺序准确
+  return sortByFocus(list);
 }
 
 function computeTop3(members: MemberView[]): MemberView[] {
-  return members.slice().sort((a, b) => b.weeklyFocusMinutes - a.weeklyFocusMinutes).slice(0, 3);
+  return sortByFocus(members).slice(0, 3);
 }
 
 function computeJoinedDays(createdAt: string): number {
