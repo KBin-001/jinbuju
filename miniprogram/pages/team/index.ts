@@ -1,5 +1,5 @@
 import { getActiveGoal } from "../../services/manualGoal";
-import { calculateTodaySummary, getTasksByDate, updateTaskStatus } from "../../services/manualTask";
+import { calculateTodaySummary, getTodayPageTasks, updateTaskStatus } from "../../services/manualTask";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import {
   createTeam,
@@ -147,7 +147,9 @@ function taskStatusToMemberStatus(status: ActionTask["status"]): MemberTodayStat
 function buildActivitySnapshot(): ActivitySnapshot {
   const goal = getActiveGoal();
   const today = getTodayBusinessDate();
-  const tasks = goal ? getTasksByDate(goal.id, today) : [];
+  // 与「今日」页保持同一取数口径：包含今日行动 + 过去未完成的顺延行动，
+  // 避免小队页统计数量与今日页不一致（例如今日 3 项 + 顺延 2 项 = 5 项）。
+  const tasks = goal ? getTodayPageTasks(goal.id, today, today) : [];
   const summary = calculateTodaySummary(tasks);
   const todayAction = tasks.find((task) => task.status !== "completed") || tasks[0];
   let todayStatus: MemberTodayStatus = "not_started";
