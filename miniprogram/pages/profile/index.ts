@@ -8,6 +8,7 @@ import {
   setCurrentTheme,
   themeToProfileCssVars,
   THEME_PRESETS,
+  DEFAULT_THEME_ID,
   ThemeId,
   ThemePreset,
 } from "../../services/theme";
@@ -41,6 +42,8 @@ interface ThemeCardView {
   bg: string;
   heroGradient: string;
   progressGradient: string;
+  tags: string[];
+  swatches: string[];
 }
 
 /** 成长概览统计 */
@@ -127,7 +130,17 @@ function toThemeCard(theme: ThemePreset): ThemeCardView {
     bg: theme.bg,
     heroGradient: theme.heroGradient,
     progressGradient: theme.progressGradient,
+    tags: theme.tags,
+    swatches: [theme.primary, theme.primaryLight, theme.accent, theme.primaryDeep],
   };
+}
+
+/** 主题弹窗筛选标签 */
+const THEME_FILTERS: string[] = ["全部", "柔和", "沉稳", "清新", "活力"];
+
+function filterThemes(list: ThemeCardView[], filter: string): ThemeCardView[] {
+  if (filter === "全部") return list;
+  return list.filter((t) => t.tags.indexOf(filter) >= 0);
 }
 
 Page({
@@ -157,6 +170,9 @@ Page({
     profileDraftUseInTeam: true,
     endingGoalId: "",
     themeList: THEME_PRESETS.map(toThemeCard) as ThemeCardView[],
+    themeFilters: THEME_FILTERS,
+    themeFilterActive: "全部",
+    filteredThemeList: filterThemes(THEME_PRESETS.map(toThemeCard), "全部") as ThemeCardView[],
     currentThemeId: getCurrentThemeId() as ThemeId,
     previewThemeId: getCurrentThemeId() as ThemeId,
     themeStyle: themeToProfileCssVars(getCurrentTheme()),
@@ -369,6 +385,8 @@ Page({
     this.setData({
       themePickerVisible: true,
       previewThemeId: id,
+      themeFilterActive: "全部",
+      filteredThemeList: filterThemes(this.data.themeList, "全部"),
       themeStyle: themeToProfileCssVars(getCurrentTheme()),
     });
   },
@@ -383,6 +401,15 @@ Page({
     });
   },
 
+  /** 切换筛选标签 */
+  switchThemeFilter(event: { currentTarget: { dataset: { filter?: string } } }) {
+    const filter = String(event.currentTarget.dataset.filter || "全部");
+    this.setData({
+      themeFilterActive: filter,
+      filteredThemeList: filterThemes(this.data.themeList, filter),
+    });
+  },
+
   /** 点击主题卡片：实时预览，不写入 storage */
   previewTheme(event: { currentTarget: { dataset: { id?: string } } }) {
     const id = String(event.currentTarget.dataset.id || "") as ThemeId;
@@ -394,7 +421,28 @@ Page({
     });
   },
 
-  /** 点击"设为当前主题"：保存到 storage 并全局生效 */
+  /** 底部「恢复默认」：预览默认主题（不写入 storage，需再用「预览当前主题」确认） */
+  restoreDefaultTheme() {
+    const theme = getThemeById(DEFAULT_THEME_ID);
+    this.setData({
+      previewThemeId: DEFAULT_THEME_ID,
+      themeStyle: themeToProfileCssVars(theme),
+    });
+    wx.showToast({ title: "已恢复默认预览", icon: "none" });
+  },
+
+  /** 底部「应用当前主题」：把当前预览的主题正式写入 storage 并全局生效 */
+  applyPreviewTheme() {
+    const id = this.data.previewThemeId;
+    const theme = setCurrentTheme(id);
+    this.setData({
+      currentThemeId: id,
+      themeStyle: themeToProfileCssVars(theme),
+    });
+    wx.showToast({ title: "已应用当前主题", icon: "success" });
+  },
+
+  /** 卡片内「设为当前主题」：保存到 storage 并全局生效（保留原入口） */
   applyTheme(event: { currentTarget: { dataset: { id?: string } } }) {
     const id = String(event.currentTarget.dataset.id || "") as ThemeId;
     if (!id) return;

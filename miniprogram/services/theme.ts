@@ -9,7 +9,7 @@
 
 import { emit, on, off } from "../utils/eventBus";
 
-export type ThemeId = "mint" | "cream" | "lake" | "inkGreen";
+export type ThemeId = "mint" | "cream" | "lake" | "inkGreen" | "apricot" | "lavender" | "midnight";
 
 export interface ThemePreset {
   id: ThemeId;
@@ -35,6 +35,8 @@ export interface ThemePreset {
   progressGradient: string;
   /** 卡片阴影 */
   shadow: string;
+  /** 风格标签，用于主题弹窗筛选 */
+  tags: string[];
 }
 
 export const THEME_EVENT = "theme:change";
@@ -56,6 +58,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     heroGradient: "linear-gradient(135deg, #E6F4EC 0%, #F7FBF8 60%, #FFFFFF 100%)",
     progressGradient: "linear-gradient(90deg, #7CC6A0 0%, #3F8F72 100%)",
     shadow: "0 8rpx 28rpx rgba(36, 88, 74, 0.08)",
+    tags: ["清新"],
   },
   {
     id: "cream",
@@ -71,6 +74,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     heroGradient: "linear-gradient(135deg, #FFF4D8 0%, #FFFBF0 60%, #FFFFFF 100%)",
     progressGradient: "linear-gradient(90deg, #F4C95D 0%, #B58A2E 100%)",
     shadow: "0 8rpx 28rpx rgba(107, 79, 18, 0.08)",
+    tags: ["柔和", "活力"],
   },
   {
     id: "lake",
@@ -86,6 +90,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     heroGradient: "linear-gradient(135deg, #E8F1FB 0%, #F4F8FB 60%, #FFFFFF 100%)",
     progressGradient: "linear-gradient(90deg, #6FA8DC 0%, #3D83A8 100%)",
     shadow: "0 8rpx 28rpx rgba(36, 81, 107, 0.08)",
+    tags: ["沉稳", "清新"],
   },
   {
     id: "inkGreen",
@@ -101,6 +106,55 @@ export const THEME_PRESETS: ThemePreset[] = [
     heroGradient: "linear-gradient(135deg, #1F5B4A 0%, #356859 58%, #4C806E 100%)",
     progressGradient: "linear-gradient(90deg, #7FAA91 0%, #356859 100%)",
     shadow: "0 12rpx 32rpx rgba(31, 91, 74, 0.10)",
+    tags: ["沉稳"],
+  },
+  {
+    id: "apricot",
+    name: "奶油杏桃",
+    desc: "温暖 · 轻盈治愈感",
+    primary: "#E08A6B",
+    primaryDeep: "#B5634A",
+    primaryLight: "#F0B49A",
+    primarySoft: "#FCEEE6",
+    accent: "#F4A87E",
+    bg: "#FFF7F3",
+    cardSoft: "#FBEFE8",
+    heroGradient: "linear-gradient(135deg, #FCEEE6 0%, #FFF7F3 60%, #FFFFFF 100%)",
+    progressGradient: "linear-gradient(90deg, #F4A87E 0%, #E08A6B 100%)",
+    shadow: "0 8rpx 28rpx rgba(181, 99, 74, 0.08)",
+    tags: ["柔和", "活力"],
+  },
+  {
+    id: "lavender",
+    name: "雾灰紫",
+    desc: "优雅 · 平衡柔和感",
+    primary: "#8B7AA8",
+    primaryDeep: "#5F4F78",
+    primaryLight: "#B6A8CC",
+    primarySoft: "#EFEAF6",
+    accent: "#A99BC0",
+    bg: "#F7F5FB",
+    cardSoft: "#F1EDF7",
+    heroGradient: "linear-gradient(135deg, #EFEAF6 0%, #F7F5FB 60%, #FFFFFF 100%)",
+    progressGradient: "linear-gradient(90deg, #B6A8CC 0%, #8B7AA8 100%)",
+    shadow: "0 8rpx 28rpx rgba(95, 79, 120, 0.08)",
+    tags: ["柔和", "沉稳"],
+  },
+  {
+    id: "midnight",
+    name: "夜幕蓝绿",
+    desc: "深邃 · 专注静谧感",
+    primary: "#2E7376",
+    primaryDeep: "#194548",
+    primaryLight: "#5FA0A3",
+    primarySoft: "#E1EDEE",
+    accent: "#5FA0A3",
+    bg: "#F2F6F6",
+    cardSoft: "#E8EFEF",
+    heroGradient: "linear-gradient(135deg, #E1EDEE 0%, #F2F6F6 60%, #FFFFFF 100%)",
+    progressGradient: "linear-gradient(90deg, #5FA0A3 0%, #2E7376 100%)",
+    shadow: "0 10rpx 30rpx rgba(25, 69, 72, 0.10)",
+    tags: ["沉稳"],
   },
 ];
 
@@ -113,7 +167,15 @@ const THEME_MAP: Record<ThemeId, ThemePreset> = THEME_PRESETS.reduce(
 );
 
 function isThemeId(value: unknown): value is ThemeId {
-  return value === "mint" || value === "cream" || value === "lake" || value === "inkGreen";
+  return (
+    value === "mint" ||
+    value === "cream" ||
+    value === "lake" ||
+    value === "inkGreen" ||
+    value === "apricot" ||
+    value === "lavender" ||
+    value === "midnight"
+  );
 }
 
 export function getThemeById(id: ThemeId): ThemePreset {

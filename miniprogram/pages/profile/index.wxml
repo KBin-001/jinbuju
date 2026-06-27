@@ -12,22 +12,28 @@
       <view class="hero-avatar-wrap">
         <image wx:if="{{displayAvatarUrl}}" class="hero-avatar-img" src="{{displayAvatarUrl}}" mode="aspectFill" />
         <text wx:else class="hero-avatar-text">{{displayAvatarText}}</text>
-        <!-- 金色徽章小点 -->
-        <view class="hero-avatar-badge">★</view>
         <!-- 微信头像选取热区 -->
         <button class="avatar-hitarea" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></button>
       </view>
 
       <view class="hero-user-info">
-        <view class="hero-name-row">
-          <text class="hero-name">{{displayName}}</text>
-          <text class="hero-name-caret">›</text>
+        <view class="hero-name">{{displayName}}</view>
+        <view class="hero-meta-row">
+          <view class="hero-level-pill">⭐ {{levelLabel}}</view>
+          <text class="hero-meta-dot">·</text>
+          <text class="hero-joined">入驻第 {{joinedDays}} 天</text>
         </view>
-        <view class="hero-level-pill">⭐ {{levelLabel}}</view>
-        <view class="hero-joined">入驻第 {{joinedDays}} 天</view>
       </view>
 
-      <button class="hero-edit-btn" bindtap="openProfileEditor">✎ 编辑资料</button>
+      <view
+        class="hero-edit-btn"
+        bindtap="openProfileEditor"
+        hover-class="hero-edit-btn--pressed"
+        hover-stay-time="120"
+      >
+        <text class="hero-edit-icon">✎</text>
+        <text class="hero-edit-text">编辑</text>
+      </view>
     </view>
 
     <!-- 成长文案 -->
@@ -215,60 +221,99 @@
     </view>
   </view>
 
-  <!-- ======= 主题皮肤弹窗 ======= -->
-  <view wx:if="{{themePickerVisible}}" class="theme-picker-layer">
-    <view class="theme-picker-mask" catchtap="closeThemePicker"></view>
-    <view class="theme-picker-panel" catchtap="noop">
-      <view class="popup-handle"></view>
+  <!-- ======= 主题换肤弹窗 ======= -->
+  <view wx:if="{{themePickerVisible}}" class="theme-modal">
+    <view class="theme-modal__mask" catchtap="closeThemePicker"></view>
 
-      <view class="editor-head">
-        <view>
-          <view class="editor-kicker">THEME</view>
-          <view class="editor-title">主题皮肤</view>
+    <view class="theme-panel" catchtap="noop">
+      <!-- 顶部标题区 -->
+      <view class="theme-panel__header">
+        <view class="theme-panel__title-wrap">
+          <view class="theme-panel__icon">
+            <text class="theme-panel__icon-emoji">🎨</text>
+          </view>
+          <view class="theme-panel__title-text">
+            <view class="theme-panel__title">主题换肤</view>
+            <view class="theme-panel__subtitle">选择你喜欢的视觉风格</view>
+          </view>
         </view>
-        <view class="panel-close" catchtap="closeThemePicker">×</view>
+        <view class="theme-panel__close" catchtap="closeThemePicker">
+          <text class="theme-panel__close-icon">×</text>
+        </view>
       </view>
 
-      <view class="theme-picker-desc">选择一套喜欢的色彩，让进步局更贴合你的心情。点击卡片可实时预览。</view>
-
-      <view class="theme-list">
+      <!-- 筛选标签 -->
+      <view class="theme-filter">
         <view
-          wx:for="{{themeList}}"
-          wx:key="id"
-          class="theme-card {{previewThemeId === item.id ? 'is-selected' : ''}} {{currentThemeId === item.id ? 'is-current' : ''}}"
-          data-id="{{item.id}}"
-          bindtap="previewTheme"
-          hover-class="theme-card--pressed"
-          hover-stay-time="120"
-        >
-          <!-- 主题卡头部：名称 + 主色圆点 + 当前标记 -->
-          <view class="theme-card-head">
-            <view class="theme-card-title-row">
-              <view class="theme-color-dot" style="background: {{item.primary}}"></view>
-              <text class="theme-card-name">{{item.name}}</text>
-              <view wx:if="{{currentThemeId === item.id}}" class="theme-current-tag">当前</view>
+          wx:for="{{themeFilters}}"
+          wx:key="*this"
+          class="theme-filter__chip {{themeFilterActive === item ? 'is-active' : ''}}"
+          data-filter="{{item}}"
+          bindtap="switchThemeFilter"
+          hover-class="theme-filter__chip--pressed"
+          hover-stay-time="100"
+        >{{item}}</view>
+      </view>
+
+      <!-- 主题网格（可滚动） -->
+      <scroll-view scroll-y class="theme-grid">
+        <view class="theme-grid__inner">
+          <view
+            wx:for="{{filteredThemeList}}"
+            wx:key="id"
+            class="theme-card {{previewThemeId === item.id ? 'theme-card--active' : ''}}"
+            data-id="{{item.id}}"
+            bindtap="previewTheme"
+            hover-class="theme-card--pressed"
+            hover-stay-time="120"
+          >
+            <!-- 状态标签 -->
+            <view wx:if="{{currentThemeId === item.id}}" class="theme-card__badge">当前使用</view>
+            <view wx:elif="{{previewThemeId === item.id}}" class="theme-card__badge theme-card__badge--preview">预览中</view>
+
+            <!-- 卡片头部：色点 + 名称 + 描述 -->
+            <view class="theme-card__head">
+              <view class="theme-card__name-row">
+                <view class="theme-card__dot" style="background: {{item.primary}}"></view>
+                <text class="theme-card__name">{{item.name}}</text>
+              </view>
+              <text class="theme-card__desc">{{item.desc}}</text>
             </view>
-            <text class="theme-card-desc">{{item.desc}}</text>
+
+            <!-- 色块 -->
+            <view class="theme-swatches">
+              <view
+                wx:for="{{item.swatches}}"
+                wx:for-item="swatch"
+                wx:key="*this"
+                class="theme-swatches__item"
+                style="background: {{swatch}}"
+              ></view>
+            </view>
+
+            <!-- 迷你预览区：小进度条 + 小按钮 -->
+            <view class="theme-preview" style="background: {{item.primarySoft}}">
+              <view class="theme-preview__bar">
+                <view class="theme-preview__bar-fill" style="background: {{item.progressGradient}}; width: 60%;"></view>
+              </view>
+              <view class="theme-preview__btn" style="background: {{item.primary}}">按钮</view>
+            </view>
           </view>
 
-          <!-- 浅色背景 + 按钮预览 -->
-          <view class="theme-preview" style="background: {{item.heroGradient}}">
-            <view class="theme-preview-row">
-              <view class="theme-preview-chip" style="background: {{item.primarySoft}}; color: {{item.primary}}">进行中</view>
-              <view class="theme-preview-dot" style="background: {{item.accent}}"></view>
-            </view>
-            <view class="theme-preview-track">
-              <view class="theme-preview-fill" style="background: {{item.progressGradient}}; width: 60%;"></view>
-            </view>
-            <view class="theme-preview-btn" style="background: {{item.primary}}">主按钮预览</view>
-          </view>
+          <!-- 筛选为空 -->
+          <view wx:if="{{filteredThemeList.length === 0}}" class="theme-grid__empty">该分类下暂无主题</view>
+        </view>
+      </scroll-view>
 
-          <!-- 卡片底部操作 -->
-          <view class="theme-card-actions">
-            <view wx:if="{{currentThemeId === item.id}}" class="theme-applied-tag">✓ 已应用</view>
-            <view wx:elif="{{previewThemeId === item.id}}" class="theme-apply-btn" data-id="{{item.id}}" catchtap="applyTheme">设为当前主题</view>
-            <view wx:else class="theme-tap-hint">点击预览</view>
-          </view>
+      <!-- 底部操作区 -->
+      <view class="theme-action-bar">
+        <view class="theme-action-bar__btn theme-action-bar__btn--ghost" bindtap="restoreDefaultTheme" hover-class="theme-action-bar__btn--pressed" hover-stay-time="100">
+          <text class="theme-action-bar__icon">↺</text>
+          <text class="theme-action-bar__text">恢复默认</text>
+        </view>
+        <view class="theme-action-bar__btn theme-action-bar__btn--primary" bindtap="applyPreviewTheme" hover-class="theme-action-bar__btn--pressed" hover-stay-time="100">
+          <text class="theme-action-bar__icon">👁</text>
+          <text class="theme-action-bar__text">应用当前主题</text>
         </view>
       </view>
     </view>
