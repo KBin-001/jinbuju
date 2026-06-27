@@ -3,6 +3,7 @@ import {
   ProfileServiceError,
 } from "../../services/profile";
 import { clearManualStore } from "../../services/manualStore";
+import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { isMockSeeded, seedMockData } from "../../utils/mockData";
 
 interface InputEvent {
@@ -11,8 +12,9 @@ interface InputEvent {
   };
 }
 
-Page({
+Page(withAppTheme({
   data: {
+    appTheme: getCurrentThemeId() as string,
     confirmedRisk: false,
     confirmation: "",
     deleting: false,
@@ -21,7 +23,7 @@ Page({
   },
 
   onShow() {
-    this.setData({ mockSeeded: isMockSeeded() });
+    this.setData({ appTheme: getCurrentThemeId(), mockSeeded: isMockSeeded() });
   },
 
   loadMockData() {
@@ -107,4 +109,4 @@ Page({
         });
       });
   },
-});
+}));

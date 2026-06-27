@@ -1017,3 +1017,206 @@
   color: var(--profile-muted);
   font-size: 24rpx;
 }
+
+/* =========================================================
+ * 墨绿成长主题 覆写（profile-page）
+ * 覆写本页硬编码的薄荷绿色：装饰圆、叶子文字、按钮、阴影、遮罩等。
+ * 切换至墨绿主题后，整页 UI 统一呈现深绿质感。
+ * ========================================================= */
+.profile-page[data-theme="inkGreen"] {
+  --profile-primary: #1F6F55;
+  --profile-deep: #0F3F32;
+  --profile-primary-soft: #E3F2EA;
+  --profile-primary-light: #6DBB95;
+  --profile-accent: #42A67A;
+  --profile-growth: #6DBB95;
+  --profile-gold: #F4C95D;
+  --profile-gold-soft: #FFF2CD;
+  --profile-text: #183F35;
+  --profile-secondary: #6D8179;
+  --profile-muted: #9AA9A4;
+  --profile-border: #DDEBE4;
+  --profile-soft: #EEF6F1;
+  --profile-bg: #F4F8F5;
+  --profile-shadow: 0 10rpx 28rpx rgba(20, 82, 63, 0.10);
+  --profile-hero-gradient: linear-gradient(135deg, #E3F2EA 0%, #F4F8F5 60%, #FFFFFF 100%);
+  --profile-progress-gradient: linear-gradient(90deg, #6DBB95 0%, #1F6F55 100%);
+  background: #F4F8F5;
+  color: #183F35;
+}
+
+.profile-page[data-theme="inkGreen"] .hero-card {
+  box-shadow: 0 8rpx 24rpx rgba(20, 82, 63, 0.10);
+}
+
+.profile-page[data-theme="inkGreen"] .hero-deco-circle--1 {
+  background: rgba(109, 187, 149, 0.22);
+}
+
+.profile-page[data-theme="inkGreen"] .hero-deco-circle--2 {
+  background: rgba(244, 201, 93, 0.12);
+}
+
+.profile-page[data-theme="inkGreen"] .hero-deco-leaf {
+  color: rgba(31, 111, 85, 0.10);
+}
+
+.profile-page[data-theme="inkGreen"] .hero-avatar-wrap {
+  border: 4rpx solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4rpx 16rpx rgba(244, 201, 93, 0.28);
+}
+
+.profile-page[data-theme="inkGreen"] .stat-grid,
+.profile-page[data-theme="inkGreen"] .goal-card,
+.profile-page[data-theme="inkGreen"] .menu-card,
+.profile-page[data-theme="inkGreen"] .danger-card,
+.profile-page[data-theme="inkGreen"] .theme-card,
+.profile-page[data-theme="inkGreen"] .stat-tile,
+.profile-page[data-theme="inkGreen"] .menu-item,
+.profile-page[data-theme="inkGreen"] .danger-button,
+.profile-page[data-theme="inkGreen"] .option-card {
+  background: #FFFFFF;
+  border-color: #DDEBE4;
+}
+
+.profile-page[data-theme="inkGreen"] .stat-divider,
+.profile-page[data-theme="inkGreen"] .menu-divider,
+.profile-page[data-theme="inkGreen"] .profile-divider {
+  border-top-color: rgba(20, 82, 63, 0.14);
+}
+
+.profile-page[data-theme="inkGreen"] .progress-track,
+.profile-page[data-theme="inkGreen"] .progress-bar,
+.profile-page[data-theme="inkGreen"] .empty-progress {
+  background: #DDEBE4;
+}
+
+.profile-page[data-theme="inkGreen"] .progress-fill,
+.profile-page[data-theme="inkGreen"] .progress-bar-inner,
+.profile-page[data-theme="inkGreen"] .goal-progress-fill {
+  background: linear-gradient(90deg, #6DBB95 0%, #1F6F55 100%);
+}
+
+.profile-page[data-theme="inkGreen"] .primary-button,
+.profile-page[data-theme="inkGreen"] .action-button,
+.profile-page[data-theme="inkGreen"] .save-button,
+.profile-page[data-theme="inkGreen"] .confirm-button,
+.profile-page[data-theme="inkGreen"] .theme-confirm,
+.profile-page[data-theme="inkGreen"] .profile-button {
+  background: #1F6F55;
+  box-shadow: 0 4rpx 16rpx rgba(31, 111, 85, 0.26);
+  color: #FFFFFF;
+}
+
+.profile-page[data-theme="inkGreen"] .secondary-button,
+.profile-page[data-theme="inkGreen"] .ghost-button {
+  background: #FFFFFF;
+  border-color: #DDEBE4;
+  color: #1F6F55;
+}
+
+.profile-page[data-theme="inkGreen"] .gold-card,
+.profile-page[data-theme="inkGreen"] .badge-card,
+.profile-page[data-theme="inkGreen"] .achievement-card {
+  background: linear-gradient(110deg, #FFF8E0 0%, #FFF4D8 100%);
+  border: 1rpx solid rgba(244, 201, 93, 0.30);
+  box-shadow: 0 6rpx 22rpx rgba(244, 201, 93, 0.12);
+}
+
+.profile-page[data-theme="inkGreen"] .gold-icon,
+.profile-page[data-theme="inkGreen"] .badge-icon,
+.profile-page[data-theme="inkGreen"] .achievement-icon {
+  background: linear-gradient(135deg, #F4C95D 0%, #E0B04A 100%);
+  box-shadow: 0 4rpx 14rpx rgba(244, 201, 93, 0.30);
+  color: #183F35;
+}
+
+.profile-page[data-theme="inkGreen"] .gold-bar,
+.profile-page[data-theme="inkGreen"] .level-bar {
+  background: linear-gradient(90deg, #F4C95D 0%, #F8D779 100%);
+}
+
+.profile-page[data-theme="inkGreen"] .func-icon-wrap--focus   { background: #E3F2EA; }
+.profile-page[data-theme="inkGreen"] .func-icon-wrap--settings { background: #EEF6F1; }
+.profile-page[data-theme="inkGreen"] .func-icon-wrap--goal     { background: #E3F2EA; }
+.profile-page[data-theme="inkGreen"] .func-icon-wrap--help     { background: #E3F2EA; }
+
+.profile-page[data-theme="inkGreen"] .danger-card {
+  background: #FBF1ED;
+  border-color: #EADBD7;
+  color: #9A675F;
+}
+
+.profile-page[data-theme="inkGreen"] .danger-button {
+  background: #FBF1ED;
+  border-color: #EADBD7;
+  color: #9A675F;
+}
+
+.profile-page[data-theme="inkGreen"] .layer-mask,
+.profile-page[data-theme="inkGreen"] .popup-mask,
+.profile-page[data-theme="inkGreen"] .theme-mask {
+  background: rgba(15, 63, 50, 0.36);
+}
+
+.profile-page[data-theme="inkGreen"] .theme-grid-card {
+  background: #FFFFFF;
+  border: 2rpx solid #EDF3EF;
+  box-shadow: 0 6rpx 20rpx rgba(20, 82, 63, 0.06);
+}
+
+.profile-page[data-theme="inkGreen"] .theme-grid-card.is-active {
+  border: 2rpx solid #1F6F55;
+  box-shadow: 0 8rpx 24rpx rgba(20, 82, 63, 0.18);
+}
+
+.profile-page[data-theme="inkGreen"] .theme-grid-swatch--mint { background: linear-gradient(135deg, #E6F4EC 0%, #3F8F72 100%); }
+.profile-page[data-theme="inkGreen"] .theme-grid-swatch--inkGreen { background: linear-gradient(135deg, #1F6F55 0%, #0F3F32 100%); }
+.profile-page[data-theme="inkGreen"] .theme-grid-swatch--cream { background: linear-gradient(135deg, #FFF4D8 0%, #B58A2E 100%); }
+.profile-page[data-theme="inkGreen"] .theme-grid-swatch--lake { background: linear-gradient(135deg, #E8F1FB 0%, #3D83A8 100%); }
+
+.profile-page[data-theme="inkGreen"] .quick-task-popup,
+.profile-page[data-theme="inkGreen"] .feedback-popup,
+.profile-page[data-theme="inkGreen"] .management-popup,
+.profile-page[data-theme="inkGreen"] .theme-popup {
+  --popup-background: #F4F8F5;
+}
+
+/* 参考墨绿稿：个人 Hero 使用深绿底，其余内容保持白卡与灰绿背景。 */
+.profile-page[data-theme="inkGreen"] {
+  --profile-primary: #356859;
+  --profile-deep: #1F5B4A;
+  --profile-primary-soft: #EAF5EF;
+  --profile-primary-light: #7FAA91;
+  --profile-accent: #356859;
+  --profile-growth: #356859;
+  --profile-text: #233B34;
+  --profile-secondary: #71827A;
+  --profile-border: #E6EEE9;
+  --profile-soft: #F0F5F1;
+  --profile-bg: #F5F7F2;
+  background: #F5F7F2;
+}
+
+.profile-page[data-theme="inkGreen"] .hero-card {
+  background: linear-gradient(135deg, #1F5B4A 0%, #356859 62%, #4C806E 100%);
+  color: #FFFFFF;
+}
+
+.profile-page[data-theme="inkGreen"] .hero-name,
+.profile-page[data-theme="inkGreen"] .hero-name-caret,
+.profile-page[data-theme="inkGreen"] .hero-joined,
+.profile-page[data-theme="inkGreen"] .hero-motto {
+  color: #FFFFFF;
+}
+
+.profile-page[data-theme="inkGreen"] .hero-edit-btn {
+  border-color: rgba(255, 255, 255, 0.38);
+  background: rgba(255, 255, 255, 0.14);
+  color: #FFFFFF;
+}
+
+.profile-page[data-theme="inkGreen"] .section-card {
+  border-color: rgba(31, 91, 74, 0.10);
+  background: #FFFFFF;
+}

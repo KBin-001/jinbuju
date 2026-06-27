@@ -1,5 +1,6 @@
 import { addDays } from "../../utils/date";
 import { getMyTeam, sendEncouragement } from "../../services/team";
+import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { EncouragementType, TeamMember } from "../../types/team";
 
 type MemberRole = "leader" | "admin" | "member";
@@ -314,8 +315,9 @@ function buildMemberDetail(member: TeamMember, teamCreatedAt: string, firstNonSe
   };
 }
 
-Page({
+Page(withAppTheme({
   data: {
+    appTheme: getCurrentThemeId() as string,
     statusBarHeight: 20,
     navBarHeight: 44,
     navTotalHeight: 64,
@@ -352,6 +354,8 @@ Page({
   },
 
   onShow() {
+    // 每次进入页面都同步最新主题（用户在「我的」页切换后回来即生效）
+    this.setData({ appTheme: getCurrentThemeId() });
     if (this.data.navTotalHeight > 0) this.loadMembers();
   },
 
@@ -467,4 +471,4 @@ Page({
   viewAllRecords() {
     wx.showToast({ title: "完整记录开发中", icon: "none" });
   },
-});
+}));

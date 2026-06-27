@@ -2,6 +2,7 @@ import { FEATURE_FLAGS } from "../../config/features";
 import { createGoal, getActiveGoals } from "../../services/manualGoal";
 import { GoalCategory } from "../../types/manual";
 import { getUiEventString, UiComponentEvent } from "../../utils/ui-event";
+import { withAppTheme } from "../../services/theme";
 
 const OPTIONS: Array<{ value: GoalCategory; label: string; title: string }> = [
   { value: "cet", label: "英语四六级", title: "通过英语四六级" },
@@ -12,7 +13,7 @@ const OPTIONS: Array<{ value: GoalCategory; label: string; title: string }> = [
   { value: "custom", label: "自定义目标", title: "" },
 ];
 
-Page({
+Page(withAppTheme({
   data: {
     options: OPTIONS,
     category: "cet" as GoalCategory,
@@ -53,4 +54,4 @@ Page({
       this.setData({ submitting: false });
     }
   },
-});
+}));

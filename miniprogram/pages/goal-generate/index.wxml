@@ -1,4 +1,4 @@
-<view class="generate-page">
+<view class="generate-page" data-theme="{{appTheme}}">
   <!-- Analyzing state -->
   <view wx:if="{{flowState === 'analyzing' && !showClarification}}" class="gen-center">
     <ant-loading type="spin" size="x-large" color="#3F8F72" />

@@ -9,7 +9,7 @@
 
 import { emit, on, off } from "../utils/eventBus";
 
-export type ThemeId = "mint" | "cream" | "lake";
+export type ThemeId = "mint" | "cream" | "lake" | "inkGreen";
 
 export interface ThemePreset {
   id: ThemeId;
@@ -87,6 +87,21 @@ export const THEME_PRESETS: ThemePreset[] = [
     progressGradient: "linear-gradient(90deg, #6FA8DC 0%, #3D83A8 100%)",
     shadow: "0 8rpx 28rpx rgba(36, 81, 107, 0.08)",
   },
+  {
+    id: "inkGreen",
+    name: "墨绿成长",
+    desc: "沉静 · 自律成长感",
+    primary: "#356859",
+    primaryDeep: "#1F5B4A",
+    primaryLight: "#7FAA91",
+    primarySoft: "#EAF5EF",
+    accent: "#356859",
+    bg: "#F5F7F2",
+    cardSoft: "#F0F5F1",
+    heroGradient: "linear-gradient(135deg, #1F5B4A 0%, #356859 58%, #4C806E 100%)",
+    progressGradient: "linear-gradient(90deg, #7FAA91 0%, #356859 100%)",
+    shadow: "0 12rpx 32rpx rgba(31, 91, 74, 0.10)",
+  },
 ];
 
 const THEME_MAP: Record<ThemeId, ThemePreset> = THEME_PRESETS.reduce(
@@ -98,7 +113,7 @@ const THEME_MAP: Record<ThemeId, ThemePreset> = THEME_PRESETS.reduce(
 );
 
 function isThemeId(value: unknown): value is ThemeId {
-  return value === "mint" || value === "cream" || value === "lake";
+  return value === "mint" || value === "cream" || value === "lake" || value === "inkGreen";
 }
 
 export function getThemeById(id: ThemeId): ThemePreset {
@@ -118,6 +133,17 @@ export function getCurrentTheme(): ThemePreset {
 export function setCurrentTheme(id: ThemeId): ThemePreset {
   const theme = getThemeById(id);
   wx.setStorageSync(THEME_STORAGE_KEY, id);
+  // 同步全局可见区（导航栏 / 后续可扩展为 page data-theme）
+  try {
+    wx.setNavigationBarColor({
+      frontColor: "#000000",
+      backgroundColor: theme.bg,
+      animation: { duration: 200, timingFunc: "easeIn" },
+    });
+  } catch (e) {
+    // 忽略导航栏同步失败
+  }
+  syncTabBar(theme);
   emit(THEME_EVENT, id);
   return theme;
 }
@@ -146,4 +172,88 @@ export function themeToProfileCssVars(theme: ThemePreset): string {
 export function onThemeChange(handler: (id: ThemeId) => void): () => void {
   on(THEME_EVENT, handler as (payload?: any) => void);
   return () => off(THEME_EVENT, handler as (payload?: any) => void);
+}
+
+/**
+ * 将当前主题应用到全局可见区域：
+ *  - 同步导航栏背景色与文字色
+ *  - 同步 app.json window.backgroundColor（运行期）
+ *  - 触发 theme:change 事件，profile 等页面会自动响应
+ *
+ * 建议在 app.ts onLaunch 中调用一次以应用启动时的主题。
+ */
+export function applyGlobalTheme(id?: ThemeId): ThemeId {
+  const themeId = id || getCurrentThemeId();
+  const theme = getThemeById(themeId);
+  try {
+    // 1. 同步导航栏颜色
+    wx.setNavigationBarColor({
+      frontColor: theme.id === "cream" ? "#000000" : "#000000",
+      backgroundColor: theme.bg,
+      animation: { duration: 200, timingFunc: "easeIn" },
+    });
+  } catch (e) {
+    // 忽略导航栏同步失败
+  }
+  syncTabBar(theme);
+  return themeId;
+}
+
+function syncTabBar(theme: ThemePreset) {
+  try {
+    wx.setTabBarStyle({
+      color: theme.id === "inkGreen" ? "#71827A" : "#9AA8A3",
+      selectedColor: theme.primary,
+      backgroundColor: "#FFFFFF",
+      borderStyle: "white",
+    });
+  } catch (e) {
+    // 非 tabBar 页面或基础库不支持时无需阻断主题切换
+  }
+}
+
+type ThemedPageOptions = Record<string, any> & {
+  data?: Record<string, any>;
+  onLoad?: (...args: any[]) => any;
+  onShow?: (...args: any[]) => any;
+  onUnload?: (...args: any[]) => any;
+};
+
+/**
+ * 为页面统一注入 appTheme，并在主题切换、页面返回时自动同步。
+ * 页面根节点只需绑定 data-theme="{{appTheme}}"，不再各自维护主题逻辑。
+ */
+export function withAppTheme<T extends ThemedPageOptions>(options: T): T {
+  const originalOnLoad = options.onLoad;
+  const originalOnShow = options.onShow;
+  const originalOnUnload = options.onUnload;
+
+  return {
+    ...options,
+    data: {
+      ...(options.data || {}),
+      appTheme: getCurrentThemeId(),
+    },
+    onLoad(this: any, ...args: any[]) {
+      if (this.__offAppTheme) this.__offAppTheme();
+      this.__offAppTheme = onThemeChange((themeId) => {
+        this.setData({ appTheme: themeId });
+      });
+      this.setData({ appTheme: getCurrentThemeId() });
+      return originalOnLoad && originalOnLoad.apply(this, args);
+    },
+    onShow(this: any, ...args: any[]) {
+      const themeId = getCurrentThemeId();
+      this.setData({ appTheme: themeId });
+      applyGlobalTheme(themeId);
+      return originalOnShow && originalOnShow.apply(this, args);
+    },
+    onUnload(this: any, ...args: any[]) {
+      if (this.__offAppTheme) {
+        this.__offAppTheme();
+        this.__offAppTheme = null;
+      }
+      return originalOnUnload && originalOnUnload.apply(this, args);
+    },
+  } as T;
 }

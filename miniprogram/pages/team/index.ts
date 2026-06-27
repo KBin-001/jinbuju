@@ -1,5 +1,6 @@
 import { getActiveGoal } from "../../services/manualGoal";
 import { calculateTodaySummary, getTasksByDate, updateTaskStatus } from "../../services/manualTask";
+import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import {
   createTeam,
   getMyTeam,
@@ -195,8 +196,9 @@ function createFeed(members: MemberView[]): ActivityFeedItem[] {
   }));
 }
 
-Page({
+Page(withAppTheme({
   data: {
+    appTheme: getCurrentThemeId() as string,
     status: "loading" as PageStatus,
     errorMessage: "",
     team: null as Team | null,
@@ -227,6 +229,7 @@ Page({
   },
 
   onShow() {
+    this.setData({ appTheme: getCurrentThemeId() });
     this.load();
   },
 
@@ -514,4 +517,4 @@ Page({
   },
 
   noop() {},
-});
+}));

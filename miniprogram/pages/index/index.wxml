@@ -1,4 +1,4 @@
-<view class="page today-page">
+<view class="page today-page" data-theme="{{appTheme}}">
   <view wx:if="{{status === 'loading'}}" class="card state-card">
     <view class="loading-dot"></view>
     <view class="state-title">正在整理今日行动</view>

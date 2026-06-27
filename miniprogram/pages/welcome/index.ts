@@ -1,8 +1,10 @@
+import { withAppTheme } from "../../services/theme";
+
 type WelcomeStatus = "loading" | "ready" | "error";
 
 const WELCOME_COMPLETED_KEY = "welcomeCompleted";
 
-Page({
+Page(withAppTheme({
   data: {
     status: "loading" as WelcomeStatus,
     errorMessage: "",
@@ -76,4 +78,4 @@ Page({
   retry() {
     this.checkWelcomeStatus();
   },
-});
+}));

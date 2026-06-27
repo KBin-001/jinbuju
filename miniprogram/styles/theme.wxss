@@ -4,6 +4,12 @@
  * --------------------------------------------------------
  * 使用方法：在 app.wxss 的 page 块内 @import 此文件后，
  *           各页面/组件可直接使用 var(--color-primary) 等。
+ *
+ * 主题切换：通过 page[data-theme="xxx"] 选择器覆盖变量。
+ *  - mint      默认主题
+ *  - cream     奶油黄主题
+ *  - lake      湖水蓝主题
+ *  - inkGreen  墨绿成长主题（新增 · 深邃沉淀感）
  * ========================================================= */
 
 page {
@@ -68,4 +74,343 @@ page {
   --gap-card: 20rpx;
   --gap-section: 36rpx;
   --padding-page: 24rpx 32rpx 160rpx;
+}
+
+/* =========================================================
+ * 主题切换：通过 page[data-theme="xxx"] 覆盖 CSS 变量
+ * 页面根节点设置 data-theme 即可切换主题，无需额外配置。
+ * ========================================================= */
+
+/* ---------- 薄荷绿（默认主题，作为兜底） ---------- */
+[data-theme="mint"] {
+  --color-bg: #F6FAF7;
+  --color-bg-warm: #FBF7EC;
+  --color-card: #FFFFFF;
+  --color-card-soft: #EFF8F3;
+  --color-card-soft-2: #EAF7EF;
+  --color-card-hover: #F1F8F4;
+
+  --color-primary: #3F8F72;
+  --color-primary-light: #7CC6A0;
+  --color-primary-soft: #E6F4EC;
+  --color-primary-deep: #24584A;
+  --color-primary-dark: #1F5B4A;
+
+  --color-text-main: #244C43;
+  --color-text-secondary: #6F827B;
+  --color-text-muted: #9AA8A3;
+  --color-text-inverse: #FFFFFF;
+
+  --color-border: #E2EEE8;
+  --color-border-soft: #EDF3EF;
+  --color-divider: #EDF3EF;
+
+  --color-success: #68BE8F;
+  --color-success-soft: #E6F4EC;
+  --color-warning: #F4C95D;
+  --color-warning-soft: #FFF4D8;
+  --color-info: #6FA8DC;
+  --color-info-soft: #E8F1FB;
+  --color-danger: #D98A76;
+  --color-danger-soft: #FBF1ED;
+
+  --gradient-card-mint: linear-gradient(135deg, #EAF7EF 0%, #F7FBF8 100%);
+  --gradient-card-soft: linear-gradient(135deg, #F4FBF7 0%, #FFFFFF 60%);
+  --gradient-card-sun: linear-gradient(135deg, #FFF6DC 0%, #FFF1BF 100%);
+  --gradient-progress: linear-gradient(90deg, #7CC6A0 0%, #68BE8F 100%);
+  --gradient-ring: linear-gradient(135deg, #9BD9B7 0%, #68BE8F 100%);
+
+  --shadow-card: 0 8rpx 28rpx rgba(36, 88, 74, 0.08);
+  --shadow-card-soft: 0 4rpx 18rpx rgba(36, 88, 74, 0.06);
+  --shadow-float: 0 16rpx 40rpx rgba(36, 88, 74, 0.12);
+  --shadow-button: 0 10rpx 24rpx rgba(63, 143, 114, 0.22);
+  --shadow-button-soft: 0 6rpx 16rpx rgba(63, 143, 114, 0.16);
+}
+
+/* ---------- 奶油黄主题 ---------- */
+[data-theme="cream"] {
+  --color-bg: #FFF9EE;
+  --color-bg-warm: #FFF4D8;
+  --color-card: #FFFFFF;
+  --color-card-soft: #FFF6DC;
+  --color-card-soft-2: #FFF4D8;
+  --color-card-hover: #FFF1BF;
+
+  --color-primary: #B58A2E;
+  --color-primary-light: #E6C062;
+  --color-primary-soft: #FFF4D8;
+  --color-primary-deep: #6B4F12;
+  --color-primary-dark: #5A4310;
+
+  --color-text-main: #3A2E12;
+  --color-text-secondary: #8A7549;
+  --color-text-muted: #B5A275;
+  --color-text-inverse: #FFFFFF;
+
+  --color-border: #F1E4C2;
+  --color-border-soft: #FAEFD3;
+  --color-divider: #FAEFD3;
+
+  --color-success: #C9A23B;
+  --color-success-soft: #FFF4D8;
+  --color-warning: #F4C95D;
+  --color-warning-soft: #FFF4D8;
+  --color-info: #C9A23B;
+  --color-info-soft: #FFF4D8;
+  --color-danger: #D98A76;
+  --color-danger-soft: #FBF1ED;
+
+  --gradient-card-mint: linear-gradient(135deg, #FFF4D8 0%, #FFFBF0 100%);
+  --gradient-card-soft: linear-gradient(135deg, #FFFAEC 0%, #FFFFFF 60%);
+  --gradient-card-sun: linear-gradient(135deg, #FFF6DC 0%, #FFF1BF 100%);
+  --gradient-progress: linear-gradient(90deg, #F4C95D 0%, #B58A2E 100%);
+  --gradient-ring: linear-gradient(135deg, #F4C95D 0%, #B58A2E 100%);
+
+  --shadow-card: 0 8rpx 28rpx rgba(107, 79, 18, 0.08);
+  --shadow-card-soft: 0 4rpx 18rpx rgba(107, 79, 18, 0.06);
+  --shadow-float: 0 16rpx 40rpx rgba(107, 79, 18, 0.12);
+  --shadow-button: 0 10rpx 24rpx rgba(181, 138, 46, 0.22);
+  --shadow-button-soft: 0 6rpx 16rpx rgba(181, 138, 46, 0.16);
+}
+
+/* ---------- 湖水蓝主题 ---------- */
+[data-theme="lake"] {
+  --color-bg: #F4F8FB;
+  --color-bg-warm: #E8F1FB;
+  --color-card: #FFFFFF;
+  --color-card-soft: #EAF2FA;
+  --color-card-soft-2: #E8F1FB;
+  --color-card-hover: #E1ECF6;
+
+  --color-primary: #3D83A8;
+  --color-primary-light: #8AB8D4;
+  --color-primary-soft: #E8F1FB;
+  --color-primary-deep: #24516B;
+  --color-primary-dark: #1B4258;
+
+  --color-text-main: #1F3A4D;
+  --color-text-secondary: #5C7387;
+  --color-text-muted: #8A9DB0;
+  --color-text-inverse: #FFFFFF;
+
+  --color-border: #D6E3EE;
+  --color-border-soft: #E4ECF3;
+  --color-divider: #E4ECF3;
+
+  --color-success: #6FA8DC;
+  --color-success-soft: #E8F1FB;
+  --color-warning: #F4C95D;
+  --color-warning-soft: #FFF4D8;
+  --color-info: #6FA8DC;
+  --color-info-soft: #E8F1FB;
+  --color-danger: #D98A76;
+  --color-danger-soft: #FBF1ED;
+
+  --gradient-card-mint: linear-gradient(135deg, #E8F1FB 0%, #F4F8FB 100%);
+  --gradient-card-soft: linear-gradient(135deg, #EEF4FA 0%, #FFFFFF 60%);
+  --gradient-card-sun: linear-gradient(135deg, #FFF6DC 0%, #FFF1BF 100%);
+  --gradient-progress: linear-gradient(90deg, #6FA8DC 0%, #3D83A8 100%);
+  --gradient-ring: linear-gradient(135deg, #8AB8D4 0%, #3D83A8 100%);
+
+  --shadow-card: 0 8rpx 28rpx rgba(36, 81, 107, 0.08);
+  --shadow-card-soft: 0 4rpx 18rpx rgba(36, 81, 107, 0.06);
+  --shadow-float: 0 16rpx 40rpx rgba(36, 81, 107, 0.12);
+  --shadow-button: 0 10rpx 24rpx rgba(61, 131, 168, 0.22);
+  --shadow-button-soft: 0 6rpx 16rpx rgba(61, 131, 168, 0.16);
+}
+
+/* ---------- 墨绿成长主题（新增） ----------
+ * 完整覆盖 app.wxss 与各页面 WXSS 所用到的全部主题色变量，
+ * 并对 app.wxss 中残留的硬编码 rgba/hex 做精细化覆写，
+ * 保证切换至墨绿后整页 UI 统一呈现深绿质感。 */
+[data-theme="inkGreen"] {
+  /* 背景 */
+  --color-bg: #F5F7F2;
+  --color-bg-warm: #FFF2CD;
+  --color-card: #FFFFFF;
+  --color-card-soft: #F0F5F1;
+  --color-card-soft-2: #EAF5EF;
+  --color-card-hover: #EAF5EF;
+
+  /* 页面级背景别名（与 app.wxss 对齐） */
+  --color-background: #F5F7F2;
+  --color-background-warm: #FFF2CD;
+  --color-surface: #FFFFFF;
+
+  /* 主色系（app.wxss 全部别名） */
+  --color-primary: #356859;
+  --color-primary-light: #7FAA91;
+  --color-primary-soft: #EAF5EF;
+  --color-primary-deep: #1F5B4A;
+  --color-primary-dark: #1F5B4A;
+  --color-growth: #356859;
+  --color-accent: #356859;
+  --color-sun: #F4C95D;
+  --color-coral: #D98A76;
+  --color-blue: #7FAA91;
+  --color-purple: #7FAA91;
+
+  /* 文字 */
+  --color-text: #233B34;
+  --color-text-main: #233B34;
+  --color-text-secondary: #71827A;
+  --color-text-light: #9AA9A4;
+  --color-text-muted: #9AA9A4;
+  --color-text-inverse: #FFFFFF;
+
+  /* 边框 / 分割线 */
+  --color-border: #D7E4DE;
+  --color-border-soft: #E6EEE9;
+  --color-divider: #E6EEE9;
+
+  /* 状态色 */
+  --color-success: #356859;
+  --color-success-soft: #EAF5EF;
+  --color-warning: #F4C95D;
+  --color-warning-soft: #FFF2CD;
+  --color-info: #7FAA91;
+  --color-info-soft: #EAF5EF;
+  --color-danger: #D98A76;
+  --color-danger-soft: #FBF1ED;
+  --color-danger-light: #FBF1ED;
+
+  /* 渐变 */
+  --gradient-card-mint: linear-gradient(135deg, #1F5B4A 0%, #356859 58%, #4C806E 100%);
+  --gradient-card-soft: linear-gradient(135deg, #F0F5F1 0%, #FFFFFF 60%);
+  --gradient-card-sun: linear-gradient(135deg, #FFF6DC 0%, #FFF1BF 100%);
+  --gradient-progress: linear-gradient(90deg, #7FAA91 0%, #356859 100%);
+  --gradient-ring: linear-gradient(135deg, #7FAA91 0%, #356859 100%);
+
+  --gradient-hero: var(--gradient-card-mint);
+  --gradient-gold: linear-gradient(135deg, #FFF3B7, #F4C95D);
+  --gradient-ai: linear-gradient(135deg, #7FAA91, #356859);
+  --gradient-accent-gold: linear-gradient(145deg, #FFFAF0, #F2DFB4);
+  --gradient-accent-blue: linear-gradient(145deg, #EEF8F2, #C8E0D4);
+  --gradient-accent-purple: linear-gradient(145deg, #EEF8F2, #C8E0D4);
+  --gradient-accent-coral: linear-gradient(145deg, #FFF9F6, #F5DDD7);
+
+  /* 阴影（深绿系，更厚实） */
+  --shadow-card: 0 12rpx 32rpx rgba(31, 91, 74, 0.10);
+  --shadow-card-soft: 0 4rpx 18rpx rgba(31, 91, 74, 0.06);
+  --shadow-float: 0 16rpx 40rpx rgba(31, 91, 74, 0.14);
+  --shadow-button: 0 10rpx 28rpx rgba(53, 104, 89, 0.22);
+  --shadow-button-soft: 0 6rpx 16rpx rgba(53, 104, 89, 0.16);
+  --shadow-button-primary: 0 12rpx 28rpx rgba(53, 104, 89, 0.26);
+
+  /* TDesign / Ant 组件兼容变量 */
+  --button-primary-background-color: #356859;
+  --button-primary-border-color: #356859;
+  --button-primary-color: #FFFFFF;
+  --button-default-background-color: #FFFFFF;
+  --button-default-border-color: #D7E4DE;
+  --button-default-color: #356859;
+  --button-primary-danger-background-color: #D98A76;
+  --button-primary-danger-border-color: #D98A76;
+  --button-disabled-opacity: 0.5;
+
+  --ant-card-bg: #FFFFFF;
+  --ant-card-divider-color: #D7E4DE;
+  --ant-card-header-title-color: #233B34;
+
+  --tag-primary-color: #356859;
+  --tag-primary-light-color: #EAF5EF;
+  --tag-success-color: #356859;
+  --tag-success-light-color: #EAF5EF;
+
+  --progress-stroke-color: #356859;
+  --progress-success-color: #356859;
+  --progress-trail-color: #D7E4DE;
+
+  --notice-primary-background-color: #EAF5EF;
+  --notice-primary-color: #1F5B4A;
+  --notice-info-background-color: #EAF5EF;
+  --notice-info-text-color: #356859;
+
+  --steps-finish-bg: #356859;
+  --steps-default-bg: #C9D8D1;
+  --steps-non-active-bg: #D7E4DE;
+  --steps-title-color: #233B34;
+  --steps-desc-color: #71827A;
+
+  --popup-background: #F5F7F2;
+  --popup-color: #233B34;
+  --dialog-background-color: #FFFFFF;
+  --dialog-title-color: #233B34;
+  --dialog-content-color: #71827A;
+
+  --input-background-color: #F5F7F2;
+  --input-item-color: #233B34;
+  --input-item-placeholder-color: #9AA9A4;
+
+  --radio-background-color: #356859;
+  --radio-border-color: #C9D8D1;
+  --radio-icon-color: #356859;
+  --radio-text-color: #233B34;
+  --checkbox-background-color: #356859;
+  --checkbox-border-color: #C9D8D1;
+  --checkbox-text-color: #233B34;
+}
+
+/* ============ 墨绿主题：覆写 app.wxss 残留的硬编码 rgba/hex ============ */
+[data-theme="inkGreen"] .card {
+  border-color: rgba(20, 82, 63, 0.10);
+}
+
+[data-theme="inkGreen"] .state-mark {
+  border-color: rgba(20, 82, 63, 0.14);
+}
+
+[data-theme="inkGreen"] .growth-hero::after {
+  background: rgba(31, 111, 85, 0.18);
+}
+
+[data-theme="inkGreen"] .secondary-button {
+  border-color: rgba(31, 111, 85, 0.22);
+}
+
+[data-theme="inkGreen"] .quick-task-popup,
+[data-theme="inkGreen"] .feedback-popup,
+[data-theme="inkGreen"] .management-popup {
+  --popup-background: #F5F7F2;
+}
+
+[data-theme="inkGreen"] .ai-notice {
+  background: #EAF5EF;
+  color: #356859;
+  border-color: rgba(31, 111, 85, 0.22);
+}
+
+/* 页面根容器统一承接主题，避免页面局部 WXSS 的浅色背景截断主题。 */
+page [data-theme="inkGreen"] {
+  background-color: var(--color-background);
+  color: var(--color-text-main);
+}
+
+page [data-theme="inkGreen"] .card,
+page [data-theme="inkGreen"] .section-card {
+  border-color: rgba(31, 91, 74, 0.10);
+  background-color: var(--color-card);
+  box-shadow: var(--shadow-card);
+}
+
+page [data-theme="inkGreen"] .primary-button {
+  background: var(--color-primary);
+  color: #FFFFFF;
+  box-shadow: var(--shadow-button-primary);
+}
+
+page [data-theme="inkGreen"] .secondary-button {
+  border-color: var(--color-border);
+  background: #FFFFFF;
+  color: var(--color-primary);
+}
+
+page [data-theme="inkGreen"] .status-chip,
+page [data-theme="inkGreen"] .ui-tag {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+page [data-theme="inkGreen"] .progress-bar-inner {
+  background: var(--gradient-progress);
 }

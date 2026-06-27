@@ -1,4 +1,4 @@
-<view class="page progress-page">
+<view class="page progress-page" data-theme="{{appTheme}}">
   <view wx:if="{{status === 'loading'}}" class="state-card">
     <view class="state-orbit"></view>
     <view class="state-title">正在整理成长记录</view>

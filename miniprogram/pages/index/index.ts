@@ -2,6 +2,7 @@ import { getActiveGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTaskStatus } from "../../services/manualTask";
 import { getLocalUserProfile } from "../../services/profile";
+import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { ActionIssueReason, ActionTask, Goal, TodaySummary } from "../../types/manual";
 import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
@@ -138,8 +139,9 @@ function toViewTask(task: ActionTask, today: string): ViewTask {
   };
 }
 
-Page({
+Page(withAppTheme({
   data: {
+    appTheme: getCurrentThemeId() as string,
     status: "loading",
     errorMessage: "",
     displayName: "阿岚",
@@ -209,7 +211,7 @@ Page({
       this.focusGoalHandler = null;
     }
   },
-  onShow() { this.load(); },
+  onShow() { this.setData({ appTheme: getCurrentThemeId() }); this.load(); },
   load() {
     this.setData({ status: "loading", errorMessage: "" });
     try {
@@ -444,4 +446,4 @@ Page({
   chooseReason(task: ViewTask, status: "partially_completed" | "skipped") { wx.showActionSheet({ itemList: REASONS.map((item) => item.label), success: ({ tapIndex }) => { const reason = REASONS[tapIndex]?.value; if (!reason) return; if (status === "partially_completed") this.askActual(task, status, reason); else { try { updateTaskStatus(task.id, status, task.actualMinutes, reason); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" }); } } } }); },
   reschedule(task: ViewTask) { try { rescheduleTask(task.id); wx.showToast({ title: "已顺延到明天", icon: "success" }); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "顺延失败", icon: "none" }); } },
   remove(task: ViewTask) { wx.showModal({ title: "删除行动？", content: `“${task.title}”删除后无法恢复。`, confirmColor: "#9B4B45", success: (result) => { if (!result.confirm) return; try { deleteTask(task.id); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "删除失败", icon: "none" }); } } }); },
-});
+}));

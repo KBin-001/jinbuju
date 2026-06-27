@@ -1,4 +1,4 @@
-<view class="page goal-detail-page">
+<view class="page goal-detail-page" data-theme="{{appTheme}}">
   <view wx:if="{{status === 'loading'}}" class="state-card card">
     <view class="loading-dot"></view>
     <view class="state-title">正在读取目标</view>

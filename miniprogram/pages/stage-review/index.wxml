@@ -1,4 +1,4 @@
-<view class="page review-page">
+<view class="page review-page" data-theme="{{appTheme}}">
   <view class="page-header growth-hero review-hero">
     <view class="page-eyebrow">可选的计划复盘</view>
     <view class="page-title">回顾这段行动</view>

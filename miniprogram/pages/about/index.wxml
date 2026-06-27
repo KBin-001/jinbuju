@@ -1,4 +1,4 @@
-<view class="page about-page">
+<view class="page about-page" data-theme="{{appTheme}}">
   <view class="about-mark">进</view>
   <view class="about-title">进步局</view>
   <view class="about-version">版本 {{version}}</view>

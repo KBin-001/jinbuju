@@ -2,6 +2,7 @@ import { endGoal, getActiveGoal, getGoal, setCurrentGoal } from "../../services/
 import { getProgressSummary } from "../../services/manualStats";
 import { getTasksByGoal } from "../../services/manualTask";
 import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
+import { withAppTheme } from "../../services/theme";
 import { addDays, formatDate, formatDisplayDate } from "../../utils/date";
 import { getActionTaskDisplayStatus } from "../../utils/taskStatus";
 
@@ -55,7 +56,7 @@ function toActionView(task: ActionTask, today: string): ActionView {
   };
 }
 
-Page({
+Page(withAppTheme({
   data: {
     status: "loading",
     errorMessage: "",
@@ -192,4 +193,4 @@ Page({
       },
     });
   },
-});
+}));

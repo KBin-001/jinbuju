@@ -1,4 +1,4 @@
-<view class="preview-page">
+<view class="preview-page" data-theme="{{appTheme}}">
   <view class="preview-header">
     <button class="preview-back" disabled="{{confirming || savingTask || regenerating}}" bindtap="goBack">‹</button>
     <view class="preview-header-title">行动计划预览</view>

@@ -1,4 +1,4 @@
-<view class="page legal-page">
+<view class="page legal-page" data-theme="{{appTheme}}">
   <view class="legal-title">进步局隐私政策</view>
   <view class="legal-notice">
     TODO：上线前补充正式隐私政策内容。当前为 V1 产品说明稿，仍需由专业法律顾问审核并补充运营主体、联系方式与生效日期。

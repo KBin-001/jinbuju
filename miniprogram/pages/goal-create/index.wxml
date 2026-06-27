@@ -1,4 +1,4 @@
-<view class="page goal-page">
+<view class="page goal-page" data-theme="{{appTheme}}">
   <view class="growth-hero goal-hero">
     <view class="hero-kicker">LONG-TERM GOAL</view>
     <view class="hero-title">创建长期目标</view>

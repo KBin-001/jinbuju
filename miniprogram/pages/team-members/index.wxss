@@ -1192,3 +1192,36 @@
     padding-right: 24rpx;
   }
 }
+
+/* ============ 墨绿成长主题 覆写 ============ */
+.members-page[data-theme="inkGreen"] {
+  --m-bg: #F5F7F2;
+  --m-bg-soft: #F0F5F1;
+  --m-primary: #356859;
+  --m-primary-deep: #1F5B4A;
+  --m-primary-soft: #EAF5EF;
+  --m-primary-light: #7FAA91;
+  --m-accent: #356859;
+  --m-gold: #F4C95D;
+  --m-gold-soft: #FFF2CD;
+  --m-text: #183F35;
+  --m-text-2: #6D8179;
+  --m-text-3: #9AA9A4;
+  --m-border: #DDEBE4;
+  --m-card: #FFFFFF;
+  --m-shadow: 0 10rpx 28rpx rgba(20, 82, 63, 0.10);
+  --m-shadow-soft: 0 4rpx 16rpx rgba(20, 82, 63, 0.05);
+}
+
+.members-page[data-theme="inkGreen"] .nav-bar {
+  border-bottom-color: rgba(20, 82, 63, 0.08);
+}
+
+.members-page[data-theme="inkGreen"] .detail-primary {
+  background: var(--m-primary);
+  box-shadow: 0 10rpx 24rpx rgba(31, 111, 85, 0.26);
+}
+
+.members-page[data-theme="inkGreen"] .detail-primary.is-disabled {
+  background: #C9DDD3;
+}

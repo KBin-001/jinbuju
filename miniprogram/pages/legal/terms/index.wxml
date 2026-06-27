@@ -1,4 +1,4 @@
-<view class="page legal-page">
+<view class="page legal-page" data-theme="{{appTheme}}">
   <view class="legal-title">进步局用户协议</view>
   <view class="legal-notice">
     TODO：上线前补充正式用户协议内容。当前为 V1 产品说明稿，仍需由专业法律顾问审核并补充运营主体、联系方式、生效日期及争议解决条款。

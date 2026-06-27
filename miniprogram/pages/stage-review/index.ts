@@ -1,3 +1,4 @@
+import { withAppTheme } from "../../services/theme";
 import {
   createStageRequestId,
   getStageReview,
@@ -58,7 +59,7 @@ const PREFERENCE_OPTIONS = [
 
 const DURATION_OPTIONS = [7, 14, 21, 30];
 
-Page({
+Page(withAppTheme({
   data: {
     status: "loading" as PageStatus,
     stageId: "",
@@ -222,4 +223,4 @@ Page({
         });
       });
   },
-});
+}));

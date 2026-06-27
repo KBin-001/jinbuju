@@ -1,4 +1,4 @@
-<view class="welcome-page">
+<view class="welcome-page" data-theme="{{appTheme}}">
   <view wx:if="{{status === 'loading'}}" class="welcome-state">
     <view class="loading-dot"></view>
     <view class="state-title">正在准备进步局</view>

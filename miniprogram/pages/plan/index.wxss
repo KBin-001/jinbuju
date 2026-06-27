@@ -1838,3 +1838,298 @@
     flex: 1 1 100%;
   }
 }
+
+/* =========================================================
+ * 墨绿成长主题 覆写（progress-page）
+ * 覆写本页中所有硬编码的薄荷绿色：进度条渐变、滑轨、图表颜色、
+ * 遮罩背景、milestone 当前态阴影、按钮阴影、对比色文字等。
+ * 切换至墨绿主题后，整页 UI 统一呈现深绿质感。
+ * ========================================================= */
+.progress-page[data-theme="inkGreen"] {
+  --progress-primary: #356859;
+  --progress-deep: #1F5B4A;
+  --progress-soft: #F0F5F1;
+  --progress-accent: #356859;
+  --progress-gold: #F4C95D;
+  --progress-gold-light: #FFF2CD;
+  --progress-text: #183F35;
+  --progress-secondary: #6D8179;
+  --progress-muted: #9AA9A4;
+  --progress-border: #DDEBE4;
+  --progress-shadow: 0 10rpx 28rpx rgba(20, 82, 63, 0.10);
+  background: #F5F7F2;
+  color: #183F35;
+}
+
+.progress-page[data-theme="inkGreen"] .goal-card,
+.progress-page[data-theme="inkGreen"] .overview-card,
+.progress-page[data-theme="inkGreen"] .trend-card,
+.progress-page[data-theme="inkGreen"] .milestone-card,
+.progress-page[data-theme="inkGreen"] .record-card,
+.progress-page[data-theme="inkGreen"] .state-card,
+.progress-page[data-theme="inkGreen"] .goal-picker-panel,
+.progress-page[data-theme="inkGreen"] .stat-tile,
+.progress-page[data-theme="inkGreen"] .insight-card,
+.progress-page[data-theme="inkGreen"] .ai-coach-card,
+.progress-page[data-theme="inkGreen"] .medal-card,
+.progress-page[data-theme="inkGreen"] .highlight-card,
+.progress-page[data-theme="inkGreen"] .record-card,
+.progress-page[data-theme="inkGreen"] .year-heatmap-card,
+.progress-page[data-theme="inkGreen"] .review-link {
+  background: #FFFFFF;
+}
+
+.progress-page[data-theme="inkGreen"] .goal-card {
+  background:
+    radial-gradient(circle at 88% 16%, rgba(244, 201, 93, 0.22), transparent 28%),
+    radial-gradient(circle at 92% 96%, rgba(109, 187, 149, 0.20), transparent 34%),
+    var(--gradient-card-mint);
+}
+
+.progress-page[data-theme="inkGreen"] .status-chip {
+  background: rgba(109, 187, 149, 0.20);
+  color: #1F6F55;
+}
+
+.progress-page[data-theme="inkGreen"] .goal-picker-mask {
+  background: rgba(15, 63, 50, 0.36);
+}
+
+.progress-page[data-theme="inkGreen"] .goal-picker-grabber {
+  background: #C9DDD3;
+}
+
+.progress-page[data-theme="inkGreen"] .progress-bar-inner,
+.progress-page[data-theme="inkGreen"] .progress-bar-track .progress-bar-inner,
+.progress-page[data-theme="inkGreen"] .summary-bar-fill {
+  background: linear-gradient(90deg, #6DBB95 0%, #1F6F55 100%);
+}
+
+.progress-page[data-theme="inkGreen"] .progress-bar-track,
+.progress-page[data-theme="inkGreen"] .progress-bar {
+  background: #DDEBE4;
+}
+
+.progress-page[data-theme="inkGreen"] .progress-bar-track {
+  border-color: rgba(31, 111, 85, 0.32);
+}
+
+.progress-page[data-theme="inkGreen"] .medal-glow {
+  background: linear-gradient(180deg, #6DBB95 0%, #1F6F55 100%);
+  box-shadow: inset 0 8rpx 12rpx rgba(255, 255, 255, 0.12);
+}
+
+.progress-page[data-theme="inkGreen"] .medal-medal::before {
+  border-bottom: 16rpx solid #1F6F55;
+}
+
+.progress-page[data-theme="inkGreen"] .medal-medal::after {
+  background: linear-gradient(135deg, #6DBB95, #42A67A);
+}
+
+.progress-page[data-theme="inkGreen"] .medal-light-bulb {
+  background: #ffe08a;
+  box-shadow: 0 0 14rpx rgba(255, 218, 113, 0.7);
+}
+
+.progress-page[data-theme="inkGreen"] .ai-coach-card {
+  background: linear-gradient(135deg, rgba(66, 166, 122, 0.16), rgba(31, 111, 85, 0.04));
+}
+
+.progress-page[data-theme="inkGreen"] .summary-card {
+  background: #F4F8F5;
+}
+
+.progress-page[data-theme="inkGreen"] .empty-card,
+.progress-page[data-theme="inkGreen"] .empty-row {
+  background: #EEF6F1;
+  color: #1F6F55;
+}
+
+.progress-page[data-theme="inkGreen"] .heatmap-grid-cell {
+  background: #DDEBE4;
+}
+
+.progress-page[data-theme="inkGreen"] .heatmap-grid-cell.is-level-1 {
+  background: #C9E5D6;
+}
+
+.progress-page[data-theme="inkGreen"] .heatmap-grid-cell.is-level-2 {
+  background: #95CFB1;
+}
+
+.progress-page[data-theme="inkGreen"] .heatmap-grid-cell.is-level-3 {
+  background: #6DBB95;
+}
+
+.progress-page[data-theme="inkGreen"] .heatmap-grid-cell.is-level-4 {
+  background: #1F6F55;
+}
+
+.progress-page[data-theme="inkGreen"] .heatmap-grid-cell.is-future {
+  background: #EDF3EF;
+}
+
+.progress-page[data-theme="inkGreen"] .heatmap-tooltip {
+  border-color: rgba(31, 111, 85, 0.32);
+}
+
+.progress-page[data-theme="inkGreen"] .insight-card.is-pos {
+  background: rgba(109, 187, 149, 0.20);
+}
+
+.progress-page[data-theme="inkGreen"] .trend-card .bar-fill {
+  background: linear-gradient(180deg, rgba(200, 224, 212, 0.92) 0%, rgba(180, 214, 198, 0.92) 100%);
+}
+
+.progress-page[data-theme="inkGreen"] .trend-card .bar-fill.is-max,
+.progress-page[data-theme="inkGreen"] .trend-card .bar-column.is-active .bar-fill {
+  background: linear-gradient(180deg, #1F6F55 0%, #0F3F32 100%);
+  box-shadow: 0 12rpx 26rpx rgba(15, 63, 50, 0.18);
+}
+
+.progress-page[data-theme="inkGreen"] .trend-card .bar-fill.is-today {
+  box-shadow: 0 0 0 3rpx rgba(31, 111, 85, 0.22);
+}
+
+.progress-page[data-theme="inkGreen"] .bar-column.is-active .bar-label,
+.progress-page[data-theme="inkGreen"] .bar-column.is-active .bar-meta {
+  color: #1F6F55;
+  font-weight: 700;
+}
+
+.progress-page[data-theme="inkGreen"] .bar-tooltip,
+.progress-page[data-theme="inkGreen"] .trend-card .bar-tooltip {
+  background: #0F3F32;
+  box-shadow: 0 14rpx 28rpx rgba(15, 63, 50, 0.28);
+}
+
+.progress-page[data-theme="inkGreen"] .bar-tooltip::after,
+.progress-page[data-theme="inkGreen"] .trend-card .bar-tooltip::after {
+  border-top-color: #0F3F32;
+}
+
+.progress-page[data-theme="inkGreen"] .trend-card .bar-grid view {
+  border-top: 1rpx dashed #DDEBE4;
+}
+
+.progress-page[data-theme="inkGreen"] .bar-grid view {
+  border-top: 1rpx dashed #DDEBE4;
+}
+
+.progress-page[data-theme="inkGreen"] .bar-grid view:last-child {
+  border-bottom: 1rpx dashed #DDEBE4;
+}
+
+.progress-page[data-theme="inkGreen"] .trend-stats-grid {
+  border-top: 1rpx solid #DDEBE4;
+}
+
+.progress-page[data-theme="inkGreen"] .trend-bar,
+.progress-page[data-theme="inkGreen"] .bar-fill {
+  background: linear-gradient(180deg, #6DBB95, #1F6F55);
+}
+
+.progress-page[data-theme="inkGreen"] .bar-fill.is-max {
+  background: linear-gradient(180deg, #1F6F55, #0F3F32);
+}
+
+.progress-page[data-theme="inkGreen"] .bar-fill.is-today {
+  box-shadow: 0 0 0 3rpx rgba(31, 111, 85, 0.22);
+}
+
+.progress-page[data-theme="inkGreen"] .bar-tooltip {
+  background: #0F3F32;
+}
+
+.progress-page[data-theme="inkGreen"] .bar-tooltip::after {
+  border-top-color: #0F3F32;
+}
+
+.progress-page[data-theme="inkGreen"] .bar-column.is-active .bar-label,
+.progress-page[data-theme="inkGreen"] .bar-column.is-active .bar-meta {
+  color: #1F6F55;
+  font-weight: 700;
+}
+
+.progress-page[data-theme="inkGreen"] .milestone-line {
+  background: #DDEBE4;
+}
+
+.progress-page[data-theme="inkGreen"] .mini-medal-face {
+  border: 4rpx solid #DDEBE4;
+  background: #EEF6F1;
+  color: #9AA9A4;
+}
+
+.progress-page[data-theme="inkGreen"] .mini-medal-ribbon {
+  background: #C9DDD3;
+}
+
+.progress-page[data-theme="inkGreen"] .state-current .mini-medal-face {
+  box-shadow: 0 0 0 8rpx rgba(20, 82, 63, 0.10);
+}
+
+.progress-page[data-theme="inkGreen"] .state-current .mini-medal-face {
+  border-color: #1F6F55;
+  background: #F4F8F5;
+  color: #1F6F55;
+}
+
+.progress-page[data-theme="inkGreen"] .state-current .mini-medal-ribbon {
+  background: #42A67A;
+}
+
+.progress-page[data-theme="inkGreen"] .review-link {
+  border: 1rpx solid #DDEBE4;
+}
+
+.progress-page[data-theme="inkGreen"] .record-check {
+  background: #E3F2EA;
+  color: #1F6F55;
+}
+
+.progress-page[data-theme="inkGreen"] .action-button,
+.progress-page[data-theme="inkGreen"] .primary-action,
+.progress-page[data-theme="inkGreen"] .save-button,
+.progress-page[data-theme="inkGreen"] .task-button {
+  background: linear-gradient(135deg, #1F6F55 0%, #0F3F32 100%);
+  box-shadow: 0 6rpx 14rpx rgba(31, 111, 85, 0.24);
+}
+
+.progress-page[data-theme="inkGreen"] .primary-button {
+  background: #1F6F55;
+  box-shadow: 0 8rpx 18rpx rgba(31, 111, 85, 0.26);
+}
+
+.progress-page[data-theme="inkGreen"] .quick-task-popup,
+.progress-page[data-theme="inkGreen"] .feedback-popup,
+.progress-page[data-theme="inkGreen"] .management-popup {
+  --popup-background: #F4F8F5;
+}
+
+.progress-page[data-theme="inkGreen"] .feedback-section,
+.progress-page[data-theme="inkGreen"] .empty-state {
+  background: #F4F8F5;
+}
+
+/* 墨绿参考稿的成长档案主卡：深绿承载目标，白卡承载数据。 */
+.progress-page[data-theme="inkGreen"] .goal-card {
+  background:
+    radial-gradient(circle at 88% 18%, rgba(248, 210, 106, 0.18), transparent 28%),
+    linear-gradient(135deg, #1F5B4A 0%, #356859 62%, #4C806E 100%);
+  color: #FFFFFF;
+}
+
+.progress-page[data-theme="inkGreen"] .goal-card .section-eyebrow,
+.progress-page[data-theme="inkGreen"] .goal-card .goal-title,
+.progress-page[data-theme="inkGreen"] .goal-card .goal-period {
+  color: #FFFFFF;
+}
+
+.progress-page[data-theme="inkGreen"] .goal-card .status-chip,
+.progress-page[data-theme="inkGreen"] .goal-card .level-chip {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.16);
+  color: #FFFFFF;
+}

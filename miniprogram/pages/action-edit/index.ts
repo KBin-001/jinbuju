@@ -1,8 +1,9 @@
 import { getActiveGoal } from "../../services/manualGoal";
 import { createTask, getTask, updateTask } from "../../services/manualTask";
 import { formatDate } from "../../utils/date";
+import { withAppTheme } from "../../services/theme";
 
-Page({
+Page(withAppTheme({
   data: {
     taskId: "",
     goalId: "",
@@ -84,4 +85,4 @@ Page({
       this.setData({ submitting: false });
     }
   },
-});
+}));

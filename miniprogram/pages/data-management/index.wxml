@@ -1,4 +1,4 @@
-<view class="page data-page">
+<view class="page data-page" data-theme="{{appTheme}}">
   <view class="page-header growth-hero data-hero">
     <view class="page-eyebrow">你的数据由你决定</view>
     <view class="page-title">数据管理</view>

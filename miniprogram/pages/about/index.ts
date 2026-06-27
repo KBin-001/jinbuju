@@ -1,7 +1,8 @@
 import { APP_VERSION } from "../../config/app";
+import { withAppTheme } from "../../services/theme";
 
-Page({
+Page(withAppTheme({
   data: {
     version: APP_VERSION,
   },
-});
+}));

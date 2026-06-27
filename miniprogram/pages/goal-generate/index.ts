@@ -1,3 +1,4 @@
+import { withAppTheme } from "../../services/theme";
 import {
   analyzeGoal,
   createAnalysisRequestId,
@@ -118,7 +119,7 @@ function buildCreateInput(draft: ReturnType<typeof getLongTermGoalDraft>) {
   };
 }
 
-Page({
+Page(withAppTheme({
   data: {
     flowState: "analyzing" as FlowState,
     generationPhase: "idle" as GenerationPhase | "idle",
@@ -557,4 +558,4 @@ Page({
         });
       });
   },
-});
+}));

@@ -137,3 +137,34 @@
 .scope-list view::before { position:absolute; top:15rpx; left:2rpx; width:12rpx; height:12rpx; border-radius:50%; background:#e67861; content:""; }
 .warning-card { border:1rpx solid rgba(230,120,97,.2); border-radius:28rpx; background:#fff7f4; }
 .confirmation-card { border:2rpx solid rgba(230,120,97,.24); border-radius:34rpx; box-shadow:0 16rpx 40rpx rgba(113,73,68,.1); }
+
+/* =========================================================
+ * 墨绿成长主题 覆写（data-page）
+ * 数据管理页中 .mock-button 写死薄荷绿，切换至墨绿后
+ * 需用墨绿变量重新着色。.data-hero/.scope-card 为本页特有
+ * 的暖色风险标识，独立于主题，不动。
+ * ========================================================= */
+.data-page[data-theme="inkGreen"] .mock-button {
+  border: 1rpx solid rgba(31, 111, 85, 0.22);
+  background: #E3F2EA;
+  color: #1F6F55;
+}
+
+.data-page[data-theme="inkGreen"] .local-danger-button {
+  border: 1rpx solid rgba(180, 76, 67, 0.22);
+  background: #FBF1ED;
+  color: #B44C43;
+}
+
+.data-page[data-theme="inkGreen"] .local-card {
+  background: #FFFFFF;
+  box-shadow: 0 10rpx 28rpx rgba(20, 82, 63, 0.08);
+}
+
+.data-page[data-theme="inkGreen"] .confirmation-input {
+  background: #F4F8F5;
+}
+
+.data-page[data-theme="inkGreen"] .confirmation-input:focus {
+  background: #FFFFFF;
+}

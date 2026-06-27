@@ -7,6 +7,93 @@
 
 @import "../../styles/theme.wxss";
 
+/* ============ 墨绿成长主题 覆写 ============
+ * 由于本页 WXSS 中存在大量硬编码的薄荷绿颜色（rgba/hex/gradient），
+ * 这些值在切换到墨绿主题后不会自动跟随 CSS 变量。
+ * 因此在切换至墨绿主题时，对最显眼的关键硬编码值做精细化覆写：
+ *  · 进度条渐变（active / fill）
+ *  · 卡片进度滑轨（rail-success / rail-primary / rail-warning）
+ *  · 完成图标阴影
+ *  · 心情、提示语等次级色
+ * 其余依赖 CSS 变量的样式已被 theme.wxss 覆盖。
+ * ---------------------------------------------------------- */
+.today-page[data-theme="inkGreen"] {
+  --today-primary: #1F6F55;
+  --today-primary-deep: #0F3F32;
+  --today-accent: #6DBB95;
+}
+
+.today-page[data-theme="inkGreen"] .today-hero::after {
+  background: rgba(31, 111, 85, 0.20);
+}
+
+.today-page[data-theme="inkGreen"] .hero-progress-segment {
+  background: rgba(109, 187, 149, 0.32);
+}
+
+.today-page[data-theme="inkGreen"] .hero-progress-segment.is-active {
+  background: linear-gradient(90deg, #6DBB95 0%, #1F6F55 100%);
+}
+
+.today-page[data-theme="inkGreen"] .hero-progress-fill {
+  background: linear-gradient(90deg, #6DBB95 0%, #1F6F55 100%);
+}
+
+.today-page[data-theme="inkGreen"] .progress-ring {
+  background: conic-gradient(#6DBB95 var(--ring-deg, 0%), rgba(109, 187, 149, 0.18) 0);
+}
+
+.today-page[data-theme="inkGreen"] .week-switch,
+.today-page[data-theme="inkGreen"] .week-day.is-today .week-number,
+.today-page[data-theme="inkGreen"] .week-day.is-selected .week-number {
+  box-shadow: 0 8rpx 18rpx rgba(31, 111, 85, 0.28);
+}
+
+.today-page[data-theme="inkGreen"] .rail-success { background: linear-gradient(180deg, #6DBB95 0%, #1F6F55 100%); }
+.today-page[data-theme="inkGreen"] .rail-warning { background: linear-gradient(180deg, #F4C95D 0%, #E0A832 100%); }
+.today-page[data-theme="inkGreen"] .rail-primary,
+.today-page[data-theme="inkGreen"] .rail-neutral,
+.today-page[data-theme="inkGreen"] .rail-muted { background: linear-gradient(180deg, #C8E0D4 0%, #6DBB95 100%); }
+
+.today-page[data-theme="inkGreen"] .action-card-completed {
+  border-color: rgba(66, 166, 122, 0.30);
+}
+
+.today-page[data-theme="inkGreen"] .action-card-completed .action-title {
+  text-decoration-color: rgba(66, 166, 122, 0.42);
+}
+
+.today-page[data-theme="inkGreen"] .action-completed-icon,
+.today-page[data-theme="inkGreen"] .today-bottom-action,
+.today-page[data-theme="inkGreen"] .quick-add-primary,
+.today-page[data-theme="inkGreen"] .calendar-confirm,
+.today-page[data-theme="inkGreen"] .quick-duration-check,
+.today-page[data-theme="inkGreen"] .calendar-day.is-selected .calendar-day-number {
+  box-shadow: 0 8rpx 24rpx rgba(31, 111, 85, 0.28);
+}
+
+.today-page[data-theme="inkGreen"] .today-data-mood {
+  color: #B08A35;
+}
+
+.today-page[data-theme="inkGreen"] .daily-nudge-label,
+.today-page[data-theme="inkGreen"] .today-data-tag {
+  color: #8A6B1F;
+}
+
+.today-page[data-theme="inkGreen"] .quick-add-mask,
+.today-page[data-theme="inkGreen"] .quick-duration-layer {
+  background: rgba(15, 63, 50, 0.36);
+}
+
+.today-page[data-theme="inkGreen"] .calendar-mask {
+  background: rgba(15, 63, 50, 0.18);
+}
+
+.today-page[data-theme="inkGreen"] .calendar-day.is-outside {
+  color: #B6C7C0;
+}
+
 .today-page {
   --today-primary: var(--color-primary);
   --today-primary-deep: var(--color-primary-deep);
@@ -1741,4 +1828,45 @@
     width: 76rpx;
     height: 76rpx;
   }
+}
+
+/* 墨绿主题：当前页面真实使用的是 today-action-* 结构。 */
+.today-page[data-theme="inkGreen"] {
+  --today-primary: #356859;
+  --today-primary-deep: #1F5B4A;
+  --today-accent: #7FAA91;
+  background: #F5F7F2;
+}
+
+.today-page[data-theme="inkGreen"] .today-action-hero {
+  background:
+    radial-gradient(circle at 82% 36%, rgba(255, 255, 255, 0.14), transparent 32%),
+    linear-gradient(135deg, #1F5B4A 0%, #356859 62%, #4C806E 100%);
+  color: #FFFFFF;
+}
+
+.today-page[data-theme="inkGreen"] .action-hero-label,
+.today-page[data-theme="inkGreen"] .action-hero-count,
+.today-page[data-theme="inkGreen"] .action-unit,
+.today-page[data-theme="inkGreen"] .action-hero-goal {
+  color: #FFFFFF;
+}
+
+.today-page[data-theme="inkGreen"] .progress-ring-inner {
+  background: rgba(255, 255, 255, 0.94);
+  color: #1F5B4A;
+}
+
+.today-page[data-theme="inkGreen"] .week-card,
+.today-page[data-theme="inkGreen"] .today-action-list,
+.today-page[data-theme="inkGreen"] .today-data-card {
+  background: #FFFFFF;
+  border-color: rgba(31, 91, 74, 0.10);
+}
+
+.today-page[data-theme="inkGreen"] .today-bottom-action,
+.today-page[data-theme="inkGreen"] .quick-add-primary,
+.today-page[data-theme="inkGreen"] .calendar-confirm {
+  background: #356859;
+  box-shadow: 0 10rpx 24rpx rgba(53, 104, 89, 0.22);
 }

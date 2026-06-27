@@ -1,6 +1,7 @@
 import { getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { calculateTodaySummary, getTasksByDate, getTasksByGoal } from "../../services/manualTask";
+import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
 import { addDays, formatDate } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
@@ -817,8 +818,9 @@ function buildTrendView(
   };
 }
 
-Page({
+Page(withAppTheme({
   data: {
+    appTheme: getCurrentThemeId() as string,
     status: "loading",
     errorMessage: "",
     goal: null as Goal | null,
@@ -861,6 +863,7 @@ Page({
   },
 
   onShow() {
+    this.setData({ appTheme: getCurrentThemeId() });
     this.load();
   },
 
@@ -1096,4 +1099,4 @@ Page({
     }
     wx.navigateTo({ url: `/pages/goal-review/index?id=${latest.id}` });
   },
-});
+}));

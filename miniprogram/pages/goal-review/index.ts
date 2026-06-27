@@ -1,5 +1,6 @@
 import { getArchivedGoals } from "../../services/manualGoal";
 import { ActionIssueReason, ActionTask, ArchivedGoal } from "../../types/manual";
+import { withAppTheme } from "../../services/theme";
 
 interface StatItem {
   label: string;
@@ -102,7 +103,7 @@ function improvementSuggestion(goal: ArchivedGoal): string {
   return "下一次建议先只保留 1 到 2 个核心行动，降低开始成本，比追求数量更重要。";
 }
 
-Page({
+Page(withAppTheme({
   data: {
     status: "loading",
     errorMessage: "",
@@ -154,4 +155,4 @@ Page({
   backProfile() {
     wx.switchTab({ url: "/pages/profile/index" });
   },
-});
+}));

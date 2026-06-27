@@ -1,3 +1,4 @@
+import { withAppTheme } from "../../services/theme";
 import {
   confirmStagePlan,
   createStagePreview,
@@ -106,7 +107,7 @@ function buildWeeks(days: AIStageDay[], current: WeekView[] = []): WeekView[] {
 const REGEN_POLL_INTERVAL = 3000;
 const REGEN_MAX_POLLS = 30;
 
-Page({
+Page(withAppTheme({
   data: {
     status: "loading" as PreviewStatus,
     preview: null as StageGenerationResult | null,
@@ -582,4 +583,4 @@ Page({
         });
     }, REGEN_POLL_INTERVAL);
   },
-});
+}));

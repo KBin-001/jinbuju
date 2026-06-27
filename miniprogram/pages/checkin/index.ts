@@ -1,4 +1,5 @@
 import { getTodayCheckinStatus, submitCheckin } from "../../services/checkin";
+import { withAppTheme } from "../../services/theme";
 import {
   ACTION_STATUS_OPTIONS,
   ActionResultStatus,
@@ -81,7 +82,7 @@ function getSubmitButtonText(overallStatus: CheckinOverallStatus | ""): string {
   return "记录今日情况";
 }
 
-Page({
+Page(withAppTheme({
   data: {
     status: "loading" as PageStatus,
     errorMessage: "",
@@ -363,4 +364,4 @@ Page({
   retry() {
     this.onLoad();
   },
-});
+}));
