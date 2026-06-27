@@ -1871,15 +1871,13 @@
   border-bottom-color: rgba(255, 255, 255, 0.74);
 }
 
-.today-page[data-theme="inkGreen"] .week-day.is-selected .week-number,
-.today-page[data-theme="inkGreen"] .week-day.is-today .week-number {
+.today-page[data-theme="inkGreen"] .week-day.is-selected .week-number {
   background: #F8D26A;
   color: #1F4E40;
   box-shadow: 0 8rpx 18rpx rgba(248, 210, 106, 0.20);
 }
 
-.today-page[data-theme="inkGreen"] .week-day.is-selected .week-label,
-.today-page[data-theme="inkGreen"] .week-day.is-today .week-label {
+.today-page[data-theme="inkGreen"] .week-day.is-selected .week-label {
   color: #F8D26A;
 }
 
@@ -2147,9 +2145,7 @@
 }
 
 .week-day.is-selected .week-number,
-.week-day.is-today .week-number,
-.today-page[data-theme="inkGreen"] .week-day.is-selected .week-number,
-.today-page[data-theme="inkGreen"] .week-day.is-today .week-number {
+.today-page[data-theme="inkGreen"] .week-day.is-selected .week-number {
   background: #F4C95D;
   color: #2F4A3F;
   box-shadow: 0 7rpx 16rpx rgba(244, 201, 93, 0.26);
@@ -2165,9 +2161,7 @@
 }
 
 .week-day.is-selected .week-label,
-.week-day.is-today .week-label,
-.today-page[data-theme="inkGreen"] .week-day.is-selected .week-label,
-.today-page[data-theme="inkGreen"] .week-day.is-today .week-label {
+.today-page[data-theme="inkGreen"] .week-day.is-selected .week-label {
   color: #B78919;
 }
 
@@ -2493,8 +2487,7 @@
   font-weight: 700;
 }
 
-.today-page[data-theme="inkGreen"] .week-day.is-selected .week-number,
-.today-page[data-theme="inkGreen"] .week-day.is-today .week-number {
+.today-page[data-theme="inkGreen"] .week-day.is-selected .week-number {
   background: #F4C95D;
   color: #2F4A3F;
   font-size: 30rpx;
@@ -2502,9 +2495,19 @@
   box-shadow: 0 8rpx 18rpx rgba(244, 201, 93, 0.28);
 }
 
-.today-page[data-theme="inkGreen"] .week-day.is-selected .week-label,
-.today-page[data-theme="inkGreen"] .week-day.is-today .week-label {
+.today-page[data-theme="inkGreen"] .week-day.is-selected .week-label {
   color: #C99A24;
+}
+
+/* 今日但未被选中：用浅绿柔和标记，避免与黄色选中态重复 */
+.today-page[data-theme="inkGreen"] .week-day.is-today:not(.is-selected) .week-number {
+  background: #EAF5EF;
+  color: #356859;
+  box-shadow: none;
+}
+
+.today-page[data-theme="inkGreen"] .week-day.is-today:not(.is-selected) .week-label {
+  color: #356859;
 }
 
 .today-page[data-theme="inkGreen"] .week-day.is-selected::after {
