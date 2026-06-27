@@ -1,7 +1,7 @@
 /**
  * 进步局 · 主题皮肤服务
  * ------------------------------------------------
- * 提供 3 套低压力主题：薄荷绿（默认）/ 奶油黄 / 湖水蓝
+ * 提供 4 套低压力主题：薄荷绿（默认）/ 奶油黄 / 墨绿成长 / 奶油杏桃
  * - 当前主题持久化到本地 storage
  * - 通过 eventBus 广播 "theme:change" 事件，便于其它页面在 onShow 时同步
  * - themeToProfileCssVars() 生成可绑定到页面根节点 style 的 CSS 变量字符串
@@ -9,7 +9,7 @@
 
 import { emit, on, off } from "../utils/eventBus";
 
-export type ThemeId = "mint" | "cream" | "lake" | "inkGreen" | "apricot" | "lavender" | "midnight";
+export type ThemeId = "mint" | "cream" | "inkGreen" | "apricot";
 
 export interface ThemePreset {
   id: ThemeId;
@@ -77,22 +77,6 @@ export const THEME_PRESETS: ThemePreset[] = [
     tags: ["柔和", "活力"],
   },
   {
-    id: "lake",
-    name: "湖水蓝",
-    desc: "冷静 · 专注沉浸感",
-    primary: "#3D83A8",
-    primaryDeep: "#24516B",
-    primaryLight: "#8AB8D4",
-    primarySoft: "#E8F1FB",
-    accent: "#6FA8DC",
-    bg: "#F4F8FB",
-    cardSoft: "#EAF2FA",
-    heroGradient: "linear-gradient(135deg, #E8F1FB 0%, #F4F8FB 60%, #FFFFFF 100%)",
-    progressGradient: "linear-gradient(90deg, #6FA8DC 0%, #3D83A8 100%)",
-    shadow: "0 8rpx 28rpx rgba(36, 81, 107, 0.08)",
-    tags: ["沉稳", "清新"],
-  },
-  {
     id: "inkGreen",
     name: "墨绿成长",
     desc: "沉静 · 自律成长感",
@@ -124,38 +108,6 @@ export const THEME_PRESETS: ThemePreset[] = [
     shadow: "0 8rpx 28rpx rgba(181, 99, 74, 0.08)",
     tags: ["柔和", "活力"],
   },
-  {
-    id: "lavender",
-    name: "雾灰紫",
-    desc: "优雅 · 平衡柔和感",
-    primary: "#8B7AA8",
-    primaryDeep: "#5F4F78",
-    primaryLight: "#B6A8CC",
-    primarySoft: "#EFEAF6",
-    accent: "#A99BC0",
-    bg: "#F7F5FB",
-    cardSoft: "#F1EDF7",
-    heroGradient: "linear-gradient(135deg, #EFEAF6 0%, #F7F5FB 60%, #FFFFFF 100%)",
-    progressGradient: "linear-gradient(90deg, #B6A8CC 0%, #8B7AA8 100%)",
-    shadow: "0 8rpx 28rpx rgba(95, 79, 120, 0.08)",
-    tags: ["柔和", "沉稳"],
-  },
-  {
-    id: "midnight",
-    name: "夜幕蓝绿",
-    desc: "深邃 · 专注静谧感",
-    primary: "#2E7376",
-    primaryDeep: "#194548",
-    primaryLight: "#5FA0A3",
-    primarySoft: "#E1EDEE",
-    accent: "#5FA0A3",
-    bg: "#F2F6F6",
-    cardSoft: "#E8EFEF",
-    heroGradient: "linear-gradient(135deg, #E1EDEE 0%, #F2F6F6 60%, #FFFFFF 100%)",
-    progressGradient: "linear-gradient(90deg, #5FA0A3 0%, #2E7376 100%)",
-    shadow: "0 10rpx 30rpx rgba(25, 69, 72, 0.10)",
-    tags: ["沉稳"],
-  },
 ];
 
 const THEME_MAP: Record<ThemeId, ThemePreset> = THEME_PRESETS.reduce(
@@ -170,11 +122,8 @@ function isThemeId(value: unknown): value is ThemeId {
   return (
     value === "mint" ||
     value === "cream" ||
-    value === "lake" ||
     value === "inkGreen" ||
-    value === "apricot" ||
-    value === "lavender" ||
-    value === "midnight"
+    value === "apricot"
   );
 }
 

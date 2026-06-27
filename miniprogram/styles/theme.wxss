@@ -8,8 +8,8 @@
  * 主题切换：通过 page[data-theme="xxx"] 选择器覆盖变量。
  *  - mint      默认主题
  *  - cream     奶油黄主题
- *  - lake      湖水蓝主题
- *  - inkGreen  墨绿成长主题（新增 · 深邃沉淀感）
+ *  - inkGreen  墨绿成长主题（深邃沉淀感）
+ *  - apricot   奶油杏桃主题（温暖治愈感）
  * ========================================================= */
 
 page {
@@ -171,52 +171,6 @@ page {
   --shadow-float: 0 16rpx 40rpx rgba(107, 79, 18, 0.12);
   --shadow-button: 0 10rpx 24rpx rgba(181, 138, 46, 0.22);
   --shadow-button-soft: 0 6rpx 16rpx rgba(181, 138, 46, 0.16);
-}
-
-/* ---------- 湖水蓝主题 ---------- */
-[data-theme="lake"] {
-  --color-bg: #F4F8FB;
-  --color-bg-warm: #E8F1FB;
-  --color-card: #FFFFFF;
-  --color-card-soft: #EAF2FA;
-  --color-card-soft-2: #E8F1FB;
-  --color-card-hover: #E1ECF6;
-
-  --color-primary: #3D83A8;
-  --color-primary-light: #8AB8D4;
-  --color-primary-soft: #E8F1FB;
-  --color-primary-deep: #24516B;
-  --color-primary-dark: #1B4258;
-
-  --color-text-main: #1F3A4D;
-  --color-text-secondary: #5C7387;
-  --color-text-muted: #8A9DB0;
-  --color-text-inverse: #FFFFFF;
-
-  --color-border: #D6E3EE;
-  --color-border-soft: #E4ECF3;
-  --color-divider: #E4ECF3;
-
-  --color-success: #6FA8DC;
-  --color-success-soft: #E8F1FB;
-  --color-warning: #F4C95D;
-  --color-warning-soft: #FFF4D8;
-  --color-info: #6FA8DC;
-  --color-info-soft: #E8F1FB;
-  --color-danger: #D98A76;
-  --color-danger-soft: #FBF1ED;
-
-  --gradient-card-mint: linear-gradient(135deg, #E8F1FB 0%, #F4F8FB 100%);
-  --gradient-card-soft: linear-gradient(135deg, #EEF4FA 0%, #FFFFFF 60%);
-  --gradient-card-sun: linear-gradient(135deg, #FFF6DC 0%, #FFF1BF 100%);
-  --gradient-progress: linear-gradient(90deg, #6FA8DC 0%, #3D83A8 100%);
-  --gradient-ring: linear-gradient(135deg, #8AB8D4 0%, #3D83A8 100%);
-
-  --shadow-card: 0 8rpx 28rpx rgba(36, 81, 107, 0.08);
-  --shadow-card-soft: 0 4rpx 18rpx rgba(36, 81, 107, 0.06);
-  --shadow-float: 0 16rpx 40rpx rgba(36, 81, 107, 0.12);
-  --shadow-button: 0 10rpx 24rpx rgba(61, 131, 168, 0.22);
-  --shadow-button-soft: 0 6rpx 16rpx rgba(61, 131, 168, 0.16);
 }
 
 /* ---------- 墨绿成长主题（新增） ----------

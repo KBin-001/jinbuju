@@ -1292,11 +1292,6 @@
   box-shadow: 0 8rpx 24rpx rgba(20, 82, 63, 0.18);
 }
 
-.profile-page[data-theme="inkGreen"] .theme-grid-swatch--mint { background: linear-gradient(135deg, #E6F4EC 0%, #3F8F72 100%); }
-.profile-page[data-theme="inkGreen"] .theme-grid-swatch--inkGreen { background: linear-gradient(135deg, #1F6F55 0%, #0F3F32 100%); }
-.profile-page[data-theme="inkGreen"] .theme-grid-swatch--cream { background: linear-gradient(135deg, #FFF4D8 0%, #B58A2E 100%); }
-.profile-page[data-theme="inkGreen"] .theme-grid-swatch--lake { background: linear-gradient(135deg, #E8F1FB 0%, #3D83A8 100%); }
-
 .profile-page[data-theme="inkGreen"] .quick-task-popup,
 .profile-page[data-theme="inkGreen"] .feedback-popup,
 .profile-page[data-theme="inkGreen"] .management-popup,
