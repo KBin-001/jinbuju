@@ -31,7 +31,8 @@
           <view class="overview-slogan">成员越活跃，小队成长越快</view>
         </view>
         <view class="overview-badge">
-          <view class="overview-badge-inner">队</view>
+          <image wx:if="{{team.avatar}}" class="overview-badge-image" src="{{team.avatar}}" mode="aspectFill" />
+          <view wx:else class="overview-badge-inner">{{team.avatarText}}</view>
         </view>
       </view>
 

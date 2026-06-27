@@ -1,43 +1,65 @@
 /* =============================================
-   进步局 · 我的页面 — 浅绿成长风
-   配色：主色 #3F8F72 / 深绿 #24584A / 浅绿 #E6F4EC
-         背景 #F6FAF7 / 卡片 #FFFFFF / 文字 #244C43
-         金色点缀 #F4C95D
+   进步局 · 我的页面 — 像素级复刻设计图
+   配色（与 AGENTS.md §4 完全对齐）：
+     主色  #356859   深绿 #1F5B4A
+     浅绿  #EAF5EF   浅黄 #FFF1C7 / #F8D26A
+     背景  #F5F7F2   卡片 #FFFFFF
+     文字  #233B34 / #71827A   分割线 #E6EEE9
    ============================================= */
 
-/* ---- 页面容器 ---- */
 .profile-page {
-  --profile-primary: #3F8F72;
-  --profile-deep: #24584A;
-  --profile-primary-soft: #E6F4EC;
-  --profile-primary-light: #7CC6A0;
-  --profile-accent: #7CC6A0;
-  --profile-growth: #7CC6A0;
-  --profile-gold: #F4C95D;
-  --profile-gold-soft: #FFF4D8;
-  --profile-text: #244C43;
-  --profile-secondary: #6F827B;
-  --profile-muted: #9AA8A3;
-  --profile-border: #E2EEE8;
-  --profile-soft: #EFF8F3;
-  --profile-bg: #F6FAF7;
-  --profile-shadow: 0 8rpx 28rpx rgba(36, 88, 74, 0.08);
-  /* 主题皮肤可覆盖的渐变（默认薄荷绿） */
-  --profile-hero-gradient: linear-gradient(135deg, #E6F4EC 0%, #F7FBF8 60%, #FFFFFF 100%);
-  --profile-progress-gradient: linear-gradient(90deg, #7CC6A0 0%, #3F8F72 100%);
+  /* ===== 设计 token ===== */
+  --profile-primary:        #356859;
+  --profile-deep:           #1F5B4A;
+  --profile-primary-soft:   #EAF5EF;
+  --profile-primary-2:      #E6F4EA;
+  --profile-primary-3:      #DDEBDD;
+  --profile-blue-soft:      #E6F1F8;
+  --profile-gold:           #F8D26A;
+  --profile-gold-soft:      #FFF1C7;
+  --profile-gold-deep:      #C99A24;
+  --profile-text:           #233B34;
+  --profile-secondary:      #71827A;
+  --profile-muted:          #9AA8A3;
+  --profile-border:         #E6EEE9;
+  --profile-bg:             #F5F7F2;
+  --profile-danger-soft:    #FBF1ED;
+  --profile-danger-border:  #EADBD7;
+  --profile-danger-text:    #9A675F;
+
+  /* ===== 阴影 ===== */
+  --profile-shadow-card:    0 16rpx 40rpx rgba(31, 91, 74, 0.08);
+  --profile-shadow-soft:    0 8rpx 24rpx rgba(31, 91, 74, 0.06);
+  --profile-shadow-yellow:  0 8rpx 22rpx rgba(201, 154, 36, 0.12);
+
+  /* ===== 渐变 ===== */
+  --profile-hero-gradient:
+    radial-gradient(circle at 88% 22%, rgba(255, 255, 255, 0.22) 0%, transparent 38%),
+    radial-gradient(circle at 14% 78%, rgba(125, 187, 105, 0.20) 0%, transparent 42%),
+    linear-gradient(135deg, #1F5B4A 0%, #2A6E5A 50%, #356859 100%);
+  --profile-progress-gradient:
+    linear-gradient(90deg, #7DBB69 0%, #356859 100%);
+  --profile-week-gradient:
+    linear-gradient(110deg, #FFF6D9 0%, #FFF1C7 100%);
+
   min-height: 100vh;
-  background: var(--profile-bg);
+  background:
+    radial-gradient(circle at 50% -10%, rgba(234, 245, 239, 0.7) 0%, transparent 36%),
+    linear-gradient(180deg, #FCFCF8 0%, #F5F7F2 100%);
   color: var(--profile-text);
-  /* 顶部安全区交给 navigationBar 处理，此处不额外留白 */
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
 }
 
-/* =============================================
-   Hero 卡 — 卡片式 Header
-   - 高度固定 200rpx（区间 180-220rpx）
-   - 左右各 24rpx 边距
-   - 四角 32rpx 圆角
-   - 背景装饰弱化
-   ============================================= */
+/* ===========================================
+   一、Hero 卡片（深绿渐变 + 白字 + 柔光斑装饰）
+   设计图要点：
+   - 深绿主色渐变（#1F5B4A → #2A6E5A → #356859）
+   - 右上角 + 左下角白色柔光圆斑（极淡）
+   - 白圆头像 + 深绿字
+   - 浅金等级胶囊 + 深棕字
+   - 白色昵称 + 浅灰白入驻天数
+   - 白色圆形编辑按钮
+   =========================================== */
 .hero-card {
   position: relative;
   overflow: hidden;
@@ -45,109 +67,110 @@
   display: flex;
   align-items: center;
   gap: 24rpx;
-  height: 200rpx;
+  height: 224rpx;
   margin: 24rpx 24rpx 0;
-  padding: 24rpx 28rpx;
+  padding: 28rpx 28rpx;
   background: var(--profile-hero-gradient);
-  border-radius: 32rpx;
-  box-shadow: 0 10rpx 28rpx rgba(36, 88, 74, 0.08);
-  color: var(--profile-text);
+  border-radius: 36rpx;
+  box-shadow:
+    0 18rpx 44rpx rgba(31, 91, 74, 0.20),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.10);
 }
 
-/* 背景装饰圆（弱化处理：缩小 + 降低不透明度） */
+/* 装饰圆：右上角白色柔光斑 */
 .hero-deco-circle {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
 }
 .hero-deco-circle--1 {
-  top: -30rpx;
+  top: -50rpx;
   right: -30rpx;
-  width: 160rpx;
-  height: 160rpx;
-  background: rgba(124, 198, 160, 0.14);
+  width: 200rpx;
+  height: 200rpx;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.30) 0%, transparent 70%);
+  filter: blur(2rpx);
 }
 .hero-deco-circle--2 {
-  bottom: -50rpx;
-  left: -25rpx;
-  width: 130rpx;
-  height: 130rpx;
-  background: rgba(244, 201, 93, 0.10);
+  bottom: -40rpx;
+  left: 60rpx;
+  width: 140rpx;
+  height: 140rpx;
+  background: radial-gradient(circle, rgba(125, 187, 105, 0.30) 0%, transparent 70%);
+  filter: blur(2rpx);
 }
 
-/* 叶子装饰文字（弱化） */
+/* 右下角叶片装饰（深绿卡上低饱和） */
 .hero-deco-leaf {
   position: absolute;
-  top: 8rpx;
-  right: 16rpx;
-  color: rgba(63, 143, 114, 0.06);
-  font-size: 80rpx;
+  right: 24rpx;
+  bottom: -8rpx;
+  font-size: 120rpx;
   line-height: 1;
+  color: rgba(255, 255, 255, 0.08);
   pointer-events: none;
-  transform: rotate(20deg);
+  transform: rotate(-12deg);
 }
 
-/* 头像（紧凑化） */
+/* 头像（白圆 + 阴影） */
 .hero-avatar-wrap {
   position: relative;
   flex-shrink: 0;
-  width: 88rpx;
-  height: 88rpx;
+  width: 108rpx;
+  height: 108rpx;
   border-radius: 50%;
-  background: var(--profile-gold-soft);
+  background: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 4rpx solid #FFFFFF;
-  box-shadow: 0 4rpx 12rpx rgba(36, 88, 74, 0.10);
+  border: 4rpx solid rgba(255, 255, 255, 0.98);
+  box-shadow: 0 8rpx 22rpx rgba(0, 0, 0, 0.18);
   overflow: hidden;
+  z-index: 1;
 }
-.hero-avatar-img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  display: block;
-}
+.hero-avatar-img { width: 100%; height: 100%; border-radius: 50%; display: block; }
 .hero-avatar-text {
   color: var(--profile-primary);
-  font-size: 38rpx;
-  font-weight: 800;
+  font-size: 46rpx;
+  font-weight: 700;
   line-height: 1;
 }
 
-/* 微信头像热区 */
+/* 头像点击热区（透明） */
 .avatar-hitarea {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  width: 100%; height: 100%;
   border-radius: 50%;
   opacity: 0;
-  padding: 0;
-  margin: 0;
+  padding: 0; margin: 0;
   background: transparent;
+  z-index: 2;
 }
 .avatar-hitarea::after { border: 0; }
 
-/* 用户信息 */
+/* 用户信息区 */
 .hero-user-info {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 10rpx;
+  gap: 12rpx;
   justify-content: center;
+  z-index: 1;
 }
 
 .hero-name {
-  color: var(--profile-text);
-  font-size: 36rpx;
-  font-weight: 800;
-  line-height: 1.2;
+  color: #FFFFFF;
+  font-size: 40rpx;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.5rpx;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.10);
 }
 
 .hero-meta-row {
@@ -155,61 +178,64 @@
   align-items: center;
   gap: 8rpx;
   flex-wrap: wrap;
+  margin-top: 4rpx;
 }
 
+/* 等级胶囊：浅金底 + 深棕字 + 浅金描边 */
 .hero-level-pill {
   display: inline-flex;
   align-items: center;
-  height: 32rpx;
-  padding: 0 12rpx;
-  border-radius: 16rpx;
-  background: var(--profile-gold-soft);
-  border: 1rpx solid rgba(244, 201, 93, 0.48);
+  height: 38rpx;
+  padding: 0 18rpx;
+  border-radius: 19rpx;
+  background: #FFF1C7;
+  border: 1rpx solid rgba(201, 154, 36, 0.36);
   color: #8A6B1F;
-  font-size: 20rpx;
-  font-weight: 700;
+  font-size: 22rpx;
+  font-weight: 600;
   line-height: 1;
   flex-shrink: 0;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.10);
 }
 
 .hero-meta-dot {
-  color: var(--profile-muted);
-  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 22rpx;
   line-height: 1;
 }
 
 .hero-joined {
-  color: var(--profile-secondary);
-  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 24rpx;
   font-weight: 500;
   line-height: 1;
 }
 
-/* 编辑按钮（圆形图标按钮） */
+/* 编辑按钮：白底圆形 + 阴影 */
 .hero-edit-btn {
   flex-shrink: 0;
-  width: 52rpx;
-  height: 52rpx;
+  width: 64rpx;
+  height: 64rpx;
   border-radius: 50%;
-  border: 1rpx solid rgba(63, 143, 114, 0.32);
-  background: rgba(255, 255, 255, 0.6);
+  background: #FFFFFF;
+  border: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--profile-primary);
-  font-size: 24rpx;
-  line-height: 1;
+  z-index: 1;
   transition: opacity 0.15s, transform 0.15s;
+  box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.18);
 }
 .hero-edit-btn::after { border: 0; }
-.hero-edit-btn--pressed { opacity: 0.78; transform: scale(0.94); }
-.hero-edit-icon { font-size: 24rpx; line-height: 1; }
+.hero-edit-btn--pressed { opacity: 0.7; transform: scale(0.92); }
+.hero-edit-icon { font-size: 28rpx; line-height: 1; }
 
-/* =============================================
-   页面主内容区
-   ============================================= */
+/* ===========================================
+   二、页面主内容区
+   =========================================== */
 .page-content {
-  padding: 28rpx 32rpx calc(160rpx + env(safe-area-inset-bottom));
+  padding: 28rpx 32rpx calc(180rpx + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 24rpx;
@@ -219,10 +245,10 @@
 .section-card {
   width: 100%;
   box-sizing: border-box;
-  background: #ffffff;
+  background: #FFFFFF;
   border-radius: 28rpx;
-  box-shadow: var(--profile-shadow);
-  padding: 28rpx;
+  box-shadow: var(--profile-shadow-card);
+  padding: 28rpx 28rpx;
 }
 
 /* 卡片头 */
@@ -235,23 +261,26 @@
 .card-title {
   color: var(--profile-text);
   font-size: 34rpx;
-  font-weight: 800;
-  line-height: 1.3;
+  font-weight: 700;
+  line-height: 1.2;
 }
 .card-link {
   color: var(--profile-primary);
   font-size: 26rpx;
-  font-weight: 600;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 2rpx;
 }
 
-/* =============================================
-   成长概览卡
-   ============================================= */
-.overview-card {}
-
+/* ===========================================
+   三、成长概览卡（3 列统计）
+   设计图要点：圆形彩色图标 + 大数字 + 小标签
+   =========================================== */
 .overview-stats {
   display: flex;
   align-items: stretch;
+  padding: 6rpx 0 0;
 }
 
 .stat-col {
@@ -259,56 +288,57 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8rpx;
+  gap: 6rpx;
 }
 
 .stat-divider {
   width: 1rpx;
   background: var(--profile-border);
-  margin: 4rpx 0;
+  margin: 12rpx 0;
 }
 
 .stat-icon-wrap {
-  width: 72rpx;
-  height: 72rpx;
+  width: 80rpx;
+  height: 80rpx;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8rpx;
+  margin-bottom: 10rpx;
+  box-shadow: inset 0 0 0 1rpx rgba(31, 91, 74, 0.03);
 }
-.stat-icon-wrap--green { background: var(--profile-primary-soft); }
-.stat-icon-wrap--teal  { background: var(--profile-soft); }
-.stat-icon-wrap--gold  { background: var(--profile-gold-soft); }
+.stat-icon-wrap--green { background: #EAF5EF; }
+.stat-icon-wrap--blue  { background: #E6F1F8; }
+.stat-icon-wrap--gold  { background: #FFF1C7; }
 
 .stat-icon {
-  font-size: 32rpx;
+  font-size: 38rpx;
   line-height: 1;
 }
 
 .stat-num {
   color: var(--profile-text);
-  font-size: 48rpx;
-  font-weight: 800;
+  font-size: 56rpx;
+  font-weight: 700;
   line-height: 1;
+  letter-spacing: -1rpx;
 }
 .stat-unit {
   color: var(--profile-secondary);
   font-size: 22rpx;
   font-weight: 500;
-  margin-top: -4rpx;
+  margin-top: 2rpx;
 }
 .stat-label {
   color: var(--profile-secondary);
   font-size: 22rpx;
-  margin-top: 2rpx;
+  margin-top: 4rpx;
 }
 
-/* =============================================
-   我的目标卡
-   ============================================= */
-.goal-card {}
-
+/* ===========================================
+   四、我的目标卡
+   设计图要点：浅绿底图标 + 绿色进度条 + 双按钮
+   =========================================== */
 .goal-empty {
   display: flex;
   flex-direction: column;
@@ -317,33 +347,19 @@
   padding: 40rpx 0;
 }
 .goal-empty-icon { font-size: 60rpx; }
-.goal-empty-title {
-  color: var(--profile-text);
-  font-size: 28rpx;
-  font-weight: 700;
-}
-.goal-empty-desc {
-  color: var(--profile-secondary);
-  font-size: 24rpx;
-}
+.goal-empty-title { color: var(--profile-text); font-size: 28rpx; font-weight: 600; }
+.goal-empty-desc { color: var(--profile-secondary); font-size: 24rpx; }
 
-.goal-list {
-  display: flex;
-  flex-direction: column;
-  gap: 18rpx;
-}
+.goal-list { display: flex; flex-direction: column; gap: 18rpx; }
 
 .goal-item {
-  padding: 22rpx 20rpx;
-  border: 1rpx solid var(--profile-border);
-  border-radius: 20rpx;
-  background: #FBFCFA;
+  padding: 24rpx 24rpx;
+  border: 1rpx solid rgba(31, 91, 74, 0.08);
+  border-radius: 24rpx;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAFDFB 100%);
   transition: opacity 0.15s, transform 0.15s;
 }
-.goal-item--pressed {
-  opacity: 0.82;
-  transform: scale(0.985);
-}
+.goal-item--pressed { opacity: 0.82; transform: scale(0.985); }
 
 .goal-item-main {
   display: flex;
@@ -353,20 +369,18 @@
 
 .goal-item-icon-wrap {
   flex-shrink: 0;
-  width: 72rpx;
-  height: 72rpx;
+  width: 80rpx;
+  height: 80rpx;
   border-radius: 50%;
-  background: var(--profile-primary-soft);
+  background: #EAF5EF;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: inset 0 0 0 1rpx rgba(53, 104, 89, 0.06);
 }
-.goal-item-icon { font-size: 34rpx; }
+.goal-item-icon { font-size: 38rpx; }
 
-.goal-item-body {
-  flex: 1;
-  min-width: 0;
-}
+.goal-item-body { flex: 1; min-width: 0; }
 
 .goal-item-head {
   display: flex;
@@ -382,18 +396,19 @@
   white-space: nowrap;
   color: var(--profile-text);
   font-size: 30rpx;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.3;
 }
 .goal-status-chip {
   flex-shrink: 0;
-  height: 36rpx;
-  padding: 0 14rpx;
-  border-radius: 18rpx;
-  background: var(--profile-primary-soft);
+  height: 40rpx;
+  padding: 0 18rpx;
+  border-radius: 20rpx;
+  background: #EAF5EF;
+  border: 1rpx solid rgba(53, 104, 89, 0.10);
   color: var(--profile-primary);
   font-size: 22rpx;
-  font-weight: 700;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
 }
@@ -409,13 +424,13 @@
   display: flex;
   align-items: center;
   gap: 16rpx;
-  margin-top: 14rpx;
+  margin-top: 16rpx;
 }
 .goal-progress-track {
   flex: 1;
   height: 16rpx;
   border-radius: 8rpx;
-  background: #E2EEE8;
+  background: #E6EEE9;
   overflow: hidden;
 }
 .goal-progress-fill {
@@ -428,7 +443,7 @@
   flex-shrink: 0;
   color: var(--profile-primary);
   font-size: 26rpx;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .goal-action-row {
@@ -436,34 +451,30 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 12rpx;
-  margin-top: 14rpx;
+  margin-top: 20rpx;
 }
 
 .goal-focus-action,
 .goal-end-action {
   display: inline-flex;
   align-items: center;
-  height: 42rpx;
-  padding: 0 18rpx;
-  border-radius: 21rpx;
-  font-size: 22rpx;
-  font-weight: 700;
+  height: 52rpx;
+  padding: 0 24rpx;
+  border-radius: 26rpx;
+  font-size: 24rpx;
+  font-weight: 600;
 }
-
 .goal-focus-action {
-  background: var(--profile-primary-soft);
+  background: #EAF5EF;
+  border: 1rpx solid rgba(53, 104, 89, 0.10);
   color: var(--profile-primary);
 }
-
 .goal-end-action {
-  border: 1rpx solid #EADBD7;
-  background: #FBF1ED;
-  color: #9A675F;
+  border: 1rpx solid var(--profile-danger-border);
+  background: var(--profile-danger-soft);
+  color: var(--profile-danger-text);
 }
-
-.goal-end-action.is-disabled {
-  opacity: 0.58;
-}
+.goal-end-action.is-disabled { opacity: 0.58; }
 
 /* 添加目标按钮 */
 .add-goal-btn {
@@ -471,17 +482,17 @@
   align-items: center;
   justify-content: center;
   gap: 10rpx;
-  height: 76rpx;
-  margin-top: 20rpx;
-  border-radius: 38rpx;
+  height: 84rpx;
+  margin-top: 22rpx;
+  border-radius: 42rpx;
   border: 1.5rpx dashed #B8D4C8;
-  background: var(--profile-bg);
+  background: #F1F8F3;
   transition: opacity 0.15s, transform 0.15s;
 }
 .add-goal-btn--pressed { opacity: 0.75; transform: scale(0.98); }
 .add-goal-plus {
   color: var(--profile-primary);
-  font-size: 32rpx;
+  font-size: 34rpx;
   font-weight: 400;
   line-height: 1;
 }
@@ -491,11 +502,12 @@
   font-weight: 600;
 }
 
-/* =============================================
-   功能入口卡
-   ============================================= */
+/* ===========================================
+   五、功能入口卡（5 列圆形图标）
+   设计图要点：白卡 + 5 个彩色圆形图标 + 标签
+   =========================================== */
 .func-card {
-  padding: 24rpx 16rpx 20rpx;
+  padding: 32rpx 16rpx 26rpx;
   display: flex;
   align-items: stretch;
   gap: 0;
@@ -507,61 +519,59 @@
   flex-direction: column;
   align-items: center;
   gap: 14rpx;
-  padding: 16rpx 8rpx;
+  padding: 8rpx 4rpx;
   transition: opacity 0.15s, transform 0.15s;
   position: relative;
 }
-/* 竖线分隔（除最后一个） */
 .func-item:not(:last-child)::after {
   content: '';
   position: absolute;
-  top: 20%;
+  top: 26%;
   right: 0;
   width: 1rpx;
-  height: 60%;
+  height: 48%;
   background: var(--profile-border);
 }
-.func-item--pressed {
-  opacity: 0.75;
-  transform: scale(0.94);
-}
+.func-item--pressed { opacity: 0.75; transform: scale(0.94); }
 
 .func-icon-wrap {
-  width: 88rpx;
-  height: 88rpx;
+  width: 92rpx;
+  height: 92rpx;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: inset 0 0 0 1rpx rgba(31, 91, 74, 0.04);
 }
-.func-icon-wrap--history { background: var(--profile-primary-soft); }
-.func-icon-wrap--badges  { background: var(--profile-gold-soft); }
-.func-icon-wrap--focus   { background: #E8F1FB; }
-.func-icon-wrap--ai      { background: var(--profile-primary-soft); color: var(--profile-primary); }
-.func-icon-wrap--theme   { background: var(--profile-primary-soft); color: var(--profile-primary); }
-.func-icon-wrap--settings { background: #F1F4F2; }
+.func-icon-wrap--history { background: #EAF5EF; }
+.func-icon-wrap--badges  { background: #FFF1C7; }
+.func-icon-wrap--focus   { background: #E6F1F8; }
+.func-icon-wrap--ai      { background: #EAF5EF; color: var(--profile-primary); }
+.func-icon-wrap--theme   { background: #EAF5EF; color: var(--profile-primary); }
+.func-icon-wrap--settings { background: #EEF1ED; }
 
-.func-icon-emoji { font-size: 38rpx; line-height: 1; }
+.func-icon-emoji { font-size: 40rpx; line-height: 1; }
 
 .func-label {
   color: var(--profile-text);
   font-size: 24rpx;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.2;
   text-align: center;
 }
 
-/* =============================================
-   本周小结卡
-   ============================================= */
+/* ===========================================
+   六、本周小结卡
+   设计图要点：浅黄渐变 + 浅金圆形徽章 + 绿色文字链接
+   =========================================== */
 .week-card {
   display: flex;
   align-items: center;
-  gap: 20rpx;
-  padding: 24rpx 24rpx 24rpx 24rpx;
-  background: linear-gradient(110deg, #FFF8E0 0%, #FFF4D8 100%);
-  border: 1rpx solid rgba(244, 201, 93, 0.28);
-  box-shadow: 0 6rpx 22rpx rgba(244, 201, 93, 0.10);
+  gap: 18rpx;
+  padding: 26rpx 28rpx;
+  background: var(--profile-week-gradient);
+  border: 1rpx solid rgba(248, 210, 106, 0.40);
+  box-shadow: var(--profile-shadow-yellow);
 }
 
 .week-badge-wrap {
@@ -577,85 +587,78 @@
   width: 88rpx;
   height: 88rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, #F4C95D 0%, #E0B04A 100%);
+  background: #FFE9A8;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 14rpx rgba(244, 201, 93, 0.28);
+  box-shadow: 0 4rpx 12rpx rgba(201, 154, 36, 0.20);
 }
-.week-badge-icon { font-size: 40rpx; line-height: 1; }
+.week-badge-icon { font-size: 42rpx; line-height: 1; }
 
-.week-text {
-  flex: 1;
-  min-width: 0;
-}
+.week-text { flex: 1; min-width: 0; }
 .week-title {
   display: block;
-  color: var(--profile-text);
+  color: #4D3B1F;
   font-size: 30rpx;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.3;
 }
 .week-desc {
   display: block;
   margin-top: 6rpx;
-  color: var(--profile-secondary);
+  color: #745F31;
   font-size: 24rpx;
   line-height: 1.4;
 }
 
-/* 金色进度条 */
+/* 浅金进度条 */
 .week-progress-track {
   height: 8rpx;
   border-radius: 4rpx;
-  background: rgba(244, 201, 93, 0.2);
+  background: rgba(163, 125, 27, 0.18);
   overflow: hidden;
   margin-top: 14rpx;
 }
 .week-progress-fill {
   height: 100%;
   border-radius: 4rpx;
-  background: linear-gradient(90deg, #F4C95D 0%, #F8D779 100%);
+  background: linear-gradient(90deg, #F8D26A 0%, #C99A24 100%);
   transition: width 0.5s ease;
 }
 
-/* 查看详情按钮 */
+/* 查看更多链接 */
 .week-detail-btn {
   flex-shrink: 0;
   height: 64rpx;
   padding: 0 24rpx;
   border-radius: 32rpx;
   background: var(--profile-primary);
-  color: #ffffff;
+  color: #FFFFFF;
   font-size: 24rpx;
-  font-weight: 700;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: opacity 0.15s, transform 0.15s;
+  box-shadow: 0 6rpx 16rpx rgba(53, 104, 89, 0.20);
 }
 .week-detail-btn--pressed { opacity: 0.82; transform: scale(0.96); }
 
-/* =============================================
-   编辑资料弹层（样式保留并小幅升级）
-   ============================================= */
+/* ===========================================
+   七、编辑资料弹层（保留原功能）
+   =========================================== */
 .profile-editor-layer {
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  inset: 0;
   z-index: 36;
   display: flex;
   align-items: flex-end;
 }
-
 .profile-editor-mask {
   position: absolute;
   inset: 0;
-  background: rgba(36, 76, 67, 0.32);
+  background: rgba(31, 45, 40, 0.30);
 }
-
 .profile-editor-panel {
   position: relative;
   width: 100%;
@@ -665,15 +668,13 @@
   border-radius: 36rpx 36rpx 0 0;
   background: var(--profile-bg);
 }
-
 .popup-handle {
   width: 80rpx;
   height: 8rpx;
   margin: 0 auto 24rpx;
   border-radius: 999rpx;
-  background: #E2EEE8;
+  background: #E6EEE9;
 }
-
 .editor-head {
   display: flex;
   align-items: center;
@@ -690,7 +691,7 @@
   margin-top: 6rpx;
   color: var(--profile-text);
   font-size: 38rpx;
-  font-weight: 750;
+  font-weight: 700;
 }
 .panel-close {
   width: 60rpx;
@@ -699,19 +700,17 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #ffffff;
+  background: #FFFFFF;
   color: var(--profile-secondary);
   font-size: 32rpx;
-  box-shadow: 0 4rpx 14rpx rgba(36, 88, 74, 0.08);
+  box-shadow: 0 4rpx 14rpx rgba(31, 91, 74, 0.08);
 }
-
 .profile-form-card {
   padding: 26rpx;
   border-radius: 28rpx;
-  background: #ffffff;
-  box-shadow: var(--profile-shadow);
+  background: #FFFFFF;
+  box-shadow: var(--profile-shadow-card);
 }
-
 .profile-avatar-row,
 .profile-setting-row,
 .profile-editor-actions {
@@ -719,7 +718,6 @@
   align-items: center;
 }
 .profile-avatar-row { gap: 22rpx; }
-
 .profile-avatar-preview {
   overflow: hidden;
   width: 104rpx;
@@ -732,10 +730,9 @@
   background: var(--profile-gold-soft);
   color: var(--profile-primary);
   font-size: 42rpx;
-  font-weight: 750;
+  font-weight: 700;
 }
 .profile-avatar-preview image { width: 100%; height: 100%; }
-
 .avatar-choose-btn {
   height: 64rpx;
   display: flex;
@@ -746,15 +743,14 @@
   background: var(--profile-primary-soft);
   color: var(--profile-primary);
   font-size: 24rpx;
-  font-weight: 700;
+  font-weight: 600;
 }
 .avatar-choose-btn::after { border: 0; }
-
 .profile-field { margin-top: 28rpx; }
 .profile-label {
   color: var(--profile-text);
   font-size: 26rpx;
-  font-weight: 700;
+  font-weight: 600;
 }
 .profile-input {
   width: 100%;
@@ -768,7 +764,6 @@
   font-size: 28rpx;
   box-sizing: border-box;
 }
-
 .profile-setting-row {
   justify-content: space-between;
   gap: 22rpx;
@@ -783,40 +778,37 @@
   font-size: 23rpx;
   line-height: 1.4;
 }
-
 .profile-editor-actions {
   gap: 18rpx;
   margin-top: 22rpx;
 }
 .profile-cancel-btn,
 .profile-save-btn {
-  height: 84rpx;
+  height: 88rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   flex: 1;
-  border-radius: 42rpx;
-  font-size: 27rpx;
-  font-weight: 750;
+  border-radius: 44rpx;
+  font-size: 28rpx;
+  font-weight: 600;
 }
 .profile-cancel-btn {
-  border: 1rpx solid #E2EEE8;
-  background: #ffffff;
+  border: 1rpx solid #E6EEE9;
+  background: #FFFFFF;
   color: var(--profile-primary);
 }
 .profile-save-btn {
   background: var(--profile-primary);
-  color: #ffffff;
-  box-shadow: 0 4rpx 16rpx rgba(63, 143, 114, 0.22);
+  color: #FFFFFF;
+  box-shadow: 0 6rpx 18rpx rgba(53, 104, 89, 0.22);
 }
 .profile-cancel-btn::after,
 .profile-save-btn::after { border: 0; }
 
-/* =============================================
-   主题换肤弹窗（居中圆角浮层 + 紧凑 2 列网格）
-   弹窗自身使用固定中性色，不随预览主题晃动；
-   仅主题卡片内的色块 / 预览区跟随各自主题色。
-   ============================================= */
+/* ===========================================
+   八、主题换肤弹窗
+   =========================================== */
 .theme-modal {
   --theme-accent: #356859;
   --theme-accent-soft: #EAF5EF;
@@ -830,16 +822,13 @@
   align-items: center;
   justify-content: center;
 }
-
 .theme-modal__mask {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.28);
-  /* 轻微模糊，突出弹窗主体 */
+  background: rgba(0, 0, 0, 0.30);
   backdrop-filter: blur(6rpx);
   -webkit-backdrop-filter: blur(6rpx);
 }
-
 .theme-panel {
   position: relative;
   width: 92%;
@@ -852,8 +841,6 @@
   box-shadow: 0 24rpx 60rpx rgba(20, 60, 45, 0.18);
   overflow: hidden;
 }
-
-/* ---- 顶部标题区 ---- */
 .theme-panel__header {
   flex-shrink: 0;
   display: flex;
@@ -862,13 +849,11 @@
   padding: 32rpx 32rpx 22rpx;
   border-bottom: 1rpx solid var(--theme-border);
 }
-
 .theme-panel__title-wrap {
   display: flex;
   align-items: center;
   gap: 18rpx;
 }
-
 .theme-panel__icon {
   width: 64rpx;
   height: 64rpx;
@@ -878,16 +863,8 @@
   align-items: center;
   justify-content: center;
 }
-.theme-panel__icon-emoji {
-  font-size: 32rpx;
-  line-height: 1;
-}
-
-.theme-panel__title-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4rpx;
-}
+.theme-panel__icon-emoji { font-size: 32rpx; line-height: 1; }
+.theme-panel__title-text { display: flex; flex-direction: column; gap: 4rpx; }
 .theme-panel__title {
   color: var(--theme-text);
   font-size: 32rpx;
@@ -899,7 +876,6 @@
   font-size: 22rpx;
   line-height: 1.2;
 }
-
 .theme-panel__close {
   width: 56rpx;
   height: 56rpx;
@@ -914,8 +890,6 @@
   font-size: 32rpx;
   line-height: 1;
 }
-
-/* ---- 筛选标签 ---- */
 .theme-filter {
   flex-shrink: 0;
   display: flex;
@@ -924,7 +898,6 @@
   overflow-x: auto;
   white-space: nowrap;
 }
-
 .theme-filter__chip {
   flex-shrink: 0;
   height: 54rpx;
@@ -944,24 +917,14 @@
   border-color: var(--theme-accent);
   color: var(--theme-accent);
 }
-.theme-filter__chip--pressed {
-  opacity: 0.7;
-}
-
-/* ---- 主题网格（可滚动） ---- */
-.theme-grid {
-  flex: 1;
-  min-height: 0;
-  box-sizing: border-box;
-}
-
+.theme-filter__chip--pressed { opacity: 0.7; }
+.theme-grid { flex: 1; min-height: 0; box-sizing: border-box; }
 .theme-grid__inner {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18rpx;
   padding: 14rpx 28rpx 24rpx;
 }
-
 .theme-grid__empty {
   grid-column: 1 / -1;
   padding: 60rpx 0;
@@ -969,8 +932,6 @@
   color: var(--theme-secondary);
   font-size: 24rpx;
 }
-
-/* ---- 主题卡片 ---- */
 .theme-card {
   position: relative;
   height: 212rpx;
@@ -985,16 +946,11 @@
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s, opacity 0.15s;
 }
-.theme-card--pressed {
-  opacity: 0.92;
-  transform: scale(0.97);
-}
+.theme-card--pressed { opacity: 0.92; transform: scale(0.97); }
 .theme-card--active {
   border-color: var(--theme-accent);
   box-shadow: 0 10rpx 28rpx rgba(20, 60, 45, 0.14);
 }
-
-/* 当前使用 / 预览中 角标 */
 .theme-card__badge {
   position: absolute;
   top: 14rpx;
@@ -1016,19 +972,13 @@
   color: var(--theme-accent);
   border: 1rpx solid var(--theme-accent);
 }
-
-/* 卡片头部：色点 + 名称 + 描述 */
 .theme-card__head {
   display: flex;
   flex-direction: column;
   gap: 4rpx;
-  padding-right: 84rpx; /* 给角标留位 */
+  padding-right: 84rpx;
 }
-.theme-card__name-row {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-}
+.theme-card__name-row { display: flex; align-items: center; gap: 10rpx; }
 .theme-card__dot {
   width: 18rpx;
   height: 18rpx;
@@ -1053,19 +1003,12 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-/* 色块 */
-.theme-swatches {
-  display: flex;
-  gap: 8rpx;
-}
+.theme-swatches { display: flex; gap: 8rpx; }
 .theme-swatches__item {
   flex: 1;
   height: 18rpx;
   border-radius: 6rpx;
 }
-
-/* 迷你预览区：小进度条 + 小按钮 */
 .theme-preview {
   margin-top: auto;
   border-radius: 14rpx;
@@ -1081,10 +1024,7 @@
   background: rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
-.theme-preview__bar-fill {
-  height: 100%;
-  border-radius: 5rpx;
-}
+.theme-preview__bar-fill { height: 100%; border-radius: 5rpx; }
 .theme-preview__btn {
   flex-shrink: 0;
   height: 36rpx;
@@ -1097,8 +1037,6 @@
   align-items: center;
   justify-content: center;
 }
-
-/* ---- 底部操作区（固定在弹窗底部） ---- */
 .theme-action-bar {
   flex-shrink: 0;
   display: flex;
@@ -1109,10 +1047,10 @@
 }
 .theme-action-bar__btn {
   flex: 1;
-  height: 76rpx;
-  border-radius: 38rpx;
+  height: 80rpx;
+  border-radius: 40rpx;
   font-size: 26rpx;
-  font-weight: 700;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1129,473 +1067,25 @@
   background: var(--theme-accent-soft);
   color: var(--theme-accent);
 }
-.theme-action-bar__btn--pressed {
-  opacity: 0.78;
-  transform: scale(0.97);
-}
-.theme-action-bar__icon {
-  font-size: 26rpx;
-  line-height: 1;
-}
-.theme-action-bar__text {
-  line-height: 1;
-}
+.theme-action-bar__btn--pressed { opacity: 0.78; transform: scale(0.97); }
+.theme-action-bar__icon { font-size: 26rpx; line-height: 1; }
+.theme-action-bar__text { line-height: 1; }
 
-/* =========================================================
- * 墨绿成长主题 覆写（profile-page）
- * 覆写本页硬编码的薄荷绿色：装饰圆、叶子文字、按钮、阴影、遮罩等。
- * 切换至墨绿主题后，整页 UI 统一呈现深绿质感。
- * ========================================================= */
+/* ===========================================
+   九、inkGreen 主题覆写（深绿 Hero 同步）
+   =========================================== */
 .profile-page[data-theme="inkGreen"] {
-  --profile-primary: #1F6F55;
-  --profile-deep: #0F3F32;
-  --profile-primary-soft: #E3F2EA;
-  --profile-primary-light: #6DBB95;
-  --profile-accent: #42A67A;
-  --profile-growth: #6DBB95;
-  --profile-gold: #F4C95D;
-  --profile-gold-soft: #FFF2CD;
-  --profile-text: #183F35;
-  --profile-secondary: #6D8179;
-  --profile-muted: #9AA9A4;
-  --profile-border: #DDEBE4;
-  --profile-soft: #EEF6F1;
-  --profile-bg: #F4F8F5;
-  --profile-shadow: 0 10rpx 28rpx rgba(20, 82, 63, 0.10);
-  --profile-hero-gradient: linear-gradient(135deg, #E3F2EA 0%, #F4F8F5 60%, #FFFFFF 100%);
-  --profile-progress-gradient: linear-gradient(90deg, #6DBB95 0%, #1F6F55 100%);
-  background: #F4F8F5;
-  color: #183F35;
-}
-
-.profile-page[data-theme="inkGreen"] .hero-card {
-  box-shadow: 0 8rpx 24rpx rgba(20, 82, 63, 0.10);
-}
-
-.profile-page[data-theme="inkGreen"] .hero-deco-circle--1 {
-  background: rgba(109, 187, 149, 0.22);
-}
-
-.profile-page[data-theme="inkGreen"] .hero-deco-circle--2 {
-  background: rgba(244, 201, 93, 0.12);
-}
-
-.profile-page[data-theme="inkGreen"] .hero-deco-leaf {
-  color: rgba(31, 111, 85, 0.10);
-}
-
-.profile-page[data-theme="inkGreen"] .hero-avatar-wrap {
-  border: 4rpx solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 4rpx 16rpx rgba(244, 201, 93, 0.28);
-}
-
-.profile-page[data-theme="inkGreen"] .stat-grid,
-.profile-page[data-theme="inkGreen"] .goal-card,
-.profile-page[data-theme="inkGreen"] .menu-card,
-.profile-page[data-theme="inkGreen"] .danger-card,
-.profile-page[data-theme="inkGreen"] .stat-tile,
-.profile-page[data-theme="inkGreen"] .menu-item,
-.profile-page[data-theme="inkGreen"] .danger-button,
-.profile-page[data-theme="inkGreen"] .option-card {
-  background: #FFFFFF;
-  border-color: #DDEBE4;
-}
-
-.profile-page[data-theme="inkGreen"] .stat-divider,
-.profile-page[data-theme="inkGreen"] .menu-divider,
-.profile-page[data-theme="inkGreen"] .profile-divider {
-  border-top-color: rgba(20, 82, 63, 0.14);
-}
-
-.profile-page[data-theme="inkGreen"] .progress-track,
-.profile-page[data-theme="inkGreen"] .progress-bar,
-.profile-page[data-theme="inkGreen"] .empty-progress {
-  background: #DDEBE4;
-}
-
-.profile-page[data-theme="inkGreen"] .progress-fill,
-.profile-page[data-theme="inkGreen"] .progress-bar-inner,
-.profile-page[data-theme="inkGreen"] .goal-progress-fill {
-  background: linear-gradient(90deg, #6DBB95 0%, #1F6F55 100%);
-}
-
-.profile-page[data-theme="inkGreen"] .primary-button,
-.profile-page[data-theme="inkGreen"] .action-button,
-.profile-page[data-theme="inkGreen"] .save-button,
-.profile-page[data-theme="inkGreen"] .confirm-button,
-.profile-page[data-theme="inkGreen"] .theme-confirm,
-.profile-page[data-theme="inkGreen"] .profile-button {
-  background: #1F6F55;
-  box-shadow: 0 4rpx 16rpx rgba(31, 111, 85, 0.26);
-  color: #FFFFFF;
-}
-
-.profile-page[data-theme="inkGreen"] .secondary-button,
-.profile-page[data-theme="inkGreen"] .ghost-button {
-  background: #FFFFFF;
-  border-color: #DDEBE4;
-  color: #1F6F55;
-}
-
-.profile-page[data-theme="inkGreen"] .gold-card,
-.profile-page[data-theme="inkGreen"] .badge-card,
-.profile-page[data-theme="inkGreen"] .achievement-card {
-  background: linear-gradient(110deg, #FFF8E0 0%, #FFF4D8 100%);
-  border: 1rpx solid rgba(244, 201, 93, 0.30);
-  box-shadow: 0 6rpx 22rpx rgba(244, 201, 93, 0.12);
-}
-
-.profile-page[data-theme="inkGreen"] .gold-icon,
-.profile-page[data-theme="inkGreen"] .badge-icon,
-.profile-page[data-theme="inkGreen"] .achievement-icon {
-  background: linear-gradient(135deg, #F4C95D 0%, #E0B04A 100%);
-  box-shadow: 0 4rpx 14rpx rgba(244, 201, 93, 0.30);
-  color: #183F35;
-}
-
-.profile-page[data-theme="inkGreen"] .gold-bar,
-.profile-page[data-theme="inkGreen"] .level-bar {
-  background: linear-gradient(90deg, #F4C95D 0%, #F8D779 100%);
-}
-
-.profile-page[data-theme="inkGreen"] .func-icon-wrap--focus   { background: #E3F2EA; }
-.profile-page[data-theme="inkGreen"] .func-icon-wrap--settings { background: #EEF6F1; }
-.profile-page[data-theme="inkGreen"] .func-icon-wrap--goal     { background: #E3F2EA; }
-.profile-page[data-theme="inkGreen"] .func-icon-wrap--help     { background: #E3F2EA; }
-
-.profile-page[data-theme="inkGreen"] .danger-card {
-  background: #FBF1ED;
-  border-color: #EADBD7;
-  color: #9A675F;
-}
-
-.profile-page[data-theme="inkGreen"] .danger-button {
-  background: #FBF1ED;
-  border-color: #EADBD7;
-  color: #9A675F;
-}
-
-.profile-page[data-theme="inkGreen"] .layer-mask,
-.profile-page[data-theme="inkGreen"] .popup-mask,
-.profile-page[data-theme="inkGreen"] .theme-mask {
-  background: rgba(15, 63, 50, 0.36);
-}
-
-.profile-page[data-theme="inkGreen"] .theme-grid-card {
-  background: #FFFFFF;
-  border: 2rpx solid #EDF3EF;
-  box-shadow: 0 6rpx 20rpx rgba(20, 82, 63, 0.06);
-}
-
-.profile-page[data-theme="inkGreen"] .theme-grid-card.is-active {
-  border: 2rpx solid #1F6F55;
-  box-shadow: 0 8rpx 24rpx rgba(20, 82, 63, 0.18);
-}
-
-.profile-page[data-theme="inkGreen"] .quick-task-popup,
-.profile-page[data-theme="inkGreen"] .feedback-popup,
-.profile-page[data-theme="inkGreen"] .management-popup,
-.profile-page[data-theme="inkGreen"] .theme-popup {
-  --popup-background: #F4F8F5;
-}
-
-/* 参考墨绿稿：个人 Hero 使用深绿底，其余内容保持白卡与灰绿背景。 */
-.profile-page[data-theme="inkGreen"] {
-  --profile-primary: #356859;
-  --profile-deep: #1F5B4A;
+  --profile-primary:      #356859;
+  --profile-deep:         #1F5B4A;
   --profile-primary-soft: #EAF5EF;
-  --profile-primary-light: #7FAA91;
-  --profile-accent: #356859;
-  --profile-growth: #356859;
-  --profile-text: #233B34;
-  --profile-secondary: #71827A;
-  --profile-border: #E6EEE9;
-  --profile-soft: #F0F5F1;
-  --profile-bg: #F5F7F2;
-  background: #F5F7F2;
-}
-
-.profile-page[data-theme="inkGreen"] .hero-card {
-  background: linear-gradient(135deg, #1F5B4A 0%, #356859 62%, #4C806E 100%);
-  color: #FFFFFF;
-}
-
-.profile-page[data-theme="inkGreen"] .hero-name,
-.profile-page[data-theme="inkGreen"] .hero-joined,
-.profile-page[data-theme="inkGreen"] .hero-motto {
-  color: #FFFFFF;
-}
-
-.profile-page[data-theme="inkGreen"] .hero-edit-btn {
-  border-color: rgba(255, 255, 255, 0.38);
-  background: rgba(255, 255, 255, 0.14);
-  color: #FFFFFF;
-}
-
-.profile-page[data-theme="inkGreen"] .section-card {
-  border-color: rgba(31, 91, 74, 0.10);
-  background: #FFFFFF;
-}
-
-/* =========================================================
- * V3 轻盈暖白最终覆盖：与今日页统一
- * ========================================================= */
-.profile-page[data-theme="inkGreen"] {
-  --profile-primary: #356859;
-  --profile-deep: #1F5B4A;
-  --profile-primary-soft: #EAF3EA;
-  --profile-primary-light: #7FAA91;
-  --profile-accent: #356859;
-  --profile-growth: #356859;
-  --profile-gold: #F4C95D;
-  --profile-gold-soft: #FFF1C7;
-  --profile-text: #1F2D28;
-  --profile-secondary: #71827A;
-  --profile-muted: #9AA8A3;
-  --profile-border: #E5EAE3;
-  --profile-soft: #EEF2EB;
-  --profile-bg: #F7F8F3;
-  --profile-shadow: 0 14rpx 34rpx rgba(47, 107, 87, 0.075);
-  --profile-hero-gradient: linear-gradient(140deg, #E4F0E6 0%, #EAF3EA 66%, #F7FAF5 100%);
-  --profile-progress-gradient: linear-gradient(90deg, #7FAA91 0%, #356859 100%);
-  background:
-    radial-gradient(circle at 12% 4%, rgba(221, 235, 221, 0.78), transparent 30%),
-    radial-gradient(circle at 94% 18%, rgba(244, 201, 93, 0.12), transparent 28%),
-    linear-gradient(180deg, #FCFCF8 0%, #F7F8F3 46%, #F5F7F2 100%);
-  color: #1F2D28;
-}
-
-.profile-page[data-theme="inkGreen"] .hero-card {
-  border: 1rpx solid #DDEBDD;
-  background:
-    radial-gradient(circle at 88% 20%, rgba(244, 201, 93, 0.12), transparent 30%),
-    radial-gradient(circle at 10% 92%, rgba(255, 255, 255, 0.66), transparent 34%),
-    var(--profile-hero-gradient);
-  color: #1F2D28;
-  box-shadow: 0 16rpx 38rpx rgba(31, 45, 40, 0.07);
-}
-
-.profile-page[data-theme="inkGreen"] .hero-deco-circle--1 {
-  background: rgba(127, 170, 145, 0.16);
-}
-
-.profile-page[data-theme="inkGreen"] .hero-deco-circle--2 {
-  background: rgba(244, 201, 93, 0.12);
-}
-
-.profile-page[data-theme="inkGreen"] .hero-deco-leaf {
-  color: rgba(53, 104, 89, 0.10);
-}
-
-.profile-page[data-theme="inkGreen"] .hero-name {
-  color: #1F2D28;
-}
-
-.profile-page[data-theme="inkGreen"] .hero-joined,
-.profile-page[data-theme="inkGreen"] .hero-motto,
-.profile-page[data-theme="inkGreen"] .hero-meta-dot {
-  color: #71827A;
-}
-
-.profile-page[data-theme="inkGreen"] .hero-level-pill {
-  background: rgba(255, 255, 255, 0.78);
-  color: #8A6B1F;
-}
-
-.profile-page[data-theme="inkGreen"] .hero-avatar-wrap {
-  border-color: rgba(255, 255, 255, 0.92);
-  background: #FFFFFF;
-  color: #356859;
-  box-shadow: 0 6rpx 18rpx rgba(47, 107, 87, 0.12);
-}
-
-.profile-page[data-theme="inkGreen"] .hero-edit-btn {
-  border-color: #CFE2D2;
-  background: rgba(255, 255, 255, 0.78);
-  color: #356859;
-}
-
-.profile-page[data-theme="inkGreen"] .section-card,
-.profile-page[data-theme="inkGreen"] .overview-card,
-.profile-page[data-theme="inkGreen"] .goal-card,
-.profile-page[data-theme="inkGreen"] .func-card {
-  border-color: rgba(229, 234, 227, 0.94);
-  background: rgba(255, 255, 252, 0.88);
-  box-shadow: var(--profile-shadow);
-}
-
-.profile-page[data-theme="inkGreen"] .card-title,
-.profile-page[data-theme="inkGreen"] .stat-num,
-.profile-page[data-theme="inkGreen"] .goal-item-title,
-.profile-page[data-theme="inkGreen"] .goal-empty-title,
-.profile-page[data-theme="inkGreen"] .func-label,
-.profile-page[data-theme="inkGreen"] .week-title,
-.profile-page[data-theme="inkGreen"] .editor-title,
-.profile-page[data-theme="inkGreen"] .theme-panel__title {
-  color: #1F2D28;
-}
-
-.profile-page[data-theme="inkGreen"] .card-link,
-.profile-page[data-theme="inkGreen"] .stat-unit,
-.profile-page[data-theme="inkGreen"] .stat-label,
-.profile-page[data-theme="inkGreen"] .goal-item-sub,
-.profile-page[data-theme="inkGreen"] .goal-empty-desc,
-.profile-page[data-theme="inkGreen"] .week-desc,
-.profile-page[data-theme="inkGreen"] .profile-helper,
-.profile-page[data-theme="inkGreen"] .theme-panel__subtitle {
-  color: #71827A;
-}
-
-.profile-page[data-theme="inkGreen"] .stat-divider,
-.profile-page[data-theme="inkGreen"] .func-item + .func-item,
-.profile-page[data-theme="inkGreen"] .goal-item + .goal-item {
-  border-color: #E5EAE3;
-  background-color: #E5EAE3;
-}
-
-.profile-page[data-theme="inkGreen"] .stat-icon-wrap--green,
-.profile-page[data-theme="inkGreen"] .stat-icon-wrap--teal,
-.profile-page[data-theme="inkGreen"] .goal-item-icon-wrap,
-.profile-page[data-theme="inkGreen"] .func-icon-wrap--focus,
-.profile-page[data-theme="inkGreen"] .func-icon-wrap--settings,
-.profile-page[data-theme="inkGreen"] .func-icon-wrap--goal,
-.profile-page[data-theme="inkGreen"] .func-icon-wrap--help {
-  background: #EAF3EA;
-  color: #356859;
-}
-
-.profile-page[data-theme="inkGreen"] .stat-icon-wrap--gold,
-.profile-page[data-theme="inkGreen"] .week-badge,
-.profile-page[data-theme="inkGreen"] .gold-icon,
-.profile-page[data-theme="inkGreen"] .badge-icon,
-.profile-page[data-theme="inkGreen"] .achievement-icon {
-  background: #FFF1C7;
-  color: #A37D1B;
-  box-shadow: none;
-}
-
-.profile-page[data-theme="inkGreen"] .goal-item,
-.profile-page[data-theme="inkGreen"] .func-item {
-  border-color: #E5EAE3;
-  background: rgba(255, 255, 255, 0.70);
-}
-
-.profile-page[data-theme="inkGreen"] .goal-status-chip {
-  border-color: #CFE2D2;
-  background: #EAF3EA;
-  color: #356859;
-}
-
-.profile-page[data-theme="inkGreen"] .goal-progress-track,
-.profile-page[data-theme="inkGreen"] .week-progress-track,
-.profile-page[data-theme="inkGreen"] .progress-track,
-.profile-page[data-theme="inkGreen"] .progress-bar,
-.profile-page[data-theme="inkGreen"] .empty-progress {
-  background: #DDEBDD;
-}
-
-.profile-page[data-theme="inkGreen"] .goal-progress-fill,
-.profile-page[data-theme="inkGreen"] .week-progress-fill,
-.profile-page[data-theme="inkGreen"] .progress-fill,
-.profile-page[data-theme="inkGreen"] .progress-bar-inner {
-  background: var(--profile-progress-gradient);
-}
-
-.profile-page[data-theme="inkGreen"] .goal-progress-pct,
-.profile-page[data-theme="inkGreen"] .goal-focus-action,
-.profile-page[data-theme="inkGreen"] .add-goal-text,
-.profile-page[data-theme="inkGreen"] .add-goal-plus {
-  color: #356859;
-}
-
-.profile-page[data-theme="inkGreen"] .goal-end-action {
-  color: #9A675F;
-}
-
-.profile-page[data-theme="inkGreen"] .add-goal-btn,
-.profile-page[data-theme="inkGreen"] .week-detail-btn,
-.profile-page[data-theme="inkGreen"] .secondary-button,
-.profile-page[data-theme="inkGreen"] .ghost-button,
-.profile-page[data-theme="inkGreen"] .profile-cancel-btn {
-  border-color: #CFE2D2;
-  background: #F3FAF3;
-  color: #356859;
-}
-
-.profile-page[data-theme="inkGreen"] .primary-button,
-.profile-page[data-theme="inkGreen"] .action-button,
-.profile-page[data-theme="inkGreen"] .save-button,
-.profile-page[data-theme="inkGreen"] .confirm-button,
-.profile-page[data-theme="inkGreen"] .theme-confirm,
-.profile-page[data-theme="inkGreen"] .profile-button,
-.profile-page[data-theme="inkGreen"] .profile-save-btn {
-  border-color: #356859;
-  background: #356859;
-  color: #FFFFFF;
-  box-shadow: 0 10rpx 24rpx rgba(53, 104, 89, 0.18);
-}
-
-.profile-page[data-theme="inkGreen"] .week-card {
-  border-color: #F5DFA5;
-  background: #FFF1C7;
-  box-shadow: 0 10rpx 22rpx rgba(244, 201, 93, 0.10);
-}
-
-.profile-page[data-theme="inkGreen"] .week-title {
-  color: #4D3B1F;
-}
-
-.profile-page[data-theme="inkGreen"] .week-desc {
-  color: #745F31;
-}
-
-.profile-page[data-theme="inkGreen"] .week-progress-track {
-  background: rgba(163, 125, 27, 0.16);
-}
-
-.profile-page[data-theme="inkGreen"] .week-progress-fill {
-  background: #C99A24;
-}
-
-.profile-page[data-theme="inkGreen"] .profile-editor-mask,
-.profile-page[data-theme="inkGreen"] .theme-modal__mask,
-.profile-page[data-theme="inkGreen"] .layer-mask,
-.profile-page[data-theme="inkGreen"] .popup-mask,
-.profile-page[data-theme="inkGreen"] .theme-mask {
-  background: rgba(31, 45, 40, 0.26);
-  backdrop-filter: blur(8rpx);
-}
-
-.profile-page[data-theme="inkGreen"] .profile-editor-panel,
-.profile-page[data-theme="inkGreen"] .theme-panel,
-.profile-page[data-theme="inkGreen"] .quick-task-popup,
-.profile-page[data-theme="inkGreen"] .feedback-popup,
-.profile-page[data-theme="inkGreen"] .management-popup,
-.profile-page[data-theme="inkGreen"] .theme-popup {
-  --popup-background: #F7F8F3;
-  border-color: rgba(229, 234, 227, 0.94);
-  background: #F7F8F3;
-  box-shadow: 0 -18rpx 48rpx rgba(31, 45, 40, 0.16);
-}
-
-.profile-page[data-theme="inkGreen"] .profile-form-card,
-.profile-page[data-theme="inkGreen"] .profile-setting-row,
-.profile-page[data-theme="inkGreen"] .theme-card,
-.profile-page[data-theme="inkGreen"] .theme-grid-card {
-  border-color: #E5EAE3;
-  background: rgba(255, 255, 252, 0.90);
-  box-shadow: 0 8rpx 20rpx rgba(31, 45, 40, 0.05);
-}
-
-.profile-page[data-theme="inkGreen"] .theme-card--active,
-.profile-page[data-theme="inkGreen"] .theme-grid-card.is-active {
-  border-color: #BFD8C8;
-  background: #EAF3EA;
-  box-shadow: 0 8rpx 22rpx rgba(53, 104, 89, 0.10);
-}
-
-.profile-page[data-theme="inkGreen"] .profile-input {
-  border-color: #E5EAE3;
-  background: #FFFFFF;
-  color: #1F2D28;
+  --profile-gold:         #F8D26A;
+  --profile-gold-soft:    #FFF1C7;
+  --profile-text:         #233B34;
+  --profile-secondary:    #71827A;
+  --profile-border:       #E6EEE9;
+  --profile-bg:           #F5F7F2;
+  --profile-hero-gradient:
+    radial-gradient(circle at 88% 22%, rgba(255, 255, 255, 0.22) 0%, transparent 38%),
+    radial-gradient(circle at 14% 78%, rgba(125, 187, 105, 0.20) 0%, transparent 42%),
+    linear-gradient(135deg, #1F5B4A 0%, #2A6E5A 50%, #356859 100%);
 }

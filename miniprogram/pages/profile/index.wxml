@@ -167,7 +167,7 @@
           </view>
         </view>
       </view>
-      <view class="week-detail-btn" bindtap="viewWeekDetail" hover-class="week-detail-btn--pressed" hover-stay-time="120">查看详情</view>
+      <view class="week-detail-btn" bindtap="viewWeekDetail" hover-class="week-detail-btn--pressed" hover-stay-time="120">查看更多 ›</view>
     </view>
 
   </view>

@@ -249,4 +249,66 @@
       </view>
     </view>
   </view>
+
+  <view
+    wx:if="{{completionSheetRendered}}"
+    class="completion-layer {{completionSheetVisible ? 'is-visible' : ''}}"
+    catchtouchmove="noop"
+  >
+    <view class="completion-mask" catchtap="closeCompletionSheet"></view>
+    <view class="completion-panel" catchtap="noop" role="dialog" aria-label="行动完成">
+      <view class="completion-grabber"></view>
+
+      <view class="completion-celebration">
+        <view class="completion-badge">
+          <ant-icon type="CheckOutline" />
+          <view class="completion-sparkle">✦</view>
+        </view>
+        <view class="completion-title">又完成一件，真棒！</view>
+        <view class="completion-copy">每天完成一点，就会靠近一点。</view>
+      </view>
+
+      <view class="completion-stats">
+        <view class="completion-stat-card">
+          <view class="completion-stat-icon is-green">日</view>
+          <view>
+            <view class="completion-stat-value">{{completionSheetData.done}}/{{completionSheetData.total}}</view>
+            <view class="completion-stat-label">今日完成</view>
+          </view>
+        </view>
+        <view class="completion-stat-card">
+          <view class="completion-stat-icon is-green">标</view>
+          <view>
+            <view class="completion-stat-value">{{completionSheetData.goalProgress}}%</view>
+            <view class="completion-stat-label">目标进度</view>
+          </view>
+        </view>
+        <view class="completion-stat-card">
+          <view class="completion-stat-icon is-yellow">时</view>
+          <view>
+            <view class="completion-stat-value">{{completionSheetData.minutes}} 分</view>
+            <view class="completion-stat-label">今日投入</view>
+          </view>
+        </view>
+        <view class="completion-stat-card">
+          <view class="completion-stat-icon is-yellow">续</view>
+          <view>
+            <view class="completion-stat-value">{{completionSheetData.streak}} 天</view>
+            <view class="completion-stat-label">连续坚持</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="completion-actions">
+        <button class="completion-share-button" catchtap="generateTodayShareCard">
+          <text class="completion-share-icon">↗</text>
+          <text>生成今日分享卡</text>
+        </button>
+        <button class="completion-continue-button" catchtap="closeCompletionSheet">
+          <text>继续完成</text>
+          <text class="completion-arrow">→</text>
+        </button>
+      </view>
+    </view>
+  </view>
 </view>

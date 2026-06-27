@@ -196,9 +196,19 @@ Page(withAppTheme({
     quickAddTouchStartY: 0,
     quickAddTouchDeltaY: 0,
     currentScrollTop: 0,
+    completionSheetRendered: false,
+    completionSheetVisible: false,
+    completionSheetData: {
+      done: 0,
+      total: 0,
+      goalProgress: 0,
+      minutes: 0,
+      streak: 0,
+    },
   },
   profileHandler: null as null | (() => void),
   focusGoalHandler: null as null | (() => void),
+  completionSheetTimer: null as ReturnType<typeof setTimeout> | null,
   onPageScroll(event: { scrollTop: number }) {
     this.setData({ currentScrollTop: event.scrollTop });
   },
@@ -209,6 +219,10 @@ Page(withAppTheme({
     on("goal:focus:update", this.focusGoalHandler);
   },
   onUnload() {
+    if (this.completionSheetTimer) {
+      clearTimeout(this.completionSheetTimer);
+      this.completionSheetTimer = null;
+    }
     if (this.profileHandler) {
       off("profile:update", this.profileHandler);
       this.profileHandler = null;
@@ -415,6 +429,44 @@ Page(withAppTheme({
     });
     wx.nextTick(() => wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 }));
   },
+  openCompletionSheet() {
+    const goal = this.data.goal;
+    if (!goal) return;
+    if (this.completionSheetTimer) {
+      clearTimeout(this.completionSheetTimer);
+      this.completionSheetTimer = null;
+    }
+    const today = getTodayBusinessDate();
+    const todayTasks = getTasksByGoal(goal.id).filter((task) => task.currentDate === today && task.status !== "rescheduled");
+    const summary = calculateTodaySummary(todayTasks);
+    const progress = getProgressSummary(goal.id, today);
+    const goalProgress = progress.totalTasks ? Math.round((progress.completedTasks / progress.totalTasks) * 100) : 0;
+    this.setData({
+      completionSheetRendered: true,
+      completionSheetVisible: false,
+      completionSheetData: {
+        done: summary.completedCount,
+        total: summary.totalCount,
+        goalProgress,
+        minutes: summary.actualMinutes,
+        streak: progress.currentStreakDays,
+      },
+    });
+    wx.nextTick(() => this.setData({ completionSheetVisible: true }));
+  },
+  closeCompletionSheet() {
+    if (!this.data.completionSheetRendered) return;
+    this.setData({ completionSheetVisible: false });
+    if (this.completionSheetTimer) clearTimeout(this.completionSheetTimer);
+    this.completionSheetTimer = setTimeout(() => {
+      this.setData({ completionSheetRendered: false });
+      this.completionSheetTimer = null;
+    }, 260);
+  },
+  generateTodayShareCard() {
+    this.closeCompletionSheet();
+    wx.showToast({ title: "今日分享卡即将上线", icon: "none" });
+  },
   toggleTaskDone(event: { currentTarget: { dataset: { id?: string } } }) {
     const id = String(event.currentTarget.dataset.id || "");
     const task = this.data.tasks.find((item) => item.id === id);
@@ -428,6 +480,7 @@ Page(withAppTheme({
       this.applyTaskPatch(updatedTask, prevScrollTop);
       if (nextStatus === "completed") {
         wx.vibrateShort({ type: "light" });
+        if (task.currentDate === today && this.data.selectedDate === today) this.openCompletionSheet();
       }
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });

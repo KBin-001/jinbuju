@@ -65,6 +65,8 @@ interface FilterTab {
 
 interface TeamOverview {
   name: string;
+  avatar: string;
+  avatarText: string;
   memberCount: number;
   maxMembers: number;
   roomCode: string;
@@ -387,6 +389,8 @@ Page(withAppTheme({
     const firstNonSelfId = firstNonSelf ? firstNonSelf.id : null;
     const teamOverview: TeamOverview = {
       name: team.name,
+      avatar: team.avatar || "",
+      avatarText: (team.name || "队").slice(0, 1),
       memberCount: team.memberCount,
       maxMembers: team.maxMembers,
       roomCode: team.roomCode,
