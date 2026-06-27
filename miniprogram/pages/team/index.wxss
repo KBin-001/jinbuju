@@ -19,7 +19,7 @@
 
 .page-title-row {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   min-height: 72rpx;
   margin-bottom: 22rpx;
@@ -30,6 +30,12 @@
   font-size: 40rpx;
   font-weight: 700;
   line-height: 48rpx;
+}
+
+.page-subtitle {
+  color: var(--team-secondary);
+  font-size: 24rpx;
+  line-height: 34rpx;
 }
 
 .team-card {
@@ -47,41 +53,42 @@
   margin-top: 0;
 }
 
-.team-info-card {
-  padding: 30rpx 28rpx 26rpx;
+.card-title {
+  color: var(--team-text);
+  font-size: 30rpx;
+  font-weight: 700;
+  line-height: 40rpx;
 }
 
-.team-info-top,
-.team-name-row,
-.member-count-row,
-.progress-meta-row,
-.honor-card,
-.feed-item,
-.member-detail-head {
+/* ============ 1. 小队状态卡（紧凑身份卡） ============ */
+.team-status-card {
+  padding: 26rpx 28rpx 24rpx;
+}
+
+.team-title-row {
   display: flex;
-  align-items: center;
-}
-
-.team-info-top,
-.member-count-row,
-.progress-meta-row,
-.honor-card {
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 20rpx;
 }
 
-.team-info-main {
+.team-info-block {
   min-width: 0;
   flex: 1;
 }
 
 .team-name-row {
-  align-items: flex-start;
+  display: flex;
+  align-items: center;
   gap: 16rpx;
 }
 
 .team-name {
   min-width: 0;
   flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--team-text);
   font-size: 34rpx;
   font-weight: 700;
@@ -91,7 +98,8 @@
 .my-team-tag,
 .level-tag,
 .mood-tag,
-.soft-tag {
+.soft-tag,
+.pill-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -105,11 +113,12 @@
 }
 
 .my-team-tag {
+  flex: none;
   background: var(--team-primary-soft);
   color: var(--team-primary);
 }
 
-.team-tag-row {
+.team-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 12rpx;
@@ -127,89 +136,533 @@
   color: var(--team-primary);
 }
 
-.team-slogan {
-  margin-top: 16rpx;
-  color: var(--team-secondary);
-  font-size: 26rpx;
-  line-height: 36rpx;
-}
-
-.member-count-row {
-  margin-top: 24rpx;
-  padding-top: 24rpx;
-  border-top: 1rpx solid var(--team-border);
-}
-
-.member-count {
-  color: var(--team-secondary);
-  font-size: 26rpx;
-  line-height: 36rpx;
-}
-
-.card-arrow {
-  color: #879790;
-  font-size: 42rpx;
-  line-height: 1;
-}
-
-.avatar-row {
+.team-member-preview {
+  flex: none;
   display: flex;
   align-items: center;
-  min-height: 58rpx;
-  margin-top: 18rpx;
+  min-height: 56rpx;
+  padding-top: 6rpx;
 }
 
-.avatar-item,
-.avatar-more,
-.feed-avatar,
-.member-detail-avatar {
+.preview-avatar,
+.preview-more {
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   flex: none;
+  width: 52rpx;
+  height: 52rpx;
+  margin-right: -10rpx;
+  border: 3rpx solid #ffffff;
   border-radius: 50%;
   background: var(--team-primary-soft);
   color: var(--team-primary);
   font-weight: 700;
-}
-
-.avatar-item {
-  width: 52rpx;
-  height: 52rpx;
-  margin-right: -8rpx;
-  border: 3rpx solid #ffffff;
   font-size: 22rpx;
 }
 
-.avatar-item image,
-.feed-avatar image,
-.member-detail-avatar image {
+.preview-avatar image {
   width: 100%;
   height: 100%;
   display: block;
 }
 
-.avatar-more {
-  width: 52rpx;
-  height: 52rpx;
-  margin-left: 8rpx;
+.preview-more {
+  margin-right: 0;
+  margin-left: 4rpx;
+  background: var(--team-soft);
   color: var(--team-muted);
   font-size: 20rpx;
 }
 
-.team-button-row,
-.empty-actions,
-.popup-actions {
+.team-sub-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 20rpx;
+  color: var(--team-secondary);
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.team-sub-info .dot {
+  color: var(--team-muted);
+}
+
+.team-slogan-row {
+  margin-top: 6rpx;
+  color: var(--team-secondary);
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.team-action-buttons {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18rpx;
+  gap: 16rpx;
+  margin-top: 22rpx;
 }
 
-.team-button-row {
-  margin-top: 28rpx;
+.pill-button {
+  height: 64rpx;
+  padding: 0 24rpx;
+  margin: 0;
+  border: 1rpx solid var(--team-border);
+  border-radius: 32rpx;
+  background: #ffffff;
+  color: var(--team-primary);
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
+.pill-button::after {
+  border: 0;
+}
+
+/* ============ 2. 今日小队战况 ============ */
+.dashboard-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.dashboard-detail-link {
+  flex: none;
+  color: var(--team-secondary);
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.team-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12rpx;
+  margin-top: 22rpx;
+}
+
+.stat-item {
+  min-width: 0;
+  padding: 4rpx 0;
+}
+
+.stat-item--divider {
+  border-left: 1rpx solid var(--team-border);
+  padding-left: 12rpx;
+}
+
+.stat-value {
+  display: flex;
+  align-items: baseline;
+  gap: 2rpx;
+  color: var(--team-text);
+  font-size: 48rpx;
+  font-weight: 800;
+  line-height: 56rpx;
+}
+
+.stat-unit {
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.stat-slash {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--team-muted);
+}
+
+.stat-label {
+  margin-top: 4rpx;
+  color: var(--team-secondary);
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.team-progress-bar {
+  margin-top: 24rpx;
+}
+
+.progress-track {
+  width: 100%;
+  height: 16rpx;
+  overflow: hidden;
+  border-radius: 8rpx;
+  background: #E2EEE8;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 8rpx;
+  background: linear-gradient(90deg, #7CC6A0 0%, #3F8F72 100%);
+}
+
+.progress-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-top: 14rpx;
+}
+
+.progress-goal-text {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--team-secondary);
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.progress-current {
+  flex: none;
+  color: var(--team-text);
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 34rpx;
+}
+
+/* ============ 3. 今日共同行动 ============ */
+.team-common-action {
+  padding-bottom: 26rpx;
+}
+
+.common-action-desc {
+  margin-top: 12rpx;
+  color: var(--team-secondary);
+  font-size: 26rpx;
+  line-height: 36rpx;
+}
+
+.team-common-progress {
+  display: flex;
+  align-items: stretch;
+  gap: 16rpx;
+  margin-top: 22rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 22rpx;
+  background: var(--team-soft);
+}
+
+.common-progress-item {
+  min-width: 0;
+  flex: 1;
+}
+
+.common-progress-label {
+  color: var(--team-secondary);
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.common-progress-value {
+  margin-top: 6rpx;
+  color: var(--team-text);
+  font-size: 40rpx;
+  font-weight: 800;
+  line-height: 48rpx;
+}
+
+.cpv-current {
+  color: var(--team-primary);
+}
+
+.cpv-current--done {
+  color: var(--team-text);
+}
+
+.cpv-slash {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--team-muted);
+}
+
+.common-progress-divider {
+  flex: none;
+  width: 1rpx;
+  background: var(--team-border);
+}
+
+.common-action-button {
+  margin-top: 24rpx;
+}
+
+/* ============ 4. 成员状态 ============ */
+.member-status-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  font-size: 22rpx;
+  line-height: 32rpx;
+}
+
+.ms-completed {
+  color: var(--team-primary);
+  font-weight: 600;
+}
+
+.ms-doing {
+  color: #C99A2E;
+  font-weight: 600;
+}
+
+.ms-pending {
+  color: var(--team-muted);
+  font-weight: 600;
+}
+
+.team-member-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24rpx 12rpx;
+  margin-top: 22rpx;
+}
+
+.member-status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.member-avatar {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background: var(--team-primary-soft);
+  color: var(--team-primary);
+  font-weight: 700;
+  font-size: 30rpx;
+}
+
+.member-avatar image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.member-avatar--doing {
+  background: var(--team-sun-soft);
+  color: #8A6B1F;
+}
+
+.member-avatar--pending {
+  background: #F0F2EF;
+  color: var(--team-muted);
+  opacity: 0.62;
+}
+
+.avatar-check {
+  position: absolute;
+  right: -4rpx;
+  bottom: -4rpx;
+  width: 36rpx;
+  height: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 3rpx solid #ffffff;
+  background: var(--team-primary);
+  color: #ffffff;
+  font-size: 20rpx;
+  font-weight: 800;
+}
+
+.avatar-dot {
+  position: absolute;
+  right: 2rpx;
+  bottom: 2rpx;
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  border: 3rpx solid #ffffff;
+  background: var(--team-sun);
+}
+
+.member-status-info {
+  margin-top: 12rpx;
+  text-align: center;
+  width: 100%;
+}
+
+.member-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--team-text);
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 32rpx;
+}
+
+.member-progress-text {
+  margin-top: 4rpx;
+  color: var(--team-secondary);
+  font-size: 20rpx;
+  line-height: 28rpx;
+}
+
+.member-list-more {
+  margin-top: 22rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid var(--team-border);
+  text-align: center;
+  color: var(--team-secondary);
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+/* ============ 5. 行动动态 ============ */
+.team-activity-card {
+  padding-bottom: 18rpx;
+}
+
+.activity-empty {
+  margin-top: 18rpx;
+  color: var(--team-secondary);
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  min-height: 70rpx;
+  padding: 16rpx 0;
+}
+
+.activity-item + .activity-item {
+  border-top: 1rpx solid var(--team-border);
+}
+
+.activity-avatar {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: var(--team-primary-soft);
+  color: var(--team-primary);
+  font-weight: 700;
+  font-size: 22rpx;
+}
+
+.activity-avatar image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.activity-main {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-name {
+  color: var(--team-text);
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.activity-action {
+  color: var(--team-secondary);
+  font-size: 26rpx;
+}
+
+.activity-time {
+  flex: none;
+  color: var(--team-muted);
+  font-size: 22rpx;
+}
+
+.activity-more {
+  margin-top: 10rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--team-border);
+  text-align: center;
+  color: var(--team-secondary);
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+/* ============ 6. 本周荣誉（横向徽章） ============ */
+.team-honor-card {
+  padding-bottom: 24rpx;
+}
+
+.honor-scroll {
+  width: 100%;
+  margin-top: 18rpx;
+  white-space: nowrap;
+}
+
+.honor-badge-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  width: 200rpx;
+  margin-right: 16rpx;
+  padding: 22rpx 16rpx;
+  box-sizing: border-box;
+  border-radius: 22rpx;
+  background: var(--team-soft);
+  vertical-align: top;
+  white-space: normal;
+}
+
+.honor-badge-card:last-child {
+  margin-right: 0;
+}
+
+.honor-icon {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--team-sun);
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: 800;
+}
+
+.honor-title {
+  margin-top: 14rpx;
+  color: var(--team-text);
+  font-size: 26rpx;
+  font-weight: 700;
+  line-height: 34rpx;
+  text-align: center;
+}
+
+.honor-desc {
+  margin-top: 6rpx;
+  color: var(--team-secondary);
+  font-size: 20rpx;
+  line-height: 28rpx;
+  text-align: center;
+}
+
+/* ============ 按钮 / 状态卡 ============ */
 .outline-button,
 .solid-button {
   min-width: 0;
@@ -238,194 +691,12 @@
   box-shadow: 0 10rpx 24rpx rgba(63, 143, 114, 0.22);
 }
 
-.card-title {
-  color: var(--team-text);
-  font-size: 30rpx;
-  font-weight: 700;
-  line-height: 40rpx;
+button::after {
+  border: 0;
 }
 
-.progress-card {
-  padding-bottom: 26rpx;
-}
-
-.progress-meta-row {
-  margin-top: 22rpx;
-}
-
-.progress-label,
-.progress-goal,
-.honor-subtitle,
-.feed-time,
-.state-copy,
-.empty-copy,
-.popup-copy,
-.detail-empty,
-.task-detail-meta {
-  color: var(--team-secondary);
-  font-size: 24rpx;
-  line-height: 34rpx;
-}
-
-.delta-label {
-  color: var(--team-primary);
-  font-size: 24rpx;
-  font-weight: 700;
-  line-height: 34rpx;
-}
-
-.focus-number-row {
-  display: flex;
-  align-items: baseline;
-  gap: 10rpx;
-  margin-top: 10rpx;
-}
-
-.focus-number {
-  color: var(--team-text);
-  font-size: 48rpx;
-  font-weight: 800;
-  line-height: 56rpx;
-}
-
-.focus-unit {
-  color: var(--team-text);
-  font-size: 28rpx;
-  font-weight: 700;
-}
-
-.progress-track {
-  width: 100%;
-  height: 16rpx;
-  overflow: hidden;
-  margin-top: 26rpx;
-  border-radius: 8rpx;
-  background: #E2EEE8;
-}
-
-.progress-fill {
-  height: 100%;
-  border-radius: 8rpx;
-  background: linear-gradient(90deg, #7CC6A0 0%, #3F8F72 100%);
-}
-
-.progress-goal {
-  margin-top: 12rpx;
-  text-align: right;
-}
-
-.honor-card {
-  gap: 22rpx;
-}
-
-.honor-copy {
-  min-width: 0;
-  flex: 1;
-}
-
-.honor-subtitle {
-  margin-top: 18rpx;
-}
-
-.honor-title {
-  margin-top: 6rpx;
-  color: var(--team-text);
-  font-size: 28rpx;
-  font-weight: 700;
-  line-height: 38rpx;
-}
-
-.honor-badge {
-  position: relative;
-  width: 76rpx;
-  height: 76rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  border-radius: 50%;
-  background: var(--team-sun);
-  box-shadow: inset 0 0 0 8rpx rgba(255, 255, 255, 0.55);
-}
-
-.honor-badge::before,
-.honor-badge::after {
-  position: absolute;
-  bottom: -10rpx;
-  width: 20rpx;
-  height: 30rpx;
-  border-radius: 0 0 8rpx 8rpx;
-  background: #E0B04A;
-  content: "";
-}
-
-.honor-badge::before {
-  left: 18rpx;
-  transform: rotate(18deg);
-}
-
-.honor-badge::after {
-  right: 18rpx;
-  transform: rotate(-18deg);
-}
-
-.honor-badge-inner {
-  position: relative;
-  z-index: 1;
-  width: 42rpx;
-  height: 42rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--team-primary);
-  color: #ffffff;
-  font-size: 24rpx;
-}
-
-.feed-card {
-  padding-bottom: 18rpx;
-}
-
-.feed-item {
-  min-height: 70rpx;
-  gap: 16rpx;
-  padding: 18rpx 0;
-}
-
-.feed-item + .feed-item {
-  border-top: 1rpx solid var(--team-border);
-}
-
-.feed-avatar {
-  width: 42rpx;
-  height: 42rpx;
-  font-size: 20rpx;
-}
-
-.feed-main {
-  min-width: 0;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.feed-name {
-  color: var(--team-text);
-  font-size: 26rpx;
-  font-weight: 700;
-}
-
-.feed-action {
-  color: var(--team-secondary);
-  font-size: 26rpx;
-}
-
-.feed-time {
-  flex: none;
-  font-size: 22rpx;
-  color: var(--team-muted);
+button[disabled] {
+  opacity: 0.58;
 }
 
 .state-card,
@@ -462,6 +733,16 @@
 }
 
 .state-copy,
+.empty-copy,
+.popup-copy,
+.detail-empty,
+.task-detail-meta {
+  color: var(--team-secondary);
+  font-size: 24rpx;
+  line-height: 34rpx;
+}
+
+.state-copy,
 .empty-copy {
   max-width: 520rpx;
   margin-top: 14rpx;
@@ -473,10 +754,14 @@
 }
 
 .empty-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
   width: 100%;
   margin-top: 32rpx;
 }
 
+/* ============ 弹窗 ============ */
 .team-popup-layer {
   position: fixed;
   top: 0;
@@ -544,6 +829,9 @@
 }
 
 .popup-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
   margin-top: 26rpx;
 }
 
@@ -579,13 +867,30 @@
 }
 
 .member-detail-head {
+  display: flex;
+  align-items: center;
   gap: 18rpx;
 }
 
 .member-detail-avatar {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
   width: 82rpx;
   height: 82rpx;
+  border-radius: 50%;
+  background: var(--team-primary-soft);
+  color: var(--team-primary);
+  font-weight: 700;
   font-size: 32rpx;
+}
+
+.member-detail-avatar image {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .member-detail-main {
@@ -638,12 +943,11 @@
   margin-top: 8rpx;
 }
 
-button::after {
-  border: 0;
-}
-
-button[disabled] {
-  opacity: 0.58;
+.detail-private-card {
+  padding: 22rpx;
+  border: 1rpx solid var(--team-border);
+  border-radius: 22rpx;
+  background: #F8FBF9;
 }
 
 @media (max-width: 340px) {
@@ -652,141 +956,24 @@ button[disabled] {
     padding-left: 24rpx;
   }
 
-  .team-button-row,
+  .team-action-buttons,
   .empty-actions,
   .popup-actions {
     grid-template-columns: 1fr;
   }
 
-  .team-name-row,
-  .progress-meta-row {
-    align-items: flex-start;
-    flex-direction: column;
+  .team-member-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .feed-time {
+  .activity-time {
     display: none;
   }
 }
 
 /* =========================================================
  * 墨绿成长主题 覆写（team-page）
- * 覆写本页硬编码的薄荷绿色：进度条、按钮、阴影、遮罩等。
  * 切换至墨绿主题后，整页 UI 统一呈现深绿质感。
- * ========================================================= */
-.team-page[data-theme="inkGreen"] {
-  --team-primary: #356859;
-  --team-primary-deep: #1F5B4A;
-  --team-primary-light: #7FAA91;
-  --team-primary-soft: #EAF5EF;
-  --team-text: #183F35;
-  --team-secondary: #6D8179;
-  --team-muted: #9AA9A4;
-  --team-border: #DDEBE4;
-  --team-soft: #F0F5F1;
-  --team-sun: #F4C95D;
-  --team-sun-soft: #FFF2CD;
-  --team-bg: #F5F7F2;
-  --team-shadow: 0 10rpx 28rpx rgba(20, 82, 63, 0.10);
-  background: #F5F7F2;
-  color: #183F35;
-}
-
-.team-page[data-theme="inkGreen"] .nav-bar {
-  border-bottom-color: rgba(20, 82, 63, 0.08);
-}
-
-.team-page[data-theme="inkGreen"] .team-hero,
-.team-page[data-theme="inkGreen"] .team-card,
-.team-page[data-theme="inkGreen"] .team-info-card,
-.team-page[data-theme="inkGreen"] .progress-card,
-.team-page[data-theme="inkGreen"] .member-card,
-.team-page[data-theme="inkGreen"] .feed-card,
-.team-page[data-theme="inkGreen"] .empty-card,
-.team-page[data-theme="inkGreen"] .join-popup,
-.team-page[data-theme="inkGreen"] .member-detail {
-  background: #FFFFFF;
-  border-color: #DDEBE4;
-}
-
-.team-page[data-theme="inkGreen"] .hero-progress-fill,
-.team-page[data-theme="inkGreen"] .progress-bar-inner,
-.team-page[data-theme="inkGreen"] .summary-progress-fill {
-  background: linear-gradient(90deg, #6DBB95 0%, #1F6F55 100%);
-}
-
-.team-page[data-theme="inkGreen"] .progress-track,
-.team-page[data-theme="inkGreen"] .progress-bar,
-.team-page[data-theme="inkGreen"] .empty-progress {
-  background: #DDEBE4;
-}
-
-.team-page[data-theme="inkGreen"] .primary-action,
-.team-page[data-theme="inkGreen"] .feed-button,
-.team-page[data-theme="inkGreen"] .encourage-button,
-.team-page[data-theme="inkGreen"] .team-button,
-.team-page[data-theme="inkGreen"] .copy-button,
-.team-page[data-theme="inkGreen"] .invite-button,
-.team-page[data-theme="inkGreen"] .detail-button,
-.team-page[data-theme="inkGreen"] .status-button {
-  background: #1F6F55;
-  box-shadow: 0 8rpx 20rpx rgba(31, 111, 85, 0.26);
-  color: #FFFFFF;
-}
-
-.team-page[data-theme="inkGreen"] .encourage-button.is-encouraged,
-.team-page[data-theme="inkGreen"] .status-button.is-disabled {
-  background: #C9DDD3;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.team-page[data-theme="inkGreen"] .medal-glow,
-.team-page[data-theme="inkGreen"] .member-avatar-ring {
-  border: 3rpx solid #FFFFFF;
-  background: linear-gradient(180deg, #6DBB95 0%, #1F6F55 100%);
-}
-
-.team-page[data-theme="inkGreen"] .medal-crown {
-  background: #E0B04A;
-}
-
-.team-page[data-theme="inkGreen"] .feed-icon,
-.team-page[data-theme="inkGreen"] .info-icon,
-.team-page[data-theme="inkGreen"] .room-icon,
-.team-page[data-theme="inkGreen"] .team-mark {
-  background: #E3F2EA;
-  color: #1F6F55;
-}
-
-.team-page[data-theme="inkGreen"] .layer-mask,
-.team-page[data-theme="inkGreen"] .popup-mask,
-.team-page[data-theme="inkGreen"] .join-mask,
-.team-page[data-theme="inkGreen"] .detail-mask {
-  background: rgba(15, 63, 50, 0.36);
-}
-
-.team-page[data-theme="inkGreen"] .popup-panel,
-.team-page[data-theme="inkGreen"] .join-popup,
-.team-page[data-theme="inkGreen"] .member-detail {
-  background: #F4F8F5;
-  box-shadow: 0 -18rpx 48rpx rgba(15, 63, 50, 0.20);
-}
-
-.team-page[data-theme="inkGreen"] .popup-grabber,
-.team-page[data-theme="inkGreen"] .join-grabber {
-  background: #C9DDD3;
-}
-
-.team-page[data-theme="inkGreen"] .quick-task-popup,
-.team-page[data-theme="inkGreen"] .feedback-popup,
-.team-page[data-theme="inkGreen"] .management-popup {
-  --popup-background: #F4F8F5;
-}
-
-/* =========================================================
- * 墨绿主题兼容 V2：严格对应当前 team/index.wxml 的真实类名。
- * 旧兼容层仍引用了已移除的 primary-action / progress-bar-inner 等类，
- * 因而主题状态虽已切换，关键控件仍显示为默认浅绿。
  * ========================================================= */
 .team-page[data-theme="inkGreen"] {
   --team-primary: #356859;
@@ -798,6 +985,8 @@ button[disabled] {
   --team-muted: #9AA9A4;
   --team-border: #E6EEE9;
   --team-soft: #F0F5F1;
+  --team-sun: #F4C95D;
+  --team-sun-soft: #FFF2CD;
   --team-bg: #F5F7F2;
   --team-shadow: 0 12rpx 32rpx rgba(31, 91, 74, 0.10);
   background: #F5F7F2;
@@ -814,8 +1003,8 @@ button[disabled] {
   box-shadow: var(--team-shadow);
 }
 
-/* 小队档案主卡与今日/进度/我的的深绿 Hero 保持同一层级。 */
-.team-page[data-theme="inkGreen"] .team-info-card {
+/* 小队状态卡使用深绿 Hero 背景与其他页 Hero 保持一致。 */
+.team-page[data-theme="inkGreen"] .team-status-card {
   border-color: transparent;
   background:
     radial-gradient(circle at 88% 18%, rgba(248, 210, 106, 0.16), transparent 30%),
@@ -824,44 +1013,46 @@ button[disabled] {
   box-shadow: 0 16rpx 36rpx rgba(31, 91, 74, 0.18);
 }
 
-.team-page[data-theme="inkGreen"] .team-info-card .team-name,
-.team-page[data-theme="inkGreen"] .team-info-card .team-slogan,
-.team-page[data-theme="inkGreen"] .team-info-card .member-count,
-.team-page[data-theme="inkGreen"] .team-info-card .card-arrow {
+.team-page[data-theme="inkGreen"] .team-status-card .team-name,
+.team-page[data-theme="inkGreen"] .team-status-card .team-slogan-row,
+.team-page[data-theme="inkGreen"] .team-status-card .team-sub-info {
   color: #FFFFFF;
 }
 
-.team-page[data-theme="inkGreen"] .team-info-card .member-count-row {
-  border-top-color: rgba(255, 255, 255, 0.20);
+.team-page[data-theme="inkGreen"] .team-status-card .team-sub-info .dot {
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.team-page[data-theme="inkGreen"] .team-info-card .my-team-tag,
-.team-page[data-theme="inkGreen"] .team-info-card .mood-tag {
+.team-page[data-theme="inkGreen"] .team-status-card .my-team-tag,
+.team-page[data-theme="inkGreen"] .team-status-card .mood-tag {
   background: rgba(255, 255, 255, 0.16);
   color: #FFFFFF;
 }
 
-.team-page[data-theme="inkGreen"] .team-info-card .level-tag {
+.team-page[data-theme="inkGreen"] .team-status-card .level-tag {
   background: #F8D26A;
   color: #5E4A16;
 }
 
-.team-page[data-theme="inkGreen"] .team-info-card .avatar-item,
-.team-page[data-theme="inkGreen"] .team-info-card .avatar-more {
+.team-page[data-theme="inkGreen"] .team-status-card .preview-avatar,
+.team-page[data-theme="inkGreen"] .team-status-card .preview-more {
   border-color: rgba(255, 255, 255, 0.82);
   background: rgba(255, 255, 255, 0.90);
   color: #356859;
 }
 
-.team-page[data-theme="inkGreen"] .team-info-card .outline-button {
+.team-page[data-theme="inkGreen"] .team-status-card .pill-button {
   border-color: rgba(255, 255, 255, 0.34);
   background: rgba(255, 255, 255, 0.12);
   color: #FFFFFF;
 }
 
-.team-page[data-theme="inkGreen"] .progress-card,
-.team-page[data-theme="inkGreen"] .honor-card,
-.team-page[data-theme="inkGreen"] .feed-card,
+/* 战况 / 共同行动 / 成员 / 动态 / 荣誉 卡片保持白底 */
+.team-page[data-theme="inkGreen"] .team-dashboard-card,
+.team-page[data-theme="inkGreen"] .team-common-action,
+.team-page[data-theme="inkGreen"] .team-member-status,
+.team-page[data-theme="inkGreen"] .team-activity-card,
+.team-page[data-theme="inkGreen"] .team-honor-card,
 .team-page[data-theme="inkGreen"] .state-card,
 .team-page[data-theme="inkGreen"] .empty-card {
   border-color: rgba(31, 91, 74, 0.10);
@@ -877,21 +1068,58 @@ button[disabled] {
   box-shadow: 0 2rpx 8rpx rgba(53, 104, 89, 0.18);
 }
 
-.team-page[data-theme="inkGreen"] .delta-label,
-.team-page[data-theme="inkGreen"] .focus-number,
-.team-page[data-theme="inkGreen"] .focus-unit,
-.team-page[data-theme="inkGreen"] .honor-title,
-.team-page[data-theme="inkGreen"] .feed-name {
+.team-page[data-theme="inkGreen"] .stat-value,
+.team-page[data-theme="inkGreen"] .common-progress-value,
+.team-page[data-theme="inkGreen"] .progress-current,
+.team-page[data-theme="inkGreen"] .activity-name,
+.team-page[data-theme="inkGreen"] .member-name,
+.team-page[data-theme="inkGreen"] .honor-title {
   color: #1F5B4A;
+}
+
+.team-page[data-theme="inkGreen"] .cpv-current {
+  color: #356859;
+}
+
+.team-page[data-theme="inkGreen"] .cpv-current--done {
+  color: #1F5B4A;
+}
+
+.team-page[data-theme="inkGreen"] .ms-completed {
+  color: #356859;
 }
 
 .team-page[data-theme="inkGreen"] .my-team-tag,
 .team-page[data-theme="inkGreen"] .mood-tag,
 .team-page[data-theme="inkGreen"] .soft-tag,
-.team-page[data-theme="inkGreen"] .feed-avatar,
+.team-page[data-theme="inkGreen"] .activity-avatar,
 .team-page[data-theme="inkGreen"] .member-detail-avatar {
   background: #EAF5EF;
   color: #356859;
+}
+
+.team-page[data-theme="inkGreen"] .team-common-progress,
+.team-page[data-theme="inkGreen"] .honor-badge-card {
+  background: #F0F5F1;
+}
+
+.team-page[data-theme="inkGreen"] .member-avatar {
+  background: #EAF5EF;
+  color: #356859;
+}
+
+.team-page[data-theme="inkGreen"] .member-avatar--doing {
+  background: #FFF2CD;
+  color: #8A6B1F;
+}
+
+.team-page[data-theme="inkGreen"] .member-avatar--pending {
+  background: #ECEFEA;
+  color: #9AA9A4;
+}
+
+.team-page[data-theme="inkGreen"] .avatar-check {
+  background: #356859;
 }
 
 .team-page[data-theme="inkGreen"] .solid-button {
@@ -906,13 +1134,20 @@ button[disabled] {
   color: #356859;
 }
 
+.team-page[data-theme="inkGreen"] .pill-button {
+  border-color: #D7E4DE;
+  background: #FFFFFF;
+  color: #356859;
+}
+
 .team-page[data-theme="inkGreen"] .solid-button[disabled] {
   background: #C9D8D1;
   box-shadow: none;
 }
 
-.team-page[data-theme="inkGreen"] .honor-badge-inner {
-  background: #356859;
+.team-page[data-theme="inkGreen"] .honor-icon {
+  background: #F8D26A;
+  color: #5E4A16;
 }
 
 .team-page[data-theme="inkGreen"] .team-popup-mask {

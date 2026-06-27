@@ -1,6 +1,7 @@
 <view class="page team-page" data-theme="{{appTheme}}">
   <view class="page-title-row">
     <view class="page-title">小队</view>
+    <view class="page-subtitle">一起完成今天的行动</view>
   </view>
 
   <view wx:if="{{status === 'loading'}}" class="team-card state-card">
@@ -29,84 +30,177 @@
   </view>
 
   <block wx:else>
-    <view class="team-card team-info-card" bindtap="openTeamInfo">
-      <view class="team-info-top">
-        <view class="team-info-main">
+    <!-- 1. 小队状态卡（紧凑身份卡） -->
+    <view class="team-card team-status-card">
+      <view class="team-title-row">
+        <view class="team-info-block">
           <view class="team-name-row">
             <view class="team-name">{{displayTeamName}}</view>
             <view class="my-team-tag">我的小队</view>
           </view>
-          <view class="team-tag-row">
+          <view class="team-tags">
             <view class="level-tag">{{teamLevel}}</view>
             <view class="mood-tag">{{teamMood}}</view>
           </view>
-          <view class="team-slogan">一起自律，各自成长</view>
+        </view>
+        <view class="team-member-preview" catchtap="openAllMembers">
+          <view
+            wx:for="{{avatarMembers}}"
+            wx:key="id"
+            class="preview-avatar"
+          >
+            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+            <text wx:else>{{item.avatarText}}</text>
+          </view>
+          <view wx:if="{{extraAvatarCount > 0}}" class="preview-more">+{{extraAvatarCount}}</view>
         </view>
       </view>
 
-      <view class="member-count-row" catchtap="openAllMembers">
-        <view class="member-count">{{team.memberCount}} / {{team.maxMembers}} 成员</view>
-        <view class="card-arrow">›</view>
+      <view class="team-sub-info">
+        <text>{{team.memberCount}} / {{team.maxMembers}} 成员</text>
+        <text class="dot">·</text>
+        <text>今日 {{teamStats.completedMembers}} 人已完成</text>
       </view>
 
-      <view class="avatar-row" catchtap="openAllMembers">
+      <view class="team-slogan-row">一起自律，各自成长</view>
+
+      <view class="team-action-buttons">
+        <button class="pill-button" catchtap="inviteFriends">邀请好友</button>
+        <button class="pill-button" catchtap="openTeamSettings">小队设置</button>
+      </view>
+    </view>
+
+    <!-- 2. 今日小队战况（核心数据模块） -->
+    <view class="team-card team-dashboard-card">
+      <view class="dashboard-title-row">
+        <view class="card-title">今日小队战况</view>
+        <view class="dashboard-detail-link" catchtap="noop">查看详情 ›</view>
+      </view>
+
+      <view class="team-stat-grid">
+        <view class="stat-item">
+          <view class="stat-value">{{teamStats.todayCompletionRate}}<text class="stat-unit">%</text></view>
+          <view class="stat-label">今日完成率</view>
+        </view>
+        <view class="stat-item stat-item--divider">
+          <view class="stat-value">{{teamStats.completedMembers}}<text class="stat-slash">/{{teamStats.totalMembers}}</text></view>
+          <view class="stat-label">已完成成员</view>
+        </view>
+        <view class="stat-item stat-item--divider">
+          <view class="stat-value">{{teamStats.todayActions}}<text class="stat-unit">项</text></view>
+          <view class="stat-label">今日行动数</view>
+        </view>
+      </view>
+
+      <view class="team-progress-bar">
+        <view class="progress-track">
+          <view class="progress-fill" style="width: {{teamStats.todayActionsRate}}%;"></view>
+        </view>
+        <view class="progress-meta-row">
+          <text class="progress-goal-text">今日目标：全队完成 {{teamStats.targetActions}} 项行动</text>
+          <text class="progress-current">{{teamStats.todayActions}} / {{teamStats.targetActions}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 3. 今日共同行动（关键行动模块） -->
+    <view class="team-card team-common-action">
+      <view class="card-title">今日共同行动</view>
+      <view class="common-action-desc">{{commonAction.desc}}</view>
+
+      <view class="team-common-progress">
+        <view class="common-progress-item">
+          <view class="common-progress-label">我的进度</view>
+          <view class="common-progress-value">
+            <text class="cpv-current {{commonAction.myDone ? 'cpv-current--done' : ''}}">{{commonAction.myCompleted}}</text>
+            <text class="cpv-slash"> / {{commonAction.myTarget}}</text>
+          </view>
+        </view>
+        <view class="common-progress-divider"></view>
+        <view class="common-progress-item">
+          <view class="common-progress-label">全队进度</view>
+          <view class="common-progress-value">
+            <text class="cpv-current">{{commonAction.teamCompleted}}</text>
+            <text class="cpv-slash"> / {{commonAction.teamTarget}}</text>
+          </view>
+        </view>
+      </view>
+
+      <button class="solid-button common-action-button" catchtap="goToTodayAction">
+        {{commonAction.myDone ? '今日行动已完成' : '去完成今日任务'}}
+      </button>
+    </view>
+
+    <!-- 4. 成员状态 -->
+    <view class="team-card team-member-status">
+      <view class="dashboard-title-row">
+        <view class="card-title">成员状态</view>
+        <view class="member-status-summary">
+          <text class="ms-completed">已完成 {{memberStatusSummary.completed}}</text>
+          <text class="ms-doing">进行中 {{memberStatusSummary.doing}}</text>
+          <text class="ms-pending">未开始 {{memberStatusSummary.pending}}</text>
+        </view>
+      </view>
+
+      <view class="team-member-list">
         <view
-          wx:for="{{avatarMembers}}"
+          wx:for="{{memberStatusList}}"
           wx:key="id"
-          class="avatar-item"
+          class="member-status-item"
+          data-id="{{item.id}}"
+          bindtap="openMemberDetail"
         >
-          <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
-          <text wx:else>{{item.avatarText}}</text>
+          <view class="member-avatar member-avatar--{{item.statusClass}}">
+            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+            <text wx:else>{{item.avatarText}}</text>
+            <view wx:if="{{item.statusClass === 'completed'}}" class="avatar-check">✓</view>
+            <view wx:elif="{{item.statusClass === 'doing'}}" class="avatar-dot"></view>
+          </view>
+          <view class="member-status-info">
+            <view class="member-name">{{item.name}}</view>
+            <view class="member-progress-text">{{item.statusText}}</view>
+          </view>
         </view>
-        <view wx:if="{{extraAvatarCount > 0}}" class="avatar-more">+{{extraAvatarCount}}</view>
       </view>
 
-      <view class="team-button-row">
-        <button class="outline-button" catchtap="inviteFriends">邀请好友</button>
-        <button class="outline-button" catchtap="openTeamSettings">小队设置</button>
+      <view wx:if="{{memberStatusExtra > 0}}" class="member-list-more" catchtap="openAllMembers">
+        查看全部 {{team.memberCount}} 位成员 ›
       </view>
     </view>
 
-    <view class="team-card progress-card">
-      <view class="card-title">小队进度</view>
-      <view class="progress-meta-row">
-        <view class="progress-label">本周集体专注时长</view>
-        <view class="delta-label">较上周 {{weeklyFocusDeltaText}}</view>
+    <!-- 5. 小队动态（行动动态） -->
+    <view class="team-card team-activity-card">
+      <view class="dashboard-title-row">
+        <view class="card-title">行动动态</view>
       </view>
-      <view class="focus-number-row">
-        <text class="focus-number">{{weeklyFocusMinutes}}</text>
-        <text class="focus-unit">分钟</text>
-      </view>
-      <view class="progress-track">
-        <view class="progress-fill" style="width: {{weeklyFocusRate}}%;"></view>
-      </view>
-      <view class="progress-goal">目标 {{weeklyFocusGoal}} 分钟</view>
-    </view>
 
-    <view class="team-card honor-card">
-      <view class="honor-copy">
-        <view class="card-title">小队荣誉墙</view>
-        <view class="honor-subtitle">{{honorSubtitle}}</view>
-        <view class="honor-title">{{honorTitle}}</view>
-      </view>
-      <view class="honor-badge">
-        <view class="honor-badge-inner">★</view>
+      <view wx:if="{{activityList.length === 0}}" class="activity-empty">今天还没有队友动态。</view>
+      <view wx:else>
+        <view wx:for="{{activityList}}" wx:key="id" class="activity-item" data-id="{{item.memberId}}" bindtap="openMemberDetail">
+          <view class="activity-avatar">
+            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+            <text wx:else>{{item.avatarText}}</text>
+          </view>
+          <view class="activity-main">
+            <text class="activity-name">{{item.name}}</text>
+            <text class="activity-action"> {{item.actionText}}</text>
+          </view>
+          <view class="activity-time">{{item.time}}</view>
+        </view>
+        <view class="activity-more" catchtap="noop">查看全部动态 ›</view>
       </view>
     </view>
 
-    <view class="team-card feed-card">
-      <view class="card-title">小队动态</view>
-      <view wx:for="{{activityFeed}}" wx:key="id" class="feed-item" data-id="{{item.memberId}}" bindtap="openMemberDetail">
-        <view class="feed-avatar">
-          <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
-          <text wx:else>{{item.avatarText}}</text>
+    <!-- 6. 本周荣誉（轻量横向徽章） -->
+    <view class="team-card team-honor-card">
+      <view class="card-title">本周荣誉</view>
+      <scroll-view scroll-x class="honor-scroll" enhanced show-scrollbar="{{false}}">
+        <view wx:for="{{honorList}}" wx:key="id" class="honor-badge-card">
+          <view class="honor-icon">{{item.icon}}</view>
+          <view class="honor-title">{{item.title}}</view>
+          <view class="honor-desc">{{item.desc}}</view>
         </view>
-        <view class="feed-main">
-          <text class="feed-name">{{item.name}}</text>
-          <text class="feed-action"> 完成了今日目标</text>
-        </view>
-        <view class="feed-time">{{item.timeText}}</view>
-      </view>
+      </scroll-view>
     </view>
   </block>
 
