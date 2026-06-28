@@ -405,7 +405,7 @@
 }
 
 .completed-title,
-.completed-meta {
+.completed-goal {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -416,11 +416,37 @@
   font-weight: 600;
 }
 
-.completed-meta {
+.completed-meta-line {
+  display: flex;
+  align-items: center;
+  min-width: 0;
   margin-top: 6rpx;
+}
+
+.completed-goal {
+  max-width: 180rpx;
   color: #9AA8A3;
   font-size: 19rpx;
 }
+
+.completion-time-chip {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 38rpx;
+  margin-left: 10rpx;
+  padding: 0 12rpx;
+  border: 1rpx solid #D7E4DE;
+  border-radius: 19rpx;
+  background: #F5FAF7;
+  color: #356859;
+  font-size: 18rpx;
+  font-weight: 600;
+}
+
+.completion-time-chip:active { background: #EAF5EF; }
+.completion-time-clock { margin-right: 5rpx; }
+.completion-time-edit { margin-left: 8rpx; color: #8FA097; font-size: 16rpx; }
 
 .completed-duration {
   flex: 0 0 auto;
@@ -550,7 +576,7 @@
 .detail-calendar-layer {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 80;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -563,6 +589,8 @@
   inset: 0;
   background: rgba(35, 59, 52, 0.30);
   backdrop-filter: blur(6rpx);
+  opacity: 0;
+  transition: opacity 220ms ease;
 }
 
 .detail-calendar-panel {
@@ -575,8 +603,13 @@
   border-radius: 30rpx;
   background: #FFFFFF;
   box-shadow: 0 26rpx 70rpx rgba(31, 70, 58, 0.22);
-  animation: calendar-enter 180ms ease-out both;
+  opacity: 0;
+  transform: translateY(22rpx) scale(0.975);
+  transition: opacity 200ms ease, transform 220ms cubic-bezier(0.22, 0.78, 0.24, 1);
 }
+
+.detail-calendar-layer.is-visible .detail-calendar-mask { opacity: 1; }
+.detail-calendar-layer.is-visible .detail-calendar-panel { opacity: 1; transform: translateY(0) scale(1); }
 
 .detail-calendar-head {
   display: flex;
@@ -701,10 +734,192 @@
   font-weight: 700;
 }
 
-@keyframes calendar-enter {
-  from { opacity: 0; transform: translateY(18rpx) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+/* 自定义完成时间编辑器 */
+.time-editor-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 32rpx;
 }
+
+.time-editor-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(35, 59, 52, 0.34);
+  backdrop-filter: blur(6rpx);
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.time-editor-panel {
+  position: relative;
+  width: 100%;
+  max-width: 620rpx;
+  box-sizing: border-box;
+  padding: 30rpx;
+  border: 1rpx solid #D7E4DE;
+  border-radius: 32rpx;
+  background: #FFFFFF;
+  box-shadow: 0 28rpx 76rpx rgba(31, 70, 58, 0.24);
+  opacity: 0;
+  transform: translateY(24rpx) scale(0.975);
+  transition: opacity 200ms ease, transform 220ms cubic-bezier(0.22, 0.78, 0.24, 1);
+}
+
+.time-editor-layer.is-visible .time-editor-mask { opacity: 1; }
+.time-editor-layer.is-visible .time-editor-panel { opacity: 1; transform: translateY(0) scale(1); }
+
+.time-editor-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.time-editor-eyebrow {
+  color: #356859;
+  font-size: 18rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+}
+
+.time-editor-title {
+  margin-top: 5rpx;
+  font-size: 32rpx;
+  font-weight: 800;
+}
+
+.time-editor-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54rpx;
+  height: 54rpx;
+  border-radius: 50%;
+  background: #EAF5EF;
+  color: #71827A;
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.time-editor-task {
+  overflow: hidden;
+  margin-top: 20rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 20rpx;
+  background: #F5F7F2;
+  color: #71827A;
+  font-size: 23rpx;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.time-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22rpx;
+  margin-top: 28rpx;
+}
+
+.time-stepper {
+  display: flex;
+  align-items: center;
+  width: 176rpx;
+  flex-direction: column;
+}
+
+.time-step-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72rpx;
+  height: 54rpx;
+  border-radius: 18rpx;
+  background: #EAF5EF;
+  color: #356859;
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.time-step-button:active { background: #DCECE3; transform: scale(0.96); }
+
+.time-step-value {
+  margin-top: 12rpx;
+  color: #233B34;
+  font-size: 64rpx;
+  line-height: 72rpx;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.time-step-label {
+  margin: 2rpx 0 12rpx;
+  color: #9AA8A3;
+  font-size: 20rpx;
+}
+
+.time-separator {
+  margin-top: -16rpx;
+  color: #356859;
+  font-size: 54rpx;
+  font-weight: 800;
+}
+
+.time-preview-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 20rpx;
+  background: #FFF8E4;
+  color: #71827A;
+  font-size: 21rpx;
+}
+
+.time-preview-row text:last-child { color: #5D4B20; font-weight: 700; }
+
+.time-sync-status {
+  min-height: 32rpx;
+  margin-top: 14rpx;
+  color: #8FA097;
+  text-align: center;
+  font-size: 19rpx;
+}
+
+.time-sync-status.is-saved { color: #356859; font-weight: 700; }
+
+.time-editor-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+  margin-top: 22rpx;
+}
+
+.time-cancel-button,
+.time-save-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: 76rpx;
+  box-sizing: border-box;
+  margin: 0;
+  border-radius: 38rpx;
+  font-size: 25rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.time-cancel-button::after,
+.time-save-button::after { border: 0; }
+.time-cancel-button { border: 1rpx solid #D7E4DE; background: #FFFFFF; color: #356859; }
+.time-save-button { background: #356859; color: #FFFFFF; box-shadow: 0 10rpx 22rpx rgba(53, 104, 89, 0.18); }
 
 @keyframes detail-enter {
   from { opacity: 0; transform: translateY(14rpx); }

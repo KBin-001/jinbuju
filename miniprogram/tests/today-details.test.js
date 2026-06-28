@@ -16,7 +16,7 @@ global.wx = {
 };
 
 const { createGoal } = require("../services/manualGoal.ts");
-const { createTask, updateTaskStatus } = require("../services/manualTask.ts");
+const { createTask, getTask, updateTaskCompletionTime, updateTaskStatus } = require("../services/manualTask.ts");
 const { getTodayDataBounds, getTodayDataCalendar, getTodayDataDetails } = require("../services/todayDetails.ts");
 
 const goal = createGoal({ title: "考公", category: "civil_service" });
@@ -27,6 +27,12 @@ const yesterday = createTask({ goalId: goal.id, title: "复盘错题", currentDa
 updateTaskStatus(completed.id, "completed", 30);
 updateTaskStatus(partial.id, "partially_completed", 20, "not_enough_time");
 updateTaskStatus(yesterday.id, "completed", 15);
+updateTaskCompletionTime(completed.id, "2026-06-21", "08:15");
+assert.equal(new Date(getTask(completed.id).completedAt).getHours(), 8);
+assert.equal(new Date(getTask(completed.id).completedAt).getMinutes(), 15);
+assert.throws(() => updateTaskCompletionTime(completed.id, "2026-06-21", "25:00"));
+assert.throws(() => updateTaskCompletionTime(completed.id, "2026-06-20", "08:15"));
+assert.throws(() => updateTaskCompletionTime(partial.id, "2026-06-21", "08:15"));
 
 const day = getTodayDataDetails(goal.id, "2026-06-21", "day");
 assert.deepEqual(day.metrics, { minutes: 50, completed: 1, focusRate: 50, total: 2 });

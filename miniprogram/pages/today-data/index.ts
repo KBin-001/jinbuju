@@ -1,4 +1,5 @@
 import { getActiveGoal } from "../../services/manualGoal";
+import { updateTaskCompletionTime } from "../../services/manualTask";
 import { DetailCalendarDay, DetailPeriod, DurationSlice, getTodayDataBounds, getTodayDataCalendar, getTodayDataDetails } from "../../services/todayDetails";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
 
@@ -47,6 +48,7 @@ Page({
     durationTotal: 0,
     pieGradient: "conic-gradient(#E8EFEA 0% 100%)",
     showAllDurations: false,
+    calendarRendered: false,
     calendarVisible: false,
     calendarMonth: "",
     calendarTitle: "",
@@ -54,7 +56,21 @@ Page({
     calendarDays: [] as DetailCalendarDay[],
     calendarPrevDisabled: false,
     calendarNextDisabled: false,
+    timeEditorRendered: false,
+    timeEditorVisible: false,
+    editingTaskId: "",
+    editingTaskTitle: "",
+    draftHour: 0,
+    draftMinute: 0,
+    draftHourText: "00",
+    draftMinuteText: "00",
+    draftTimeText: "00:00",
+    savingTime: false,
+    timeSyncText: "修改后将保存到本地数据",
   },
+  calendarCloseTimer: null as ReturnType<typeof setTimeout> | null,
+  timeEditorCloseTimer: null as ReturnType<typeof setTimeout> | null,
+  timeEditorSavedTimer: null as ReturnType<typeof setTimeout> | null,
 
   onLoad(query: Record<string, string>) {
     const today = getTodayBusinessDate();
@@ -66,6 +82,12 @@ Page({
 
   onShow() {
     if (this.data.status === "ready") this.load();
+  },
+
+  onUnload() {
+    if (this.calendarCloseTimer) clearTimeout(this.calendarCloseTimer);
+    if (this.timeEditorCloseTimer) clearTimeout(this.timeEditorCloseTimer);
+    if (this.timeEditorSavedTimer) clearTimeout(this.timeEditorSavedTimer);
   },
 
   load() {
@@ -105,19 +127,29 @@ Page({
   },
 
   openCalendar() {
+    if (this.calendarCloseTimer) {
+      clearTimeout(this.calendarCloseTimer);
+      this.calendarCloseTimer = null;
+    }
     const calendarMonth = monthStart(this.data.date);
-    this.showCalendarMonth(calendarMonth, true);
+    this.showCalendarMonth(calendarMonth);
+    this.setData({ calendarRendered: true, calendarVisible: false });
+    wx.nextTick(() => this.setData({ calendarVisible: true }));
   },
 
   closeCalendar() {
     this.setData({ calendarVisible: false });
+    if (this.calendarCloseTimer) clearTimeout(this.calendarCloseTimer);
+    this.calendarCloseTimer = setTimeout(() => {
+      this.setData({ calendarRendered: false });
+      this.calendarCloseTimer = null;
+    }, 220);
   },
 
-  showCalendarMonth(calendarMonth: string, calendarVisible = this.data.calendarVisible) {
+  showCalendarMonth(calendarMonth: string) {
     if (!this.data.goalId) return;
     const calendar = getTodayDataCalendar(this.data.goalId, this.data.date, calendarMonth, this.data.minDate, this.data.maxDate);
     this.setData({
-      calendarVisible,
       calendarMonth,
       calendarTitle: calendar.title,
       calendarDays: calendar.days,
@@ -153,8 +185,84 @@ Page({
   },
 
   applyDate(date: string, closeCalendar: boolean) {
-    this.setData({ date, dateLabel: dateLabel(date), dateMonth: String(Number(date.slice(5, 7))), calendarVisible: closeCalendar ? false : this.data.calendarVisible, calendarMonth: monthStart(date), showAllDurations: false });
+    if (closeCalendar) this.closeCalendar();
+    this.setData({ date, dateLabel: dateLabel(date), dateMonth: String(Number(date.slice(5, 7))), calendarMonth: monthStart(date), showAllDurations: false });
     this.load();
+  },
+
+  openTimeEditor(event: { currentTarget: { dataset: { id?: string } } }) {
+    const taskId = String(event.currentTarget.dataset.id || "");
+    const task = this.data.completedTasks.find((item) => item.id === taskId);
+    if (!task) return;
+    const match = /^(\d{2}):(\d{2})$/.exec(task.completedTime);
+    const now = new Date();
+    const draftHour = match ? Number(match[1]) : now.getHours();
+    const draftMinute = match ? Number(match[2]) : now.getMinutes();
+    if (this.timeEditorCloseTimer) {
+      clearTimeout(this.timeEditorCloseTimer);
+      this.timeEditorCloseTimer = null;
+    }
+    this.setData({
+      timeEditorRendered: true,
+      timeEditorVisible: false,
+      editingTaskId: task.id,
+      editingTaskTitle: task.title,
+      draftHour,
+      draftMinute,
+      draftHourText: String(draftHour).padStart(2, "0"),
+      draftMinuteText: String(draftMinute).padStart(2, "0"),
+      draftTimeText: `${String(draftHour).padStart(2, "0")}:${String(draftMinute).padStart(2, "0")}`,
+      savingTime: false,
+      timeSyncText: "修改后将保存到本地数据",
+    });
+    wx.nextTick(() => this.setData({ timeEditorVisible: true }));
+  },
+
+  closeTimeEditor() {
+    if (this.data.savingTime) return;
+    this.setData({ timeEditorVisible: false });
+    if (this.timeEditorCloseTimer) clearTimeout(this.timeEditorCloseTimer);
+    this.timeEditorCloseTimer = setTimeout(() => {
+      this.setData({ timeEditorRendered: false, editingTaskId: "" });
+      this.timeEditorCloseTimer = null;
+    }, 220);
+  },
+
+  adjustCompletionTime(event: { currentTarget: { dataset: { part?: string; delta?: string | number } } }) {
+    if (this.data.savingTime) return;
+    const part = String(event.currentTarget.dataset.part || "");
+    const delta = Number(event.currentTarget.dataset.delta || 0);
+    let draftHour = this.data.draftHour;
+    let draftMinute = this.data.draftMinute;
+    if (part === "hour") draftHour = (draftHour + delta + 24) % 24;
+    else if (part === "minute") draftMinute = (draftMinute + delta + 60) % 60;
+    else return;
+    this.setData({
+      draftHour,
+      draftMinute,
+      draftHourText: String(draftHour).padStart(2, "0"),
+      draftMinuteText: String(draftMinute).padStart(2, "0"),
+      draftTimeText: `${String(draftHour).padStart(2, "0")}:${String(draftMinute).padStart(2, "0")}`,
+    });
+  },
+
+  saveCompletionTime() {
+    if (this.data.savingTime || !this.data.editingTaskId) return;
+    this.setData({ savingTime: true, timeSyncText: "正在保存到本地…" });
+    try {
+      updateTaskCompletionTime(this.data.editingTaskId, this.data.date, this.data.draftTimeText);
+      this.setData({ savingTime: false, timeSyncText: "已保存到本地" });
+      this.load();
+      this.timeEditorSavedTimer = setTimeout(() => {
+        this.timeEditorSavedTimer = null;
+        this.closeTimeEditor();
+        wx.showToast({ title: "完成时间已更新", icon: "success" });
+      }, 450);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "完成时间保存失败";
+      this.setData({ savingTime: false, timeSyncText: message });
+      wx.showToast({ title: message, icon: "none" });
+    }
   },
 
   noop() {},

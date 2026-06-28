@@ -5,9 +5,19 @@
  * - 当前主题持久化到本地 storage
  * - 通过 eventBus 广播 "theme:change" 事件，便于其它页面在 onShow 时同步
  * - themeToProfileCssVars() 生成可绑定到页面根节点 style 的 CSS 变量字符串
+ *
+ * 宏定义开关：FEATURE_FLAGS.ENABLE_THEME_SWITCHING
+ * - false（默认）：禁用换肤，getCurrentThemeId 始终返回默认主题，
+ *                  setCurrentTheme 不写入 storage、不广播事件，
+ *                  onThemeChange 返回空取消函数。系统强制使用 inkGreen 默认主题。
+ * - true：恢复完整换肤能力，可读取/保存/切换主题。
  */
 
+import { FEATURE_FLAGS } from "../config/features";
 import { emit, on, off } from "../utils/eventBus";
+
+/** 主题换肤宏定义：禁用时系统强制使用默认主题，所有切换操作变为空操作 */
+const THEME_SWITCHING_ENABLED = FEATURE_FLAGS.ENABLE_THEME_SWITCHING;
 
 export type ThemeId = "mint" | "cream" | "inkGreen" | "apricot";
 
@@ -133,6 +143,10 @@ export function getThemeById(id: ThemeId): ThemePreset {
 }
 
 export function getCurrentThemeId(): ThemeId {
+  // 宏定义禁用期间：始终返回默认主题，不读取本地缓存
+  if (!THEME_SWITCHING_ENABLED) {
+    return DEFAULT_THEME_ID;
+  }
   const value = wx.getStorageSync(THEME_STORAGE_KEY);
   return isThemeId(value) ? value : DEFAULT_THEME_ID;
 }
@@ -143,6 +157,10 @@ export function getCurrentTheme(): ThemePreset {
 
 /** 保存当前主题到 storage，并广播变更事件，全局生效 */
 export function setCurrentTheme(id: ThemeId): ThemePreset {
+  // 宏定义禁用期间：不写入 storage、不广播事件，直接返回默认主题
+  if (!THEME_SWITCHING_ENABLED) {
+    return getThemeById(DEFAULT_THEME_ID);
+  }
   const theme = getThemeById(id);
   wx.setStorageSync(THEME_STORAGE_KEY, id);
   // 同步全局可见区（导航栏 / 后续可扩展为 page data-theme）
@@ -182,6 +200,10 @@ export function themeToProfileCssVars(theme: ThemePreset): string {
 
 /** 监听主题变更（返回取消函数） */
 export function onThemeChange(handler: (id: ThemeId) => void): () => void {
+  // 宏定义禁用期间：主题不会变更，注册空监听并返回空取消函数
+  if (!THEME_SWITCHING_ENABLED) {
+    return () => {};
+  }
   on(THEME_EVENT, handler as (payload?: any) => void);
   return () => off(THEME_EVENT, handler as (payload?: any) => void);
 }

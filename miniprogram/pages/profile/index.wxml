@@ -216,12 +216,15 @@
     </view>
   </view>
 
-  <!-- ======= 主题换肤弹窗 ======= -->
+  <!-- ======= 主题换肤弹窗（宏定义禁用期间已整体注释屏蔽）=======
+       启用方式：将 features.ts 中 ENABLE_THEME_SWITCHING 改为 true，
+       并恢复 profile/index.ts 中换肤方法注释，再取消本注释块即可。
+  -->
+  <!--
   <view wx:if="{{themePickerVisible}}" class="theme-modal">
     <view class="theme-modal__mask" catchtap="closeThemePicker"></view>
 
     <view class="theme-panel" catchtap="noop">
-      <!-- 顶部标题区 -->
       <view class="theme-panel__header">
         <view class="theme-panel__title-wrap">
           <view class="theme-panel__icon">
@@ -237,7 +240,6 @@
         </view>
       </view>
 
-      <!-- 筛选标签 -->
       <view class="theme-filter">
         <view
           wx:for="{{themeFilters}}"
@@ -250,7 +252,6 @@
         >{{item}}</view>
       </view>
 
-      <!-- 主题网格（可滚动） -->
       <scroll-view scroll-y class="theme-grid">
         <view class="theme-grid__inner">
           <view
@@ -262,11 +263,9 @@
             hover-class="theme-card--pressed"
             hover-stay-time="120"
           >
-            <!-- 状态标签 -->
             <view wx:if="{{currentThemeId === item.id}}" class="theme-card__badge">当前使用</view>
             <view wx:elif="{{previewThemeId === item.id}}" class="theme-card__badge theme-card__badge--preview">预览中</view>
 
-            <!-- 卡片头部：色点 + 名称 + 描述 -->
             <view class="theme-card__head">
               <view class="theme-card__name-row">
                 <view class="theme-card__dot" style="background: {{item.primary}}"></view>
@@ -275,7 +274,6 @@
               <text class="theme-card__desc">{{item.desc}}</text>
             </view>
 
-            <!-- 色块 -->
             <view class="theme-swatches">
               <view
                 wx:for="{{item.swatches}}"
@@ -286,7 +284,6 @@
               ></view>
             </view>
 
-            <!-- 迷你预览区：小进度条 + 小按钮 -->
             <view class="theme-preview" style="background: {{item.primarySoft}}">
               <view class="theme-preview__bar">
                 <view class="theme-preview__bar-fill" style="background: {{item.progressGradient}}; width: 60%;"></view>
@@ -295,12 +292,10 @@
             </view>
           </view>
 
-          <!-- 筛选为空 -->
           <view wx:if="{{filteredThemeList.length === 0}}" class="theme-grid__empty">该分类下暂无主题</view>
         </view>
       </scroll-view>
 
-      <!-- 底部操作区 -->
       <view class="theme-action-bar">
         <view class="theme-action-bar__btn theme-action-bar__btn--ghost" bindtap="restoreDefaultTheme" hover-class="theme-action-bar__btn--pressed" hover-stay-time="100">
           <text class="theme-action-bar__icon">↺</text>
@@ -313,5 +308,6 @@
       </view>
     </view>
   </view>
+  -->
 
 </view>

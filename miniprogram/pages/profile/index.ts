@@ -4,16 +4,28 @@ import { getLocalUserProfile, saveLocalUserProfile } from "../../services/profil
 import {
   getCurrentTheme,
   getCurrentThemeId,
+  themeToProfileCssVars,
+  DEFAULT_THEME_ID,
+} from "../../services/theme";
+// === 主题换肤宏定义（前端）===
+// ENABLE_THEME_SWITCHING 为 false 时，下方换肤相关代码已被注释屏蔽。
+// 启用方式：将 features.ts 中 ENABLE_THEME_SWITCHING 改为 true，
+//           并取消本文件及 index.wxml 中「主题换肤」相关注释即可恢复。
+import { FEATURE_FLAGS } from "../../config/features";
+/* 主题换肤启用后恢复以下导入：
+import {
   getThemeById,
   setCurrentTheme,
-  themeToProfileCssVars,
   THEME_PRESETS,
-  DEFAULT_THEME_ID,
   ThemeId,
   ThemePreset,
 } from "../../services/theme";
+*/
 import { Goal, ProgressSummary } from "../../types/manual";
 import { UserDisplayProfile, UserProfileSource } from "../../types/profile";
+
+/** 前端主题换肤宏定义：与全局 FEATURE_FLAGS.ENABLE_THEME_SWITCHING 对齐 */
+const THEME_SWITCHING_ENABLED = FEATURE_FLAGS.ENABLE_THEME_SWITCHING;
 
 interface GoalCardView {
   id: string;
@@ -30,6 +42,7 @@ interface FunctionEntry {
   iconClass: string;
 }
 
+/* 主题换肤启用后恢复以下类型：
 interface ThemeCardView {
   id: ThemeId;
   name: string;
@@ -45,6 +58,7 @@ interface ThemeCardView {
   tags: string[];
   swatches: string[];
 }
+*/
 
 /** 成长概览统计 */
 interface GrowthStats {
@@ -113,10 +127,12 @@ const FUNCTION_ENTRIES: FunctionEntry[] = [
   { key: "history", title: "历史数据", emoji: "📊", iconClass: "func-icon-wrap--history" },
   { key: "badges",  title: "成就徽章", emoji: "🏆", iconClass: "func-icon-wrap--badges" },
   { key: "ai",      title: "AI 教练", emoji: "✦", iconClass: "func-icon-wrap--ai" },
-  { key: "theme",   title: "主题皮肤", emoji: "🎨", iconClass: "func-icon-wrap--theme" },
+  // 主题换肤宏定义禁用：暂时屏蔽「主题皮肤」入口
+  // { key: "theme",   title: "主题皮肤", emoji: "🎨", iconClass: "func-icon-wrap--theme" },
   { key: "settings",title: "数据设置", emoji: "⚙️", iconClass: "func-icon-wrap--settings" },
 ];
 
+/* 主题换肤启用后恢复以下辅助函数：
 function toThemeCard(theme: ThemePreset): ThemeCardView {
   return {
     id: theme.id,
@@ -135,13 +151,14 @@ function toThemeCard(theme: ThemePreset): ThemeCardView {
   };
 }
 
-/** 主题弹窗筛选标签 */
+// 主题弹窗筛选标签
 const THEME_FILTERS: string[] = ["全部", "柔和", "沉稳", "清新", "活力"];
 
 function filterThemes(list: ThemeCardView[], filter: string): ThemeCardView[] {
   if (filter === "全部") return list;
   return list.filter((t) => t.tags.indexOf(filter) >= 0);
 }
+*/
 
 Page({
   data: {
@@ -169,14 +186,18 @@ Page({
     profileDraftSource: "custom" as UserProfileSource,
     profileDraftUseInTeam: true,
     endingGoalId: "",
-    themeList: THEME_PRESETS.map(toThemeCard) as ThemeCardView[],
-    themeFilters: THEME_FILTERS,
-    themeFilterActive: "全部",
-    filteredThemeList: filterThemes(THEME_PRESETS.map(toThemeCard), "全部") as ThemeCardView[],
-    currentThemeId: getCurrentThemeId() as ThemeId,
-    previewThemeId: getCurrentThemeId() as ThemeId,
+    // 主题换肤宏定义（前端）：暴露给 wxml 层，便于后续启用时做条件渲染
+    enableThemeSwitching: THEME_SWITCHING_ENABLED,
+    // 以下为换肤弹窗专用字段，宏定义禁用期间已注释屏蔽
+    // themeList: THEME_PRESETS.map(toThemeCard) as ThemeCardView[],
+    // themeFilters: THEME_FILTERS,
+    // themeFilterActive: "全部",
+    // filteredThemeList: filterThemes(THEME_PRESETS.map(toThemeCard), "全部") as ThemeCardView[],
+    // themePickerVisible: false,
+    // 以下两个字段保留：用于根节点默认主题样式绑定，禁用期间恒为默认主题
+    currentThemeId: getCurrentThemeId() as string,
+    previewThemeId: getCurrentThemeId() as string,
     themeStyle: themeToProfileCssVars(getCurrentTheme()),
-    themePickerVisible: false,
   },
 
   onShow() {
@@ -363,10 +384,11 @@ Page({
       wx.navigateTo({ url: "/pages/data-management/index" });
       return;
     }
-    if (key === "theme") {
-      this.openThemePicker();
-      return;
-    }
+    // 主题换肤宏定义禁用：暂时屏蔽主题皮肤入口
+    // if (key === "theme") {
+    //   this.openThemePicker();
+    //   return;
+    // }
     if (key === "history") {
       const archivedGoal = getArchivedGoals()[0];
       if (archivedGoal) wx.navigateTo({ url: `/pages/goal-review/index?id=${archivedGoal.id}` });
@@ -378,8 +400,10 @@ Page({
     }
   },
 
-  /* ======= 主题皮肤弹窗 ======= */
-
+  /* ======= 主题皮肤弹窗（宏定义禁用期间已整体注释屏蔽）=======
+   * 启用方式：将 features.ts 中 ENABLE_THEME_SWITCHING 改为 true，
+   *           并恢复 wxml 中「主题换肤弹窗」注释块，再取消下方方法注释即可。
+   *
   openThemePicker() {
     const id = getCurrentThemeId();
     this.setData({
@@ -401,7 +425,7 @@ Page({
     });
   },
 
-  /** 切换筛选标签 */
+  // 切换筛选标签
   switchThemeFilter(event: { currentTarget: { dataset: { filter?: string } } }) {
     const filter = String(event.currentTarget.dataset.filter || "全部");
     this.setData({
@@ -410,7 +434,7 @@ Page({
     });
   },
 
-  /** 点击主题卡片：实时预览，不写入 storage */
+  // 点击主题卡片：实时预览，不写入 storage
   previewTheme(event: { currentTarget: { dataset: { id?: string } } }) {
     const id = String(event.currentTarget.dataset.id || "") as ThemeId;
     if (!id) return;
@@ -421,7 +445,7 @@ Page({
     });
   },
 
-  /** 底部「恢复默认」：预览默认主题（不写入 storage，需再用「预览当前主题」确认） */
+  // 底部「恢复默认」：预览默认主题（不写入 storage，需再用「预览当前主题」确认）
   restoreDefaultTheme() {
     const theme = getThemeById(DEFAULT_THEME_ID);
     this.setData({
@@ -431,7 +455,7 @@ Page({
     wx.showToast({ title: "已恢复默认预览", icon: "none" });
   },
 
-  /** 底部「应用当前主题」：把当前预览的主题正式写入 storage 并全局生效 */
+  // 底部「应用当前主题」：把当前预览的主题正式写入 storage 并全局生效
   applyPreviewTheme() {
     const id = this.data.previewThemeId;
     const theme = setCurrentTheme(id);
@@ -442,7 +466,7 @@ Page({
     wx.showToast({ title: "已应用当前主题", icon: "success" });
   },
 
-  /** 卡片内「设为当前主题」：保存到 storage 并全局生效（保留原入口） */
+  // 卡片内「设为当前主题」：保存到 storage 并全局生效（保留原入口）
   applyTheme(event: { currentTarget: { dataset: { id?: string } } }) {
     const id = String(event.currentTarget.dataset.id || "") as ThemeId;
     if (!id) return;
@@ -454,4 +478,5 @@ Page({
     });
     wx.showToast({ title: "已设为当前主题", icon: "success" });
   },
+  */
 });

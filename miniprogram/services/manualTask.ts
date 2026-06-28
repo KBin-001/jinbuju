@@ -1,4 +1,4 @@
-import { addDays, formatDate } from "../utils/date";
+import { addDays, formatDate, getTodayBusinessDate } from "../utils/date";
 import { ActionIssueReason, ActionTask, ActionTaskStatus, TodaySummary } from "../types/manual";
 import { createLocalId, readManualStore, writeManualStore } from "./manualStore";
 
@@ -70,6 +70,24 @@ export function updateTaskStatus(taskId: string, status: ActionTaskStatus, actua
   const now = new Date().toISOString();
   task.status = status; task.actualMinutes = actualMinutes; task.issueReason = issueReason; task.updatedAt = now;
   task.completedAt = status === "completed" ? now : undefined;
+  writeManualStore(store);
+  return task;
+}
+
+export function updateTaskCompletionTime(taskId: string, businessDate: string, time: string): ActionTask {
+  if (!/^\d{2}:\d{2}$/.test(time)) throw new Error("完成时间格式应为 HH:mm");
+  const [hour, minute] = time.split(":").map(Number);
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23 || !Number.isInteger(minute) || minute < 0 || minute > 59) throw new Error("请选择有效的完成时间");
+  const store = readManualStore();
+  const task = store.tasks.find((item) => item.id === taskId);
+  if (!task) throw new Error("行动不存在");
+  if (task.status !== "completed") throw new Error("只有已完成行动可以修改完成时间");
+  if (task.currentDate !== businessDate) throw new Error("完成时间必须属于行动当天");
+  const completedAt = new Date(`${businessDate}T${time}:00`);
+  if (Number.isNaN(completedAt.getTime())) throw new Error("请选择有效的完成时间");
+  if (businessDate === getTodayBusinessDate() && completedAt.getTime() > Date.now()) throw new Error("完成时间不能晚于当前时间");
+  task.completedAt = completedAt.toISOString();
+  task.updatedAt = new Date().toISOString();
   writeManualStore(store);
   return task;
 }
