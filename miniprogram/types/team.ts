@@ -122,3 +122,43 @@ export interface SendEncouragementResult {
   memberId: string;
   sent: boolean;
 }
+
+/** 小队行动动态类型 */
+export type TeamActivityType =
+  | "completed"
+  | "partial"
+  | "not_started"
+  | "joined"
+  | "streak"
+  | "encouraged";
+
+/** 单条小队动态（已根据成员展示模式处理昵称/头像） */
+export interface TeamActivity {
+  id: string;
+  memberId: string;
+  name: string;
+  avatar: string;
+  avatarText: string;
+  type: TeamActivityType;
+  /** 简短动作描述，例：完成了今日目标 */
+  actionText: string;
+  /** 详情页长描述 */
+  detail: string;
+  goalTitle: string;
+  growthMinutes: number;
+  actionCount: number;
+  /** 毫秒时间戳，用于排序 */
+  timestamp: number;
+  /** 分组/展示用日期标签：今天 / 昨天 / 6/26 */
+  dateLabel: string;
+  /** 完整时间文案：今天 14:30 / 昨天 / 6/26 */
+  timeText: string;
+}
+
+export interface TeamActivityFeedResult {
+  list: TeamActivity[];
+  hasMore: boolean;
+  total: number;
+  page: number;
+  pageSize: number;
+}

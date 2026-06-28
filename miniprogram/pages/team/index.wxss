@@ -662,6 +662,11 @@
   color: var(--team-secondary);
   font-size: 24rpx;
   line-height: 34rpx;
+  transition: background 0.18s ease;
+}
+
+.activity-more--pressed {
+  background: rgba(124, 198, 160, 0.08);
 }
 
 /* ============ 6. 本周荣誉（横向徽章） ============ */

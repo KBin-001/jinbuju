@@ -204,7 +204,7 @@
           </view>
           <view class="activity-time">{{item.time}}</view>
         </view>
-        <view class="activity-more" catchtap="noop">查看全部动态 ›</view>
+        <view class="activity-more" catchtap="openAllActivities" hover-class="activity-more--pressed" hover-stay-time="100">查看全部动态 ›</view>
       </view>
     </view>
 

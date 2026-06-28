@@ -2,10 +2,11 @@
 
   <!-- ======= 一、用户成长 Hero 卡（卡片式 Header） ======= -->
   <view class="hero-card">
-    <!-- 背景装饰纹理圆 -->
-    <view class="hero-deco-circle hero-deco-circle--1"></view>
-    <view class="hero-deco-circle hero-deco-circle--2"></view>
-    <view class="hero-deco-leaf">❧</view>
+    <image class="hero-botanical-bg" src="/images/profile-hero-bg.jpg" mode="aspectFill" />
+    <view class="hero-readability-wash"></view>
+    <view class="hero-soft-glow"></view>
+    <view class="hero-light-speck hero-light-speck--white"></view>
+    <view class="hero-light-speck hero-light-speck--honey"></view>
 
     <view class="hero-avatar-wrap">
       <image wx:if="{{displayAvatarUrl}}" class="hero-avatar-img" src="{{displayAvatarUrl}}" mode="aspectFill" />

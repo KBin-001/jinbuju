@@ -10,6 +10,9 @@ import {
   SendEncouragementResult,
   Team,
   TeamActionDetailVisibility,
+  TeamActivity,
+  TeamActivityFeedResult,
+  TeamActivityType,
   TeamDailyStats,
   TeamDisplayMode,
   TeamMember,
@@ -434,4 +437,207 @@ export function encouragementLabel(type: EncouragementType): string {
     stay_together: "一起坚持",
   };
   return labels[type];
+}
+
+/* =========================================================
+ * 小队行动动态
+ * ------------------------------------------------
+ * 当前为本地演示版本：基于当前小队成员合成最近 14 天的动态流，
+ * 用于「全部动态」页的无限滚动展示。合成结果对同一小队稳定
+ * （以 memberId + 日期为种子），便于分页与详情回看。
+ * 后续接入云端后，可替换为真实动态事件流水。
+ * ========================================================= */
+
+const ACTIVITY_HISTORY_DAYS = 14;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function activityHashSeed(value: string): number {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+function pad2(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+/** 根据时间戳生成展示文案：今天 14:30 / 昨天 / 前天 / 6/26 */
+function formatActivityTime(date: Date): { dateLabel: string; timeText: string } {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const targetStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const diffDays = Math.round((todayStart - targetStart) / DAY_MS);
+  const hh = pad2(date.getHours());
+  const mm = pad2(date.getMinutes());
+  if (diffDays === 0) return { dateLabel: "今天", timeText: `今天 ${hh}:${mm}` };
+  if (diffDays === 1) return { dateLabel: "昨天", timeText: "昨天" };
+  if (diffDays === 2) return { dateLabel: "前天", timeText: "前天" };
+  return { dateLabel: `${date.getMonth() + 1}/${date.getDate()}`, timeText: `${date.getMonth() + 1}/${date.getDate()}` };
+}
+
+function resolveDisplayName(member: TeamMember): string {
+  return member.displayMode === "anonymous"
+    ? (member.anonymousName || "行动伙伴")
+    : member.nickname;
+}
+
+function buildActivityBase(member: TeamMember, type: TeamActivityType, when: Date, suffix: string): TeamActivity {
+  const name = resolveDisplayName(member);
+  const { dateLabel, timeText } = formatActivityTime(when);
+  return {
+    id: `act_${member.userId}_${type}_${suffix}`,
+    memberId: member.id,
+    name,
+    avatar: member.avatar || "",
+    avatarText: name.slice(0, 1),
+    type,
+    actionText: "",
+    detail: "",
+    goalTitle: member.goalTitle || "正在建立目标",
+    growthMinutes: 0,
+    actionCount: 0,
+    timestamp: when.getTime(),
+    dateLabel,
+    timeText,
+  };
+}
+
+function fillActivityContent(activity: TeamActivity, member: TeamMember, type: TeamActivityType, dayOffset: number): TeamActivity {
+  const seed = activityHashSeed(member.userId + type + dayOffset);
+  const goalTitle = activity.goalTitle;
+  switch (type) {
+    case "completed": {
+      const actionCount = 2 + (seed % 3);
+      const minutes = 25 + (seed % 45);
+      activity.actionText = "完成了今日目标";
+      activity.detail = `完成了今日全部 ${actionCount} 项行动，累计投入 ${minutes} 分钟。`;
+      activity.growthMinutes = minutes;
+      activity.actionCount = actionCount;
+      break;
+    }
+    case "partial": {
+      const done = 1 + (seed % 2);
+      const target = done + 1 + (seed % 2);
+      const minutes = 15 + (seed % 30);
+      activity.actionText = "完成了部分行动";
+      activity.detail = `今日完成 ${done}/${target} 项行动，已投入 ${minutes} 分钟，剩下的可以明天继续。`;
+      activity.growthMinutes = minutes;
+      activity.actionCount = done;
+      break;
+    }
+    case "not_started": {
+      activity.actionText = "开始了今日行动";
+      activity.detail = `迈出了今天的第一步，目标：${goalTitle}。先从最简单的一小步开始吧。`;
+      activity.growthMinutes = 5 + (seed % 10);
+      activity.actionCount = 0;
+      break;
+    }
+    case "streak": {
+      const days = 3 + (seed % 12);
+      activity.actionText = `连续打卡 ${days} 天`;
+      activity.detail = `已经连续坚持 ${days} 天，继续保持这股稳定的节奏。`;
+      activity.growthMinutes = 0;
+      activity.actionCount = days;
+      break;
+    }
+    case "encouraged": {
+      activity.actionText = "收到了队友鼓励";
+      activity.detail = "收到了队友送来的鼓励，一起自律，各自成长。";
+      activity.growthMinutes = 0;
+      activity.actionCount = 1;
+      break;
+    }
+    case "joined": {
+      activity.actionText = "加入了小队";
+      activity.detail = `加入了小队，开始推进：${goalTitle}。`;
+      activity.growthMinutes = 0;
+      activity.actionCount = 0;
+      break;
+    }
+    default:
+      break;
+  }
+  return activity;
+}
+
+/** 为单个成员合成最近 N 天的动态（不含 joined 事件，joined 由调用方按入队时间补充） */
+function buildMemberHistory(member: TeamMember): TeamActivity[] {
+  const activities: TeamActivity[] = [];
+  const now = new Date();
+  for (let dayOffset = 0; dayOffset < ACTIVITY_HISTORY_DAYS; dayOffset += 1) {
+    const seed = activityHashSeed(member.userId + "_day_" + dayOffset);
+    // 当天动态由真实 todayStatus 决定；历史日期用种子稳定合成
+    const isToday = dayOffset === 0;
+    const todayType: TeamActivityType | null = isToday
+      ? (member.todayStatus === "completed"
+          ? "completed"
+          : member.todayStatus === "partial"
+            ? "partial"
+            : member.todayStatus === "not_started"
+              ? "not_started"
+              : null)
+      : null;
+    if (todayType) {
+      const when = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9 + (seed % 9), (seed * 7) % 60);
+      activities.push(fillActivityContent(buildActivityBase(member, todayType, when, `d${dayOffset}`), member, todayType, dayOffset));
+    }
+    // 历史日期：约 60% 概率有完成/部分动态
+    if (!isToday) {
+      const roll = seed % 10;
+      if (roll < 5) {
+        const type: TeamActivityType = roll < 3 ? "completed" : "partial";
+        const when = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOffset, 9 + (seed % 9), (seed * 13) % 60);
+        activities.push(fillActivityContent(buildActivityBase(member, type, when, `d${dayOffset}`), member, type, dayOffset));
+      } else if (roll === 7) {
+        // 偶发连续打卡里程碑
+        const when = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOffset, 20, (seed * 5) % 60);
+        activities.push(fillActivityContent(buildActivityBase(member, "streak", when, `d${dayOffset}`), member, "streak", dayOffset));
+      }
+    }
+  }
+  return activities;
+}
+
+/**
+ * 获取小队行动动态流（按时间倒序，支持分页）。
+ * 当未创建/加入小队时返回空流。
+ */
+export function getTeamActivityFeed(options?: { page?: number; pageSize?: number }): TeamActivityFeedResult {
+  const page = Math.max(1, Math.floor(options?.page || 1));
+  const pageSize = Math.max(1, Math.floor(options?.pageSize || 10));
+  const store = readStore();
+  if (!store.currentTeam) {
+    // pageSize: 0 作为「未加入小队」的哨兵，便于页面区分空动态与无小队
+    return { list: [], hasMore: false, total: 0, page, pageSize: 0 };
+  }
+  const team = store.currentTeam;
+  const members = store.teamMembers.filter((member) => member.teamId === team.id);
+
+  const all: TeamActivity[] = [];
+  members.forEach((member) => {
+    all.push(...buildMemberHistory(member));
+    // 入队动态：基于小队创建日 + 成员种子错开时间
+    const joinSeed = activityHashSeed(member.userId + "_join");
+    const teamCreated = new Date(team.createdAt).getTime();
+    const joinOffset = joinSeed % Math.min(ACTIVITY_HISTORY_DAYS, 14);
+    const joinDate = new Date(teamCreated + joinOffset * DAY_MS + (8 + (joinSeed % 10)) * 60 * 60 * 1000);
+    if (joinDate.getTime() <= Date.now()) {
+      all.push(fillActivityContent(buildActivityBase(member, "joined", joinDate, "join"), member, "joined", joinOffset));
+    }
+    // 鼓励动态：有鼓励记录的成员补充一条
+    if (member.encouragementCount > 0) {
+      const encSeed = activityHashSeed(member.userId + "_enc");
+      const encDate = new Date(Date.now() - (encSeed % 5) * 60 * 60 * 1000 - 60 * 60 * 1000);
+      all.push(fillActivityContent(buildActivityBase(member, "encouraged", encDate, "enc"), member, "encouraged", 0));
+    }
+  });
+
+  all.sort((a, b) => b.timestamp - a.timestamp);
+
+  const total = all.length;
+  const start = (page - 1) * pageSize;
+  const list = all.slice(start, start + pageSize);
+  return { list, hasMore: start + pageSize < total, total, page, pageSize };
 }

@@ -1,0 +1,110 @@
+<view class="share-page">
+  <view class="share-backdrop"></view>
+
+  <button
+    class="share-close"
+    style="top: {{navButtonTop}}px; width: {{navButtonSize}}px; height: {{navButtonSize}}px;"
+    bindtap="closePage"
+    aria-label="关闭分享卡"
+  >×</button>
+
+  <view wx:if="{{status === 'loading'}}" class="share-state">
+    <view class="state-dot"></view>
+    <text>正在整理今日成长</text>
+  </view>
+
+  <view wx:elif="{{status === 'error'}}" class="share-state">
+    <view class="state-title">分享卡暂时无法生成</view>
+    <view class="state-copy">{{errorMessage}}</view>
+    <button class="state-button" bindtap="load">重新加载</button>
+  </view>
+
+  <scroll-view wx:else class="share-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="share-content" style="padding-top: {{contentTop}}px;">
+      <view class="share-card">
+        <view class="share-brand-bar">
+          <view class="brand-name"><text class="brand-sprout">♧</text>进度条 · 今日完成卡</view>
+          <view class="brand-date">{{dateText}} {{weekday}}</view>
+        </view>
+
+        <view class="share-card-body">
+          <view class="share-identity">
+            <view class="share-avatar">
+              <image wx:if="{{avatarUrl}}" src="{{avatarUrl}}" mode="aspectFill" />
+              <text wx:else>{{avatarText}}</text>
+            </view>
+            <view class="identity-copy">
+              <view class="identity-name">{{nickname}}</view>
+              <view class="identity-goal-row">
+                <text class="identity-chip">当前目标</text>
+                <text class="identity-goal">{{goalTitle}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="share-core-card">
+            <view class="core-left">
+              <view class="core-label">今日完成</view>
+              <view class="core-count"><text>{{done}}</text><text class="core-total"> / {{total}}</text></view>
+              <view class="core-minutes"><text class="timer-icon">◴</text>今日专注 {{focusMinutes}} 分钟</view>
+            </view>
+            <view class="core-divider"></view>
+            <view class="goal-ring" style="background: conic-gradient(#356859 0% {{goalProgress}}%, #DDEBDD {{goalProgress}}% 100%);">
+              <view class="goal-ring-inner">
+                <view>{{goalProgress}}%</view>
+                <text>目标进度</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="share-list-card">
+            <view class="list-head">
+              <view class="list-title">今日完成清单</view>
+              <view class="privacy-control">
+                <text>{{hideTasks ? '已隐藏' : '隐藏内容'}}</text>
+                <switch checked="{{hideTasks}}" color="#356859" bindchange="toggleTaskPrivacy" />
+              </view>
+            </view>
+            <view wx:if="{{hideTasks}}" class="hidden-summary">今日完成 {{done}} 项行动</view>
+            <view wx:elif="{{completedTasks.length > 0}}" class="completed-list">
+              <view wx:for="{{completedTasks}}" wx:key="id" class="completed-item">
+                <view class="completed-check">✓</view>
+                <text>{{item.title}}</text>
+              </view>
+            </view>
+            <view wx:else class="hidden-summary">今天还没有已完成行动</view>
+          </view>
+
+          <view class="share-growth-strip">
+            <view class="growth-item">
+              <text class="growth-icon is-yellow">♨</text>
+              <text class="growth-label">连续坚持</text>
+              <text class="growth-value">{{streak}} 天</text>
+            </view>
+            <view class="growth-divider"></view>
+            <view class="growth-item">
+              <text class="growth-icon">◎</text>
+              <text class="growth-label">累计投入</text>
+              <text class="growth-value">{{totalMinutes}} 分钟</text>
+            </view>
+          </view>
+
+          <view class="share-encouragement">每天完成一点，就会靠近一点。</view>
+          <view class="share-signature"><text>♧</text>我在「进度条」记录今天的成长</view>
+        </view>
+      </view>
+
+      <view class="share-save-area">
+        <button class="save-image-button" loading="{{saving}}" disabled="{{saving}}" bindtap="saveImage">
+          <text wx:if="{{!saving}}" class="save-icon">⇩</text>
+          <text>{{saving ? '正在生成图片' : '保存图片'}}</text>
+        </button>
+        <view class="save-tip">图片仅保存在你的设备中</view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="share-canvas-host" aria-hidden="true">
+    <canvas type="2d" id="shareCanvas" class="share-canvas"></canvas>
+  </view>
+</view>

@@ -1,0 +1,147 @@
+<view class="activity-page" data-theme="{{appTheme}}">
+  <view
+    class="nav-bar"
+    style="padding-top: {{statusBarHeight}}px;"
+  >
+    <view
+      class="nav-content"
+      style="height: {{navBarHeight}}px; padding-left: {{navRightPad}}px; padding-right: {{navRightPad}}px;"
+    >
+      <view class="nav-back" bindtap="goBack" aria-label="返回">
+        <text class="nav-back-arrow">‹</text>
+      </view>
+      <view class="nav-titles">
+        <text class="nav-title">行动动态</text>
+        <text class="nav-subtitle">查看队友的坚持与成长</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="activity-body" style="padding-top: {{navTotalHeight}}px;">
+    <!-- 初始加载骨架 -->
+    <block wx:if="{{loading}}">
+      <view class="skeleton-card">
+        <view class="skeleton-row" wx:for="{{[1,2,3,4,5]}}" wx:key="*this">
+          <view class="skeleton-avatar"></view>
+          <view class="skeleton-lines">
+            <view class="skeleton-line skeleton-line--short"></view>
+            <view class="skeleton-line"></view>
+          </view>
+          <view class="skeleton-tag"></view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 未加入小队 -->
+    <view wx:elif="{{noTeam}}" class="empty-state">
+      <view class="empty-icon">📋</view>
+      <view class="empty-title">还没有加入小队</view>
+      <view class="empty-copy">创建或加入小队后，这里会展示队友的行动动态。</view>
+    </view>
+
+    <!-- 空动态 -->
+    <view wx:elif="{{isEmpty}}" class="empty-state">
+      <view class="empty-icon">🍃</view>
+      <view class="empty-title">暂无动态</view>
+      <view class="empty-copy">队友开始记录行动后，动态会出现在这里。</view>
+    </view>
+
+    <!-- 动态列表 -->
+    <block wx:else>
+      <view class="activity-card">
+        <view
+          wx:for="{{activities}}"
+          wx:key="id"
+          class="activity-item-wrap"
+        >
+          <view wx:if="{{item.showHeader}}" class="date-header">{{item.dateLabel}}</view>
+          <view
+            class="activity-item"
+            data-id="{{item.id}}"
+            bindtap="openDetail"
+            hover-class="activity-item--pressed"
+            hover-stay-time="100"
+          >
+            <view class="activity-avatar avatar-grad {{item.avatarClass}}">
+              <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+              <text wx:else>{{item.avatarText}}</text>
+            </view>
+            <view class="activity-main">
+              <view class="activity-line1">
+                <text class="activity-name">{{item.name}}</text>
+                <text class="activity-action">{{item.actionText}}</text>
+              </view>
+              <view class="activity-line2">
+                <view class="activity-type-tag {{item.typeClass}}">{{item.typeLabel}}</view>
+                <text class="activity-time">{{item.timeText}}</text>
+              </view>
+            </view>
+            <view class="activity-chevron">›</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 列表底部状态 -->
+      <view class="list-footer">
+        <view wx:if="{{loadingMore}}" class="footer-loading">
+          <view class="footer-spinner"></view>
+          <text>加载中…</text>
+        </view>
+        <view wx:elif="{{!hasMore}}" class="footer-end">
+          <view class="footer-line"></view>
+          <text>已经到底了 · 共 {{total}} 条动态</text>
+          <view class="footer-line"></view>
+        </view>
+        <view wx:else class="footer-hint">上拉加载更多</view>
+      </view>
+    </block>
+
+    <view class="bottom-safe-area"></view>
+  </view>
+
+  <!-- 动态详情弹层 -->
+  <view wx:if="{{detailVisible && selectedDetail}}" class="detail-mask" catchtap="closeDetail" catchtouchmove="noop">
+    <view class="detail-sheet" catchtap="noop">
+      <view class="detail-handle-row">
+        <view class="detail-handle"></view>
+        <view class="detail-close" catchtap="closeDetail">×</view>
+      </view>
+
+      <view class="detail-head">
+        <view class="detail-avatar avatar-grad {{selectedDetail.avatarClass}}">
+          <image wx:if="{{selectedDetail.avatar}}" src="{{selectedDetail.avatar}}" mode="aspectFill" />
+          <text wx:else>{{selectedDetail.avatarText}}</text>
+        </view>
+        <view class="detail-head-main">
+          <view class="detail-name-row">
+            <text class="detail-name">{{selectedDetail.name}}</text>
+            <view class="activity-type-tag {{selectedDetail.typeClass}}">{{selectedDetail.typeLabel}}</view>
+          </view>
+          <view class="detail-time">{{selectedDetail.timeText}}</view>
+        </view>
+      </view>
+
+      <view class="detail-action">{{selectedDetail.actionText}}</view>
+      <view class="detail-content">{{selectedDetail.detail}}</view>
+
+      <view class="detail-meta">
+        <view class="meta-item">
+          <text class="meta-label">目标</text>
+          <text class="meta-value">{{selectedDetail.goalTitle}}</text>
+        </view>
+        <view wx:if="{{selectedDetail.growthMinutes > 0}}" class="meta-item">
+          <text class="meta-label">投入</text>
+          <text class="meta-value">{{selectedDetail.growthMinutes}} 分钟</text>
+        </view>
+        <view wx:if="{{selectedDetail.actionCount > 0}}" class="meta-item">
+          <text class="meta-label">{{selectedDetail.type === 'streak' ? '连续' : '行动'}}</text>
+          <text class="meta-value">{{selectedDetail.actionCount}} {{selectedDetail.type === 'streak' ? '天' : '项'}}</text>
+        </view>
+      </view>
+
+      <view class="detail-footer">
+        <view class="detail-primary" catchtap="closeDetail">知道了</view>
+      </view>
+    </view>
+  </view>
+</view>

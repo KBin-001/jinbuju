@@ -837,6 +837,10 @@ Page(withAppTheme({
     wx.navigateTo({ url: "/pages/team-members/index" });
   },
 
+  openAllActivities() {
+    wx.navigateTo({ url: "/pages/team-activity/index" });
+  },
+
   openMemberDetail(event: { currentTarget: { dataset: { id?: string } } }) {
     const memberId = String(event.currentTarget.dataset.id || "");
     let member = this.data.members.find((item) => item.id === memberId);

@@ -465,7 +465,10 @@ Page(withAppTheme({
   },
   generateTodayShareCard() {
     this.closeCompletionSheet();
-    wx.showToast({ title: "今日分享卡即将上线", icon: "none" });
+    wx.navigateTo({
+      url: "/pages/share-card/index",
+      fail: () => wx.showToast({ title: "分享卡打开失败", icon: "none" }),
+    });
   },
   toggleTaskDone(event: { currentTarget: { dataset: { id?: string } } }) {
     const id = String(event.currentTarget.dataset.id || "");
