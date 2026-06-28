@@ -3468,11 +3468,20 @@
   color: #71827A;
 }
 
-.progress-page[data-theme="inkGreen"] .overview-item + .overview-item::before,
+.progress-page[data-theme="inkGreen"] .overview-item + .overview-item::before {
+  border-color: #E5EAE3;
+  background-color: #E5EAE3;
+}
+
+.progress-page[data-theme="inkGreen"] .trend-stat-item,
+.progress-page[data-theme="inkGreen"] .record-item {
+  background: transparent;
+}
+
 .progress-page[data-theme="inkGreen"] .trend-stat-item + .trend-stat-item,
 .progress-page[data-theme="inkGreen"] .record-item + .record-item {
   border-color: #E5EAE3;
-  background-color: #E5EAE3;
+  background: transparent;
 }
 
 .progress-page[data-theme="inkGreen"] .trend-card .trend-range-tabs {

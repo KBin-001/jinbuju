@@ -439,7 +439,7 @@
           <view class="card-title">最近记录</view>
           <view class="card-subtitle">今天完成了什么</view>
         </view>
-        <button class="review-link" bindtap="openHistoryReview">查看历史复盘</button>
+        <button wx:if="{{hasHistoryReview}}" class="review-link" bindtap="openHistoryReview">查看历史复盘</button>
       </view>
 
       <view wx:if="{{recentRecords.length}}" class="record-list">
