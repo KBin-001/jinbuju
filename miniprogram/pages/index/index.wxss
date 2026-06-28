@@ -2643,6 +2643,282 @@
   box-shadow: 0 10rpx 22rpx rgba(244, 201, 93, 0.10);
 }
 
+/* =========================================================
+ * V4 浅色奶油 · 今日页轻插画氛围最终覆盖
+ * 顶部插画背景 + 奶油底 + 浅绿今日行动卡 + 金色点缀
+ * 不改业务结构，仅做视觉统一升级
+ * ========================================================= */
+
+/* --- CSS 变量统一为奶油浅色系 --- */
+.today-page[data-theme="inkGreen"] {
+  --today-primary: #2F765E;
+  --today-primary-deep: #294F43;
+  --today-accent: #5EB28B;
+  --today-text: #20322D;
+  --today-secondary: #7D8C86;
+  --today-muted: #93A099;
+  --today-border: #E7ECE5;
+  --today-gold: #F2C34B;
+  background: #F6F3EA;
+  color: #20322D;
+}
+
+/* --- 顶部背景插画（轻插画氛围，无文字） --- */
+.today-header {
+  position: relative;
+  overflow: hidden;
+  margin: -28rpx -32rpx 0;
+  height: 300rpx;
+}
+
+.today-header-bg {
+  position: absolute;
+  left: 0;
+  top: -12%;
+  width: 100%;
+  height: 124%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 底部柔和过渡：让插画波浪底部融入页面奶油白背景 */
+.today-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 70rpx;
+  background: linear-gradient(to bottom, rgba(246, 243, 234, 0) 0%, rgba(246, 243, 234, 0.5) 55%, #F6F3EA 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.today-header-content {
+  position: relative;
+  z-index: 2;
+  padding: 52rpx 48rpx 0;
+  box-sizing: border-box;
+}
+
+/* --- 问候文案（由 WXML 渲染，不写进背景图） --- */
+.today-page[data-theme="inkGreen"] .today-header .today-greeting {
+  color: #20322D;
+  font-size: 54rpx;
+  font-weight: 900;
+  line-height: 1.12;
+  letter-spacing: -1rpx;
+}
+
+.today-page[data-theme="inkGreen"] .today-header .today-subtitle {
+  margin-top: 10rpx;
+  color: #7D8C86;
+  font-size: 27rpx;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* --- 日历卡上移叠加在背景下沿，承接顶部氛围 --- */
+.today-page[data-theme="inkGreen"] .week-card {
+  margin-top: -130rpx;
+  position: relative;
+  z-index: 3;
+  background: #FFFDF7;
+  border: 1rpx solid rgba(255, 255, 255, 0.76);
+  border-radius: 32rpx;
+  box-shadow: 0 20rpx 52rpx rgba(48, 71, 60, 0.10);
+}
+
+/* --- 卡片统一奶油白 --- */
+.today-page[data-theme="inkGreen"] .card,
+.today-page[data-theme="inkGreen"] .today-action-panel,
+.today-page[data-theme="inkGreen"] .today-data-card,
+.today-page[data-theme="inkGreen"] .daily-nudge-card {
+  background: #FFFDF7;
+  border: 1rpx solid rgba(231, 236, 229, 0.88);
+  border-radius: 32rpx;
+  box-shadow: 0 20rpx 52rpx rgba(48, 71, 60, 0.08);
+}
+
+/* --- 今日行动卡：顶部浅绿渐变 + 圆角 --- */
+.today-page[data-theme="inkGreen"] .today-action-panel {
+  margin-top: 28rpx;
+  overflow: hidden;
+  border-radius: 32rpx;
+}
+
+.today-page[data-theme="inkGreen"] .today-action-hero {
+  min-height: 220rpx;
+  padding: 32rpx 32rpx 28rpx;
+  background: linear-gradient(135deg, #F1F8F2 0%, #F8FBF6 100%);
+  border-radius: 32rpx 32rpx 0 0;
+}
+
+/* --- 今日行动标签：浅绿胶囊 --- */
+.today-page[data-theme="inkGreen"] .action-hero-label {
+  display: inline-flex;
+  align-items: center;
+  height: 48rpx;
+  padding: 0 20rpx;
+  border-radius: 999rpx;
+  background: #EEF5EF;
+  color: #2F765E;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+/* --- 行动数量大数字 --- */
+.today-page[data-theme="inkGreen"] .action-hero-count text:first-child {
+  color: #20322D;
+  font-size: 64rpx;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.today-page[data-theme="inkGreen"] .action-hero-count .action-total,
+.today-page[data-theme="inkGreen"] .action-hero-count .action-unit {
+  color: #7D8C86;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.today-page[data-theme="inkGreen"] .action-hero-goal {
+  margin-top: 10rpx;
+  color: #3A5C51;
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+/* --- 进度环：放大 + 主绿 --- */
+.today-page[data-theme="inkGreen"] .progress-ring {
+  width: 160rpx;
+  height: 160rpx;
+  padding: 0;
+  box-sizing: border-box;
+  box-shadow: 0 16rpx 34rpx rgba(47, 118, 94, 0.10);
+}
+
+.today-page[data-theme="inkGreen"] .progress-ring-inner {
+  width: 100%;
+  height: 100%;
+  background: #FFFFFF;
+  border-radius: 50%;
+}
+
+.today-page[data-theme="inkGreen"] .progress-ring-inner view {
+  color: #2F765E;
+  font-size: 40rpx;
+  font-weight: 900;
+}
+
+.today-page[data-theme="inkGreen"] .progress-ring-inner text {
+  color: #668077;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+/* --- 任务列表：白底圆角 --- */
+.today-page[data-theme="inkGreen"] .today-action-list {
+  padding: 24rpx;
+  background: #FFFFFF;
+  border-radius: 0 0 32rpx 32rpx;
+}
+
+/* --- 任务行：卡片化 --- */
+.today-page[data-theme="inkGreen"] .today-task-row {
+  min-height: 120rpx;
+  gap: 20rpx;
+  padding: 22rpx 24rpx;
+  border: 1rpx solid #EEF1ED;
+  border-radius: 24rpx;
+  background: #FFFFFF;
+  box-shadow: none;
+}
+
+.today-page[data-theme="inkGreen"] .today-task-row + .today-task-row {
+  margin-top: 16rpx;
+}
+
+/* --- 任务图标：圆形浅绿 --- */
+.today-page[data-theme="inkGreen"] .task-type-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #EEF6F0;
+  color: #2F765E;
+}
+
+/* --- 完成勾选：圆形 --- */
+.today-page[data-theme="inkGreen"] .task-tail-check {
+  width: 56rpx;
+  height: 56rpx;
+  border: 4rpx solid #D7E2DA;
+  border-radius: 50%;
+}
+
+.today-page[data-theme="inkGreen"] .task-tail-check.is-done {
+  background: #2F765E;
+  border-color: #2F765E;
+}
+
+/* --- 展开收起链接 --- */
+.today-page[data-theme="inkGreen"] .action-list-toggle {
+  color: #7D8C86;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+/* --- 添加今日行动按钮：浅绿底 --- */
+.today-page[data-theme="inkGreen"] .inline-add-action {
+  height: 88rpx;
+  margin-top: 12rpx;
+  border-radius: 24rpx;
+  background: #F2F8F2;
+  border: 1rpx solid #E4EEE5;
+  color: #2F765E;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+/* --- 今日数据卡 --- */
+.today-page[data-theme="inkGreen"] .today-data-value {
+  color: #2F765E;
+  font-size: 40rpx;
+  font-weight: 800;
+}
+
+/* --- 每日提示卡：浅金 --- */
+.today-page[data-theme="inkGreen"] .daily-nudge-card {
+  border: 1rpx solid #F5DFA5;
+  background: #FFF7DC;
+  border-radius: 24rpx;
+}
+
+/* --- 文字颜色统一 --- */
+.today-page[data-theme="inkGreen"] .week-title,
+.today-page[data-theme="inkGreen"] .task-title,
+.today-page[data-theme="inkGreen"] .today-data-title,
+.today-page[data-theme="inkGreen"] .state-title,
+.today-page[data-theme="inkGreen"] .empty-title {
+  color: #20322D;
+}
+
+.today-page[data-theme="inkGreen"] .today-subtitle,
+.today-page[data-theme="inkGreen"] .action-hero-count,
+.today-page[data-theme="inkGreen"] .task-desc,
+.today-page[data-theme="inkGreen"] .today-data-label,
+.today-page[data-theme="inkGreen"] .week-switch,
+.today-page[data-theme="inkGreen"] .today-data-entry {
+  color: #7D8C86;
+}
+
+/* --- 周日历今日：金色圆点 --- */
+.today-page[data-theme="inkGreen"] .week-day.is-today .week-number {
+  background: #F2C34B;
+  color: #24352E;
+  box-shadow: 0 12rpx 24rpx rgba(242, 195, 75, 0.22);
+}
+
 .quote-mark {
   position: absolute;
   left: 24rpx;
@@ -3046,4 +3322,280 @@
   .today-page[data-theme="inkGreen"] .today-topbar {
     padding-right: 126rpx;
   }
+}
+
+/* =========================================================
+ * V4 浅色奶油 · 今日页轻插画氛围最终覆盖（覆盖 V2）
+ * 顶部插画背景 + 奶油底 + 浅绿今日行动卡 + 金色点缀
+ * 不改业务结构，仅做视觉统一升级
+ * ========================================================= */
+
+/* --- CSS 变量统一为奶油浅色系 --- */
+.today-page[data-theme="inkGreen"] {
+  --today-primary: #2F765E;
+  --today-primary-deep: #294F43;
+  --today-accent: #5EB28B;
+  --today-text: #20322D;
+  --today-secondary: #7D8C86;
+  --today-muted: #93A099;
+  --today-border: #E7ECE5;
+  --today-gold: #F2C34B;
+  background: #F6F3EA;
+  color: #20322D;
+}
+
+/* --- 顶部背景插画（轻插画氛围，无文字） --- */
+.today-header {
+  position: relative;
+  overflow: hidden;
+  margin: -28rpx -32rpx 0;
+  height: 300rpx;
+}
+
+.today-header-bg {
+  position: absolute;
+  left: 0;
+  top: -12%;
+  width: 100%;
+  height: 124%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 底部柔和过渡：让插画波浪底部融入页面奶油白背景 */
+.today-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 70rpx;
+  background: linear-gradient(to bottom, rgba(246, 243, 234, 0) 0%, rgba(246, 243, 234, 0.5) 55%, #F6F3EA 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.today-header-content {
+  position: relative;
+  z-index: 2;
+  padding: 52rpx 48rpx 0;
+  box-sizing: border-box;
+}
+
+/* --- 问候文案（由 WXML 渲染，不写进背景图） --- */
+.today-page[data-theme="inkGreen"] .today-header .today-greeting {
+  color: #20322D;
+  font-size: 54rpx;
+  font-weight: 900;
+  line-height: 1.12;
+  letter-spacing: -1rpx;
+}
+
+.today-page[data-theme="inkGreen"] .today-header .today-subtitle {
+  margin-top: 10rpx;
+  color: #7D8C86;
+  font-size: 27rpx;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* --- 日历卡上移叠加在背景下沿，承接顶部氛围 --- */
+.today-page[data-theme="inkGreen"] .week-card {
+  margin-top: -130rpx;
+  position: relative;
+  z-index: 3;
+  background: #FFFDF7;
+  border: 1rpx solid rgba(255, 255, 255, 0.76);
+  border-radius: 32rpx;
+  box-shadow: 0 20rpx 52rpx rgba(48, 71, 60, 0.10);
+}
+
+/* --- 卡片统一奶油白 --- */
+.today-page[data-theme="inkGreen"] .card,
+.today-page[data-theme="inkGreen"] .today-action-panel,
+.today-page[data-theme="inkGreen"] .today-data-card,
+.today-page[data-theme="inkGreen"] .daily-nudge-card {
+  background: #FFFDF7;
+  border: 1rpx solid rgba(231, 236, 229, 0.88);
+  border-radius: 32rpx;
+  box-shadow: 0 20rpx 52rpx rgba(48, 71, 60, 0.08);
+}
+
+/* --- 今日行动卡：顶部浅绿渐变 + 圆角 --- */
+.today-page[data-theme="inkGreen"] .today-action-panel {
+  margin-top: 28rpx;
+  overflow: hidden;
+  border-radius: 32rpx;
+}
+
+.today-page[data-theme="inkGreen"] .today-action-hero {
+  min-height: 220rpx;
+  padding: 32rpx 32rpx 28rpx;
+  background: linear-gradient(135deg, #F1F8F2 0%, #F8FBF6 100%);
+  border-radius: 32rpx 32rpx 0 0;
+}
+
+/* --- 今日行动标签：浅绿胶囊 --- */
+.today-page[data-theme="inkGreen"] .action-hero-label {
+  display: inline-flex;
+  align-items: center;
+  height: 48rpx;
+  padding: 0 20rpx;
+  border-radius: 999rpx;
+  background: #EEF5EF;
+  color: #2F765E;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+/* --- 行动数量大数字 --- */
+.today-page[data-theme="inkGreen"] .action-hero-count text:first-child {
+  color: #20322D;
+  font-size: 64rpx;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.today-page[data-theme="inkGreen"] .action-hero-count .action-total,
+.today-page[data-theme="inkGreen"] .action-hero-count .action-unit {
+  color: #7D8C86;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.today-page[data-theme="inkGreen"] .action-hero-goal {
+  margin-top: 10rpx;
+  color: #3A5C51;
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+/* --- 进度环：放大 + 主绿 --- */
+.today-page[data-theme="inkGreen"] .progress-ring {
+  width: 160rpx;
+  height: 160rpx;
+  padding: 0;
+  box-sizing: border-box;
+  box-shadow: 0 16rpx 34rpx rgba(47, 118, 94, 0.10);
+}
+
+.today-page[data-theme="inkGreen"] .progress-ring-inner {
+  width: 100%;
+  height: 100%;
+  background: #FFFFFF;
+  border-radius: 50%;
+}
+
+.today-page[data-theme="inkGreen"] .progress-ring-inner view {
+  color: #2F765E;
+  font-size: 40rpx;
+  font-weight: 900;
+}
+
+.today-page[data-theme="inkGreen"] .progress-ring-inner text {
+  color: #668077;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+/* --- 任务列表：白底圆角 --- */
+.today-page[data-theme="inkGreen"] .today-action-list {
+  padding: 24rpx;
+  background: #FFFFFF;
+  border-radius: 0 0 32rpx 32rpx;
+}
+
+/* --- 任务行：卡片化 --- */
+.today-page[data-theme="inkGreen"] .today-task-row {
+  min-height: 120rpx;
+  gap: 20rpx;
+  padding: 22rpx 24rpx;
+  border: 1rpx solid #EEF1ED;
+  border-radius: 24rpx;
+  background: #FFFFFF;
+  box-shadow: none;
+}
+
+.today-page[data-theme="inkGreen"] .today-task-row + .today-task-row {
+  margin-top: 16rpx;
+}
+
+/* --- 任务图标：圆形浅绿 --- */
+.today-page[data-theme="inkGreen"] .task-type-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #EEF6F0;
+  color: #2F765E;
+}
+
+/* --- 完成勾选：圆形 --- */
+.today-page[data-theme="inkGreen"] .task-tail-check {
+  width: 56rpx;
+  height: 56rpx;
+  border: 4rpx solid #D7E2DA;
+  border-radius: 50%;
+}
+
+.today-page[data-theme="inkGreen"] .task-tail-check.is-done {
+  background: #2F765E;
+  border-color: #2F765E;
+}
+
+/* --- 展开收起链接 --- */
+.today-page[data-theme="inkGreen"] .action-list-toggle {
+  color: #7D8C86;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+/* --- 添加今日行动按钮：浅绿底 --- */
+.today-page[data-theme="inkGreen"] .inline-add-action {
+  height: 88rpx;
+  margin-top: 12rpx;
+  border-radius: 24rpx;
+  background: #F2F8F2;
+  border: 1rpx solid #E4EEE5;
+  color: #2F765E;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+/* --- 今日数据卡 --- */
+.today-page[data-theme="inkGreen"] .today-data-value {
+  color: #2F765E;
+  font-size: 40rpx;
+  font-weight: 800;
+}
+
+/* --- 每日提示卡：浅金 --- */
+.today-page[data-theme="inkGreen"] .daily-nudge-card {
+  border: 1rpx solid #F5DFA5;
+  background: #FFF7DC;
+  border-radius: 24rpx;
+}
+
+/* --- 文字颜色统一 --- */
+.today-page[data-theme="inkGreen"] .week-title,
+.today-page[data-theme="inkGreen"] .task-title,
+.today-page[data-theme="inkGreen"] .today-data-title,
+.today-page[data-theme="inkGreen"] .state-title,
+.today-page[data-theme="inkGreen"] .empty-title {
+  color: #20322D;
+}
+
+.today-page[data-theme="inkGreen"] .today-subtitle,
+.today-page[data-theme="inkGreen"] .action-hero-count,
+.today-page[data-theme="inkGreen"] .task-desc,
+.today-page[data-theme="inkGreen"] .today-data-label,
+.today-page[data-theme="inkGreen"] .week-switch,
+.today-page[data-theme="inkGreen"] .today-data-entry {
+  color: #7D8C86;
+}
+
+/* --- 周日历今日：金色圆点 --- */
+.today-page[data-theme="inkGreen"] .week-day.is-today .week-number {
+  background: #F2C34B;
+  color: #24352E;
+  box-shadow: 0 12rpx 24rpx rgba(242, 195, 75, 0.22);
 }

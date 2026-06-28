@@ -12,8 +12,9 @@
   </view>
 
   <block wx:else>
-    <view class="today-topbar">
-      <view>
+    <view class="today-header">
+      <image class="today-header-bg" src="/assets/today-header-bg-no-text.png" mode="aspectFill" />
+      <view class="today-header-content">
         <view class="today-greeting">早上好，{{displayName}} 👋</view>
         <view class="today-subtitle">坚持的每一步，都是成长的证据</view>
       </view>
@@ -60,7 +61,7 @@
             </view>
             <view class="action-hero-goal">{{goal.title}}</view>
           </view>
-          <view class="progress-ring" style="background: conic-gradient(#356859 0% {{completionPercent}}%, #DCEAE3 {{completionPercent}}% 100%);">
+          <view class="progress-ring" style="background: conic-gradient(#2F765E 0% {{completionPercent}}%, #E6EFE8 {{completionPercent}}% 100%);">
             <view class="progress-ring-inner">
               <view>{{completionPercent}}%</view>
               <text>进度</text>
