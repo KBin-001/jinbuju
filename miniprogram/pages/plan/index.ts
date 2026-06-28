@@ -304,6 +304,10 @@ function compareText(current: number, previous: number, label: string): { text: 
 
 function buildAdviceText(todayMinutes: number, avgMinutes: number, range: TrendRange): string {
   if (todayMinutes <= 0 && avgMinutes <= 0) return "先记录一次投入，趋势线就会开始出现。建议明天保持 30 分钟以上。";
+  if (todayMinutes >= avgMinutes && todayMinutes > 0) {
+    const target = Math.max(45, Math.ceil(todayMinutes / 5) * 5);
+    return `今日已投入 ${todayMinutes} 分钟，达到${range === "week" ? "本周" : "本月"}日均水平。建议明天保持 ${target} 分钟以上。`;
+  }
   const target = Math.max(45, avgMinutes ? Math.ceil(avgMinutes / 5) * 5 : 45);
   return `今日投入 ${todayMinutes} 分钟，低于${range === "week" ? "本周" : "本月"}日均 ${avgMinutes} 分钟。建议明天保持 ${target} 分钟以上。`;
 }
@@ -407,7 +411,7 @@ function buildBarChart(
     midLabel: formatAxisLabel(Math.round(maxValue / 2)),
     maxValue,
     barWidth,
-    insufficient: nonZeroCount < 2,
+    insufficient: nonZeroCount < 1,
   };
 }
 
@@ -438,8 +442,10 @@ function buildWeekSummary(
   const bestInvestLabel = perDay[maxIndex]?.minutes > 0 ? buckets[maxIndex].label : "-";
 
   let summaryText: string;
-  if (activeDays < 2) {
-    summaryText = "继续记录几天后，将生成更准确的周趋势。";
+  if (activeDays < 1) {
+    summaryText = "完成第一项行动后，今日投入会立即显示在趋势图上。";
+  } else if (activeDays === 1) {
+    summaryText = `今天已投入 ${todayMinutes} 分钟，继续保持就会形成稳定趋势。`;
   } else if (todayMinutes > 0 && yesterdayMinutes > 0) {
     const diff = todayMinutes - yesterdayMinutes;
     if (diff < 0) {
@@ -464,7 +470,7 @@ function buildWeekSummary(
     bestInvestLabel,
     adviceText: buildAdviceText(todayMinutes, avgMinutes, "week"),
     summaryText,
-    insufficient: activeDays < 2,
+    insufficient: activeDays < 1,
   };
 }
 
@@ -497,8 +503,10 @@ function buildMonthSummary(
   const bestInvestLabel = perWeek[maxIndex]?.minutes > 0 ? buckets[maxIndex].label : "-";
 
   let summaryText: string;
-  if (activeWeeks < 2) {
-    summaryText = "继续坚持几周后，可以看到更清晰的月度节奏。";
+  if (activeWeeks < 1) {
+    summaryText = "完成第一项行动后，本周投入会立即显示在趋势图上。";
+  } else if (activeWeeks === 1) {
+    summaryText = `本周已投入 ${totalMinutes} 分钟，继续记录就会形成月度节奏。`;
   } else {
     summaryText = `本月累计投入 ${totalMinutes} 分钟，完成 ${totalActions} 项行动。`;
   }
@@ -514,7 +522,7 @@ function buildMonthSummary(
     bestInvestLabel,
     adviceText: buildAdviceText(totalMinutes, avgMinutes, "month"),
     summaryText,
-    insufficient: activeWeeks < 2,
+    insufficient: activeWeeks < 1,
   };
 }
 
