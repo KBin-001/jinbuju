@@ -2591,6 +2591,322 @@
   line-height: 34rpx;
 }
 
+/* ============ AI 进度教练容器 - Figma 优化版 ============ */
+.ai-coach-card--summary {
+  padding: 28rpx 24rpx;
+  border-color: #CFE5D5;
+  background: linear-gradient(180deg, #FFFDF7 0%, #F4FAF2 100%);
+  box-shadow: 0 14rpx 34rpx rgba(26, 59, 41, 0.09);
+}
+
+.ai-coach-card--summary .ai-coach-title-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-coach-card--summary .ai-coach-subtitle {
+  display: block;
+  margin-top: 4rpx;
+  color: #64766B;
+  font-size: 24rpx;
+  line-height: 30rpx;
+  font-weight: 400;
+}
+
+.ai-coach-card--summary .ai-coach-title {
+  color: #14251E;
+  font-size: 38rpx;
+  line-height: 44rpx;
+  font-weight: 700;
+}
+
+/* AI 头像 */
+.ai-coach-avatar {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: #EAF5EF;
+  border: 2rpx solid #CFE5D5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.ai-coach-avatar-screen {
+  width: 30rpx;
+  height: 20rpx;
+  border-radius: 10rpx;
+  background: #245944;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+}
+
+.ai-coach-avatar-eye {
+  width: 5rpx;
+  height: 5rpx;
+  border-radius: 50%;
+  background: #A7F0D0;
+}
+
+/* 中间区域：机器人 + 建议气泡 */
+.ai-coach-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+  margin-top: 22rpx;
+}
+
+/* 机器人（缩小尺寸） */
+.ai-coach-robot {
+  flex: none;
+  width: 96rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ai-coach-robot-antenna {
+  width: 8rpx;
+  height: 22rpx;
+  background: #9FCAB3;
+  border-radius: 4rpx;
+  position: relative;
+}
+
+.ai-coach-robot-antenna-ball {
+  position: absolute;
+  top: -10rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  background: #DFF2E7;
+}
+
+.ai-coach-robot-head {
+  width: 96rpx;
+  height: 92rpx;
+  border-radius: 40rpx;
+  background: #F9FFFC;
+  border: 2rpx solid #D6E7DD;
+  box-shadow: 0 6rpx 14rpx rgba(26, 59, 41, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.ai-coach-robot-face {
+  width: 56rpx;
+  height: 38rpx;
+  border-radius: 18rpx;
+  background: linear-gradient(180deg, #164638 0%, #193F35 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+}
+
+.ai-coach-robot-eye {
+  width: 7rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: #B7F4D9;
+}
+
+.ai-coach-robot-ear {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: #B4D8C1;
+  border: 2rpx solid #74A586;
+}
+
+.ai-coach-robot-ear--left {
+  left: -8rpx;
+}
+
+.ai-coach-robot-ear--right {
+  right: -8rpx;
+}
+
+/* 核心建议气泡 */
+.ai-coach-hint {
+  flex: 1;
+  min-width: 0;
+  padding: 18rpx 22rpx;
+  border-radius: 28rpx;
+  background: #FFF7E6;
+  border: 2rpx solid #F4D58B;
+  box-shadow: 0 6rpx 14rpx rgba(26, 59, 41, 0.05);
+}
+
+.ai-coach-hint-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+}
+
+.ai-coach-hint-star {
+  flex: none;
+  color: #E8A335;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 34rpx;
+}
+
+.ai-coach-hint-title {
+  flex: 1;
+  min-width: 0;
+  color: #14251E;
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 36rpx;
+}
+
+.ai-coach-hint-detail {
+  display: block;
+  margin-top: 8rpx;
+  margin-left: 36rpx;
+  color: #4C5F55;
+  font-size: 24rpx;
+  font-weight: 400;
+  line-height: 32rpx;
+}
+
+/* 3 个数据证据卡（紧凑单行版） */
+.ai-coach-evidence {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.ai-coach-evidence-card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 12rpx 12rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.94);
+  border: 2rpx solid #E2ECE5;
+  box-shadow: 0 4rpx 12rpx rgba(26, 59, 41, 0.04);
+}
+
+.ai-coach-evidence-icon {
+  flex: none;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: #EFF7F2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3rpx;
+  padding-bottom: 10rpx;
+  overflow: hidden;
+}
+
+.ai-coach-evidence-bar {
+  width: 6rpx;
+  height: 13rpx;
+  border-radius: 3rpx;
+  background: #518A68;
+}
+
+.ai-coach-evidence-bar--mid {
+  height: 20rpx;
+}
+
+.ai-coach-evidence-bar--tall {
+  height: 27rpx;
+}
+
+.ai-coach-evidence-target {
+  width: 26rpx;
+  height: 26rpx;
+  border-radius: 50%;
+  border: 3rpx solid #397458;
+  position: relative;
+}
+
+.ai-coach-evidence-target::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: #397458;
+}
+
+.ai-coach-evidence-icon--fire {
+  font-size: 28rpx;
+  line-height: 1;
+  align-items: center;
+  padding-bottom: 0;
+}
+
+.ai-coach-evidence-info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ai-coach-evidence-label {
+  color: #77857D;
+  font-size: 20rpx;
+  line-height: 26rpx;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-coach-evidence-value {
+  margin-top: 2rpx;
+  color: #1F6B4A;
+  font-size: 26rpx;
+  line-height: 32rpx;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 查看详细分析按钮 */
+.ai-coach-full-btn {
+  width: 100%;
+  height: 84rpx;
+  margin-top: 22rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(180deg, #1F6B4A 0%, #2E7B58 100%);
+  box-shadow: 0 8rpx 18rpx rgba(26, 59, 41, 0.14);
+  color: #FFFFFF;
+  font-size: 30rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+}
+
+.ai-coach-full-btn-star {
+  color: #F6F3D9;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
 @media (max-width: 340px) {
   .progress-page {
     padding-right: 22rpx;
@@ -3268,19 +3584,64 @@
 .progress-page[data-theme="inkGreen"] .ai-coach-card,
 .progress-page[data-theme="inkGreen"] .ai-coach-card--summary {
   border-color: #D6E8DC;
-  background: #F3FAF3;
+  background: linear-gradient(180deg, #FFFDF7 0%, #F4FAF2 100%);
+  box-shadow: 0 14rpx 34rpx rgba(26, 59, 41, 0.09);
 }
 
-.progress-page[data-theme="inkGreen"] .ai-coach-card--summary .ai-coach-icon,
-.progress-page[data-theme="inkGreen"] .record-check,
-.progress-page[data-theme="inkGreen"] .state-mark {
-  background: #EAF3EA;
-  color: #356859;
+.progress-page[data-theme="inkGreen"] .ai-coach-card--summary .ai-coach-title {
+  color: #1F2D28;
 }
 
-.progress-page[data-theme="inkGreen"] .ai-coach-card--summary .ai-coach-period {
-  background: rgba(255, 255, 255, 0.82);
+.progress-page[data-theme="inkGreen"] .ai-coach-card--summary .ai-coach-subtitle {
   color: #71827A;
+}
+
+/* AI 头像 inkGreen 覆写 */
+.progress-page[data-theme="inkGreen"] .ai-coach-avatar {
+  background: #EAF3EA;
+  border-color: #D6E8DC;
+}
+
+/* 核心建议气泡 inkGreen 覆写 */
+.progress-page[data-theme="inkGreen"] .ai-coach-hint {
+  border-color: #F5DFA5;
+  background: #FFF7E6;
+}
+
+.progress-page[data-theme="inkGreen"] .ai-coach-hint-star {
+  color: #E8A335;
+}
+
+.progress-page[data-theme="inkGreen"] .ai-coach-hint-title {
+  color: #1F2D28;
+}
+
+.progress-page[data-theme="inkGreen"] .ai-coach-hint-detail {
+  color: #4C5F55;
+}
+
+/* 数据证据卡 inkGreen 覆写 */
+.progress-page[data-theme="inkGreen"] .ai-coach-evidence-card {
+  background: rgba(255, 255, 252, 0.94);
+  border-color: #E5EAE3;
+}
+
+.progress-page[data-theme="inkGreen"] .ai-coach-evidence-icon {
+  background: #EAF3EA;
+}
+
+.progress-page[data-theme="inkGreen"] .ai-coach-evidence-label {
+  color: #71827A;
+}
+
+.progress-page[data-theme="inkGreen"] .ai-coach-evidence-value {
+  color: #1F6B4A;
+}
+
+/* 查看详细分析按钮 inkGreen 覆写 */
+.progress-page[data-theme="inkGreen"] .ai-coach-full-btn {
+  background: linear-gradient(180deg, #1F6B4A 0%, #2E7B58 100%);
+  box-shadow: 0 10rpx 20rpx rgba(26, 59, 41, 0.16);
 }
 
 .progress-page[data-theme="inkGreen"] .ai-coach-point,

@@ -182,7 +182,6 @@
           <view class="bar-labels">
             <text wx:for="{{barChart.bars}}" wx:key="key">{{item.label}}</text>
           </view>
-          <view class="trend-summary-strip">✦ {{trendSummary.adviceText}}</view>
         </block>
 
         <view class="ai-coach-card ai-coach-card--inside">
@@ -334,14 +333,84 @@
     </view>
 
     <view class="ai-coach-card ai-coach-card--summary">
+      <!-- 顶部：AI 教练身份 -->
       <view class="ai-coach-head">
         <view class="ai-coach-title-wrap">
-          <view class="ai-coach-icon">✦</view>
-          <view class="ai-coach-title">AI 进度教练</view>
+          <view class="ai-coach-avatar">
+            <view class="ai-coach-avatar-screen">
+              <view class="ai-coach-avatar-eye"></view>
+              <view class="ai-coach-avatar-eye"></view>
+            </view>
+          </view>
+          <view class="ai-coach-title-text">
+            <view class="ai-coach-title">AI 进度教练</view>
+            <view class="ai-coach-subtitle">基于本周数据分析</view>
+          </view>
         </view>
-        <view class="ai-coach-period">{{aiCoach.periodLabel}} ›</view>
       </view>
-      <view class="ai-coach-summary">{{aiCoach.summary}}</view>
+
+      <!-- 中间：机器人 + 核心建议气泡 -->
+      <view class="ai-coach-body">
+        <view class="ai-coach-robot">
+          <view class="ai-coach-robot-antenna">
+            <view class="ai-coach-robot-antenna-ball"></view>
+          </view>
+          <view class="ai-coach-robot-head">
+            <view class="ai-coach-robot-ear ai-coach-robot-ear--left"></view>
+            <view class="ai-coach-robot-face">
+              <view class="ai-coach-robot-eye"></view>
+              <view class="ai-coach-robot-eye"></view>
+            </view>
+            <view class="ai-coach-robot-ear ai-coach-robot-ear--right"></view>
+          </view>
+        </view>
+        <view class="ai-coach-hint">
+          <view class="ai-coach-hint-top">
+            <text class="ai-coach-hint-star">✦</text>
+            <text class="ai-coach-hint-title">{{trendSummary.adviceTitle || aiCoach.summary}}</text>
+          </view>
+          <text class="ai-coach-hint-detail">{{trendSummary.adviceDetail}}</text>
+        </view>
+      </view>
+
+      <!-- 下方：3 个数据证据卡 -->
+      <view class="ai-coach-evidence">
+        <view class="ai-coach-evidence-card">
+          <view class="ai-coach-evidence-icon">
+            <view class="ai-coach-evidence-bar"></view>
+            <view class="ai-coach-evidence-bar ai-coach-evidence-bar--mid"></view>
+            <view class="ai-coach-evidence-bar ai-coach-evidence-bar--tall"></view>
+          </view>
+          <view class="ai-coach-evidence-info">
+            <view class="ai-coach-evidence-label">对比昨日</view>
+            <view class="ai-coach-evidence-value">{{trendSummary.vsYesterdayText}}</view>
+          </view>
+        </view>
+        <view class="ai-coach-evidence-card">
+          <view class="ai-coach-evidence-icon">
+            <view class="ai-coach-evidence-target"></view>
+          </view>
+          <view class="ai-coach-evidence-info">
+            <view class="ai-coach-evidence-label">{{trendRange === 'month' ? '本月平均' : '本周平均'}}</view>
+            <view class="ai-coach-evidence-value">{{trendSummary.avgMinutes}} 分钟</view>
+          </view>
+        </view>
+        <view class="ai-coach-evidence-card">
+          <view class="ai-coach-evidence-icon ai-coach-evidence-icon--fire">
+            <text>🔥</text>
+          </view>
+          <view class="ai-coach-evidence-info">
+            <view class="ai-coach-evidence-label">连续投入</view>
+            <view class="ai-coach-evidence-value">{{trendSummary.streakDays}} 天</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 底部：查看详细分析按钮 -->
+      <view class="ai-coach-full-btn">
+        <text class="ai-coach-full-btn-star">✦</text>
+        <text>查看详细分析  ›</text>
+      </view>
     </view>
 
     <view class="milestone-card">

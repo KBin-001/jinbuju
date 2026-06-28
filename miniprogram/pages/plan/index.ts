@@ -3,7 +3,7 @@ import { getProgressSummary } from "../../services/manualStats";
 import { getTasksByDate, getTasksByGoal } from "../../services/manualTask";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
-import { addDays, formatDate } from "../../utils/date";
+import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
 
 type TrendRange = "week" | "month" | "year";
@@ -67,6 +67,9 @@ interface TrendSummary {
   compareTone: "up" | "down" | "flat";
   bestInvestLabel: string;
   adviceText: string;
+  adviceTitle: string;
+  adviceDetail: string;
+  vsYesterdayText: string;
   summaryText: string;
   insufficient: boolean;
 }
@@ -312,6 +315,42 @@ function buildAdviceText(todayMinutes: number, avgMinutes: number, range: TrendR
   return `今日投入 ${todayMinutes} 分钟，低于${range === "week" ? "本周" : "本月"}日均 ${avgMinutes} 分钟。建议明天保持 ${target} 分钟以上。`;
 }
 
+/** 将建议拆分为「主句（加粗）」和「补充说明（常规）」两段，供 AI 教练气泡分层展示 */
+function buildAdviceParts(todayMinutes: number, avgMinutes: number, range: TrendRange): { title: string; detail: string } {
+  const rangeLabel = range === "week" ? "本周" : "本月";
+  if (todayMinutes <= 0 && avgMinutes <= 0) {
+    return { title: "还没有投入记录", detail: "先记录一次投入，趋势线就会开始出现。" };
+  }
+  if (todayMinutes >= avgMinutes && todayMinutes > 0) {
+    const target = Math.max(45, Math.ceil(todayMinutes / 5) * 5);
+    return {
+      title: `今日投入 ${todayMinutes} 分钟，达到${rangeLabel}平均水平。`,
+      detail: `建议明天继续保持 ${target} 分钟以上，连续性会更好。`,
+    };
+  }
+  const target = Math.max(45, avgMinutes ? Math.ceil(avgMinutes / 5) * 5 : 45);
+  return {
+    title: `今日投入 ${todayMinutes} 分钟，低于${rangeLabel}平均 ${avgMinutes} 分钟。`,
+    detail: `建议明天保持 ${target} 分钟以上，逐步追回节奏。`,
+  };
+}
+
+/** 对比昨日投入差值文案
+ * 传入 periodHasData 用于区分"整个周期无数据"与"今日/昨日恰好无记录"两种场景，
+ * 避免本周平均/连续投入有数据时，对比昨日却显示"暂无数据"造成信息不一致。
+ */
+function buildVsYesterdayText(todayMinutes: number, yesterdayMinutes: number, periodHasData: boolean = true): string {
+  if (todayMinutes <= 0 && yesterdayMinutes <= 0) {
+    return periodHasData ? "今日暂未记录" : "暂无数据";
+  }
+  if (todayMinutes <= 0) return `-${yesterdayMinutes} 分钟`;
+  if (yesterdayMinutes <= 0) return `+${todayMinutes} 分钟`;
+  const diff = todayMinutes - yesterdayMinutes;
+  if (diff > 0) return `+${diff} 分钟`;
+  if (diff < 0) return `${diff} 分钟`;
+  return "持平";
+}
+
 interface WeekBucket {
   key: string;
   label: string;
@@ -469,6 +508,8 @@ function buildWeekSummary(
     compareTone: compare.tone,
     bestInvestLabel,
     adviceText: buildAdviceText(todayMinutes, avgMinutes, "week"),
+    ...buildAdviceParts(todayMinutes, avgMinutes, "week"),
+    vsYesterdayText: buildVsYesterdayText(todayMinutes, yesterdayMinutes, activeDays > 0),
     summaryText,
     insufficient: activeDays < 1,
   };
@@ -502,6 +543,10 @@ function buildMonthSummary(
   const maxIndex = perWeek.reduce((best, item, index) => item.minutes > perWeek[best].minutes ? index : best, 0);
   const bestInvestLabel = perWeek[maxIndex]?.minutes > 0 ? buckets[maxIndex].label : "-";
 
+  const todayMinutes = sumRange(tasks, today, today).minutes;
+  const yesterdayDate = formatDate(addDays(toDate(today), -1));
+  const yesterdayMinutes = sumRange(tasks, yesterdayDate, yesterdayDate).minutes;
+
   let summaryText: string;
   if (activeWeeks < 1) {
     summaryText = "完成第一项行动后，本周投入会立即显示在趋势图上。";
@@ -521,6 +566,8 @@ function buildMonthSummary(
     compareTone: compare.tone,
     bestInvestLabel,
     adviceText: buildAdviceText(totalMinutes, avgMinutes, "month"),
+    ...buildAdviceParts(todayMinutes, avgMinutes, "month"),
+    vsYesterdayText: buildVsYesterdayText(todayMinutes, yesterdayMinutes, activeWeeks > 0),
     summaryText,
     insufficient: activeWeeks < 1,
   };
@@ -817,7 +864,7 @@ function buildTrendView(
   const { weeks, monthLabels } = buildYearHeatmap(year, today, tasks, selectedHeatDate);
   return {
     barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, barWidth: 0, insufficient: false },
-    trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, completionRate: 0, compareText: "", compareTone: "flat", bestInvestLabel: "-", adviceText: "", summaryText: "", insufficient: false },
+    trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, completionRate: 0, compareText: "", compareTone: "flat", bestInvestLabel: "-", adviceText: "", adviceTitle: "", adviceDetail: "", vsYesterdayText: "暂无数据", summaryText: "", insufficient: false },
     heatmapWeeks: weeks,
     heatmapMonthLabels: monthLabels,
     yearSummary: buildYearSummary(year, today, tasks),
@@ -842,7 +889,7 @@ Page(withAppTheme({
     trendRanges: buildTrendRanges("week"),
     aiCoach: { periodLabel: "本周复盘", summary: "数据正在整理中。", suggestion: "完成更多行动后，这里会展示 AI 进度教练建议。" } as AiCoachView,
     barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, barWidth: WEEK_BAR_WIDTH, insufficient: false } as BarChartData,
-    trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, completionRate: 0, compareText: "", compareTone: "flat", bestInvestLabel: "-", adviceText: "", summaryText: "", insufficient: false } as TrendSummary,
+    trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, completionRate: 0, compareText: "", compareTone: "flat", bestInvestLabel: "-", adviceText: "", adviceTitle: "", adviceDetail: "", vsYesterdayText: "暂无数据", summaryText: "", insufficient: false } as TrendSummary,
     selectedTrendItem: null as TrendBar | null,
     heatmapWeeks: [] as HeatmapWeek[],
     heatmapMonthLabels: [] as HeatmapMonthLabel[],
@@ -877,7 +924,7 @@ Page(withAppTheme({
   load() {
     this.setData({ status: "loading", errorMessage: "" });
     try {
-      const today = formatDate(new Date());
+      const today = getTodayBusinessDate();
       const goal = getActiveGoal();
       const activeGoals = getActiveGoals();
       const summary = goal ? getProgressSummary(goal.id, today) : null;
@@ -965,7 +1012,7 @@ Page(withAppTheme({
   switchTrendRange(event: { currentTarget: { dataset: { key?: TrendRange } } }) {
     const range = event.currentTarget.dataset.key || "week";
     if (range === this.data.trendRange) return;
-    const today = formatDate(new Date());
+    const today = getTodayBusinessDate();
     const tasks = this.data.goal ? getTasksByGoal(this.data.goal.id) : [];
     const trendView = buildTrendView(range, tasks, today);
     this.setData({
@@ -987,7 +1034,7 @@ Page(withAppTheme({
 
   onBarTap(event: { currentTarget: { dataset: { key?: string } } }) {
     const key = String(event.currentTarget.dataset.key || "");
-    const today = formatDate(new Date());
+    const today = getTodayBusinessDate();
     const tasks = this.data.goal ? getTasksByGoal(this.data.goal.id) : [];
     const currentKey = this.data.selectedTrendItem?.key;
     const nextKey = currentKey === key ? undefined : key;
@@ -1010,7 +1057,7 @@ Page(withAppTheme({
   onHeatmapDayTap(event: { currentTarget: { dataset: { date?: string } } }) {
     const date = String(event.currentTarget.dataset.date || "");
     if (!date) return;
-    const today = formatDate(new Date());
+    const today = getTodayBusinessDate();
     const tasks = this.data.goal ? getTasksByGoal(this.data.goal.id) : [];
     const year = toDate(today).getFullYear();
     const current = this.data.selectedHeatmapDay;

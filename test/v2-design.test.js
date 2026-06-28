@@ -59,7 +59,7 @@ test("进度页包含山景 Hero、三列总览、双指标图例和独立教练
   const wxml = read("miniprogram/pages/plan/index.wxml");
   const wxss = read("miniprogram/pages/plan/index.wxss");
   const finalStyle = wxss.slice(wxss.lastIndexOf("V3 轻盈暖白最终覆盖"));
-  ["累计投入", "投入分钟", "完成项数", "trend-summary-strip", "ai-coach-card--summary"].forEach((token) => {
+  ["累计投入", "投入分钟", "完成项数", "ai-coach-hint", "ai-coach-card--summary"].forEach((token) => {
     assert(wxml.includes(token) || read("miniprogram/pages/plan/index.ts").includes(token), `进度页缺少 ${token}`);
   });
   assert(wxml.includes('<image class="goal-card-bg" src="/images/progress-hero-v2.jpg" mode="aspectFill" />'), "未通过 image 图层接入 V2 Hero 资源");
