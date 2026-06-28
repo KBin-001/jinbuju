@@ -1,7 +1,10 @@
 <view class="page team-page" data-theme="{{appTheme}}">
-  <view class="page-title-row">
-    <view class="page-title">小队</view>
-    <view class="page-subtitle">一起完成今天的行动</view>
+  <view class="team-header">
+    <image class="team-header-bg" src="/assets/team-header-bg.png" mode="aspectFill" />
+    <view class="page-title-row">
+      <view class="page-title">小队</view>
+      <view class="page-subtitle">一起完成今天的行动</view>
+    </view>
   </view>
 
   <view wx:if="{{status === 'loading'}}" class="team-card state-card">

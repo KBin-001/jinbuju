@@ -20,24 +20,21 @@
   </view>
 
   <block wx:else>
-    <view class="goal-card" bindtap="openGoalPicker">
-      <image class="goal-card-bg" src="/images/progress-hero-v2.jpg" mode="aspectFill" />
-      <view class="goal-card-shade"></view>
-      <view class="goal-card-main">
-        <view class="goal-copy">
-          <view class="section-eyebrow">当前目标</view>
-          <view class="goal-title">{{goal.title}}</view>
-          <view class="goal-meta-row">
-            <view class="level-chip">{{levelLabel}}</view>
-            <view class="status-chip">{{goalStatusText}}</view>
-          </view>
-          <view class="goal-period">{{goalPeriod}}</view>
+    <!-- 顶部目标卡：参考图背景 + 动态文案 + 可点击按钮 -->
+    <view class="hero-card" bindtap="openGoalPicker" hover-class="hero-card--pressed" hover-stay-time="120">
+      <image class="hero-card-bg" src="/assets/hero-card-bg.png" mode="aspectFill" />
+      <view class="hero-card-content">
+        <view class="hero-eyebrow">当前目标</view>
+        <view class="hero-title">{{goal.title}}</view>
+        <view class="hero-meta-row">
+          <view class="hero-chip hero-chip--level">{{levelLabel}}</view>
+          <view class="hero-chip hero-chip--status">{{goalStatusText}}</view>
         </view>
-
-        <view class="goal-switch-button" catchtap="openGoalPicker">
-          <text>{{goalOptions.length > 1 ? '切换目标' : '查看目标'}}</text>
-          <view class="goal-switch-arrow"></view>
-        </view>
+        <view class="hero-period">{{goalPeriod}}</view>
+      </view>
+      <view class="hero-switch-button" catchtap="openGoalPicker" hover-class="hero-switch-button--pressed" hover-stay-time="120">
+        <text>{{goalOptions.length > 1 ? '切换目标' : '查看目标'}}</text>
+        <view class="hero-switch-arrow"></view>
       </view>
     </view>
 

@@ -1916,3 +1916,424 @@ button[disabled] {
   background: #EAF3EA;
   color: #356859;
 }
+
+/* =========================================================
+ * V4 浅色奶油 · 小队协作氛围最终覆盖
+ * 顶部插画背景 + 浅奶油底 + 雾绿卡片 + 金色点缀
+ * 不改业务结构，仅做视觉统一升级
+ * ========================================================= */
+
+/* --- CSS 变量统一 --- */
+.team-page[data-theme="inkGreen"] {
+  --team-primary: #2F765E;
+  --team-primary-deep: #294F43;
+  --team-primary-light: #5EB28B;
+  --team-primary-soft: #EAF3EC;
+  --team-text: #20322D;
+  --team-secondary: #7D8C86;
+  --team-muted: #93A099;
+  --team-border: #E7ECE5;
+  --team-soft: #F0F6EF;
+  --team-sun: #F2B94B;
+  --team-sun-soft: #FFE8A8;
+  --team-bg: #F6F3EA;
+  --team-shadow: 0 20rpx 52rpx rgba(48, 71, 60, 0.09);
+  background: #F6F3EA;
+  color: #20322D;
+}
+
+/* --- 顶部背景插画（短 Banner：氛围弱化，信息卡为主视觉） --- */
+.team-header {
+  position: relative;
+  overflow: hidden;
+  margin: -32rpx -32rpx 0;
+  height: 220rpx;
+}
+
+.team-header-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.88;
+}
+
+/* 底部柔和过渡：让插画波浪底部融入页面奶油白背景，不抢视觉 */
+.team-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 96rpx;
+  background: linear-gradient(to bottom, rgba(246, 243, 234, 0) 0%, rgba(246, 243, 234, 0.55) 55%, #F6F3EA 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.team-page[data-theme="inkGreen"] .team-header .page-title-row {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 56rpx 48rpx 0;
+}
+
+.team-page[data-theme="inkGreen"] .team-header .page-title {
+  color: #20322D;
+  font-size: 48rpx;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -1rpx;
+}
+
+.team-page[data-theme="inkGreen"] .team-header .page-subtitle {
+  margin-top: 8rpx;
+  color: #7D8C86;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* --- 第一张卡片上移叠加在背景下沿，成为首屏主视觉 --- */
+.team-page[data-theme="inkGreen"] .team-card:first-of-type {
+  margin-top: -28rpx;
+  position: relative;
+  z-index: 3;
+}
+
+/* --- 卡片统一 --- */
+.team-page[data-theme="inkGreen"] .team-card {
+  border: 1rpx solid rgba(231, 236, 229, 0.88);
+  border-radius: 32rpx;
+  background: #FFFDF7;
+  box-shadow: 0 20rpx 52rpx rgba(48, 71, 60, 0.08);
+}
+
+/* --- 小队状态卡：浅色奶油（非深绿） --- */
+.team-page[data-theme="inkGreen"] .team-status-card {
+  border-color: rgba(255, 255, 255, 0.76);
+  background: rgba(255, 253, 247, 0.97);
+  box-shadow: 0 24rpx 58rpx rgba(48, 71, 60, 0.10);
+}
+
+.team-page[data-theme="inkGreen"] .team-status-card .team-name {
+  color: #20322D;
+}
+
+.team-page[data-theme="inkGreen"] .team-status-card .team-slogan-row,
+.team-page[data-theme="inkGreen"] .team-status-card .team-sub-info {
+  color: #7D8C86;
+}
+
+.team-page[data-theme="inkGreen"] .team-status-card .team-sub-info .dot {
+  color: #93A099;
+}
+
+/* --- 队伍头像 --- */
+.team-page[data-theme="inkGreen"] .team-hero-avatar {
+  background: #F0F8F1;
+  border: 1rpx solid #D8E8DC;
+  color: #2F765E;
+  border-radius: 30rpx;
+}
+
+/* --- 标签胶囊 --- */
+.team-page[data-theme="inkGreen"] .level-tag {
+  background: #FFE8A8;
+  color: #8D6510;
+  border-radius: 16rpx;
+  height: 44rpx;
+}
+
+.team-page[data-theme="inkGreen"] .mood-tag,
+.team-page[data-theme="inkGreen"] .soft-tag,
+.team-page[data-theme="inkGreen"] .my-team-tag {
+  background: #EDF7EF;
+  border: 1rpx solid #DCEBDF;
+  color: #2F765E;
+  border-radius: 16rpx;
+  height: 44rpx;
+}
+
+/* --- 预览头像气泡 --- */
+.team-page[data-theme="inkGreen"] .preview-avatar,
+.team-page[data-theme="inkGreen"] .preview-more {
+  background: #FFFFFF;
+  color: #2F765E;
+  border: 3rpx solid #FFFFFF;
+  box-shadow: 0 6rpx 14rpx rgba(45, 70, 55, 0.10);
+}
+
+/* --- 按钮 --- */
+.team-page[data-theme="inkGreen"] .team-action-btn--primary {
+  background: linear-gradient(135deg, #49A180 0%, #2F765E 100%);
+  border: 1rpx solid transparent;
+  color: #FFFFFF;
+  box-shadow: 0 16rpx 32rpx rgba(47, 118, 94, 0.22);
+}
+
+.team-page[data-theme="inkGreen"] .team-action-btn--secondary {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1rpx solid #D8E6DB;
+  color: #2F765E;
+  box-shadow: 0 4rpx 12rpx rgba(48, 71, 60, 0.05);
+}
+
+/* --- 战况数字 --- */
+.team-page[data-theme="inkGreen"] .stat-value,
+.team-page[data-theme="inkGreen"] .common-progress-value,
+.team-page[data-theme="inkGreen"] .cpv-current,
+.team-page[data-theme="inkGreen"] .cpv-current--done,
+.team-page[data-theme="inkGreen"] .progress-current,
+.team-page[data-theme="inkGreen"] .ms-completed {
+  color: #2F765E;
+}
+
+/* --- 进度条 --- */
+.team-page[data-theme="inkGreen"] .progress-track {
+  background: #E3EBE1;
+  border-radius: 999rpx;
+}
+
+.team-page[data-theme="inkGreen"] .progress-fill {
+  background: linear-gradient(90deg, #5EB28B 0%, #2F765E 100%);
+  border-radius: 999rpx;
+  box-shadow: 0 2rpx 8rpx rgba(47, 118, 94, 0.18);
+}
+
+/* --- 共同行动容器 --- */
+.team-page[data-theme="inkGreen"] .team-common-progress {
+  background: #F0F6EF;
+  border-radius: 28rpx;
+}
+
+.team-page[data-theme="inkGreen"] .common-progress-divider {
+  background: #DDE8DE;
+}
+
+/* --- 成员头像气泡 --- */
+.team-page[data-theme="inkGreen"] .member-avatar {
+  background: #E8F2E9;
+  color: #2F765E;
+}
+
+.team-page[data-theme="inkGreen"] .member-avatar--doing {
+  background: #FFE8A8;
+  color: #8D6510;
+}
+
+.team-page[data-theme="inkGreen"] .member-avatar--pending {
+  background: #EEF2EB;
+  color: #93A099;
+}
+
+.team-page[data-theme="inkGreen"] .avatar-check {
+  background: #2F765E;
+  border: 3rpx solid #FFFFFF;
+}
+
+.team-page[data-theme="inkGreen"] .avatar-dot {
+  background: #F2B94B;
+  border: 3rpx solid #FFFFFF;
+}
+
+/* --- 状态文字 --- */
+.team-page[data-theme="inkGreen"] .ms-doing {
+  color: #D79A1E;
+}
+
+.team-page[data-theme="inkGreen"] .ms-pending {
+  color: #93A099;
+}
+
+/* --- 荣誉 --- */
+.team-page[data-theme="inkGreen"] .honor-icon {
+  background: #FFE8A8;
+  color: #8D6510;
+}
+
+.team-page[data-theme="inkGreen"] .honor-badge-card {
+  background: #F0F6EF;
+}
+
+/* --- 主按钮 / 次按钮 --- */
+.team-page[data-theme="inkGreen"] .solid-button {
+  background: linear-gradient(135deg, #49A180 0%, #2F765E 100%);
+  color: #FFFFFF;
+  box-shadow: 0 14rpx 28rpx rgba(47, 118, 94, 0.20);
+}
+
+.team-page[data-theme="inkGreen"] .outline-button {
+  border: 1rpx solid #D8E6DB;
+  background: #FFFFFF;
+  color: #2F765E;
+}
+
+/* --- 文字颜色统一 --- */
+.team-page[data-theme="inkGreen"] .page-title,
+.team-page[data-theme="inkGreen"] .card-title,
+.team-page[data-theme="inkGreen"] .team-name,
+.team-page[data-theme="inkGreen"] .member-name,
+.team-page[data-theme="inkGreen"] .activity-name,
+.team-page[data-theme="inkGreen"] .honor-title,
+.team-page[data-theme="inkGreen"] .popup-title,
+.team-page[data-theme="inkGreen"] .settings-title,
+.team-page[data-theme="inkGreen"] .settings-section-title,
+.team-page[data-theme="inkGreen"] .state-title,
+.team-page[data-theme="inkGreen"] .empty-title {
+  color: #20322D;
+}
+
+.team-page[data-theme="inkGreen"] .page-subtitle,
+.team-page[data-theme="inkGreen"] .team-slogan-row,
+.team-page[data-theme="inkGreen"] .team-sub-info,
+.team-page[data-theme="inkGreen"] .stat-label,
+.team-page[data-theme="inkGreen"] .common-progress-label,
+.team-page[data-theme="inkGreen"] .common-action-desc,
+.team-page[data-theme="inkGreen"] .member-progress-text,
+.team-page[data-theme="inkGreen"] .activity-action,
+.team-page[data-theme="inkGreen"] .activity-time,
+.team-page[data-theme="inkGreen"] .honor-desc,
+.team-page[data-theme="inkGreen"] .dashboard-detail-link,
+.team-page[data-theme="inkGreen"] .member-list-more,
+.team-page[data-theme="inkGreen"] .activity-more,
+.team-page[data-theme="inkGreen"] .activity-empty,
+.team-page[data-theme="inkGreen"] .state-copy,
+.team-page[data-theme="inkGreen"] .empty-copy,
+.team-page[data-theme="inkGreen"] .popup-copy {
+  color: #7D8C86;
+}
+
+/* --- 弹窗 --- */
+.team-page[data-theme="inkGreen"] .team-popup-mask {
+  background: rgba(32, 50, 45, 0.28);
+  backdrop-filter: blur(8rpx);
+}
+
+.team-page[data-theme="inkGreen"] .team-popup {
+  background: #FFFDF7;
+  box-shadow: 0 -18rpx 48rpx rgba(48, 71, 60, 0.16);
+}
+
+.team-page[data-theme="inkGreen"] .popup-handle {
+  background: #E7ECE5;
+}
+
+/* --- 活动头像 / 成员详情头像 --- */
+.team-page[data-theme="inkGreen"] .activity-avatar,
+.team-page[data-theme="inkGreen"] .member-detail-avatar {
+  background: #EAF3EC;
+  color: #2F765E;
+}
+
+/* --- 设置面板 --- */
+.team-page[data-theme="inkGreen"] .team-settings-mask {
+  background: rgba(32, 50, 45, 0.34);
+  backdrop-filter: blur(8rpx);
+}
+
+.team-page[data-theme="inkGreen"] .team-settings-dialog {
+  background: #F6F3EA;
+  border-color: rgba(231, 236, 229, 0.94);
+}
+
+.team-page[data-theme="inkGreen"] .settings-header {
+  background: #FFFDF7;
+  border-bottom-color: #E7ECE5;
+}
+
+.team-page[data-theme="inkGreen"] .settings-section,
+.team-page[data-theme="inkGreen"] .room-code-card,
+.team-page[data-theme="inkGreen"] .detail-visibility-option,
+.team-page[data-theme="inkGreen"] .task-detail-item,
+.team-page[data-theme="inkGreen"] .detail-private-card,
+.team-page[data-theme="inkGreen"] .room-input {
+  border-color: #E7ECE5;
+  background: #FFFDF7;
+}
+
+.team-page[data-theme="inkGreen"] .setting-segments {
+  background: #EEF2EB;
+}
+
+.team-page[data-theme="inkGreen"] .setting-segment--active {
+  background: #FFFFFF;
+  color: #2F765E;
+  box-shadow: 0 4rpx 14rpx rgba(48, 71, 60, 0.08);
+}
+
+.team-page[data-theme="inkGreen"] .custom-switch--on {
+  background: #2F765E;
+}
+
+.team-page[data-theme="inkGreen"] .detail-visibility-option--active {
+  border-color: #BFD8C8;
+  background: #EAF3EC;
+}
+
+.team-page[data-theme="inkGreen"] .detail-visibility-option--active .option-radio {
+  border-color: #2F765E;
+}
+
+.team-page[data-theme="inkGreen"] .detail-visibility-option--active .option-radio view {
+  background: #2F765E;
+}
+
+.team-page[data-theme="inkGreen"] .settings-save-button {
+  background: linear-gradient(135deg, #49A180 0%, #2F765E 100%);
+  box-shadow: 0 12rpx 24rpx rgba(47, 118, 94, 0.20);
+}
+
+.team-page[data-theme="inkGreen"] .settings-cancel-button {
+  border-color: #D8E6DB;
+  background: #FFFFFF;
+  color: #2F765E;
+}
+
+.team-page[data-theme="inkGreen"] .team-avatar-picker {
+  background: #F0F8F1;
+  border-color: #D8E8DC;
+  color: #2F765E;
+}
+
+.team-page[data-theme="inkGreen"] .avatar-edit-mark {
+  background: #2F765E;
+}
+
+.team-page[data-theme="inkGreen"] .copy-code-button {
+  background: #FFFFFF;
+  color: #2F765E;
+}
+
+.team-page[data-theme="inkGreen"] .room-code-value {
+  color: #294F43;
+}
+
+.team-page[data-theme="inkGreen"] .settings-readonly-tip {
+  background: #FFF4D8;
+  color: #8D6510;
+}
+
+.team-page[data-theme="inkGreen"] .settings-close {
+  background: #F0F6EF;
+  color: #7D8C86;
+}
+
+.team-page[data-theme="inkGreen"] .settings-close:active {
+  background: #EAF3EC;
+  color: #2F765E;
+}
+
+.team-page[data-theme="inkGreen"] .solid-button[disabled] {
+  background: #C9D8D1;
+  box-shadow: none;
+}
