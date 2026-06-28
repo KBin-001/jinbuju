@@ -67,8 +67,7 @@
 .today-page[data-theme="inkGreen"] .today-bottom-action,
 .today-page[data-theme="inkGreen"] .quick-add-primary,
 .today-page[data-theme="inkGreen"] .calendar-confirm,
-.today-page[data-theme="inkGreen"] .quick-duration-check,
-.today-page[data-theme="inkGreen"] .calendar-day.is-selected .calendar-day-number {
+.today-page[data-theme="inkGreen"] .quick-duration-check {
   box-shadow: 0 8rpx 24rpx rgba(31, 111, 85, 0.28);
 }
 
@@ -92,6 +91,20 @@
 
 .today-page[data-theme="inkGreen"] .calendar-day.is-outside {
   color: #B6C7C0;
+}
+
+/* 展开日历选中态：与今日页内联周日历保持一致的黄色，避免旧模板绿色选中态 */
+.today-page[data-theme="inkGreen"] .calendar-day.is-selected .calendar-day-number {
+  background: #F4C95D;
+  color: #2F4A3F;
+  font-weight: 800;
+  box-shadow: 0 8rpx 18rpx rgba(244, 201, 93, 0.28);
+}
+
+/* 今日但未被选中：浅绿柔和标记，与内联周日历一致 */
+.today-page[data-theme="inkGreen"] .calendar-day.is-today:not(.is-selected) .calendar-day-number {
+  background: #EAF5EF;
+  color: #356859;
 }
 
 .today-page {

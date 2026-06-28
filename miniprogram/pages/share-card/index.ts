@@ -116,7 +116,7 @@ Page({
     saving: false,
     navButtonTop: 52,
     navButtonSize: 34,
-    contentTop: 104,
+    contentTop: 122,
   },
 
   onLoad() {
@@ -134,7 +134,7 @@ Page({
     this.setData({
       navButtonTop,
       navButtonSize,
-      contentTop: menuBottom + 16,
+      contentTop: menuBottom + 34,
     });
   },
 

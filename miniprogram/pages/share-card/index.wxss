@@ -61,7 +61,7 @@ page {
 .share-content {
   width: 100%;
   box-sizing: border-box;
-  padding: 104px 32rpx calc(env(safe-area-inset-bottom) + 42rpx);
+  padding: 122px 32rpx calc(env(safe-area-inset-bottom) + 42rpx);
 }
 
 .share-card {
