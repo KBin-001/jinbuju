@@ -101,8 +101,11 @@
         </view>
       </view>
 
-      <view class="today-data-card">
-        <view class="today-data-title">今日数据</view>
+      <view class="today-data-card" bindtap="openTodayDataDetails" hover-class="today-data-card--pressed" hover-stay-time="100">
+        <view class="today-data-head">
+          <view class="today-data-title">今日数据</view>
+          <view class="today-data-entry">查看详情 <text>›</text></view>
+        </view>
         <view class="today-data-grid">
           <view class="today-data-item">
             <view class="today-data-value">{{summary.actualMinutes}}<text> 分钟</text></view>

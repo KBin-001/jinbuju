@@ -2589,6 +2589,32 @@
   border-radius: 24rpx;
   background: rgba(255, 255, 252, 0.86);
   box-shadow: 0 12rpx 30rpx rgba(31, 45, 40, 0.055);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.today-data-card--pressed {
+  transform: scale(0.988);
+  box-shadow: 0 8rpx 20rpx rgba(31, 45, 40, 0.045);
+}
+
+.today-data-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.today-data-entry {
+  display: flex;
+  align-items: center;
+  color: #356859;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.today-data-entry text {
+  margin-left: 6rpx;
+  font-size: 30rpx;
+  line-height: 1;
 }
 
 .today-data-grid {

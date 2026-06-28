@@ -1,0 +1,159 @@
+<view class="detail-page">
+  <view wx:if="{{status === 'loading'}}" class="state-card">
+    <view class="loading-dot"></view>
+    <view class="state-title">正在整理数据详情</view>
+  </view>
+
+  <view wx:elif="{{status === 'error'}}" class="state-card">
+    <view class="state-title">数据详情暂时无法展示</view>
+    <view class="state-copy">{{errorMessage}}</view>
+    <button class="state-button" bindtap="load">重新加载</button>
+  </view>
+
+  <block wx:else>
+    <view class="date-nav-card">
+      <view class="date-nav-arrow {{date <= minDate ? 'is-disabled' : ''}}" data-delta="-1" bindtap="shiftDate" hover-class="date-nav-arrow--pressed">‹</view>
+      <view class="date-nav-current" bindtap="openCalendar" hover-class="date-nav-current--pressed" hover-stay-time="100">
+        <view class="date-calendar-icon">
+          <view class="date-calendar-top"></view>
+          <text>{{dateMonth}}</text>
+        </view>
+        <view class="date-nav-value">{{dateLabel}}</view>
+      </view>
+      <view class="date-nav-arrow {{date >= maxDate ? 'is-disabled' : ''}}" data-delta="1" bindtap="shiftDate" hover-class="date-nav-arrow--pressed">›</view>
+    </view>
+
+    <view class="kpi-grid">
+      <view class="kpi-card">
+        <view class="kpi-label">专注时长</view>
+        <view class="kpi-value">{{metrics.minutes}}<text>分钟</text></view>
+        <view class="kpi-delta">{{minuteDelta}}</view>
+      </view>
+      <view class="kpi-card">
+        <view class="kpi-label">完成行动</view>
+        <view class="kpi-value">{{metrics.completed}}<text>项</text></view>
+        <view class="kpi-delta">{{completedDelta}}</view>
+      </view>
+      <view class="kpi-card">
+        <view class="kpi-label">专注度</view>
+        <view class="kpi-value">{{metrics.focusRate}}<text>%</text></view>
+        <view class="kpi-delta">{{focusDelta}}</view>
+      </view>
+    </view>
+
+    <view class="detail-card distribution-card">
+      <view class="card-head">
+        <view class="card-title">专注时长分布</view>
+        <view class="period-segments">
+          <view class="period-item {{period === 'day' ? 'is-active' : ''}}" data-period="day" bindtap="changePeriod">日</view>
+          <view class="period-item {{period === 'week' ? 'is-active' : ''}}" data-period="week" bindtap="changePeriod">周</view>
+          <view class="period-item {{period === 'month' ? 'is-active' : ''}}" data-period="month" bindtap="changePeriod">月</view>
+        </view>
+      </view>
+      <view class="chart-row">
+        <view class="axis-y">
+          <text wx:for="{{axisLabels}}" wx:key="*this">{{item}}</text>
+        </view>
+        <view class="chart-plot">
+          <view class="grid-line line-0"></view>
+          <view class="grid-line line-1"></view>
+          <view class="grid-line line-2"></view>
+          <view class="grid-line line-3"></view>
+          <view class="chart-bars">
+            <view wx:for="{{bars}}" wx:key="label" class="bar-column">
+              <view class="bar-value">{{item.value ? item.value : ''}}</view>
+              <view class="bar" style="height: {{item.height}}%;"></view>
+              <view class="bar-label">{{item.label}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="detail-card duration-card">
+      <view class="card-head">
+        <view class="card-title">完成任务时长占比</view>
+        <view wx:if="{{completedTasks.length > 5}}" class="card-link" bindtap="toggleDurations">{{showAllDurations ? '收起' : '查看全部'}}</view>
+      </view>
+      <view wx:if="{{completedTasks.length > 0}}" class="duration-content">
+        <view class="duration-pie" style="background: {{pieGradient}};">
+          <view class="duration-pie-inner">
+            <view>{{durationTotal}}</view>
+            <text>分钟·共{{completedTasks.length}}项</text>
+          </view>
+        </view>
+        <view class="duration-legend">
+          <view wx:for="{{visibleDurationTasks}}" wx:key="id" class="legend-row">
+            <view class="legend-swatch" style="background: {{item.color}};"></view>
+            <view class="legend-title">{{item.title}}</view>
+            <view class="legend-minutes">{{item.minutes}}分</view>
+            <view class="legend-percent">{{item.percent}}%</view>
+          </view>
+        </view>
+      </view>
+      <view wx:else class="card-empty">这一天还没有已完成行动</view>
+    </view>
+
+    <view class="detail-card completed-card">
+      <view class="card-head">
+        <view class="card-title">今日完成任务</view>
+        <view class="card-count">{{completedTasks.length}} 项</view>
+      </view>
+      <view wx:if="{{completedTasks.length > 0}}" class="completed-list">
+        <view wx:for="{{completedTasks}}" wx:key="id" class="completed-row">
+          <view class="completed-check">✓</view>
+          <view class="completed-copy">
+            <view class="completed-title">{{item.title}}</view>
+            <view class="completed-meta">{{goalTitle}} · 完成于 {{item.completedTime}}</view>
+          </view>
+          <view class="completed-duration"><view>{{item.minutes}}分</view><text>专注</text></view>
+        </view>
+      </view>
+      <view wx:else class="card-empty">完成一项行动后，会在这里留下记录。</view>
+    </view>
+
+    <view class="detail-card compare-card">
+      <view class="card-title">数据趋势对比</view>
+      <view class="compare-head"><text></text><text><text class="dot today-dot"></text>今日</text><text><text class="dot yesterday-dot"></text>昨日</text></view>
+      <view class="compare-row"><text>专注时长</text><text class="compare-today">{{metrics.minutes}} 分钟</text><text class="compare-yesterday">{{previous.minutes}} 分钟</text></view>
+      <view class="compare-row"><text>完成行动</text><text class="compare-today">{{metrics.completed}} 项</text><text class="compare-yesterday">{{previous.completed}} 项</text></view>
+      <view class="compare-row"><text>专注度</text><text class="compare-today">{{metrics.focusRate}}%</text><text class="compare-yesterday">{{previous.focusRate}}%</text></view>
+    </view>
+
+    <view class="detail-cta">
+      <view class="cta-title">每天进步一点点</view>
+      <view class="cta-copy">长期坚持，你会看到自己的成长被认真记录。</view>
+      <button class="cta-button" bindtap="goAddAction">继续添加今日行动</button>
+    </view>
+  </block>
+
+  <view wx:if="{{calendarVisible}}" class="detail-calendar-layer" catchtouchmove="noop">
+    <view class="detail-calendar-mask" catchtap="closeCalendar"></view>
+    <view class="detail-calendar-panel" catchtap="noop">
+      <view class="detail-calendar-head">
+        <view class="detail-calendar-nav {{calendarPrevDisabled ? 'is-disabled' : ''}}" data-delta="-1" catchtap="switchCalendarMonth">‹</view>
+        <view class="detail-calendar-title">{{calendarTitle}}</view>
+        <view class="detail-calendar-nav {{calendarNextDisabled ? 'is-disabled' : ''}}" data-delta="1" catchtap="switchCalendarMonth">›</view>
+      </view>
+      <view class="detail-calendar-week-row">
+        <view wx:for="{{calendarWeekLabels}}" wx:key="*this" class="detail-calendar-week-label">{{item}}</view>
+      </view>
+      <view class="detail-calendar-grid">
+        <view
+          wx:for="{{calendarDays}}"
+          wx:key="date"
+          class="detail-calendar-day {{item.isCurrentMonth ? '' : 'is-outside'}} {{item.isToday ? 'is-today' : ''}} {{item.isSelected ? 'is-selected' : ''}} {{item.isFuture || item.isBeforeMin ? 'is-disabled' : ''}}"
+          data-date="{{item.date}}"
+          catchtap="selectCalendarDate"
+        >
+          <view class="detail-calendar-day-number">{{item.day}}</view>
+          <view wx:if="{{item.hasAction}}" class="detail-calendar-dot {{item.isCompleted ? 'is-completed' : ''}}"></view>
+        </view>
+      </view>
+      <view class="detail-calendar-footer">
+        <view class="detail-calendar-today" catchtap="jumpTodayFromCalendar">回到今天</view>
+        <view class="detail-calendar-confirm" catchtap="closeCalendar">确定</view>
+      </view>
+    </view>
+  </view>
+</view>

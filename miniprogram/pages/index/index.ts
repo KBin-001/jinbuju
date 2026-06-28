@@ -334,6 +334,14 @@ Page(withAppTheme({
     this.load();
   },
   goCreateGoal() { if (this.data.navigating) return; this.setData({ navigating: true }); wx.navigateTo({ url: "/pages/goal-create/index", fail: () => this.setData({ navigating: false }) }); },
+  openTodayDataDetails() {
+    if (!this.data.goal) return;
+    const date = this.data.selectedDate || getTodayBusinessDate();
+    wx.navigateTo({
+      url: `/pages/today-data/index?date=${encodeURIComponent(date)}`,
+      fail: () => wx.showToast({ title: "数据详情打开失败", icon: "none" }),
+    });
+  },
   addTask() {
     if (!this.data.goal) { this.goCreateGoal(); return; }
     this.setData({ quickAddVisible: true, quickAddTitle: "", quickAddDescription: "", quickAddMinutes: 30, quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX, quickDurationVisible: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });

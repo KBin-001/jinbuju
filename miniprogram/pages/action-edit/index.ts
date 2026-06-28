@@ -20,8 +20,9 @@ Page(withAppTheme({
   onLoad(query: Record<string, string>) {
     const taskId = String(query.id || "");
     const goalId = String(query.goalId || "");
+    const currentDate = /^\d{4}-\d{2}-\d{2}$/.test(String(query.date || "")) ? String(query.date) : this.data.currentDate;
     if (!taskId) {
-      this.setData({ loading: false, goalId });
+      this.setData({ loading: false, goalId, currentDate });
       return;
     }
 

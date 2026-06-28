@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "今日数据",
+  "navigationBarBackgroundColor": "#F5F7F2",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#F5F7F2",
+  "enablePullDownRefresh": false
+}
