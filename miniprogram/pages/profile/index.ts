@@ -12,15 +12,6 @@ import {
 // 启用方式：将 features.ts 中 ENABLE_THEME_SWITCHING 改为 true，
 //           并取消本文件及 index.wxml 中「主题换肤」相关注释即可恢复。
 import { FEATURE_FLAGS } from "../../config/features";
-/* 主题换肤启用后恢复以下导入：
-import {
-  getThemeById,
-  setCurrentTheme,
-  THEME_PRESETS,
-  ThemeId,
-  ThemePreset,
-} from "../../services/theme";
-*/
 import { Goal, ProgressSummary } from "../../types/manual";
 import { UserDisplayProfile, UserProfileSource } from "../../types/profile";
 
@@ -35,41 +26,11 @@ interface GoalCardView {
   isCurrent: boolean;
 }
 
-interface FunctionEntry {
-  key: string;
-  title: string;
-  emoji: string;
-  iconClass: string;
-}
-
-/* 主题换肤启用后恢复以下类型：
-interface ThemeCardView {
-  id: ThemeId;
-  name: string;
-  desc: string;
-  primary: string;
-  primaryDeep: string;
-  primaryLight: string;
-  primarySoft: string;
-  accent: string;
-  bg: string;
-  heroGradient: string;
-  progressGradient: string;
-  tags: string[];
-  swatches: string[];
-}
-*/
-
 /** 成长概览统计 */
 interface GrowthStats {
   streakDays: number;
   completedActions: number;
   totalMinutes: number;
-}
-
-/** 本周小结 */
-interface WeekSummary {
-  beatPercent: number;
 }
 
 function shortDate(value?: string): string {
@@ -123,43 +84,6 @@ function buildGrowthStats(goals: Goal[]): GrowthStats {
   };
 }
 
-const FUNCTION_ENTRIES: FunctionEntry[] = [
-  { key: "history", title: "历史数据", emoji: "📊", iconClass: "func-icon-wrap--history" },
-  { key: "badges",  title: "成就徽章", emoji: "🏆", iconClass: "func-icon-wrap--badges" },
-  { key: "ai",      title: "AI 教练", emoji: "✦", iconClass: "func-icon-wrap--ai" },
-  // 主题换肤宏定义禁用：暂时屏蔽「主题皮肤」入口
-  // { key: "theme",   title: "主题皮肤", emoji: "🎨", iconClass: "func-icon-wrap--theme" },
-  { key: "settings",title: "数据设置", emoji: "⚙️", iconClass: "func-icon-wrap--settings" },
-];
-
-/* 主题换肤启用后恢复以下辅助函数：
-function toThemeCard(theme: ThemePreset): ThemeCardView {
-  return {
-    id: theme.id,
-    name: theme.name,
-    desc: theme.desc,
-    primary: theme.primary,
-    primaryDeep: theme.primaryDeep,
-    primaryLight: theme.primaryLight,
-    primarySoft: theme.primarySoft,
-    accent: theme.accent,
-    bg: theme.bg,
-    heroGradient: theme.heroGradient,
-    progressGradient: theme.progressGradient,
-    tags: theme.tags,
-    swatches: [theme.primary, theme.primaryLight, theme.accent, theme.primaryDeep],
-  };
-}
-
-// 主题弹窗筛选标签
-const THEME_FILTERS: string[] = ["全部", "柔和", "沉稳", "清新", "活力"];
-
-function filterThemes(list: ThemeCardView[], filter: string): ThemeCardView[] {
-  if (filter === "全部") return list;
-  return list.filter((t) => t.tags.indexOf(filter) >= 0);
-}
-*/
-
 Page({
   data: {
     goals: [] as GoalCardView[],
@@ -170,15 +94,11 @@ Page({
     displayAvatarText: "岚",
     levelLabel: "Lv.2 自律新星",
     joinedDays: 1,
-    functionEntries: FUNCTION_ENTRIES,
     stats: {
       streakDays: 0,
       completedActions: 0,
       totalMinutes: 0,
     } as GrowthStats,
-    weekSummary: {
-      beatPercent: 72, // TODO: 接入真实排名数据后替换
-    } as WeekSummary,
     profileEditorVisible: false,
     profileDraftNickname: "",
     profileDraftAvatarUrl: "",
@@ -186,15 +106,7 @@ Page({
     profileDraftSource: "custom" as UserProfileSource,
     profileDraftUseInTeam: true,
     endingGoalId: "",
-    // 主题换肤宏定义（前端）：暴露给 wxml 层，便于后续启用时做条件渲染
     enableThemeSwitching: THEME_SWITCHING_ENABLED,
-    // 以下为换肤弹窗专用字段，宏定义禁用期间已注释屏蔽
-    // themeList: THEME_PRESETS.map(toThemeCard) as ThemeCardView[],
-    // themeFilters: THEME_FILTERS,
-    // themeFilterActive: "全部",
-    // filteredThemeList: filterThemes(THEME_PRESETS.map(toThemeCard), "全部") as ThemeCardView[],
-    // themePickerVisible: false,
-    // 以下两个字段保留：用于根节点默认主题样式绑定，禁用期间恒为默认主题
     currentThemeId: getCurrentThemeId() as string,
     previewThemeId: getCurrentThemeId() as string,
     themeStyle: themeToProfileCssVars(getCurrentTheme()),
@@ -335,6 +247,18 @@ Page({
     }
   },
 
+  /** 查看成长档案 — 跳转到进度 Tab */
+  viewGoalArchive(event: { currentTarget: { dataset: { id?: string } } }) {
+    const id = String(event.currentTarget.dataset.id || "");
+    if (!id) return;
+    try {
+      setCurrentGoal(id);
+      wx.switchTab({ url: "/pages/plan/index" });
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "跳转失败", icon: "none" });
+    }
+  },
+
   endCurrentGoal(event: { currentTarget: { dataset: { id?: string } } }) {
     const id = String(event.currentTarget.dataset.id || "");
     const goal = this.data.goals.find((item) => item.id === id && item.isCurrent);
@@ -361,122 +285,36 @@ Page({
     });
   },
 
-  /** 管理目标 — 跳转到目标创建（复用原有 createGoal 路由） */
+  /** 管理目标 — 跳转到目标创建 */
   manageGoals() {
     wx.navigateTo({ url: "/pages/goal-create/index" });
   },
 
-  /** 查看全部统计（暂时跳转到进度 Tab） */
+  /** 查看全部统计 — 跳转到进度 Tab */
   viewAllStats() {
-    // TODO: 后续可跳转专属统计页
     wx.switchTab({ url: "/pages/plan/index" });
   },
 
-  /** 查看本周小结详情 */
-  viewWeekDetail() {
-    // TODO: 接入真实周报页面
-    wx.showToast({ title: "功能开发中", icon: "none" });
-  },
-
-  openFunction(event: { currentTarget: { dataset: { key?: string } } }) {
+  /** 工具箱入口 */
+  openToolboxItem(event: { currentTarget: { dataset: { key?: string } } }) {
     const key = String(event.currentTarget.dataset.key || "");
     if (key === "settings") {
       wx.navigateTo({ url: "/pages/data-management/index" });
       return;
     }
-    // 主题换肤宏定义禁用：暂时屏蔽主题皮肤入口
-    // if (key === "theme") {
-    //   this.openThemePicker();
-    //   return;
-    // }
     if (key === "history") {
       const archivedGoal = getArchivedGoals()[0];
       if (archivedGoal) wx.navigateTo({ url: `/pages/goal-review/index?id=${archivedGoal.id}` });
       else wx.showToast({ title: "暂无历史目标", icon: "none" });
       return;
     }
-    if (key === "badges" || key === "focus") {
-      wx.switchTab({ url: "/pages/plan/index" });
+    if (key === "badges") {
+      wx.showToast({ title: "成就系统开发中", icon: "none" });
+      return;
+    }
+    if (key === "ai") {
+      wx.showToast({ title: "AI 教练开发中", icon: "none" });
+      return;
     }
   },
-
-  /* ======= 主题皮肤弹窗（宏定义禁用期间已整体注释屏蔽）=======
-   * 启用方式：将 features.ts 中 ENABLE_THEME_SWITCHING 改为 true，
-   *           并恢复 wxml 中「主题换肤弹窗」注释块，再取消下方方法注释即可。
-   *
-  openThemePicker() {
-    const id = getCurrentThemeId();
-    this.setData({
-      themePickerVisible: true,
-      previewThemeId: id,
-      themeFilterActive: "全部",
-      filteredThemeList: filterThemes(this.data.themeList, "全部"),
-      themeStyle: themeToProfileCssVars(getCurrentTheme()),
-    });
-  },
-
-  closeThemePicker() {
-    // 关闭时若未保存，回退到当前已保存主题，避免预览残留
-    const theme = getCurrentTheme();
-    this.setData({
-      themePickerVisible: false,
-      previewThemeId: theme.id,
-      themeStyle: themeToProfileCssVars(theme),
-    });
-  },
-
-  // 切换筛选标签
-  switchThemeFilter(event: { currentTarget: { dataset: { filter?: string } } }) {
-    const filter = String(event.currentTarget.dataset.filter || "全部");
-    this.setData({
-      themeFilterActive: filter,
-      filteredThemeList: filterThemes(this.data.themeList, filter),
-    });
-  },
-
-  // 点击主题卡片：实时预览，不写入 storage
-  previewTheme(event: { currentTarget: { dataset: { id?: string } } }) {
-    const id = String(event.currentTarget.dataset.id || "") as ThemeId;
-    if (!id) return;
-    const theme = getThemeById(id);
-    this.setData({
-      previewThemeId: id,
-      themeStyle: themeToProfileCssVars(theme),
-    });
-  },
-
-  // 底部「恢复默认」：预览默认主题（不写入 storage，需再用「预览当前主题」确认）
-  restoreDefaultTheme() {
-    const theme = getThemeById(DEFAULT_THEME_ID);
-    this.setData({
-      previewThemeId: DEFAULT_THEME_ID,
-      themeStyle: themeToProfileCssVars(theme),
-    });
-    wx.showToast({ title: "已恢复默认预览", icon: "none" });
-  },
-
-  // 底部「应用当前主题」：把当前预览的主题正式写入 storage 并全局生效
-  applyPreviewTheme() {
-    const id = this.data.previewThemeId;
-    const theme = setCurrentTheme(id);
-    this.setData({
-      currentThemeId: id,
-      themeStyle: themeToProfileCssVars(theme),
-    });
-    wx.showToast({ title: "已应用当前主题", icon: "success" });
-  },
-
-  // 卡片内「设为当前主题」：保存到 storage 并全局生效（保留原入口）
-  applyTheme(event: { currentTarget: { dataset: { id?: string } } }) {
-    const id = String(event.currentTarget.dataset.id || "") as ThemeId;
-    if (!id) return;
-    const theme = setCurrentTheme(id);
-    this.setData({
-      currentThemeId: id,
-      previewThemeId: id,
-      themeStyle: themeToProfileCssVars(theme),
-    });
-    wx.showToast({ title: "已设为当前主题", icon: "success" });
-  },
-  */
 });

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 140 140">
+
+<defs>
+  <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+    <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#1c3d35" flood-opacity="0.12"/>
+  </filter>
+  <linearGradient id="cream" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#FFFDF7"/>
+    <stop offset="100%" stop-color="#FFF4D7"/>
+  </linearGradient>
+  <linearGradient id="mint" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#F4FBF7"/>
+    <stop offset="100%" stop-color="#E2F0EA"/>
+  </linearGradient>
+</defs>
+<rect x="20" y="20" width="100" height="100" rx="24" fill="#FFF1C8" filter="url(#shadow)"/>
+<path d="M52 42h36v20c0 19-10 31-18 31S52 81 52 62V42z" fill="#F5A623"/><path d="M52 52H38c0 18 10 25 21 25" fill="none" stroke="#D98D1A" stroke-width="6"/><path d="M88 52h14c0 18-10 25-21 25" fill="none" stroke="#D98D1A" stroke-width="6"/><rect x="64" y="88" width="12" height="18" fill="#8A5620"/><rect x="48" y="104" width="44" height="12" rx="6" fill="#6B3F1E"/><rect x="58" y="107" width="24" height="4" rx="2" fill="#FFC857"/></svg>
