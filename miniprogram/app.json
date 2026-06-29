@@ -15,6 +15,7 @@
     "pages/team-members/index",
     "pages/team-activity/index",
     "pages/profile/index",
+    "pages/ai-coach/index",
     "pages/goal-detail/index",
     "pages/goal-review/index",
     "pages/legal/privacy/index",

@@ -316,22 +316,22 @@ function buildAdviceText(todayMinutes: number, avgMinutes: number, range: TrendR
 }
 
 /** 将建议拆分为「主句（加粗）」和「补充说明（常规）」两段，供 AI 教练气泡分层展示 */
-function buildAdviceParts(todayMinutes: number, avgMinutes: number, range: TrendRange): { title: string; detail: string } {
+function buildAdviceParts(todayMinutes: number, avgMinutes: number, range: TrendRange): { adviceTitle: string; adviceDetail: string } {
   const rangeLabel = range === "week" ? "本周" : "本月";
   if (todayMinutes <= 0 && avgMinutes <= 0) {
-    return { title: "还没有投入记录", detail: "先记录一次投入，趋势线就会开始出现。" };
+    return { adviceTitle: "还没有投入记录", adviceDetail: "先记录一次投入，趋势线就会开始出现。" };
   }
   if (todayMinutes >= avgMinutes && todayMinutes > 0) {
     const target = Math.max(45, Math.ceil(todayMinutes / 5) * 5);
     return {
-      title: `今日投入 ${todayMinutes} 分钟，达到${rangeLabel}平均水平。`,
-      detail: `建议明天继续保持 ${target} 分钟以上，连续性会更好。`,
+      adviceTitle: `今日投入 ${todayMinutes} 分钟，达到${rangeLabel}平均水平。`,
+      adviceDetail: `建议明天继续保持 ${target} 分钟以上，连续性会更好。`,
     };
   }
   const target = Math.max(45, avgMinutes ? Math.ceil(avgMinutes / 5) * 5 : 45);
   return {
-    title: `今日投入 ${todayMinutes} 分钟，低于${rangeLabel}平均 ${avgMinutes} 分钟。`,
-    detail: `建议明天保持 ${target} 分钟以上，逐步追回节奏。`,
+    adviceTitle: `今日投入 ${todayMinutes} 分钟，低于${rangeLabel}平均 ${avgMinutes} 分钟。`,
+    adviceDetail: `建议明天保持 ${target} 分钟以上，逐步追回节奏。`,
   };
 }
 
@@ -1030,6 +1030,17 @@ Page(withAppTheme({
     }, () => {
       this.drawTrendLine();
     });
+  },
+
+  openAiCoach() {
+    if (this.data.trendRange === "year") {
+      wx.showToast({ title: "年度教练分析正在准备中", icon: "none" });
+      return;
+    }
+    const goalId = this.data.goal?.id || "";
+    const query = [`range=${this.data.trendRange}`];
+    if (goalId) query.push(`goalId=${encodeURIComponent(goalId)}`);
+    wx.navigateTo({ url: `/pages/ai-coach/index?${query.join("&")}` });
   },
 
   onBarTap(event: { currentTarget: { dataset: { key?: string } } }) {

@@ -4410,3 +4410,11 @@
     padding-left: 22rpx;
   }
 }
+.ai-coach-full-btn--pressed {
+  opacity: 0.78;
+  transform: scale(0.985);
+}
+
+.ai-coach-action--pressed {
+  opacity: 0.72;
+}

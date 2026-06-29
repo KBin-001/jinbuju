@@ -313,7 +313,7 @@ Page({
       return;
     }
     if (key === "ai") {
-      wx.showToast({ title: "AI 教练开发中", icon: "none" });
+      wx.navigateTo({ url: "/pages/ai-coach/index?range=total" });
       return;
     }
   },

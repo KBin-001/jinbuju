@@ -197,7 +197,7 @@
             <text class="ai-coach-point-icon">!</text>
             <text>{{aiCoach.suggestion}}</text>
           </view>
-          <view class="ai-coach-action">查看完整分析与建议 →</view>
+          <view class="ai-coach-action" bindtap="openAiCoach" hover-class="ai-coach-action--pressed">查看完整分析 →</view>
         </view>
 
         <view class="trend-stats-grid">
@@ -341,7 +341,7 @@
           </view>
           <view class="ai-coach-title-text">
             <view class="ai-coach-title">AI 进度教练</view>
-            <view class="ai-coach-subtitle">基于本周数据分析</view>
+            <view class="ai-coach-subtitle">{{trendRange === 'month' ? '基于本月数据分析' : trendRange === 'year' ? '基于年度数据分析' : '基于本周数据分析'}}</view>
           </view>
         </view>
       </view>
@@ -404,7 +404,7 @@
       </view>
 
       <!-- 底部：查看详细分析按钮 -->
-      <view class="ai-coach-full-btn">
+      <view class="ai-coach-full-btn" bindtap="openAiCoach" hover-class="ai-coach-full-btn--pressed">
         <text class="ai-coach-full-btn-star">✦</text>
         <text>查看详细分析  ›</text>
       </view>
