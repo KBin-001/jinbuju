@@ -30,6 +30,7 @@
     "navigationBarTitleText": "进步局",
     "navigationBarTextStyle": "black"
   },
+  "lazyCodeLoading": "requiredComponents",
   "tabBar": {
     "color": "#71827A",
     "selectedColor": "#356859",

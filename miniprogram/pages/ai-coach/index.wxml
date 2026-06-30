@@ -1,0 +1,100 @@
+<view class="coach-page">
+  <image class="coach-page__mountain" src="/assets/ai-coach/mountain-bg.svg" mode="aspectFill" />
+  <view class="coach-page__fade"></view>
+
+  <view class="coach-nav">
+    <view class="coach-nav__back" bindtap="goBack" hover-class="coach-nav__back--pressed">‹</view>
+    <text class="coach-nav__title">AI 进度教练</text>
+    <view class="coach-nav__safe"></view>
+  </view>
+
+  <scroll-view class="coach-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="coach-content">
+      <view class="coach-hero">
+        <view class="coach-hero__avatar-wrap">
+          <image class="coach-hero__avatar" src="/assets/ai-coach/robot.svg" mode="aspectFit" />
+        </view>
+        <view class="coach-hero__copy">
+          <text class="coach-hero__title">{{displayName}}，{{rangeGreeting}} 🌱</text>
+          <text class="coach-hero__line">{{periodLabel}}已投入 {{periodMinutes}} 分钟</text>
+          <text class="coach-hero__line">{{scoreLabel}} {{completionRate}}%</text>
+          <view class="coach-status"><view class="coach-status__dot"></view><text>{{analysisLabel}} · {{statusText}}</text></view>
+        </view>
+        <view class="coach-score" style="background: conic-gradient(#4F9876 {{completionRate * 3.6}}deg, #E5EEE8 0deg);">
+          <view class="coach-score__inner">
+            <view><text class="coach-score__number">{{completionRate}}</text><text class="coach-score__unit">%</text></view>
+            <text class="coach-score__label">{{scoreLabel}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="coach-section discovery-section">
+        <view class="section-heading">
+          <text class="section-heading__title section-heading__title--compact">教练发现</text>
+          <text class="section-heading__meta">{{discoveryMeta}}</text>
+        </view>
+
+        <view class="discovery-grid">
+          <view wx:for="{{metrics}}" wx:key="key" class="discovery-card">
+            <view class="discovery-card__head">
+              <text class="discovery-card__label">{{item.label}}</text>
+              <text class="discovery-card__signal discovery-card__signal--{{item.signalTone}}">{{item.signal}}</text>
+            </view>
+            <view class="discovery-card__value"><text class="discovery-card__number">{{item.value}}</text><text class="discovery-card__unit">{{item.unit}}</text></view>
+            <text class="discovery-card__helper">{{item.helper}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="coach-section ask-section">
+        <view class="section-heading">
+          <text class="section-heading__title">问问教练</text>
+        </view>
+
+        <scroll-view class="question-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+          <view class="question-row">
+            <view wx:for="{{quickQuestions}}" wx:key="*this" class="question-chip" data-question="{{item}}" bindtap="chooseQuestion">{{item}}</view>
+          </view>
+        </scroll-view>
+
+        <view class="ask-input-row">
+          <input
+            class="ask-input"
+            value="{{question}}"
+            maxlength="80"
+            placeholder="问问教练：{{periodLabel}}节奏怎么调整？"
+            bindinput="inputQuestion"
+            confirm-type="send"
+            bindconfirm="sendQuestion"
+          />
+          <view class="ask-send" bindtap="sendQuestion" hover-class="ask-send--pressed">
+            <image src="/assets/ai-coach/icon-send.svg" mode="aspectFit" />
+          </view>
+        </view>
+
+        <view wx:if="{{replyVisible}}" class="coach-reply">
+          <image class="coach-reply__avatar" src="/assets/ai-coach/robot.svg" mode="aspectFit" />
+          <view class="coach-reply__body">
+            <text class="coach-reply__title">教练回复</text>
+            <text class="coach-reply__text">{{replyText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="coach-tabbar">
+    <view class="coach-tabbar__item" data-url="/pages/index/index" bindtap="switchMainTab">
+      <image src="/assets/ai-coach/icon-calendar.svg" mode="aspectFit" /><text>今日</text>
+    </view>
+    <view class="coach-tabbar__item coach-tabbar__item--active" data-url="/pages/plan/index" bindtap="switchMainTab">
+      <image src="/assets/ai-coach/icon-progress.svg" mode="aspectFit" /><text>进度</text>
+    </view>
+    <view class="coach-tabbar__item" data-url="/pages/team/index" bindtap="switchMainTab">
+      <image src="/assets/ai-coach/icon-team.svg" mode="aspectFit" /><text>小队</text>
+    </view>
+    <view class="coach-tabbar__item" data-url="/pages/profile/index" bindtap="switchMainTab">
+      <image src="/assets/ai-coach/icon-user.svg" mode="aspectFit" /><text>我的</text>
+    </view>
+  </view>
+</view>

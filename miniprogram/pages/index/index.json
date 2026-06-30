@@ -2,9 +2,6 @@
   "navigationBarTitleText": "",
   "enablePullDownRefresh": false,
   "usingComponents": {
-    "ant-button": "antd-mini/Button/index",
-    "ant-card": "antd-mini/Card/index",
-    "ant-icon": "antd-mini/Icon/index",
-    "ant-tag": "antd-mini/Tag/index"
+    "ant-icon": "antd-mini/Icon/index"
   }
 }

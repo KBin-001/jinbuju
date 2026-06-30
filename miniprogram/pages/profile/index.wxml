@@ -1,6 +1,6 @@
 <view class="profile-page" data-theme="{{currentThemeId}}">
   <view class="profile-hero">
-    <image class="profile-hero__bg" src="/assets/profile/top-bg-watercolor.png" mode="aspectFill" />
+    <image class="profile-hero__bg" src="/assets/profile/top-bg-watercolor.jpg" mode="aspectFill" />
     <view class="profile-nav">
       <text class="profile-nav__title">我的</text>
     </view>
