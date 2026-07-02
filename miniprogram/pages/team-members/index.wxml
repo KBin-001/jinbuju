@@ -39,13 +39,13 @@
       <view class="search-row">
         <view class="search-box">
           <text class="search-icon">⌕</text>
-          <input
+          <t-input
             class="search-input"
             value="{{searchKeyword}}"
             placeholder="搜索成员昵称"
             placeholder-class="search-placeholder"
             confirm-type="search"
-            bindinput="onSearchInput"
+            bindchange="onSearchInput"
           />
           <view wx:if="{{searchKeyword}}" class="search-clear" catchtap="onSearchClear">×</view>
         </view>

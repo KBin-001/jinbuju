@@ -7,7 +7,7 @@
   <view wx:elif="{{status === 'error'}}" class="state-card card">
     <view class="state-mark">!</view>
     <view class="state-title">{{errorMessage}}</view>
-    <button class="primary-button" bindtap="backProfile">回到我的</button>
+    <t-button class="primary-button" bindtap="backProfile">回到我的</t-button>
   </view>
 
   <block wx:else>

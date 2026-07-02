@@ -17,7 +17,7 @@
     <view class="state-icon">!</view>
     <view class="state-title">小队加载失败</view>
     <view class="state-copy">{{errorMessage}}</view>
-    <button class="solid-button state-button" bindtap="retry">重新加载</button>
+    <t-button class="solid-button state-button" bindtap="retry">重新加载</t-button>
   </view>
 
   <view wx:elif="{{status === 'empty'}}" class="team-card empty-card">
@@ -25,10 +25,10 @@
     <view class="empty-title">还没有加入小队</view>
     <view class="empty-copy">支持 5-50 人轻量同行。一起自律，各自成长。</view>
     <view class="empty-actions">
-      <button class="solid-button" loading="{{creating}}" disabled="{{creating}}" bindtap="createLocalTeam">
+      <t-button class="solid-button" loading="{{creating}}" disabled="{{creating}}" bindtap="createLocalTeam">
         {{creating ? '正在创建' : '创建小队'}}
-      </button>
-      <button class="outline-button" bindtap="openJoinPopup">房间号加入</button>
+      </t-button>
+      <t-button class="outline-button" bindtap="openJoinPopup">房间号加入</t-button>
     </view>
   </view>
 
@@ -57,8 +57,8 @@
             wx:key="id"
             class="preview-avatar"
           >
-            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
-            <text wx:else>{{item.avatarText}}</text>
+            <t-avatar wx:if="{{item.avatar}}" image="{{item.avatar}}" size="80rpx" />
+            <t-avatar wx:else size="80rpx">{{item.avatarText}}</t-avatar>
           </view>
           <view wx:if="{{extraAvatarCount > 0}}" class="preview-more">+{{extraAvatarCount}}</view>
         </view>
@@ -230,16 +230,16 @@
       <view class="popup-handle"></view>
       <view class="popup-title">输入房间号加入</view>
       <view class="popup-copy">当前为本地演示版本，真实跨设备加入需要后续接入云端小队数据。</view>
-      <input
+      <t-input
         class="room-input"
         maxlength="6"
         value="{{roomCodeInput}}"
         placeholder="例如 TQLR01"
-        bindinput="inputRoomCode"
+        bindchange="inputRoomCode"
       />
       <view class="popup-actions">
-        <button class="outline-button" bindtap="closeJoinPopup">取消</button>
-        <button class="solid-button" loading="{{joining}}" disabled="{{joining}}" bindtap="submitJoinRoom">加入</button>
+        <t-button class="outline-button" bindtap="closeJoinPopup">取消</t-button>
+        <t-button class="solid-button" loading="{{joining}}" disabled="{{joining}}" bindtap="submitJoinRoom">加入</t-button>
       </view>
     </view>
   </view>
@@ -263,7 +263,7 @@
           <text>一起自律，各自成长</text>
         </view>
       </view>
-      <button class="solid-button popup-full-button" bindtap="closeTeamInfo">知道了</button>
+      <t-button class="solid-button popup-full-button" bindtap="closeTeamInfo">知道了</t-button>
     </view>
   </view>
 
@@ -276,7 +276,7 @@
           <view class="settings-title">小队设置</view>
         </view>
         <view class="settings-close" catchtap="closeTeamSettings" aria-label="关闭小队设置">
-          <ant-icon type="CloseOutline" />
+          <t-icon name="close" />
         </view>
       </view>
 
@@ -288,7 +288,7 @@
         <view class="settings-section {{!settingsCanEditTeam ? 'settings-section--readonly' : ''}}">
           <view class="settings-section-title">小队资料</view>
           <view class="team-profile-setting">
-            <button
+            <t-button
               class="team-avatar-picker"
               open-type="chooseAvatar"
               bindchooseavatar="chooseTeamAvatar"
@@ -297,16 +297,16 @@
               <image wx:if="{{settingsDraft.avatar}}" src="{{settingsDraft.avatar}}" mode="aspectFill" />
               <text wx:else>{{teamAvatarText}}</text>
               <view wx:if="{{settingsCanEditTeam}}" class="avatar-edit-mark">换</view>
-            </button>
+            </t-button>
             <view class="team-name-field">
               <view class="setting-label">小队名称</view>
-              <input
+              <t-input
                 class="settings-input"
                 maxlength="20"
                 value="{{settingsDraft.name}}"
                 placeholder="输入 2-20 个字符"
                 disabled="{{!settingsCanEditTeam}}"
-                bindinput="inputTeamName"
+                bindchange="inputTeamName"
               />
             </view>
           </view>
@@ -316,7 +316,7 @@
               <view class="setting-label">小队房间号</view>
               <view class="room-code-value">{{team.roomCode}}</view>
             </view>
-            <button class="copy-code-button" bindtap="copyRoomCode">复制</button>
+            <t-button class="copy-code-button" bindtap="copyRoomCode">复制</t-button>
           </view>
           <view class="setting-help">房间号创建时随机生成，为保证邀请链接稳定，暂不支持修改。</view>
         </view>
@@ -395,8 +395,8 @@
       </scroll-view>
 
       <view class="settings-footer">
-        <button class="settings-cancel-button" bindtap="closeTeamSettings">取消</button>
-        <button class="settings-save-button" loading="{{savingSettings}}" disabled="{{savingSettings}}" bindtap="saveTeamSettings">保存设置</button>
+        <t-button class="settings-cancel-button" bindtap="closeTeamSettings">取消</t-button>
+        <t-button class="settings-save-button" loading="{{savingSettings}}" disabled="{{savingSettings}}" bindtap="saveTeamSettings">保存设置</t-button>
       </view>
     </view>
   </view>
@@ -413,8 +413,8 @@
         <view class="member-detail-main">
           <view class="popup-title">{{selectedMember.displayName}}</view>
           <view class="member-detail-tags">
-            <view class="soft-tag">{{selectedMember.privacyText}}</view>
-            <view class="soft-tag">{{selectedMember.statusText}}</view>
+            <t-tag class="soft-tag" theme="primary" variant="light">{{selectedMember.privacyText}}</t-tag>
+            <t-tag class="soft-tag" theme="warning" variant="light">{{selectedMember.statusText}}</t-tag>
           </view>
         </view>
       </view>
@@ -435,7 +435,7 @@
         <view class="popup-copy">{{selectedMember.detailHiddenText}}</view>
       </view>
 
-      <button class="solid-button popup-full-button" bindtap="closeMemberDetail">知道了</button>
+      <t-button class="solid-button popup-full-button" bindtap="closeMemberDetail">知道了</t-button>
     </view>
   </view>
 </view>

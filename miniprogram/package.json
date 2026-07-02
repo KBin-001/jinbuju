@@ -3,6 +3,6 @@
     "typescript": "^6.0.3"
   },
   "dependencies": {
-    "antd-mini": "3.4.3"
+    "tdesign-miniprogram": "^1.15.2"
   }
 }

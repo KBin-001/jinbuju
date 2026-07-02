@@ -1,6 +1,4 @@
 {
   "navigationBarTitleText": "小队",
-  "usingComponents": {
-    "ant-icon": "antd-mini/Icon/index"
-  }
+  "usingComponents": {}
 }

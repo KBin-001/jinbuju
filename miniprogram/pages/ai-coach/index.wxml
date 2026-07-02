@@ -148,13 +148,13 @@
   <!-- 底部输入栏 -->
   <view class="chat-composer">
     <view class="chat-composer__inner">
-      <input
+      <t-input
         class="chat-composer__input"
         value="{{question}}"
         maxlength="120"
         disabled="{{asking}}"
         placeholder="问问教练..."
-        bindinput="inputQuestion"
+        bindchange="inputQuestion"
         confirm-type="send"
         bindconfirm="sendQuestion"
       />

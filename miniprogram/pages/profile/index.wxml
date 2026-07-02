@@ -12,9 +12,9 @@
 
   <view class="profile-user-card">
     <view class="profile-avatar">
-      <image wx:if="{{displayAvatarUrl}}" class="profile-avatar__image" src="{{displayAvatarUrl}}" mode="aspectFill" />
-      <text wx:else class="profile-avatar__text">{{displayAvatarText}}</text>
-      <button class="profile-avatar__picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></button>
+      <t-avatar wx:if="{{displayAvatarUrl}}" class="profile-avatar__image" image="{{displayAvatarUrl}}" size="128rpx" />
+      <t-avatar wx:else class="profile-avatar__text" size="128rpx">{{displayAvatarText}}</t-avatar>
+      <t-button class="profile-avatar__picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></t-button>
     </view>
 
     <view class="profile-user-info">
@@ -93,7 +93,7 @@
               <text class="goal-main__title">{{item.title}}</text>
               <text class="goal-main__sub">已坚持 {{item.days}} 天</text>
             </view>
-            <view class="goal-status">{{item.isCurrent ? '进行中' : '待续'}}</view>
+            <t-tag class="goal-status" theme="primary" variant="light">{{item.isCurrent ? '进行中' : '待续'}}</t-tag>
           </view>
 
           <view class="goal-progress-row">
@@ -159,12 +159,12 @@
             <image wx:if="{{profileDraftAvatarUrl}}" src="{{profileDraftAvatarUrl}}" mode="aspectFill" />
             <text wx:else>{{profileDraftAvatarText}}</text>
           </view>
-          <button class="avatar-choose-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">使用微信头像</button>
+          <t-button class="avatar-choose-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">使用微信头像</t-button>
         </view>
 
         <view class="profile-field">
           <view class="profile-label">展示名称</view>
-          <input class="profile-input" type="nickname" maxlength="16" value="{{profileDraftNickname}}" placeholder="输入昵称或选择微信昵称" bindinput="inputProfileNickname" />
+          <t-input class="profile-input" type="nickname" maxlength="16" value="{{profileDraftNickname}}" placeholder="输入昵称或选择微信昵称" bindchange="inputProfileNickname" />
         </view>
 
         <view class="profile-setting-row">
@@ -172,13 +172,13 @@
             <view class="profile-label">在小队中使用该资料</view>
             <view class="profile-helper">匿名模式下仍会隐藏头像和名称。</view>
           </view>
-          <switch checked="{{profileDraftUseInTeam}}" color="#2F6D5D" bindchange="toggleProfileUseInTeam" />
+          <t-switch value="{{profileDraftUseInTeam}}" color="#2F6D5D" bindchange="toggleProfileUseInTeam" />
         </view>
       </view>
 
       <view class="profile-editor-actions">
-        <button class="profile-cancel-btn" bindtap="closeProfileEditor">取消</button>
-        <button class="profile-save-btn" bindtap="saveProfileEditor">保存</button>
+        <t-button class="profile-cancel-btn" bindtap="closeProfileEditor">取消</t-button>
+        <t-button class="profile-save-btn" bindtap="saveProfileEditor">保存</t-button>
       </view>
     </view>
   </view>

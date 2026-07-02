@@ -7,7 +7,7 @@
   <view wx:elif="{{status === 'error'}}" class="state-card card">
     <view class="state-mark">!</view>
     <view class="state-title">{{errorMessage}}</view>
-    <button class="primary-button" bindtap="retry">重试</button>
+    <t-button class="primary-button" bindtap="retry">重试</t-button>
   </view>
 
   <block wx:else>
@@ -34,9 +34,9 @@
     </view>
 
     <view class="action-row">
-      <button wx:if="{{!isCurrentGoal}}" class="secondary-button compact-action" bindtap="setAsCurrentGoal">设为当前目标</button>
-      <button class="secondary-button compact-action" bindtap="addAction">添加行动</button>
-      <button class="secondary-button compact-action" bindtap="openReview">复盘入口</button>
+      <t-button wx:if="{{!isCurrentGoal}}" class="secondary-button compact-action" bindtap="setAsCurrentGoal">设为当前目标</t-button>
+      <t-button class="secondary-button compact-action" bindtap="addAction">添加行动</t-button>
+      <t-button class="secondary-button compact-action" bindtap="openReview">复盘入口</t-button>
     </view>
 
     <view class="section-card">
@@ -49,7 +49,7 @@
         <view wx:for="{{dailyActions}}" wx:key="id" class="record-card">
           <view class="record-head">
             <view class="record-title">{{item.title}}</view>
-            <view class="status-chip {{item.statusTone}}">{{item.statusLabel}}</view>
+            <t-tag class="status-chip {{item.statusTone}}" theme="primary" variant="light">{{item.statusLabel}}</t-tag>
           </view>
           <view class="record-meta">{{item.dateText}} · 预计 {{item.estimatedMinutes}} 分钟 · 实际 {{item.actualText}}</view>
         </view>
@@ -71,8 +71,8 @@
     </view>
 
     <view class="danger-actions">
-      <button class="secondary-button" loading="{{lifecycleSubmitting}}" disabled="{{lifecycleSubmitting}}" bindtap="replaceGoal">更换目标</button>
-      <button class="danger-button" loading="{{lifecycleSubmitting}}" disabled="{{lifecycleSubmitting}}" bindtap="endGoal">终止目标</button>
+      <t-button class="secondary-button" loading="{{lifecycleSubmitting}}" disabled="{{lifecycleSubmitting}}" bindtap="replaceGoal">更换目标</t-button>
+      <t-button class="danger-button" loading="{{lifecycleSubmitting}}" disabled="{{lifecycleSubmitting}}" bindtap="endGoal">终止目标</t-button>
     </view>
   </block>
 </view>

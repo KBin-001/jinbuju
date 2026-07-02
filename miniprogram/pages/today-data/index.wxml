@@ -7,7 +7,7 @@
   <view wx:elif="{{status === 'error'}}" class="state-card">
     <view class="state-title">数据详情暂时无法展示</view>
     <view class="state-copy">{{errorMessage}}</view>
-    <button class="state-button" bindtap="load">重新加载</button>
+    <t-button class="state-button" bindtap="load">重新加载</t-button>
   </view>
 
   <block wx:else>
@@ -130,7 +130,7 @@
     <view class="detail-cta">
       <view class="cta-title">每天进步一点点</view>
       <view class="cta-copy">长期坚持，你会看到自己的成长被认真记录。</view>
-      <button class="cta-button" bindtap="goAddAction">继续添加今日行动</button>
+      <t-button class="cta-button" bindtap="goAddAction">继续添加今日行动</t-button>
     </view>
   </block>
 
@@ -199,8 +199,8 @@
       <view class="time-sync-status {{timeSyncText === '已保存到本地' ? 'is-saved' : ''}}">{{timeSyncText}}</view>
 
       <view class="time-editor-actions">
-        <button class="time-cancel-button" disabled="{{savingTime}}" catchtap="closeTimeEditor">取消</button>
-        <button class="time-save-button" loading="{{savingTime}}" disabled="{{savingTime}}" catchtap="saveCompletionTime">保存时间</button>
+        <t-button class="time-cancel-button" disabled="{{savingTime}}" catchtap="closeTimeEditor">取消</t-button>
+        <t-button class="time-save-button" loading="{{savingTime}}" disabled="{{savingTime}}" catchtap="saveCompletionTime">保存时间</t-button>
       </view>
     </view>
   </view>

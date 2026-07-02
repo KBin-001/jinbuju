@@ -1,10 +1,5 @@
 {
   "usingComponents": {
-    "ant-button": "antd-mini/Button/index",
-    "ant-loading": "antd-mini/Loading/index",
-    "ant-input": "antd-mini/Input/index",
-    "ant-textarea": "antd-mini/Input/Textarea/index",
-    "ant-checkbox": "antd-mini/Checkbox/index"
   },
   "navigationBarTitleText": "AI 方案生成"
 }

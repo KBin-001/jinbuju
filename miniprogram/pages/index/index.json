@@ -1,7 +1,4 @@
 {
   "navigationBarTitleText": "",
-  "enablePullDownRefresh": false,
-  "usingComponents": {
-    "ant-icon": "antd-mini/Icon/index"
-  }
+  "enablePullDownRefresh": false
 }

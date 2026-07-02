@@ -1,12 +1,5 @@
 {
   "navigationStyle": "custom",
   "usingComponents": {
-    "ant-button": "antd-mini/Button/index",
-    "ant-card": "antd-mini/Card/index",
-    "ant-input": "antd-mini/Input/index",
-    "ant-loading": "antd-mini/Loading/index",
-    "ant-notice": "antd-mini/NoticeBar/index",
-    "ant-popup": "antd-mini/Popup/index",
-    "ant-textarea": "antd-mini/Input/Textarea/index"
   }
 }

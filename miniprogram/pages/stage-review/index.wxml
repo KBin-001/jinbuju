@@ -15,7 +15,7 @@
     <view class="state-mark">!</view>
     <view class="state-title">复盘加载失败</view>
     <view class="state-description">{{errorMessage}}</view>
-    <button class="primary-button" bindtap="retry">重新加载</button>
+    <t-button class="primary-button" bindtap="retry">重新加载</t-button>
   </view>
 
   <block wx:else>
@@ -106,29 +106,29 @@
         </view>
         <view class="review-success-encouragement">每一次复盘，都是让行动更清晰的一步。</view>
       </view>
-      <button
+      <t-button
         wx:if="{{generatedPreviewId || review.previewId}}"
         class="primary-button full-button review-success-button"
         bindtap="continuePreview"
-      >查看新计划方案</button>
+      >查看新计划方案</t-button>
       <view wx:else class="section-copy">预览暂时不可用，请稍后从进度页重试。</view>
     </view>
 
     <view wx:elif="{{review.reviewed}}" class="card reviewed-card">
       <view class="section-title">复盘已经完成</view>
       <view class="section-copy">新计划预览已经生成，可以继续查看并确认。</view>
-      <button
+      <t-button
         wx:if="{{review.previewId}}"
         class="primary-button full-button"
         bindtap="continuePreview"
-      >主动生成新计划</button>
+      >主动生成新计划</t-button>
       <view wx:else class="section-copy">预览暂时不可用，请稍后从进度页重试。</view>
     </view>
 
     <block wx:elif="{{!review.reviewed}}">
       <view class="card question-card">
         <view class="section-title">这段节奏感觉如何？</view>
-        <button
+        <t-button
           wx:for="{{difficultyOptions}}"
           wx:key="value"
           class="choice {{difficulty === item.value ? 'choice-active' : ''}}"
@@ -137,12 +137,12 @@
         >
           <view class="choice-title">{{item.label}}</view>
           <view class="choice-description">{{item.description}}</view>
-        </button>
+        </t-button>
       </view>
 
       <view class="card question-card">
         <view class="section-title">新计划怎么调整？</view>
-        <button
+        <t-button
           wx:for="{{preferenceOptions}}"
           wx:key="value"
           class="choice {{nextPreference === item.value ? 'choice-active' : ''}}"
@@ -151,14 +151,14 @@
         >
           <view class="choice-title">{{item.label}}</view>
           <view class="choice-description">{{item.description}}</view>
-        </button>
-        <textarea
+        </t-button>
+        <t-textarea
           wx:if="{{nextPreference === 'change_focus'}}"
           class="focus-input"
           maxlength="200"
           value="{{focusAdjustment}}"
           placeholder="例如：减少理论阅读，多做两次模拟练习；也可以写下想使用的材料、练习方式和时间安排"
-          bindinput="updateFocus"
+          bindchange="updateFocus"
         />
       </view>
 
@@ -166,25 +166,25 @@
         <view class="section-title">新计划准备推进多久？</view>
         <view class="section-copy">14 天以内生成完整行动；更长周期先生成整体大纲和首个 7 天。</view>
         <view class="duration-grid">
-          <button
+          <t-button
             wx:for="{{durationOptions}}"
             wx:key="*this"
             class="duration-choice {{planDurationDays === item ? 'duration-choice-active' : ''}}"
             data-value="{{item}}"
             bindtap="chooseDuration"
-          >{{item}} 天</button>
+          >{{item}} 天</t-button>
         </view>
       </view>
 
       <view wx:if="{{!review.canReview}}" class="notice">
         当前阶段结束后开放复盘。你可以先回到今日页继续行动。
       </view>
-      <button
+      <t-button
         class="submit-button {{!review.canReview ? 'button-disabled' : ''}}"
         disabled="{{!review.canReview || submitting}}"
         loading="{{submitting}}"
         bindtap="submit"
-      >生成新的行动计划</button>
+      >生成新的行动计划</t-button>
     </block>
   </block>
 </view>

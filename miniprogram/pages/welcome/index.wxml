@@ -9,7 +9,7 @@
     <view class="state-mark">!</view>
     <view class="state-title">启动失败</view>
     <view class="state-description">{{errorMessage}}</view>
-    <button class="primary-button" bindtap="retry">重新加载</button>
+    <t-button class="primary-button" bindtap="retry">重新加载</t-button>
   </view>
 
   <view wx:else class="welcome-content">
@@ -47,12 +47,12 @@
     </view>
 
     <view class="welcome-actions">
-      <button class="start-button" hover-class="start-button-active" bindtap="startPlanning">
+      <t-button class="start-button" hover-class="start-button-active" bindtap="startPlanning">
         创建长期目标
-      </button>
-      <button class="example-button" hover-class="example-button-active" bindtap="toggleExample">
+      </t-button>
+      <t-button class="example-button" hover-class="example-button-active" bindtap="toggleExample">
         {{showExample ? '收起示例' : '先看看示例'}}
-      </button>
+      </t-button>
     </view>
   </view>
 </view>

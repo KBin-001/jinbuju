@@ -16,13 +16,13 @@
     </view>
     <view class="card form-card">
       <view class="field-label">行动标题</view>
-      <input class="text-input" value="{{title}}" maxlength="40" placeholder="例如：做一组逻辑推理题" bindinput="inputTitle"/>
+      <t-input class="text-input" value="{{title}}" maxlength="40" placeholder="例如：做一组逻辑推理题" bindchange="inputTitle"/>
       <view class="counter">{{title.length}} / 40</view>
       <view class="two-fields">
         <view class="field">
           <view class="field-label">预计时间</view>
           <view class="input-unit">
-            <input type="number" value="{{estimatedMinutes}}" bindinput="inputMinutes"/>
+            <t-input type="number" value="{{estimatedMinutes}}" bindchange="inputMinutes"/>
             <text>分钟</text>
           </view>
           <view class="hint">5～240 分钟</view>
@@ -35,11 +35,11 @@
         </view>
       </view>
       <view class="field-label field-gap">简单说明（可选）</view>
-      <textarea class="description" value="{{description}}" maxlength="150" placeholder="补充执行方式或完成标准" bindinput="inputDescription"/>
+      <t-textarea class="description" value="{{description}}" maxlength="150" placeholder="补充执行方式或完成标准" bindchange="inputDescription"/>
       <view class="counter">{{description.length}} / 150</view>
     </view>
-    <button class="primary-button save-button" loading="{{submitting}}" disabled="{{submitting || title.length < 2}}" bindtap="save">
+    <t-button class="primary-button save-button" loading="{{submitting}}" disabled="{{submitting || title.length < 2}}" bindtap="save">
       {{submitting ? '正在保存' : '保存行动'}}
-    </button>
+    </t-button>
   </block>
 </view>

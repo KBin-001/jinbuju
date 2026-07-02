@@ -1,12 +1,12 @@
 <view class="share-page">
   <view class="share-backdrop"></view>
 
-  <button
+  <t-button
     class="share-close"
     style="top: {{navButtonTop}}px; width: {{navButtonSize}}px; height: {{navButtonSize}}px;"
     bindtap="closePage"
     aria-label="关闭分享卡"
-  >×</button>
+  >×</t-button>
 
   <view wx:if="{{status === 'loading'}}" class="share-state">
     <view class="state-dot"></view>
@@ -16,7 +16,7 @@
   <view wx:elif="{{status === 'error'}}" class="share-state">
     <view class="state-title">分享卡暂时无法生成</view>
     <view class="state-copy">{{errorMessage}}</view>
-    <button class="state-button" bindtap="load">重新加载</button>
+    <t-button class="state-button" bindtap="load">重新加载</t-button>
   </view>
 
   <scroll-view wx:else class="share-scroll" scroll-y enhanced show-scrollbar="{{false}}">
@@ -62,7 +62,7 @@
               <view class="list-title">今日完成清单</view>
               <view class="privacy-control">
                 <text>{{hideTasks ? '已隐藏' : '隐藏内容'}}</text>
-                <switch checked="{{hideTasks}}" color="#356859" bindchange="toggleTaskPrivacy" />
+                <t-switch value="{{hideTasks}}" color="#356859" bindchange="toggleTaskPrivacy" />
               </view>
             </view>
             <view wx:if="{{hideTasks}}" class="hidden-summary">今日完成 {{done}} 项行动</view>
@@ -95,10 +95,10 @@
       </view>
 
       <view class="share-save-area">
-        <button class="save-image-button" loading="{{saving}}" disabled="{{saving}}" bindtap="saveImage">
+        <t-button class="save-image-button" loading="{{saving}}" disabled="{{saving}}" bindtap="saveImage">
           <text wx:if="{{!saving}}" class="save-icon">⇩</text>
           <text>{{saving ? '正在生成图片' : '保存图片'}}</text>
-        </button>
+        </t-button>
         <view class="save-tip">图片仅保存在你的设备中</view>
       </view>
     </view>

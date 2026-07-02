@@ -1,7 +1,7 @@
 <view class="generate-page" data-theme="{{appTheme}}">
   <!-- Analyzing state -->
   <view wx:if="{{flowState === 'analyzing' && !showClarification}}" class="gen-center">
-    <ant-loading type="spin" size="x-large" color="#3F8F72" />
+    <t-loading size="64rpx" color="#3F8F72" />
     <view class="gen-title">正在理解你的目标</view>
     <view class="gen-sub">AI 分析完成后将自动进入下一步</view>
   </view>
@@ -32,7 +32,7 @@
         </view>
 
         <view wx:if="{{question.type === 'single_choice'}}" class="answer-options">
-          <button
+          <t-button
             wx:for="{{question.optionViews}}"
             wx:key="value"
             wx:for-item="option"
@@ -40,53 +40,51 @@
             data-question-id="{{question.id}}"
             data-value="{{option.value}}"
             bindtap="selectAnswer"
-          >{{option.value}}</button>
+          >{{option.value}}</t-button>
         </view>
 
         <view wx:elif="{{question.type === 'multiple_choice'}}" class="answer-options">
-          <ant-checkbox
+          <t-checkbox
             wx:for="{{question.optionViews}}"
             wx:key="value"
             wx:for-item="option"
-            className="answer-chip {{option.selected ? 'choice-chip-active' : ''}}"
+            class="answer-chip {{option.selected ? 'choice-chip-active' : ''}}"
             checked="{{option.selected}}"
             data-question-id="{{question.id}}"
             data-value="{{option.value}}"
             bindchange="toggleMultiAnswer"
-          >{{option.value}}</ant-checkbox>
+          >{{option.value}}</t-checkbox>
         </view>
 
         <view wx:elif="{{question.type === 'boolean'}}" class="answer-options">
-          <button
+          <t-button
             class="answer-chip {{answers[question.id] === true ? 'choice-chip-active' : ''}}"
             data-question-id="{{question.id}}"
             data-value="true"
             bindtap="selectAnswer"
-          >可以</button>
-          <button
+          >可以</t-button>
+          <t-button
             class="answer-chip {{answers[question.id] === false ? 'choice-chip-active' : ''}}"
             data-question-id="{{question.id}}"
             data-value="false"
             bindtap="selectAnswer"
-          >暂时不行</button>
+          >暂时不行</t-button>
         </view>
 
-        <ant-input
+        <t-input
           wx:elif="{{question.type === 'number'}}"
-          className="answer-input"
+          class="answer-input"
           type="number"
-          controlled="{{true}}"
           value="{{answers[question.id]}}"
           placeholder="{{question.min}}～{{question.max}}"
           data-question-id="{{question.id}}"
           bindchange="inputNumberAnswer"
         />
 
-        <ant-textarea
+        <t-textarea
           wx:else
-          className="answer-textarea"
-          controlled="{{true}}"
-          maxLength="{{question.maxLength || 100}}"
+          class="answer-textarea"
+          maxlength="{{question.maxLength || 100}}"
           value="{{answers[question.id]}}"
           placeholder="{{question.placeholder || '简单说明即可'}}"
           data-question-id="{{question.id}}"
@@ -100,7 +98,7 @@
   <!-- Generating state -->
   <view wx:elif="{{flowState === 'generating'}}" class="gen-center">
     <view class="generation-panel">
-      <ant-loading type="spin" size="x-large" color="#fff" />
+      <t-loading size="64rpx" color="#fff" />
 
       <view class="phase-list">
         <view class="phase-item {{generationPhase === 'understanding' ? 'phase-active' : ''}} {{generationPhase === 'organizing' || generationPhase === 'generating' || generationPhase === 'validating' || generationPhase === 'completed' ? 'phase-done' : ''}}">
@@ -163,14 +161,14 @@
   <!-- Bottom actions -->
   <view class="bottom-actions">
     <block wx:if="{{showClarification && analysis}}">
-      <ant-button type="default" className="previous-button" disabled="{{submitting}}" bindtap="goBack">返回修改</ant-button>
-      <ant-button type="primary" className="next-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitClarificationAndGenerate">
+      <t-button theme="default" class="previous-button" disabled="{{submitting}}" bindtap="goBack">返回修改</t-button>
+      <t-button theme="primary" class="next-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitClarificationAndGenerate">
         确认并生成方案
-      </ant-button>
+      </t-button>
     </block>
     <block wx:elif="{{flowState === 'error'}}">
-      <ant-button type="default" className="previous-button" bindtap="goBack">返回修改</ant-button>
-      <ant-button type="primary" className="next-button" disabled="{{submitting}}" bindtap="retryGeneration">重新生成</ant-button>
+      <t-button theme="default" class="previous-button" bindtap="goBack">返回修改</t-button>
+      <t-button theme="primary" class="next-button" disabled="{{submitting}}" bindtap="retryGeneration">重新生成</t-button>
     </block>
     <!-- generating/completed: no buttons -->
   </view>

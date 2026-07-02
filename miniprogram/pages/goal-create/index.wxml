@@ -16,16 +16,16 @@
   <view class="section-shell">
     <view class="section-title">选择目标方向</view>
     <view class="chip-grid">
-      <button wx:for="{{options}}" wx:key="value" class="choice-chip {{category === item.value ? 'choice-chip-active' : ''}}" data-value="{{item.value}}" bindtap="selectCategory">{{item.label}}</button>
+      <t-button wx:for="{{options}}" wx:key="value" class="choice-chip {{category === item.value ? 'choice-chip-active' : ''}}" data-value="{{item.value}}" bindtap="selectCategory">{{item.label}}</t-button>
     </view>
   </view>
 
   <view class="card form-card">
     <view class="field-label">目标名称</view>
-    <input class="text-input" value="{{title}}" maxlength="30" placeholder="例如：完成个人博客" bindinput="inputTitle" />
+    <t-input class="text-input" value="{{title}}" maxlength="30" placeholder="例如：完成个人博客" bindchange="inputTitle" />
     <view class="counter">{{title.length}} / 30</view>
     <view class="field-label field-gap">简单说明（可选）</view>
-    <textarea class="description" value="{{description}}" maxlength="150" placeholder="写下你希望达成的结果" bindinput="inputDescription" />
+    <t-textarea class="description" value="{{description}}" maxlength="150" placeholder="写下你希望达成的结果" bindchange="inputDescription" />
     <view class="counter">{{description.length}} / 150</view>
   </view>
 
@@ -37,5 +37,5 @@
     </view>
   </view>
 
-  <button class="primary-button submit-button" loading="{{submitting}}" disabled="{{submitting || title.length < 2}}" bindtap="submit">{{submitting ? '正在创建' : '创建目标并进入今日'}}</button>
+  <t-button class="primary-button submit-button" loading="{{submitting}}" disabled="{{submitting || title.length < 2}}" bindtap="submit">{{submitting ? '正在创建' : '创建目标并进入今日'}}</t-button>
 </view>

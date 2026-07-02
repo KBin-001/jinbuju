@@ -19,44 +19,44 @@
   <view class="card local-card">
     <view class="section-title">本地数据</view>
     <view class="local-copy">清除当前设备上的本地目标、行动和历史复盘缓存，不会影响线上数据库。</view>
-    <button class="local-danger-button" bindtap="clearLocalData">清除本地数据</button>
+    <t-button class="local-danger-button" bindtap="clearLocalData">清除本地数据</t-button>
   </view>
 
   <view class="card local-card">
     <view class="section-title">演示数据</view>
     <view class="local-copy">载入 1 个目标、约 10 天行动记录和 20 位各行各业的小队成员，用于预览体验。会覆盖当前本地数据。</view>
-    <button class="mock-button" bindtap="loadMockData">{{mockSeeded ? '重新载入演示数据' : '载入演示数据'}}</button>
+    <t-button class="mock-button" bindtap="loadMockData">{{mockSeeded ? '重新载入演示数据' : '载入演示数据'}}</t-button>
   </view>
 
   <view class="warning-card">
     清除完成后无法恢复。小队中其他成员的数据不会受到影响，系统只会更新相应的小队人数。
   </view>
 
-  <button
+  <t-button
     wx:if="{{!confirmedRisk}}"
     class="danger-outline-button"
     bindtap="startDelete"
-  >清除我的全部数据</button>
+  >清除我的全部数据</t-button>
 
   <view wx:else class="card confirmation-card">
     <view class="section-title">再次确认</view>
     <view class="confirmation-copy">
       请输入“确认清除”，然后提交最终请求。
     </view>
-    <input
+    <t-input
       class="confirmation-input"
       value="{{confirmation}}"
       placeholder="确认清除"
       maxlength="20"
       disabled="{{deleting}}"
-      bindinput="onConfirmationInput"
+      bindchange="onConfirmationInput"
     />
     <view wx:if="{{errorMessage}}" class="error-copy">{{errorMessage}}</view>
-    <button
+    <t-button
       class="danger-button"
       loading="{{deleting}}"
       disabled="{{confirmation !== '确认清除' || deleting}}"
       bindtap="submitDelete"
-    >{{deleting ? '正在清除' : '确认清除全部数据'}}</button>
+    >{{deleting ? '正在清除' : '确认清除全部数据'}}</t-button>
   </view>
 </view>

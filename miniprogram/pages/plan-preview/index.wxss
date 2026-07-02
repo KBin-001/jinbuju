@@ -76,6 +76,8 @@
 
 /* Feedback panel */
 .feedback-panel { margin-top: 24rpx; }
+.feedback-popup-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24rpx; }
+.feedback-popup-title { color:var(--color-text-main); font-size:34rpx; font-weight:700; }
 .feedback-hint { color: var(--color-text-secondary); font-size: 24rpx; line-height: 1.6; margin-bottom: 24rpx; }
 
 /* Feedback chips */

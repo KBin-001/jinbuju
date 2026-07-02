@@ -1108,7 +1108,7 @@
   box-shadow: var(--shadow-card);
 }
 
-.action-card .ant-card-body {
+.action-card .card-body {
   padding: 26rpx 28rpx;
 }
 
@@ -1914,7 +1914,7 @@
   box-shadow: 0 16rpx 30rpx rgba(53, 104, 89, 0.28);
 }
 
-.completion-badge .ant-icon {
+.completion-badge .t-icon {
   font-size: 58rpx;
   font-weight: 800;
 }

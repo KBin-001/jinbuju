@@ -8,10 +8,10 @@ page {
    * ---------------------------------------------------------- */
 
   /* 主色系（与 theme.wxss 对齐） */
-  --color-primary: #3F8F72;
-  --color-primary-deep: #24584A;
-  --color-primary-soft: #E6F4EC;
-  --color-primary-light: #7CC6A0;
+  --color-primary: #356859;
+  --color-primary-deep: #1F5B4A;
+  --color-primary-soft: #EAF5EF;
+  --color-primary-light: #7DBB69;
   --color-growth: #68BE8F;
   --color-accent: #68BE8F;
   --color-sun: #F4C95D;
@@ -20,27 +20,40 @@ page {
   --color-purple: #9E96C8;
 
   /* 文字 */
-  --color-text: #244C43;
-  --color-text-main: #244C43;
-  --color-text-secondary: #6F827B;
+  --color-text: #233B34;
+  --color-text-main: #233B34;
+  --color-text-secondary: #71827A;
   --color-text-light: #9AA8A3;
   --color-text-muted: #9AA8A3;
 
   /* 背景 */
-  --color-background: #F6FAF7;
-  --color-background-warm: #FFF4D8;
+  --color-background: #F5F7F2;
+  --color-background-warm: #FFF8E6;
   --color-surface: #FFFFFF;
 
   /* 边框 */
-  --color-border: #E2EEE8;
+  --color-border: #E6EEE9;
+
+  --radius-card: 28rpx;
+  --radius-card-small: 24rpx;
+  --radius-card-large: 32rpx;
+  --radius-button: 44rpx;
+  --font-page-title: 40rpx;
+  --font-section-title: 34rpx;
+  --font-card-title: 30rpx;
+  --font-body: 26rpx;
+  --font-caption: 24rpx;
+  --space-page-x: 32rpx;
+  --space-section: 36rpx;
+  --space-card: 24rpx;
 
   /* 危险态（柔和表达） */
   --color-danger: #D98A76;
   --color-danger-light: #FBF1ED;
 
   /* 阴影 */
-  --shadow-card: 0 8rpx 28rpx rgba(36, 88, 74, 0.08);
-  --shadow-float: 0 16rpx 40rpx rgba(36, 88, 74, 0.12);
+  --shadow-card: 0 16rpx 40rpx rgba(31, 70, 58, 0.08);
+  --shadow-float: 0 18rpx 44rpx rgba(31, 70, 58, 0.12);
   --shadow-button: 0 10rpx 24rpx rgba(63, 143, 114, 0.22);
   --shadow-button-primary: 0 12rpx 28rpx rgba(31, 77, 66, 0.18);
 
@@ -56,8 +69,29 @@ page {
   --gradient-accent-coral: linear-gradient(145deg, #FFF9F6, #F5DDD7);
 
   /* TDesign / Ant 组件兼容变量（映射到新色） */
-  --button-primary-background-color: #3F8F72;
-  --button-primary-border-color: #3F8F72;
+  --td-brand-color: #356859;
+  --td-brand-color-active: #1F5B4A;
+  --td-brand-color-disabled: #B8CEC4;
+  --td-brand-color-light: #EAF5EF;
+  --td-bg-color-page: #F5F7F2;
+  --td-bg-color-container: #FFFFFF;
+  --td-text-color-primary: #233B34;
+  --td-text-color-secondary: #71827A;
+  --td-component-border: #E6EEE9;
+  --td-radius-default: 24rpx;
+  --td-radius-large: 28rpx;
+  --td-button-primary-bg-color: #356859;
+  --td-button-primary-active-bg-color: #1F5B4A;
+  --td-button-primary-color: #FFFFFF;
+  --td-button-default-color: #356859;
+  --td-button-default-border-color: #D7E4DE;
+  --td-input-bg-color: #FFFFFF;
+  --td-input-border-color: #E6EEE9;
+  --td-progress-track-color: #E8EFEA;
+  --td-progress-inner-bg-color: #7DBB69;
+
+  --button-primary-background-color: #356859;
+  --button-primary-border-color: #356859;
   --button-primary-color: #FFFFFF;
   --button-default-background-color: #FFFFFF;
   --button-default-border-color: #E2EEE8;
@@ -65,10 +99,6 @@ page {
   --button-primary-danger-background-color: #D98A76;
   --button-primary-danger-border-color: #D98A76;
   --button-disabled-opacity: 0.5;
-
-  --ant-card-bg: #FFFFFF;
-  --ant-card-divider-color: #E2EEE8;
-  --ant-card-header-title-color: #244C43;
 
   --tag-primary-color: #3F8F72;
   --tag-primary-light-color: #E6F4EC;
@@ -254,7 +284,7 @@ button[disabled] {
   box-shadow: var(--shadow-button);
 }
 
-.growth-ant-card {
+.growth-component-card {
   border: 1rpx solid rgba(255, 255, 255, 0.78);
   border-radius: 28rpx;
   box-shadow: var(--shadow-card);
@@ -465,4 +495,49 @@ button[disabled] {
   .loading-dot {
     animation: none;
   }
+}
+
+/* Unified TDesign surface. Page-specific themes may change decoration, not the core palette. */
+[data-theme] {
+  --color-primary: #356859;
+  --color-primary-deep: #1F5B4A;
+  --color-primary-soft: #EAF5EF;
+  --color-background: #F5F7F2;
+  --color-background-warm: #FFF8E6;
+  --color-surface: #FFFFFF;
+  --color-text: #233B34;
+  --color-text-main: #233B34;
+  --color-text-secondary: #71827A;
+  --color-border: #E6EEE9;
+}
+
+t-button,
+t-input,
+t-textarea,
+t-cell,
+t-progress {
+  box-sizing: border-box;
+}
+
+t-button.primary-button,
+t-button.growth-primary-button,
+t-button.checkin-button,
+t-button.confirm-button,
+t-button.next-button,
+t-button.add-task-button {
+  --td-button-border-radius: 44rpx;
+  --td-button-primary-bg-color: #356859;
+  --td-button-primary-active-bg-color: #1F5B4A;
+}
+
+t-input,
+t-textarea {
+  --td-input-bg-color: #FFFFFF;
+  --td-textarea-background-color: #FFFFFF;
+  --td-input-border-color: #E6EEE9;
+  --td-textarea-border-color: #E6EEE9;
+}
+
+t-popup {
+  --td-popup-border-radius: 32rpx 32rpx 0 0;
 }

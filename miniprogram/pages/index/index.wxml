@@ -8,7 +8,7 @@
     <view class="state-mark">!</view>
     <view class="state-title">今日数据读取失败</view>
     <view class="state-description">{{errorMessage}}</view>
-    <button class="primary-button" bindtap="retry">重新加载</button>
+    <t-button class="primary-button" bindtap="retry">重新加载</t-button>
   </view>
 
   <block wx:else>
@@ -46,7 +46,7 @@
       <view class="empty-mark">目标</view>
       <view class="state-title">先创建一个长期目标</view>
       <view class="state-description">之后每天都可以自由添加行动，不需要等待 AI 生成计划。</view>
-      <button class="primary-button" disabled="{{navigating}}" bindtap="goCreateGoal">创建长期目标</button>
+      <t-button class="primary-button" disabled="{{navigating}}" bindtap="goCreateGoal">创建长期目标</t-button>
     </view>
 
     <block wx:else>
@@ -89,14 +89,14 @@
               <view class="task-desc">{{task.actionSubtext}}</view>
             </view>
             <view class="task-tail-check {{task.status === 'completed' ? 'is-done' : ''}}">
-              <ant-icon wx:if="{{task.status === 'completed'}}" type="CheckOutline" />
+              <t-icon wx:if="{{task.status === 'completed'}}" name="check" />
             </view>
           </view>
           <view wx:if="{{hiddenActionCount > 0 || actionListExpanded}}" class="action-list-toggle" bindtap="toggleActionList">
             {{actionListExpanded ? '收起行动 ˄' : '展开剩余 ' + hiddenActionCount + ' 项 ˅'}}
           </view>
           <view class="inline-add-action" catchtap="addTask">
-            <ant-icon type="AddOutline" />
+            <t-icon name="add" />
             <text>添加今日行动</text>
           </view>
         </view>
@@ -180,33 +180,33 @@
           <view class="quick-add-title">添加今日行动</view>
         </view>
         <view class="quick-add-close {{quickAddSubmitting ? 'is-disabled' : ''}}" catchtap="closeQuickAdd" aria-label="关闭">
-          <ant-icon type="CloseOutline" />
+          <t-icon name="close" />
         </view>
       </view>
       <view class="quick-add-copy">写下一件今天能推进的小事，保存后会出现在今日行动安排里。</view>
 
       <view class="quick-add-field">
         <view class="quick-add-label">行动标题</view>
-        <input
+        <t-input
           class="quick-add-input"
           value="{{quickAddTitle}}"
           maxlength="40"
           placeholder="例如：完成 20 分钟听力精听"
           placeholder-class="quick-add-placeholder"
           confirm-type="done"
-          bindinput="inputQuickAddTitle"
+          bindchange="inputQuickAddTitle"
         />
       </view>
       <view class="quick-add-field">
         <view class="quick-add-label">补充说明</view>
-        <textarea
+        <t-textarea
           class="quick-add-textarea"
           value="{{quickAddDescription}}"
           maxlength="150"
           placeholder="可选：写清楚材料、范围或完成标准"
           placeholder-class="quick-add-placeholder"
           auto-height="{{false}}"
-          bindinput="inputQuickAddDescription"
+          bindchange="inputQuickAddDescription"
         />
       </view>
       <view class="quick-add-field quick-add-minutes-row">
@@ -218,21 +218,21 @@
           <text class="quick-add-minutes-value">{{quickAddMinutes}}</text>
           <text class="quick-add-minute-unit">分钟</text>
           <view class="quick-add-picker-arrow">
-            <ant-icon type="DownOutline" />
+            <t-icon name="chevron-down" />
           </view>
         </view>
       </view>
 
       <view class="quick-add-actions">
-        <button class="quick-add-secondary" disabled="{{quickAddSubmitting}}" catchtap="closeQuickAdd">取消</button>
-        <button class="quick-add-primary" loading="{{quickAddSubmitting}}" disabled="{{quickAddSubmitting}}" catchtap="saveQuickAdd">保存行动</button>
+        <t-button class="quick-add-secondary" disabled="{{quickAddSubmitting}}" catchtap="closeQuickAdd">取消</t-button>
+        <t-button class="quick-add-primary" loading="{{quickAddSubmitting}}" disabled="{{quickAddSubmitting}}" catchtap="saveQuickAdd">保存行动</t-button>
       </view>
     </view>
 
     <view wx:if="{{quickDurationVisible}}" class="quick-duration-layer" catchtap="closeDurationPicker">
       <view class="quick-duration-panel" catchtap="noop">
         <view class="quick-duration-header">
-          <button class="quick-duration-cancel" catchtap="closeDurationPicker">取消</button>
+          <t-button class="quick-duration-cancel" catchtap="closeDurationPicker">取消</t-button>
           <view class="quick-duration-title">选择预计投入</view>
           <view class="quick-duration-spacer"></view>
         </view>
@@ -246,7 +246,7 @@
           >
             <view class="quick-duration-option-label">{{item.label}}</view>
             <view wx:if="{{quickAddMinuteIndex === index}}" class="quick-duration-check">
-              <ant-icon type="CheckOutline" />
+              <t-icon name="check" />
             </view>
           </view>
         </view>
@@ -265,7 +265,7 @@
 
       <view class="completion-celebration">
         <view class="completion-badge">
-          <ant-icon type="CheckOutline" />
+          <t-icon name="check" />
           <view class="completion-sparkle">✦</view>
         </view>
         <view class="completion-title">又完成一件，真棒！</view>
@@ -304,14 +304,14 @@
       </view>
 
       <view class="completion-actions">
-        <button class="completion-share-button" catchtap="generateTodayShareCard">
+        <t-button class="completion-share-button" catchtap="generateTodayShareCard">
           <text class="completion-share-icon">↗</text>
           <text>生成今日分享卡</text>
-        </button>
-        <button class="completion-continue-button" catchtap="closeCompletionSheet">
+        </t-button>
+        <t-button class="completion-continue-button" catchtap="closeCompletionSheet">
           <text>继续完成</text>
           <text class="completion-arrow">→</text>
-        </button>
+        </t-button>
       </view>
     </view>
   </view>

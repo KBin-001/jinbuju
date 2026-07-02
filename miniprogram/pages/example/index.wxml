@@ -84,9 +84,9 @@
         <view class="code_box_record_detail">{{item.region}}</view>
         <view class="code_box_record_detail">{{item.city}}</view>
         <!-- <view class="code_box_record_detail">{{item.sales}}</view> -->
-        <input style="background-color: rgba(0, 0, 0, 0.03)" class="code_box_record_detail" bindinput="bindInput" data-index="{{index}}" value="{{item.sales}}" type="number"></input>
+        <t-input style="background-color: rgba(0, 0, 0, 0.03)" class="code_box_record_detail" bindchange="bindInput" data-index="{{index}}" value="{{item.sales}}" type="number"></t-input>
         <view class="code_box_record_detail">
-          <button style="font-size: 12px" bind:tap="deleteRecord" data-id="{{item._id}}">删除</button>
+          <t-button style="font-size: 12px" bind:tap="deleteRecord" data-id="{{item._id}}">删除</t-button>
         </view>
       </view>
     </view>
@@ -99,12 +99,12 @@
   <view wx:if="{{showInsertModal}}" class="modal-mask">
   <view class="modal-content">
     <view class="modal-title">新增销量记录</view>
-    <input class="modal-input" placeholder="地域" value="{{insertRegion}}" bindinput="onInsertRegionInput"/>
-    <input class="modal-input" placeholder="城市" value="{{insertCity}}" bindinput="onInsertCityInput"/>
-    <input class="modal-input" placeholder="销量" value="{{insertSales}}" bindinput="onInsertSalesInput" type="number"/>
+    <t-input class="modal-input" placeholder="地域" value="{{insertRegion}}" bindchange="onInsertRegionInput"/>
+    <t-input class="modal-input" placeholder="城市" value="{{insertCity}}" bindchange="onInsertCityInput"/>
+    <t-input class="modal-input" placeholder="销量" value="{{insertSales}}" bindchange="onInsertSalesInput" type="number"/>
     <view class="modal-actions">
-      <button bindtap="onInsertCancel">取消</button>
-      <button bindtap="onInsertConfirm" type="primary">确认</button>
+      <t-button bindtap="onInsertCancel">取消</t-button>
+      <t-button bindtap="onInsertConfirm" theme="primary">确认</t-button>
     </view>
   </view>
 </view>

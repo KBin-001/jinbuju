@@ -9,14 +9,14 @@
     <view class="state-mark">!</view>
     <view class="state-title">进度读取失败</view>
     <view class="state-description">{{errorMessage}}</view>
-    <button class="primary-action" bindtap="retry">重新加载</button>
+    <t-button class="primary-action" bindtap="retry">重新加载</t-button>
   </view>
 
   <view wx:elif="{{!goal}}" class="state-card">
     <view class="state-mark">0</view>
     <view class="state-title">还没有当前目标</view>
     <view class="state-description">创建目标后，这里会记录你的完成率、趋势和成长里程碑。</view>
-    <button class="primary-action" bindtap="createGoal">创建目标</button>
+    <t-button class="primary-action" bindtap="createGoal">创建目标</t-button>
   </view>
 
   <block wx:else>
@@ -436,7 +436,7 @@
           <view class="card-title">最近记录</view>
           <view class="card-subtitle">今天完成了什么</view>
         </view>
-        <button wx:if="{{hasHistoryReview}}" class="review-link" bindtap="openHistoryReview">查看历史复盘</button>
+        <t-button wx:if="{{hasHistoryReview}}" class="review-link" bindtap="openHistoryReview">查看历史复盘</t-button>
       </view>
 
       <view wx:if="{{recentRecords.length}}" class="record-list">
