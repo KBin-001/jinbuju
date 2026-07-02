@@ -19,6 +19,7 @@ const REQUIRED_COLLECTIONS = [
   "stage_reviews",
   "goal_analysis_drafts",
   "stage_preview_versions",
+  "progress_ai_snapshots",
 ];
 let collectionsReady = false;
 

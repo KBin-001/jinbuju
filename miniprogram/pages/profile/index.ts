@@ -1,6 +1,7 @@
 import { endGoal, getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { getLocalUserProfile, saveLocalUserProfile } from "../../services/profile";
+import { prepareProgressCoach } from "../../services/progressCoach";
 import {
   getCurrentTheme,
   getCurrentThemeId,
@@ -115,6 +116,7 @@ Page({
   onShow() {
     this.applyThemeFromStorage();
     this.loadProfile();
+    setTimeout(() => prepareProgressCoach("overall").catch(() => undefined), 0);
   },
 
   /** 从本地 storage 读取当前主题并应用到根节点 */
@@ -313,7 +315,7 @@ Page({
       return;
     }
     if (key === "ai") {
-      wx.navigateTo({ url: "/pages/ai-coach/index?range=total" });
+      wx.navigateTo({ url: "/pages/ai-coach/index?scope=overall" });
       return;
     }
   },

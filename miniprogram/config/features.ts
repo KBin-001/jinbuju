@@ -1,5 +1,6 @@
 export const FEATURE_FLAGS = {
   ENABLE_AI_PLANNER: false,
+  ENABLE_AI_PROGRESS_COACH: true,
   ENABLE_TEAM: true,
   /**
    * 主题换肤功能开关（宏定义）

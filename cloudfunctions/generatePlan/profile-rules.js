@@ -47,6 +47,7 @@ const USER_OWNED_COLLECTIONS = [
   "stage_reviews",
   "goal_analysis_drafts",
   "stage_preview_versions",
+  "progress_ai_snapshots",
 ];
 
 function clamp(value, minimum, maximum) {

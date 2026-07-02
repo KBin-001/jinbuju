@@ -61,6 +61,11 @@ const {
   regenerateStagePreview,
   updateStagePreviewTask,
 } = require("./stage-v2");
+const {
+  analyzeProgress,
+  askProgressCoach,
+  prepareProgressCoach,
+} = require("./progress-coach");
 
 function success(data) {
   return { success: true, data };
@@ -138,6 +143,13 @@ function failure(error) {
     "STAGE_REGENERATION_QUALITY_FAILED",
     "STAGE_FEEDBACK_NOT_RESOLVED",
     "PREVIEW_VERSION_MISMATCH",
+    "AI_ANALYSIS_FAILED",
+    "AI_ANALYSIS_INVALID",
+    "AI_COACH_FAILED",
+    "AI_COACH_INVALID",
+    "PROGRESS_CONTEXT_NOT_FOUND",
+    "PROGRESS_SNAPSHOT_INVALID",
+    "PROGRESS_SNAPSHOT_TOO_LARGE",
   ];
   const code = allowedCodes.includes(error.code) ? error.code : "INTERNAL_ERROR";
   if (code === "INTERNAL_ERROR") {
@@ -217,6 +229,13 @@ function failure(error) {
     STAGE_REGENERATION_QUALITY_FAILED: "重新生成方案未通过质量检查，请重试。",
     STAGE_FEEDBACK_NOT_RESOLVED: error.message,
     PREVIEW_VERSION_MISMATCH: error.message,
+    AI_ANALYSIS_FAILED: "暂时没有生成 AI 分析，请稍后再试。",
+    AI_ANALYSIS_INVALID: "AI 分析结果暂时不可用，请稍后再试。",
+    AI_COACH_FAILED: "AI 进度教练暂时无法回答，请稍后再试。",
+    AI_COACH_INVALID: "AI 回答结果暂时不可用，请稍后再试。",
+    PROGRESS_CONTEXT_NOT_FOUND: error.message,
+    PROGRESS_SNAPSHOT_INVALID: error.message,
+    PROGRESS_SNAPSHOT_TOO_LARGE: error.message,
     INTERNAL_ERROR: "服务暂时不可用，请稍后重试。",
   };
   return {
@@ -526,6 +545,15 @@ exports.main = async (event) => {
     }
     if (event.action === "submitStageReview") {
       return success(await submitStageReview(context.OPENID, event));
+    }
+    if (event.action === "analyzeProgress") {
+      return success(await analyzeProgress(context.OPENID, event));
+    }
+    if (event.action === "prepareProgressCoach") {
+      return success(await prepareProgressCoach(context.OPENID, event));
+    }
+    if (event.action === "askProgressCoach") {
+      return success(await askProgressCoach(context.OPENID, event));
     }
 
     const error = new Error("不支持的操作。");

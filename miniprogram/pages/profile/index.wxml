@@ -1,6 +1,10 @@
 <view class="profile-page" data-theme="{{currentThemeId}}">
+  <view class="profile-fixed-background" aria-hidden="true">
+    <image class="profile-fixed-background__image" src="/assets/profile/top-bg-watercolor.jpg" mode="aspectFill" />
+    <view class="profile-fixed-background__wash"></view>
+  </view>
+
   <view class="profile-hero">
-    <image class="profile-hero__bg" src="/assets/profile/top-bg-watercolor.jpg" mode="aspectFill" />
     <view class="profile-nav">
       <text class="profile-nav__title">我的</text>
     </view>
@@ -126,8 +130,8 @@
         </view>
         <view class="toolbox-item toolbox-item--ai" data-key="ai" bindtap="openToolboxItem" hover-class="toolbox-item--pressed">
           <image class="toolbox-item__icon" src="/assets/profile/tool-ai.svg" mode="aspectFit" />
-          <text class="toolbox-item__title toolbox-item__title--strong">AI 教练</text>
-          <text class="toolbox-item__sub">查看分析</text>
+          <text class="toolbox-item__title toolbox-item__title--strong">AI 成长教练</text>
+          <text class="toolbox-item__sub">了解我的整体成长节奏</text>
         </view>
         <view class="toolbox-item toolbox-item--settings" data-key="settings" bindtap="openToolboxItem" hover-class="toolbox-item--pressed">
           <image class="toolbox-item__icon" src="/assets/profile/tool-settings.svg" mode="aspectFit" />

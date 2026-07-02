@@ -1,6 +1,7 @@
 import { getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { getTasksByDate, getTasksByGoal } from "../../services/manualTask";
+import { prepareProgressCoach } from "../../services/progressCoach";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
@@ -961,6 +962,9 @@ Page(withAppTheme({
         hasHistoryReview: getArchivedGoals().length > 0,
       }, () => {
         this.drawTrendLine();
+        if (goal?.id && this.data.trendRange !== "year") {
+          prepareProgressCoach(this.data.trendRange, goal.id).catch(() => undefined);
+        }
       });
     } catch (error) {
       this.setData({
@@ -1029,6 +1033,9 @@ Page(withAppTheme({
       selectedHeatmapDay: null,
     }, () => {
       this.drawTrendLine();
+      if (this.data.goal?.id && range !== "year") {
+        prepareProgressCoach(range, this.data.goal.id).catch(() => undefined);
+      }
     });
   },
 
@@ -1038,7 +1045,7 @@ Page(withAppTheme({
       return;
     }
     const goalId = this.data.goal?.id || "";
-    const query = [`range=${this.data.trendRange}`];
+    const query = [`scope=${this.data.trendRange}`];
     if (goalId) query.push(`goalId=${encodeURIComponent(goalId)}`);
     wx.navigateTo({ url: `/pages/ai-coach/index?${query.join("&")}` });
   },
