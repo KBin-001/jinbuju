@@ -30,10 +30,9 @@ interface WeekDayView { label: string; date: string; day: string; isToday: boole
 interface CalendarDayView extends WeekDayView { hasAction: boolean; isCompleted: boolean; }
 interface CalendarView { title: string; days: CalendarDayView[]; }
 
-function dateCopy(value: string, today: string): { title: string; weekday: string } {
+function dateCopy(value: string): { weekday: string } {
   const date = new Date(`${value}T00:00:00`);
-  const title = value === today ? `今天，${date.getMonth() + 1} 月 ${date.getDate()} 日` : `${date.getMonth() + 1} 月 ${date.getDate()} 日`;
-  return { title, weekday: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"][date.getDay()] };
+  return { weekday: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"][date.getDay()] };
 }
 function emptySummary(): TodaySummary { return { estimatedMinutes: 0, actualMinutes: 0, completedCount: 0, partialCount: 0, unfinishedCount: 0, totalCount: 0 }; }
 function completionPercent(summary: TodaySummary): number { return summary.totalCount ? Math.round(summary.completedCount / summary.totalCount * 100) : 0; }
@@ -56,13 +55,20 @@ function todayMood(summary: TodaySummary): TodayMood {
   if (percent > 0) return { title: "先拿下 1 项，节奏已经起来了", copy: `已经完成 ${summary.completedCount} 项，剩下的慢慢推进。`, tone: "low", mark: "进" };
   return { title: "今天别空手离开", copy: `还有 ${summary.totalCount} 项等你开动，挑最小的一件先做。`, tone: "low", mark: "动" };
 }
-function dailyNudge(summary: TodaySummary): string {
-  const percent = completionPercent(summary);
-  if (!summary.totalCount) return "今天的行动不需要宏大，能开始的一件小事就够。";
-  if (percent >= 100) return "完成感不是为了炫耀，是给明天少一点阻力。";
-  if (percent >= 50) return "已经过半了，剩下的不是压力，是收尾机会。";
-  if (percent > 0) return "启动之后，今天就已经站在前进的一边。";
-  return "先做 5 分钟也算，别把今天让给犹豫。";
+function dailyNudge(tasks: ViewTask[], selectedDate: string, today: string): string {
+  const dayLabel = selectedDate === today ? "今天" : "这一天";
+  const remaining = tasks.filter((task) => task.status === "pending" || task.status === "partially_completed");
+  if (remaining.length > 0) {
+    const nextTask = remaining[0];
+    return `${dayLabel}还有 ${remaining.length} 项待推进，建议先完成“${nextTask.displayTitle}”的第一步，不追求做多，只完成一次明确推进。`;
+  }
+  if (tasks.length > 0 && tasks.every((task) => task.status === "completed")) {
+    return `${dayLabel}的基础行动已完成，可以简单复盘 2 分钟，记录一个有效做法，为明天减少阻力。`;
+  }
+  if (tasks.length > 0) {
+    return `${dayLabel}没有待推进事项，可以用 2 分钟确认跳过或顺延的原因，避免同一阻力再次出现。`;
+  }
+  return `${dayLabel}还没有行动记录。先添加一项可以在 15～30 分钟内完成的具体行动。`;
 }
 function buildWeekDays(today: string, selectedDate: string, weekOffset: number): { weekTitle: string; weekDays: WeekDayView[] } {
   const selected = new Date(`${selectedDate}T00:00:00`);
@@ -170,8 +176,7 @@ Page(withAppTheme({
     todayMoodCopy: "先放一件小事上来，别让今天空过去。",
     todayMoodTone: "empty",
     todayMoodMark: "启",
-    dailyNudge: "今天的行动不需要宏大，能开始的一件小事就够。",
-    dateTitle: "",
+    dailyNudge: "今天还没有行动记录。先添加一项可以在 15～30 分钟内完成的具体行动。",
     weekday: "",
     weekdayShort: "",
     selectedDate: "",
@@ -236,7 +241,7 @@ Page(withAppTheme({
   load() {
     this.setData({ status: "loading", errorMessage: "" });
     try {
-      const today = getTodayBusinessDate(); const selectedDate = this.data.selectedDate || today; const goal = getActiveGoal(); const copy = dateCopy(selectedDate, today); const userProfile = getLocalUserProfile(); const displayName = userProfile?.nickname || "阿岚";
+      const today = getTodayBusinessDate(); const selectedDate = this.data.selectedDate || today; const goal = getActiveGoal(); const copy = dateCopy(selectedDate); const userProfile = getLocalUserProfile(); const displayName = userProfile?.nickname || "阿岚";
       const goalTasks = goal ? getTasksByGoal(goal.id) : [];
       const sourceTasks = goal ? getTodayPageTasks(goal.id, selectedDate, today) : [];
       const selectedTasks = sourceTasks.filter((task) => task.currentDate === selectedDate);
@@ -271,8 +276,7 @@ Page(withAppTheme({
         todayMoodCopy: mood.copy,
         todayMoodTone: mood.tone,
         todayMoodMark: mood.mark,
-        dailyNudge: dailyNudge(summary),
-        dateTitle: copy.title,
+        dailyNudge: dailyNudge(tasks, selectedDate, today),
         weekday: copy.weekday,
         weekdayShort: copy.weekday.replace("星期", "周"),
         weekTitle: week.weekTitle,
@@ -433,7 +437,7 @@ Page(withAppTheme({
       todayMoodCopy: mood.copy,
       todayMoodTone: mood.tone,
       todayMoodMark: mood.mark,
-      dailyNudge: dailyNudge(summary),
+      dailyNudge: dailyNudge(tasks, selectedDate, today),
     });
     wx.nextTick(() => wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 }));
   },

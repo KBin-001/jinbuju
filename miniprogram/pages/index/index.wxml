@@ -12,22 +12,26 @@
   </view>
 
   <block wx:else>
-    <view class="today-header">
-      <image class="today-header-bg" src="/assets/today-header-bg-no-text.png" mode="aspectFill" />
-      <view class="today-header-content">
-        <view class="today-greeting">早上好，{{displayName}} 👋</view>
-        <view class="today-subtitle">坚持的每一步，都是成长的证据</view>
-      </view>
-    </view>
-
-    <view class="week-card">
-      <view class="week-head">
-        <view class="week-title">{{weekTitle}} <text>{{weekdayShort}}</text></view>
-        <view class="week-switch" catchtap="openCalendar" aria-label="展开日历">
-          <text>展开</text>
-          <view class="week-chevron"></view>
+    <view class="cockpit-header">
+      <view class="cockpit-topline">
+        <view>
+          <view class="today-greeting">早上好，{{displayName}}</view>
+          <view class="today-subtitle">{{weekday}}</view>
+        </view>
+        <view class="cockpit-status status-{{todayMoodTone}}">
+          <view class="cockpit-status-dot"></view>
+          <text>{{todayMoodTitle}}</text>
         </view>
       </view>
+
+      <view class="week-card">
+        <view class="week-head">
+          <view class="week-title">{{weekTitle}} <text>{{weekdayShort}}</text></view>
+          <view class="week-switch" catchtap="openCalendar" aria-label="展开完整日历">
+            <text>完整日历</text>
+            <view class="week-chevron"></view>
+          </view>
+        </view>
       <view class="week-grid">
         <view
           wx:for="{{weekDays}}"
@@ -40,6 +44,7 @@
           <view class="week-number">{{item.day}}</view>
         </view>
       </view>
+      </view>
     </view>
 
     <view wx:if="{{!goal}}" class="card empty-card">
@@ -50,23 +55,13 @@
     </view>
 
     <block wx:else>
-      <view class="today-action-panel">
-        <view class="today-action-hero">
+      <view class="task-section action-priority-card">
+        <view class="task-section-head">
           <view>
-            <view class="action-hero-label">今日行动</view>
-            <view class="action-hero-count">
-              <text>{{summary.completedCount}}</text>
-              <text class="action-total"> / {{summary.totalCount}}</text>
-              <text class="action-unit"> 项已完成</text>
-            </view>
-            <view class="action-hero-goal">{{goal.title}}</view>
+            <view class="task-section-title">今日行动队列</view>
+            <view class="task-section-subtitle">记录今天的行动与完成情况。</view>
           </view>
-          <view class="progress-ring" style="background: conic-gradient(#2F765E 0% {{completionPercent}}%, #E6EFE8 {{completionPercent}}% 100%);">
-            <view class="progress-ring-inner">
-              <view>{{completionPercent}}%</view>
-              <text>进度</text>
-            </view>
-          </view>
+          <view class="task-section-add" catchtap="addTask"><text>+</text> 添加</view>
         </view>
 
         <view class="today-action-list">
@@ -80,55 +75,44 @@
             wx:for-item="task"
             class="today-task-row {{task.status === 'completed' ? 'is-done' : ''}}"
             data-id="{{task.id}}"
-            bindtap="toggleTaskDone"
             bindlongpress="openTask"
           >
-            <view class="task-type-icon icon-{{task.actionIconType}}"><view></view></view>
             <view class="task-copy">
-              <view class="task-title">{{task.displayTitle}}</view>
-              <view class="task-desc">{{task.actionSubtext}}</view>
+              <view class="task-title-line"><view class="task-title">{{task.displayTitle}}</view></view>
+              <view class="task-meta"><text>预计 {{task.estimatedMinutes}} 分钟</text><text class="task-meta-dot">·</text><text class="task-goal-name">{{goal.title}}</text></view>
             </view>
-            <view class="task-tail-check {{task.status === 'completed' ? 'is-done' : ''}}">
+            <view class="task-tail-check {{task.status === 'completed' ? 'is-done' : ''}}" data-id="{{task.id}}" catchtap="toggleTaskDone">
               <t-icon wx:if="{{task.status === 'completed'}}" name="check" />
             </view>
           </view>
           <view wx:if="{{hiddenActionCount > 0 || actionListExpanded}}" class="action-list-toggle" bindtap="toggleActionList">
             {{actionListExpanded ? '收起行动 ˄' : '展开剩余 ' + hiddenActionCount + ' 项 ˅'}}
           </view>
-          <view class="inline-add-action" catchtap="addTask">
-            <t-icon name="add" />
-            <text>添加今日行动</text>
-          </view>
         </view>
       </view>
 
-      <view class="today-data-card" bindtap="openTodayDataDetails" hover-class="today-data-card--pressed" hover-stay-time="100">
-        <view class="today-data-head">
-          <view class="today-data-title">今日数据</view>
-          <view class="today-data-entry">查看详情 <text>›</text></view>
+      <view class="execution-summary-card" bindtap="openTodayDataDetails" hover-class="execution-summary-card--pressed">
+        <view class="summary-card-head">
+          <view class="summary-card-title">今日执行状态</view>
+          <view class="summary-card-label">查看详情 <text>›</text></view>
         </view>
-        <view class="today-data-grid">
-          <view class="today-data-item">
-            <view class="today-data-value">{{summary.actualMinutes}}<text> 分钟</text></view>
-            <view class="today-data-label">专注时长</view>
-          </view>
-          <view class="today-data-item">
-            <view class="today-data-value">{{summary.completedCount}}<text> 项</text></view>
-            <view class="today-data-label">完成行动</view>
-          </view>
-          <view class="today-data-item">
-            <view class="today-data-value today-data-efficiency">{{focusPercent}}<text> %</text></view>
-            <view class="today-data-label">专注度</view>
-          </view>
+        <view class="summary-metrics">
+          <view class="summary-metric is-primary"><view class="summary-metric-value">{{summary.completedCount}}/{{summary.totalCount}}</view><text class="summary-metric-name">已完成</text></view>
+          <view class="summary-metric"><view class="summary-metric-value">{{remainingCount}}<text class="summary-metric-unit"> 项</text></view><text class="summary-metric-name">待推进</text></view>
+          <view class="summary-metric"><view class="summary-metric-value">{{remainingEstimatedMinutes}}<text class="summary-metric-unit"> min</text></view><text class="summary-metric-name">预计剩余</text></view>
+          <view class="summary-metric"><view class="summary-metric-value">{{summary.actualMinutes}}<text class="summary-metric-unit"> min</text></view><text class="summary-metric-name">实际投入</text></view>
         </view>
+        <view class="summary-progress"><view class="summary-progress-inner" style="width: {{completionPercent}}%;"></view></view>
       </view>
 
-      <view class="daily-nudge-card">
-        <view class="quote-mark">“</view>
-        <view class="daily-nudge-text">{{dailyNudge}}</view>
-        <view class="daily-nudge-star">★</view>
-      </view>
-
+      <navigator class="coach-advice-card" url="/pages/ai-coach/index?scope=week&amp;goalId={{goal.id}}" hover-class="coach-advice-card--pressed">
+        <view class="coach-advice-head">
+          <view class="coach-advice-title">AI 进度教练</view>
+          <view class="coach-advice-tag">在线陪跑</view>
+        </view>
+        <view class="coach-advice-copy">{{dailyNudge}}</view>
+        <view class="coach-advice-link">和教练聊聊 <text>→</text></view>
+      </navigator>
     </block>
   </block>
 
@@ -176,7 +160,6 @@
       <view class="quick-add-grabber"></view>
       <view class="quick-add-header">
         <view>
-          <view class="quick-add-kicker">TODAY ACTION</view>
           <view class="quick-add-title">添加今日行动</view>
         </view>
         <view class="quick-add-close {{quickAddSubmitting ? 'is-disabled' : ''}}" catchtap="closeQuickAdd" aria-label="关闭">

@@ -3599,3 +3599,1599 @@
   color: #24352E;
   box-shadow: 0 12rpx 24rpx rgba(242, 195, 75, 0.22);
 }
+
+/* =========================================================
+ * Today cockpit visual structure
+ * Keeps the existing interaction model while establishing a
+ * clear execution > coach > goal > task hierarchy.
+ * ======================================================= */
+.today-page[data-theme] {
+  padding: 0 32rpx calc(176rpx + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 92% 2%, rgba(248, 210, 106, 0.20), transparent 26%),
+    linear-gradient(180deg, #F9FAF5 0%, #F5F7F2 38%, #F3F6F1 100%);
+  color: #233B34;
+}
+
+.cockpit-header {
+  position: relative;
+  margin: 0 -32rpx 30rpx;
+  padding: calc(42rpx + env(safe-area-inset-top)) 32rpx 30rpx;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(248, 210, 106, 0.34), transparent 28%),
+    linear-gradient(160deg, #FFFFFF 0%, #F4F9F4 62%, #FFF9E8 100%);
+  border-bottom: 1rpx solid rgba(53, 104, 89, 0.08);
+}
+
+.cockpit-header::before {
+  position: absolute;
+  top: -88rpx;
+  right: -54rpx;
+  width: 250rpx;
+  height: 250rpx;
+  border: 1rpx solid rgba(53, 104, 89, 0.08);
+  border-radius: 50%;
+  content: "";
+}
+
+.cockpit-topline {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.cockpit-eyebrow,
+.section-kicker,
+.goal-progress-overline,
+.task-section-kicker {
+  color: #6F8A80;
+  font-size: 20rpx;
+  font-weight: 800;
+  letter-spacing: 2.4rpx;
+}
+
+.today-page[data-theme] .today-greeting {
+  margin-top: 10rpx;
+  color: #203A32;
+  font-size: 46rpx;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.today-page[data-theme] .today-subtitle {
+  margin-top: 10rpx;
+  color: #71827A;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.cockpit-status {
+  max-width: 230rpx;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-top: 8rpx;
+  padding: 12rpx 18rpx;
+  border: 1rpx solid rgba(53, 104, 89, 0.10);
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.76);
+  color: #356859;
+  font-size: 21rpx;
+  font-weight: 700;
+  line-height: 1.3;
+  box-shadow: 0 8rpx 24rpx rgba(31, 70, 58, 0.06);
+}
+
+.cockpit-status-dot,
+.live-dot {
+  width: 12rpx;
+  height: 12rpx;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #65A979;
+  box-shadow: 0 0 0 8rpx rgba(101, 169, 121, 0.13);
+}
+
+.today-page[data-theme] .week-card {
+  position: relative;
+  z-index: 1;
+  margin: 30rpx 0 0;
+  padding: 22rpx 22rpx 18rpx;
+  border: 1rpx solid rgba(53, 104, 89, 0.08);
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 14rpx 38rpx rgba(31, 70, 58, 0.07);
+  backdrop-filter: blur(14rpx);
+}
+
+.today-page[data-theme] .week-head {
+  margin-bottom: 14rpx;
+}
+
+.today-page[data-theme] .week-title {
+  font-size: 25rpx;
+  font-weight: 800;
+}
+
+.today-page[data-theme] .week-switch {
+  color: #356859;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.today-page[data-theme] .week-day {
+  min-height: 80rpx;
+  border-radius: 18rpx;
+}
+
+.execution-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 34rpx;
+  border: 1rpx solid rgba(53, 104, 89, 0.10);
+  border-radius: 32rpx;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(248, 210, 106, 0.25), transparent 30%),
+    linear-gradient(145deg, #FFFFFF 0%, #F1F8F3 100%);
+  box-shadow: 0 22rpx 58rpx rgba(31, 70, 58, 0.12);
+}
+
+.execution-hero-glow {
+  position: absolute;
+  right: -70rpx;
+  bottom: 80rpx;
+  width: 240rpx;
+  height: 240rpx;
+  border-radius: 50%;
+  background: rgba(137, 190, 148, 0.10);
+}
+
+.execution-head,
+.execution-core,
+.execution-metrics,
+.execution-action {
+  position: relative;
+  z-index: 1;
+}
+
+.execution-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.section-kicker {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.execution-title {
+  margin-top: 10rpx;
+  font-size: 36rpx;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.execution-detail-link {
+  padding: 10rpx 0 16rpx 20rpx;
+  color: #356859;
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.execution-core {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-top: 30rpx;
+}
+
+.execution-score-line {
+  display: flex;
+  align-items: baseline;
+}
+
+.execution-score-main {
+  color: #1F5B4A;
+  font-size: 78rpx;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -3rpx;
+}
+
+.execution-score-total {
+  color: #789087;
+  font-size: 34rpx;
+  font-weight: 800;
+}
+
+.execution-score-label {
+  margin-top: 10rpx;
+  color: #536B62;
+  font-size: 25rpx;
+  font-weight: 700;
+}
+
+.execution-message {
+  max-width: 380rpx;
+  margin-top: 14rpx;
+  color: #71827A;
+  font-size: 23rpx;
+  line-height: 1.55;
+}
+
+.today-page[data-theme] .progress-ring {
+  width: 176rpx;
+  height: 176rpx;
+  flex: 0 0 auto;
+  padding: 12rpx;
+  border-radius: 50%;
+  box-shadow: 0 16rpx 36rpx rgba(53, 104, 89, 0.14);
+}
+
+.today-page[data-theme] .progress-ring-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #FFFFFF;
+}
+
+.today-page[data-theme] .progress-ring-inner view {
+  color: #1F5B4A;
+  font-size: 38rpx;
+  font-weight: 900;
+}
+
+.today-page[data-theme] .progress-ring-inner text {
+  margin-top: 3rpx;
+  color: #789087;
+  font-size: 19rpx;
+  font-weight: 700;
+}
+
+.execution-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 30rpx;
+  padding: 22rpx 0;
+  border-top: 1rpx solid #E2ECE6;
+  border-bottom: 1rpx solid #E2ECE6;
+}
+
+.execution-metric {
+  min-width: 0;
+  text-align: center;
+}
+
+.execution-metric + .execution-metric {
+  border-left: 1rpx solid #E2ECE6;
+}
+
+.execution-metric-value {
+  color: #233B34;
+  font-size: 31rpx;
+  font-weight: 850;
+}
+
+.execution-metric-value text {
+  color: #71827A;
+  font-size: 19rpx;
+  font-weight: 650;
+}
+
+.execution-metric-label {
+  margin-top: 6rpx;
+  color: #819189;
+  font-size: 21rpx;
+}
+
+.execution-action {
+  min-height: 80rpx;
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  margin-top: 24rpx;
+  padding: 0 22rpx;
+  border-radius: 22rpx;
+  background: #356859;
+  color: #FFFFFF;
+  font-size: 25rpx;
+  font-weight: 750;
+  box-shadow: 0 12rpx 26rpx rgba(53, 104, 89, 0.18);
+}
+
+.execution-action-icon {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+.execution-action-arrow {
+  margin-left: auto;
+  font-size: 34rpx;
+}
+
+.coach-command-card {
+  position: relative;
+  min-height: 250rpx;
+  display: flex;
+  align-items: center;
+  gap: 26rpx;
+  margin-top: 28rpx;
+  padding: 30rpx;
+  overflow: hidden;
+  border: 1rpx solid #F0DB9E;
+  border-radius: 28rpx;
+  background:
+    radial-gradient(circle at 8% 18%, rgba(255, 255, 255, 0.9), transparent 25%),
+    linear-gradient(135deg, #FFF8DF 0%, #FFFDF5 54%, #EEF7F0 100%);
+  box-shadow: 0 16rpx 42rpx rgba(119, 94, 35, 0.10);
+}
+
+.coach-command-card--pressed {
+  transform: scale(0.988);
+  opacity: 0.92;
+}
+
+.coach-visual {
+  position: relative;
+  width: 142rpx;
+  height: 142rpx;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coach-orbit {
+  position: absolute;
+  inset: 0;
+  border: 1rpx dashed rgba(53, 104, 89, 0.28);
+  border-radius: 50%;
+}
+
+.coach-avatar-shell {
+  width: 104rpx;
+  height: 104rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 8rpx solid rgba(255, 255, 255, 0.78);
+  border-radius: 36rpx;
+  background: #EAF5EF;
+  box-shadow: 0 14rpx 30rpx rgba(53, 104, 89, 0.14);
+}
+
+.coach-avatar-shell image {
+  width: 76rpx;
+  height: 76rpx;
+}
+
+.coach-online-dot {
+  position: absolute;
+  right: 8rpx;
+  bottom: 12rpx;
+  width: 22rpx;
+  height: 22rpx;
+  border: 5rpx solid #FFF9E9;
+  border-radius: 50%;
+  background: #63A977;
+}
+
+.coach-command-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.coach-command-topline {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.coach-command-label {
+  color: #356859;
+  font-size: 22rpx;
+  font-weight: 850;
+  letter-spacing: 1rpx;
+}
+
+.coach-command-online {
+  padding: 5rpx 12rpx;
+  border-radius: 999rpx;
+  background: rgba(53, 104, 89, 0.10);
+  color: #527D6C;
+  font-size: 18rpx;
+  font-weight: 700;
+}
+
+.coach-command-title {
+  margin-top: 12rpx;
+  color: #233B34;
+  font-size: 31rpx;
+  font-weight: 850;
+}
+
+.coach-command-copy {
+  margin-top: 12rpx;
+  color: #5D7069;
+  font-size: 24rpx;
+  line-height: 1.55;
+}
+
+.coach-command-cta {
+  margin-top: 16rpx;
+  color: #356859;
+  font-size: 23rpx;
+  font-weight: 800;
+}
+
+.coach-command-cta text {
+  margin-left: 8rpx;
+}
+
+.goal-progress-card {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin-top: 24rpx;
+  padding: 26rpx 28rpx;
+  border: 1rpx solid rgba(53, 104, 89, 0.10);
+  border-radius: 24rpx;
+  background: #FFFFFF;
+  box-shadow: 0 10rpx 28rpx rgba(31, 70, 58, 0.07);
+}
+
+.goal-progress-mark {
+  width: 92rpx;
+  height: 92rpx;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 28rpx;
+  background: #EAF5EF;
+}
+
+.goal-progress-mark-inner {
+  color: #356859;
+  font-size: 19rpx;
+  font-weight: 900;
+  text-align: center;
+}
+
+.goal-progress-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.goal-progress-title {
+  margin-top: 7rpx;
+  overflow: hidden;
+  color: #233B34;
+  font-size: 29rpx;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-progress-track {
+  height: 10rpx;
+  margin-top: 17rpx;
+  overflow: hidden;
+  border-radius: 999rpx;
+  background: #E8EFEA;
+}
+
+.goal-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7DBB69, #356859);
+}
+
+.goal-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10rpx;
+  color: #7B8B84;
+  font-size: 20rpx;
+}
+
+.task-section {
+  margin-top: 34rpx;
+  padding: 28rpx;
+  border: 1rpx solid rgba(53, 104, 89, 0.08);
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 12rpx 34rpx rgba(31, 70, 58, 0.06);
+}
+
+.task-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22rpx;
+}
+
+.task-section-title {
+  margin-top: 7rpx;
+  color: #233B34;
+  font-size: 32rpx;
+  font-weight: 850;
+}
+
+.task-section-add {
+  height: 58rpx;
+  display: flex;
+  align-items: center;
+  gap: 7rpx;
+  padding: 0 20rpx;
+  border-radius: 999rpx;
+  background: #EAF5EF;
+  color: #356859;
+  font-size: 23rpx;
+  font-weight: 800;
+}
+
+.task-section-add text {
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.today-page[data-theme] .today-action-list {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.today-page[data-theme] .today-task-row {
+  min-height: 112rpx;
+  gap: 18rpx;
+  padding: 20rpx;
+  border: 1rpx solid #E8EFEA;
+  border-radius: 22rpx;
+  background: #FFFFFF;
+  box-shadow: none;
+}
+
+.today-page[data-theme] .today-task-row + .today-task-row {
+  margin-top: 14rpx;
+}
+
+.today-page[data-theme] .task-type-icon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 20rpx;
+  background: #F0F6F2;
+}
+
+.today-page[data-theme] .task-title {
+  color: #2B3F38;
+  font-size: 27rpx;
+  font-weight: 780;
+}
+
+.today-page[data-theme] .task-desc {
+  margin-top: 7rpx;
+  color: #85938D;
+  font-size: 22rpx;
+}
+
+.today-page[data-theme] .task-tail-check {
+  width: 50rpx;
+  height: 50rpx;
+  border: 3rpx solid #CAD9D1;
+}
+
+.today-page[data-theme] .task-tail-check.is-done {
+  border-color: #356859;
+  background: #356859;
+}
+
+.today-page[data-theme] .action-empty-inline {
+  padding: 50rpx 24rpx;
+  border: 1rpx dashed #CDDBD3;
+  border-radius: 22rpx;
+  background: #FAFCFA;
+}
+
+@media (max-width: 350px) {
+  .cockpit-status {
+    display: none;
+  }
+
+  .execution-hero {
+    padding: 28rpx;
+  }
+
+  .execution-score-main {
+    font-size: 68rpx;
+  }
+
+  .today-page[data-theme] .progress-ring {
+    width: 148rpx;
+    height: 148rpx;
+  }
+
+  .coach-command-card {
+    align-items: flex-start;
+  }
+
+  .coach-visual {
+    width: 106rpx;
+    height: 106rpx;
+  }
+
+  .coach-avatar-shell {
+    width: 82rpx;
+    height: 82rpx;
+  }
+}
+
+/* =========================================================
+ * Action-first today page
+ * Priority: action queue > summary > coach advice.
+ * ======================================================= */
+.today-page[data-theme] {
+  padding: 0 32rpx calc(170rpx + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 92% 3%, rgba(246, 200, 95, 0.18), transparent 250rpx),
+    linear-gradient(180deg, #F8F7F1 0%, #F7F5EE 48%, #F3F6F1 100%);
+}
+
+.today-page[data-theme] .cockpit-header {
+  margin: 0 -32rpx 20rpx;
+  padding: calc(18rpx + env(safe-area-inset-top)) 32rpx 20rpx;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(246, 200, 95, 0.24), transparent 210rpx),
+    linear-gradient(160deg, #FFFFFF 0%, #F7FAF5 66%, #FFF9E8 100%);
+}
+
+.today-page[data-theme] .cockpit-header::before {
+  width: 190rpx;
+  height: 190rpx;
+  opacity: 0.7;
+}
+
+.today-page[data-theme] .cockpit-eyebrow {
+  font-size: 19rpx;
+  letter-spacing: 2.8rpx;
+}
+
+.today-page[data-theme] .today-greeting {
+  margin-top: 6rpx;
+  color: #1F2A24;
+  font-size: 40rpx;
+  line-height: 48rpx;
+}
+
+.today-page[data-theme] .today-subtitle {
+  margin-top: 5rpx;
+  color: #7A8A80;
+  font-size: 22rpx;
+}
+
+.today-page[data-theme] .cockpit-status {
+  max-width: 196rpx;
+  margin-top: 4rpx;
+  padding: 9rpx 14rpx;
+  font-size: 19rpx;
+}
+
+.today-page[data-theme] .cockpit-status-dot {
+  width: 10rpx;
+  height: 10rpx;
+  box-shadow: 0 0 0 6rpx rgba(101, 169, 121, 0.12);
+}
+
+.today-page[data-theme] .week-card {
+  height: 112rpx;
+  min-height: 112rpx;
+  margin-top: 16rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 10rpx 28rpx rgba(31, 42, 36, 0.055);
+}
+
+.today-page[data-theme] .week-head {
+  height: 26rpx;
+  margin-bottom: 4rpx;
+}
+
+.today-page[data-theme] .week-title,
+.today-page[data-theme] .week-switch {
+  font-size: 19rpx;
+}
+
+.today-page[data-theme] .week-grid {
+  height: 64rpx;
+}
+
+.today-page[data-theme] .week-day {
+  min-height: 62rpx;
+  height: 62rpx;
+  border-radius: 18rpx;
+}
+
+.today-page[data-theme] .week-label {
+  font-size: 18rpx;
+}
+
+.today-page[data-theme] .week-number {
+  width: 36rpx;
+  height: 36rpx;
+  margin-top: 2rpx;
+  font-size: 21rpx;
+}
+
+.today-page[data-theme] .action-priority-card {
+  margin-top: 0;
+  padding: 30rpx;
+  border: 1rpx solid rgba(47, 125, 92, 0.12);
+  border-radius: 34rpx;
+  background: #FFFFFF;
+  box-shadow: 0 18rpx 48rpx rgba(31, 42, 36, 0.09);
+}
+
+.today-page[data-theme] .task-section-head {
+  align-items: flex-start;
+  margin-bottom: 24rpx;
+}
+
+.today-page[data-theme] .task-section-kicker {
+  color: #719185;
+  font-size: 19rpx;
+  letter-spacing: 2.5rpx;
+}
+
+.today-page[data-theme] .task-section-title {
+  margin-top: 5rpx;
+  color: #1F2A24;
+  font-size: 35rpx;
+  line-height: 44rpx;
+}
+
+.task-section-subtitle {
+  margin-top: 7rpx;
+  color: #7A8A80;
+  font-size: 22rpx;
+  line-height: 32rpx;
+}
+
+.today-page[data-theme] .task-section-add {
+  height: 58rpx;
+  flex: 0 0 auto;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  background: #EAF5EF;
+  color: #2F7D5C;
+  font-size: 23rpx;
+}
+
+.today-page[data-theme] .today-action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.today-page[data-theme] .today-task-row,
+.today-page[data-theme] .today-task-row + .today-task-row {
+  min-height: 108rpx;
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  margin-top: 0;
+  padding: 18rpx;
+  border: 1rpx solid rgba(31, 42, 36, 0.08);
+  border-radius: 23rpx;
+  background: #FFFFFF;
+}
+
+.today-page[data-theme] .today-task-row.is-recommended {
+  min-height: 122rpx;
+  border-color: rgba(47, 125, 92, 0.38);
+  background: linear-gradient(90deg, rgba(234, 245, 239, 0.92), #FFFFFF 78%);
+  box-shadow: inset 6rpx 0 0 #2F7D5C;
+}
+
+.task-order {
+  width: 44rpx;
+  height: 44rpx;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #EEF4F0;
+  color: #6E8177;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.task-order.is-recommended {
+  background: #2F7D5C;
+  color: #FFFFFF;
+  box-shadow: 0 8rpx 18rpx rgba(47, 125, 92, 0.20);
+}
+
+.today-page[data-theme] .task-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.task-title-line {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.today-page[data-theme] .task-title {
+  min-width: 0;
+  overflow: hidden;
+  color: #1F2A24;
+  font-size: 27rpx;
+  font-weight: 800;
+  line-height: 36rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recommend-chip {
+  flex: 0 0 auto;
+  padding: 4rpx 9rpx;
+  border-radius: 999rpx;
+  background: rgba(246, 200, 95, 0.24);
+  color: #A97812;
+  font-size: 18rpx;
+  font-weight: 750;
+}
+
+.task-meta {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  margin-top: 7rpx;
+  overflow: hidden;
+  color: #7A8A80;
+  font-size: 20rpx;
+  white-space: nowrap;
+}
+
+.task-goal-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-meta-dot {
+  flex: 0 0 auto;
+  margin: 0 7rpx;
+}
+
+.task-progress-action {
+  height: 52rpx;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 15rpx;
+  border-radius: 999rpx;
+  background: #2F7D5C;
+  color: #FFFFFF;
+  font-size: 20rpx;
+  font-weight: 800;
+  box-shadow: 0 8rpx 18rpx rgba(47, 125, 92, 0.17);
+}
+
+.today-page[data-theme] .task-tail-check {
+  width: 44rpx;
+  height: 44rpx;
+  flex: 0 0 auto;
+  border: 2rpx solid rgba(122, 138, 128, 0.34);
+}
+
+.today-page[data-theme] .task-tail-check.is-done {
+  border-color: #2F7D5C;
+  background: #2F7D5C;
+}
+
+.today-page[data-theme] .action-list-toggle {
+  margin-top: 4rpx;
+  padding: 12rpx 0 2rpx;
+  color: #6F857A;
+  font-size: 22rpx;
+}
+
+.execution-summary-card {
+  min-height: 176rpx;
+  margin-top: 24rpx;
+  padding: 24rpx 26rpx 20rpx;
+  border: 1rpx solid rgba(47, 125, 92, 0.09);
+  border-radius: 28rpx;
+  background: #FFFFFF;
+  box-shadow: 0 12rpx 34rpx rgba(31, 42, 36, 0.055);
+}
+
+.execution-summary-card--pressed {
+  opacity: 0.9;
+  transform: scale(0.99);
+}
+
+.summary-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.summary-card-title {
+  color: #1F2A24;
+  font-size: 28rpx;
+  font-weight: 850;
+}
+
+.summary-card-label {
+  color: #789087;
+  font-size: 18rpx;
+  font-weight: 750;
+  letter-spacing: 1.5rpx;
+}
+
+.summary-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 18rpx;
+}
+
+.summary-metric {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+  border-right: 1rpx solid rgba(31, 42, 36, 0.07);
+  text-align: center;
+}
+
+.summary-metric:last-child {
+  border-right: 0;
+}
+
+.summary-metric-value {
+  color: #1F2A24;
+  font-size: 26rpx;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.summary-metric.is-primary .summary-metric-value {
+  color: #2F7D5C;
+}
+
+.summary-metric-unit {
+  color: #73847A;
+  font-size: 16rpx;
+  font-weight: 650;
+}
+
+.summary-metric-name {
+  color: #7A8A80;
+  font-size: 18rpx;
+}
+
+.summary-progress {
+  height: 8rpx;
+  margin-top: 17rpx;
+  overflow: hidden;
+  border-radius: 999rpx;
+  background: rgba(47, 125, 92, 0.10);
+}
+
+.summary-progress-inner {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #78B88D, #2F7D5C);
+}
+
+.coach-advice-card {
+  display: block;
+  margin-top: 24rpx;
+  padding: 26rpx 28rpx;
+  border: 1rpx solid rgba(246, 200, 95, 0.40);
+  border-radius: 28rpx;
+  background: linear-gradient(135deg, #FFFDF6, #FFFFFF);
+  box-shadow: 0 10rpx 30rpx rgba(31, 42, 36, 0.045);
+}
+
+.coach-advice-card--pressed {
+  opacity: 0.9;
+  transform: scale(0.99);
+}
+
+.coach-advice-head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.coach-advice-title {
+  color: #2F7D5C;
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.coach-advice-tag {
+  padding: 4rpx 11rpx;
+  border-radius: 999rpx;
+  background: #EAF5EF;
+  color: #2F7D5C;
+  font-size: 18rpx;
+  font-weight: 700;
+}
+
+.coach-advice-copy {
+  margin-top: 13rpx;
+  color: #4D5E56;
+  font-size: 24rpx;
+  line-height: 37rpx;
+}
+
+.coach-advice-link {
+  margin-top: 14rpx;
+  color: #2F7D5C;
+  font-size: 23rpx;
+  font-weight: 800;
+}
+
+@media (max-width: 350px) {
+  .today-page[data-theme] .cockpit-status {
+    display: none;
+  }
+
+  .today-page[data-theme] .action-priority-card {
+    padding: 26rpx 22rpx;
+  }
+
+  .task-progress-action {
+    padding: 0 12rpx;
+    font-size: 18rpx;
+  }
+
+  .summary-metric-value {
+    font-size: 23rpx;
+  }
+}
+
+/* =========================================================
+ * Quiet refinement: generous spacing, restrained surfaces,
+ * Chinese-first hierarchy and a fully visible week calendar.
+ * ======================================================= */
+.today-page[data-theme] {
+  padding-right: 32rpx;
+  padding-left: 32rpx;
+  background: #F6F6F2;
+  color: #1D1D1F;
+}
+
+.today-page[data-theme] .cockpit-header {
+  overflow: visible;
+  margin-bottom: 24rpx;
+  padding-top: calc(24rpx + env(safe-area-inset-top));
+  padding-bottom: 26rpx;
+  background: #F6F6F2;
+  border-bottom: 0;
+}
+
+.today-page[data-theme] .cockpit-header::before {
+  display: none;
+}
+
+.today-page[data-theme] .cockpit-topline {
+  align-items: center;
+}
+
+.today-page[data-theme] .today-greeting {
+  margin-top: 0;
+  color: #1D1D1F;
+  font-size: 44rpx;
+  font-weight: 760;
+  line-height: 56rpx;
+  letter-spacing: -0.8rpx;
+}
+
+.today-page[data-theme] .today-subtitle {
+  margin-top: 8rpx;
+  color: #6E6E73;
+  font-size: 23rpx;
+  font-weight: 450;
+  line-height: 32rpx;
+}
+
+.today-page[data-theme] .cockpit-status {
+  max-width: 186rpx;
+  margin-top: 0;
+  padding: 8rpx 13rpx;
+  border-color: rgba(60, 60, 67, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+  color: #65736B;
+  font-size: 18rpx;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.today-page[data-theme] .cockpit-status-dot {
+  width: 9rpx;
+  height: 9rpx;
+  background: #71A687;
+  box-shadow: none;
+}
+
+/* The previous 112rpx box had only 88rpx of inner height after padding,
+ * while its header + margin + grid needed 94rpx. The explicit 168rpx
+ * layout below gives both text rows room and prevents parent clipping. */
+.today-page[data-theme] .week-card {
+  height: 168rpx;
+  min-height: 168rpx;
+  overflow: visible;
+  box-sizing: border-box;
+  margin-top: 22rpx;
+  padding: 16rpx 20rpx 16rpx;
+  border: 1rpx solid rgba(60, 60, 67, 0.10);
+  border-radius: 30rpx;
+  background: #FFFFFF;
+  box-shadow: 0 8rpx 28rpx rgba(31, 31, 35, 0.035);
+  backdrop-filter: none;
+}
+
+.today-page[data-theme] .week-head {
+  height: 34rpx;
+  min-height: 34rpx;
+  margin-bottom: 10rpx;
+}
+
+.today-page[data-theme] .week-title {
+  color: #1D1D1F;
+  font-size: 23rpx;
+  font-weight: 650;
+  line-height: 34rpx;
+}
+
+.today-page[data-theme] .week-title text {
+  margin-left: 7rpx;
+  color: #8A8A8E;
+  font-size: 20rpx;
+  font-weight: 450;
+}
+
+.today-page[data-theme] .week-switch {
+  width: auto;
+  height: 34rpx;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #6E6E73;
+  font-size: 19rpx;
+  font-weight: 500;
+  box-shadow: none;
+}
+
+.today-page[data-theme] .week-chevron {
+  width: 9rpx;
+  height: 9rpx;
+  margin-left: 7rpx;
+  border-right: 2rpx solid #8A8A8E;
+  border-bottom: 2rpx solid #8A8A8E;
+}
+
+.today-page[data-theme] .week-grid {
+  height: 84rpx;
+  min-height: 84rpx;
+  align-items: center;
+  overflow: visible;
+}
+
+.today-page[data-theme] .week-day {
+  height: 84rpx;
+  min-height: 84rpx;
+  justify-content: center;
+  gap: 6rpx;
+  overflow: visible;
+  border-radius: 20rpx;
+}
+
+.today-page[data-theme] .week-label {
+  height: 24rpx;
+  color: #8A8A8E;
+  font-size: 19rpx;
+  font-weight: 450;
+  line-height: 24rpx;
+}
+
+.today-page[data-theme] .week-number {
+  width: 42rpx;
+  height: 42rpx;
+  margin-top: 0;
+  color: #3A3A3C;
+  font-size: 23rpx;
+  font-weight: 650;
+  line-height: 42rpx;
+}
+
+.today-page[data-theme] .week-day.is-selected .week-number,
+.today-page[data-theme] .week-day.is-today .week-number {
+  background: #F2D27A;
+  color: #2C2C2E;
+  box-shadow: none;
+}
+
+.today-page[data-theme] .week-day.is-selected .week-label,
+.today-page[data-theme] .week-day.is-today .week-label {
+  color: #5F665F;
+  font-weight: 550;
+}
+
+.today-page[data-theme] .week-day.is-today:not(.is-selected) .week-number {
+  border: 1rpx solid rgba(47, 125, 92, 0.18);
+  background: #EAF5EF;
+  color: #2F7D5C;
+}
+
+.today-page[data-theme] .action-priority-card,
+.execution-summary-card,
+.coach-advice-card {
+  border-color: rgba(60, 60, 67, 0.10);
+  background: #FFFFFF;
+  box-shadow: 0 8rpx 28rpx rgba(31, 31, 35, 0.035);
+}
+
+.today-page[data-theme] .action-priority-card {
+  padding: 28rpx;
+  border-radius: 32rpx;
+}
+
+.today-page[data-theme] .task-section-head {
+  margin-bottom: 26rpx;
+}
+
+.today-page[data-theme] .task-section-title {
+  margin-top: 0;
+  color: #1D1D1F;
+  font-size: 33rpx;
+  font-weight: 700;
+  line-height: 42rpx;
+  letter-spacing: -0.4rpx;
+}
+
+.task-section-subtitle {
+  margin-top: 8rpx;
+  color: #6E6E73;
+  font-size: 22rpx;
+  line-height: 32rpx;
+}
+
+.today-page[data-theme] .task-section-add {
+  height: 52rpx;
+  padding: 0 16rpx;
+  border: 1rpx solid rgba(47, 125, 92, 0.10);
+  background: #F3F8F5;
+  color: #2F7D5C;
+  font-size: 21rpx;
+  font-weight: 650;
+}
+
+.today-page[data-theme] .today-action-list {
+  gap: 12rpx;
+}
+
+.today-page[data-theme] .today-task-row,
+.today-page[data-theme] .today-task-row + .today-task-row {
+  min-height: 112rpx;
+  gap: 16rpx;
+  padding: 20rpx 18rpx;
+  border-color: rgba(60, 60, 67, 0.09);
+  border-radius: 22rpx;
+  box-shadow: none;
+}
+
+.today-page[data-theme] .today-task-row.is-recommended {
+  min-height: 112rpx;
+  border-color: rgba(47, 125, 92, 0.22);
+  background: #F5FAF7;
+  box-shadow: none;
+}
+
+.today-page[data-theme] .task-title {
+  color: #1D1D1F;
+  font-size: 27rpx;
+  font-weight: 650;
+}
+
+.recommend-chip {
+  padding: 3rpx 9rpx;
+  background: #F8EDCE;
+  color: #8A6A20;
+  font-size: 17rpx;
+  font-weight: 600;
+}
+
+.task-meta {
+  margin-top: 8rpx;
+  color: #6E6E73;
+  font-size: 20rpx;
+}
+
+.today-page[data-theme] .task-tail-check {
+  width: 42rpx;
+  height: 42rpx;
+  border-color: rgba(60, 60, 67, 0.22);
+}
+
+.execution-summary-card {
+  min-height: 170rpx;
+  margin-top: 22rpx;
+  padding: 24rpx 26rpx 20rpx;
+  border-radius: 30rpx;
+}
+
+.summary-card-title {
+  color: #1D1D1F;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.summary-card-label {
+  color: #8A8A8E;
+  font-size: 19rpx;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.summary-metrics {
+  margin-top: 20rpx;
+}
+
+.summary-metric {
+  border-right-color: rgba(60, 60, 67, 0.10);
+}
+
+.summary-metric-value {
+  color: #1D1D1F;
+  font-size: 27rpx;
+  font-weight: 700;
+}
+
+.summary-metric.is-primary .summary-metric-value {
+  color: #2F7D5C;
+}
+
+.summary-metric-name,
+.summary-metric-unit {
+  color: #6E6E73;
+}
+
+.summary-progress {
+  height: 6rpx;
+  margin-top: 18rpx;
+  background: rgba(47, 125, 92, 0.09);
+}
+
+.summary-progress-inner {
+  background: #2F7D5C;
+}
+
+.coach-advice-card {
+  margin-top: 22rpx;
+  padding: 26rpx 28rpx;
+  border-radius: 30rpx;
+  background: #FFFFFF;
+}
+
+.coach-advice-title {
+  color: #1D1D1F;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.coach-advice-tag {
+  background: #EAF5EF;
+  color: #527461;
+  font-size: 17rpx;
+  font-weight: 550;
+}
+
+.coach-advice-copy {
+  margin-top: 14rpx;
+  color: #515154;
+  font-size: 25rpx;
+  line-height: 39rpx;
+}
+
+.coach-advice-link {
+  margin-top: 16rpx;
+  color: #2F7D5C;
+  font-size: 22rpx;
+  font-weight: 650;
+}
+
+/* =========================================================
+ * Interaction scale: prominent inline calendar and readable
+ * type. The month calendar popup has been removed.
+ * ======================================================= */
+.today-page[data-theme] .today-subtitle {
+  margin-top: 8rpx;
+  font-size: 27rpx;
+  line-height: 38rpx;
+}
+
+.today-page[data-theme] .cockpit-status {
+  max-width: 220rpx;
+  padding: 10rpx 16rpx;
+  font-size: 22rpx;
+}
+
+.today-page[data-theme] .week-card {
+  height: 230rpx;
+  min-height: 230rpx;
+  margin-top: 24rpx;
+  padding: 20rpx 18rpx 22rpx;
+  border-radius: 32rpx;
+}
+
+.today-page[data-theme] .week-head {
+  height: 42rpx;
+  min-height: 42rpx;
+  margin-bottom: 14rpx;
+}
+
+.today-page[data-theme] .week-title {
+  font-size: 29rpx;
+  font-weight: 750;
+  line-height: 42rpx;
+}
+
+.today-page[data-theme] .week-title text {
+  font-size: 25rpx;
+}
+
+.today-page[data-theme] .week-grid {
+  height: 132rpx;
+  min-height: 132rpx;
+}
+
+.today-page[data-theme] .week-day {
+  height: 128rpx;
+  min-height: 128rpx;
+  gap: 10rpx;
+  border-radius: 26rpx;
+}
+
+.today-page[data-theme] .week-label {
+  height: 30rpx;
+  font-size: 24rpx;
+  font-weight: 550;
+  line-height: 30rpx;
+}
+
+.today-page[data-theme] .week-number {
+  width: 58rpx;
+  height: 58rpx;
+  color: #303033;
+  font-size: 31rpx;
+  font-weight: 750;
+  line-height: 58rpx;
+}
+
+.today-page[data-theme] .week-day.is-selected .week-number {
+  width: 70rpx;
+  height: 70rpx;
+  border: 0;
+  background: #F2D27A;
+  color: #2C2C2E;
+  font-size: 38rpx;
+  font-weight: 850;
+  line-height: 70rpx;
+  box-shadow: none;
+}
+
+.today-page[data-theme] .week-day.is-today {
+  background: transparent;
+}
+
+.today-page[data-theme] .week-day.is-today:not(.is-selected) .week-number {
+  width: 58rpx;
+  height: 58rpx;
+  border: 0;
+  background: transparent;
+  color: #303033;
+  font-size: 31rpx;
+  font-weight: 750;
+  line-height: 58rpx;
+  box-shadow: none;
+}
+
+.today-page[data-theme] .week-day.is-selected::after {
+  display: none;
+}
+
+.today-page[data-theme] .task-section-title {
+  font-size: 36rpx;
+  line-height: 46rpx;
+}
+
+.task-section-subtitle {
+  font-size: 25rpx;
+  line-height: 36rpx;
+}
+
+.today-page[data-theme] .task-section-add {
+  height: 60rpx;
+  padding: 0 20rpx;
+  font-size: 24rpx;
+}
+
+.today-page[data-theme] .today-task-row,
+.today-page[data-theme] .today-task-row + .today-task-row {
+  min-height: 122rpx;
+  padding: 22rpx 20rpx;
+}
+
+.today-page[data-theme] .task-title {
+  font-size: 30rpx;
+  font-weight: 720;
+  line-height: 40rpx;
+}
+
+.task-meta {
+  margin-top: 10rpx;
+  font-size: 23rpx;
+  line-height: 32rpx;
+}
+
+.today-page[data-theme] .task-tail-check {
+  width: 50rpx;
+  height: 50rpx;
+}
+
+.summary-card-title,
+.coach-advice-title {
+  font-size: 31rpx;
+}
+
+.summary-card-label,
+.summary-metric-name {
+  font-size: 21rpx;
+}
+
+.summary-metric-value {
+  font-size: 30rpx;
+}
+
+.summary-metric-unit {
+  font-size: 19rpx;
+}
+
+.coach-advice-tag {
+  font-size: 20rpx;
+}
+
+.coach-advice-copy {
+  font-size: 27rpx;
+  line-height: 43rpx;
+}
+
+.coach-advice-link {
+  font-size: 24rpx;
+}
