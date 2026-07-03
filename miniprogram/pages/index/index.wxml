@@ -61,7 +61,12 @@
     <block wx:else>
       <view class="reference-summary-card" bindtap="openTodayDataDetails" hover-class="reference-card--pressed">
         <view class="reference-ring-wrap">
-          <canvas type="2d" id="summary-ring-canvas" class="reference-ring-canvas"></canvas>
+          <canvas
+            wx:if="{{!calendarVisible && !quickAddVisible && !completionSheetRendered}}"
+            type="2d"
+            id="summary-ring-canvas"
+            class="reference-ring-canvas"
+          ></canvas>
           <view class="reference-ring-center">
             <view class="reference-ring-value">{{summary.completedCount}}/{{summary.totalCount}}</view>
             <view class="reference-ring-label">已完成</view>

@@ -371,7 +371,7 @@ Page(withAppTheme({
     this.load();
   },
   closeCalendar() {
-    this.setData({ calendarVisible: false });
+    this.setData({ calendarVisible: false }, () => this.drawSummaryRing());
   },
   switchCalendarMonth(event: { currentTarget: { dataset: { delta?: string | number } } }) {
     const delta = Number(event.currentTarget.dataset.delta || 0);
@@ -416,7 +416,10 @@ Page(withAppTheme({
   },
   closeQuickAdd() {
     if (this.data.quickAddSubmitting) return;
-    this.setData({ quickAddVisible: false, quickDurationVisible: false, quickAddTouchDeltaY: 0 });
+    this.setData(
+      { quickAddVisible: false, quickDurationVisible: false, quickAddTouchDeltaY: 0 },
+      () => this.drawSummaryRing(),
+    );
   },
   noop() {},
   inputQuickAddTitle(event: { detail: { value?: string } }) { this.setData({ quickAddTitle: String(event.detail.value || "").slice(0, 40) }); },
@@ -535,7 +538,7 @@ Page(withAppTheme({
     this.setData({ completionSheetVisible: false });
     if (this.completionSheetTimer) clearTimeout(this.completionSheetTimer);
     this.completionSheetTimer = setTimeout(() => {
-      this.setData({ completionSheetRendered: false });
+      this.setData({ completionSheetRendered: false }, () => this.drawSummaryRing());
       this.completionSheetTimer = null;
     }, 260);
   },

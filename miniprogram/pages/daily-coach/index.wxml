@@ -63,54 +63,31 @@
               <text class="coach-report-label">完成率</text>
             </view>
           </view>
-          <view class="coach-report-progress"><view style="width: {{analysis.completionPercent}}%;"></view></view>
+          <view class="coach-report-progress">
+            <view class="coach-report-progress-inner" style="width: {{analysis.completionPercent}}%;"></view>
+          </view>
         </view>
 
         <view class="coach-report-card coach-analysis-card">
-          <view class="coach-report-title">AI 今日判断</view>
+          <view class="coach-report-title">表现分析</view>
           <view class="coach-analysis-line">
             <view class="coach-analysis-dot coach-analysis-dot--green"></view>
             <text>{{analysis.judgement}}</text>
           </view>
-          <view wx:for="{{analysis.bottlenecks}}" wx:key="*this" class="coach-analysis-line">
+          <view wx:if="{{analysis.bottlenecks.length}}" class="coach-analysis-line">
             <view class="coach-analysis-dot coach-analysis-dot--amber"></view>
-            <text>{{item}}</text>
+            <text>{{analysis.bottlenecks[0]}}</text>
           </view>
         </view>
 
-        <view class="coach-report-card coach-actions-card">
-          <view class="coach-report-title">行动分析</view>
-          <view wx:if="{{analysis.completedTasks.length}}" class="coach-action-section">
-            <view class="coach-action-heading">已完成行动</view>
-            <view wx:for="{{analysis.completedTasks}}" wx:key="id" class="coach-action-row">
-              <view class="coach-action-check">✓</view>
-              <text class="coach-action-title">{{item.title}}</text>
-              <text class="coach-action-time">{{item.actualMinutes}} min</text>
-            </view>
+        <view class="coach-report-actions">
+          <view class="coach-report-action" bindtap="acknowledgeReport" hover-class="coach-pressed">
+            <text class="coach-report-action-icon">👍</text>
+            <text>很棒</text>
           </view>
-          <view wx:if="{{analysis.pendingTasks.length}}" class="coach-action-section">
-            <view class="coach-action-heading">待推进行动</view>
-            <view wx:for="{{analysis.pendingTasks}}" wx:key="id" class="coach-action-row">
-              <view class="coach-action-pending"></view>
-              <text class="coach-action-title">{{item.title}}</text>
-              <text class="coach-action-time">{{item.estimatedMinutes}} min</text>
-            </view>
-          </view>
-          <view wx:if="{{!analysis.pendingTasks.length}}" class="coach-action-empty">当前没有待推进行动</view>
-        </view>
-
-        <view class="coach-suggestion-title">下一步建议</view>
-        <view class="coach-suggestion-list">
-          <view
-            wx:for="{{analysis.suggestions}}"
-            wx:key="*this"
-            class="coach-suggestion"
-            data-suggestion="{{item}}"
-            bindtap="chooseSuggestion"
-            hover-class="coach-pressed"
-          >
-            <text class="coach-suggestion-index">{{index + 1}}</text>
-            <text class="coach-suggestion-copy">{{item}}</text>
+          <view class="coach-report-action" bindtap="viewReportDetails" hover-class="coach-pressed">
+            <text class="coach-report-action-icon">📈</text>
+            <text>查看详情</text>
           </view>
         </view>
       </view>

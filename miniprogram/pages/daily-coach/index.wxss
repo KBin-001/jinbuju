@@ -266,7 +266,7 @@ page {
   background: #E7EFEA;
 }
 
-.coach-report-progress view {
+.coach-report-progress-inner {
   height: 100%;
   border-radius: inherit;
   background: #168A61;
@@ -296,6 +296,33 @@ page {
 
 .coach-analysis-dot--green { background: #2FB582; }
 .coach-analysis-dot--amber { background: #F6A623; }
+
+.coach-report-actions {
+  display: flex;
+  margin: 0 20rpx 22rpx;
+  gap: 14rpx;
+}
+
+.coach-report-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 64rpx;
+  min-width: 0;
+  flex: 1;
+  border: 1rpx solid rgba(228, 232, 229, 0.92);
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.96);
+  color: #19211E;
+  font-size: 22rpx;
+  font-weight: 700;
+  box-shadow: 0 6rpx 16rpx rgba(55, 42, 29, 0.045);
+}
+
+.coach-report-action-icon {
+  margin-right: 9rpx;
+  font-size: 23rpx;
+}
 
 .coach-action-section {
   margin-top: 18rpx;

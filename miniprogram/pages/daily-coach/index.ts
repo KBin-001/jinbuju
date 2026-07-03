@@ -84,6 +84,14 @@ Page({
     this.setData({ question });
   },
 
+  acknowledgeReport() {
+    wx.showToast({ title: "已记录今天的状态", icon: "none" });
+  },
+
+  viewReportDetails() {
+    this.setData({ question: "告诉我今天最需要关注的细节" });
+  },
+
   sendQuestion() {
     const question = this.data.question.trim();
     if (!question) {
