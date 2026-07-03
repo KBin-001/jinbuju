@@ -14,7 +14,9 @@
   <block wx:else>
     <view class="reference-hero">
       <view class="reference-identity-row">
-        <image class="reference-avatar" src="/assets/coach-ui/avatar.svg" mode="aspectFit" />
+        <image wx:if="{{displayAvatarUrl}}" class="reference-avatar" src="{{displayAvatarUrl}}" mode="aspectFill" />
+        <image wx:elif="{{!displayAvatarText}}" class="reference-avatar" src="/assets/coach-ui/avatar.svg" mode="aspectFit" />
+        <view wx:else class="reference-avatar reference-avatar--text">{{displayAvatarText}}</view>
         <view class="cockpit-status status-{{todayMoodTone}}">
           <view class="cockpit-status-dot"></view>
           <text>{{todayMoodTitle}}</text>
@@ -61,7 +63,9 @@
         <view class="reference-ring-wrap">
           <view class="reference-ring-aura reference-ring-aura--green"></view>
           <view class="reference-ring-aura reference-ring-aura--blue"></view>
-          <image class="reference-ring" src="/assets/coach-ui/progress-ring.svg" mode="aspectFit" />
+          <view class="reference-ring-layer reference-ring-layer--outer"></view>
+          <view class="reference-ring-layer reference-ring-layer--middle"></view>
+          <view class="reference-ring-layer reference-ring-layer--inner"></view>
           <view class="reference-ring-center">
             <view class="reference-ring-value">{{summary.completedCount}}/{{summary.totalCount}}</view>
             <view class="reference-ring-label">已完成</view>
@@ -70,7 +74,7 @@
         </view>
         <view class="reference-summary-side">
           <view class="reference-summary-metric">
-            <image src="/assets/coach-ui/icon-clock.svg" mode="aspectFit" />
+            <view class="reference-metric-icon reference-metric-icon--clock"><view></view></view>
             <view>
               <view><text class="reference-summary-num">{{summary.actualMinutes}}</text><text class="reference-summary-unit">min</text></view>
               <view class="reference-summary-label">实际投入</view>
@@ -78,7 +82,11 @@
           </view>
           <view class="reference-summary-line"></view>
           <view class="reference-summary-metric">
-            <image src="/assets/coach-ui/icon-chart.svg" mode="aspectFit" />
+            <view class="reference-metric-icon reference-metric-icon--chart">
+              <view class="reference-chart-bar reference-chart-bar--one"></view>
+              <view class="reference-chart-bar reference-chart-bar--two"></view>
+              <view class="reference-chart-bar reference-chart-bar--three"></view>
+            </view>
             <view>
               <view><text class="reference-summary-num">{{completionPercent}}</text><text class="reference-summary-unit">%</text></view>
               <view class="reference-summary-label">今日进度</view>

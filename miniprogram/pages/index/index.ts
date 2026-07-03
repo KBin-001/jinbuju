@@ -158,6 +158,8 @@ Page(withAppTheme({
     status: "loading",
     errorMessage: "",
     displayName: "阿岚",
+    displayAvatarUrl: "",
+    displayAvatarText: "岚",
     goal: null as Goal | null,
     tasks: [] as ViewTask[],
     taskGroups: [] as ViewTaskGroup[],
@@ -245,6 +247,8 @@ Page(withAppTheme({
     this.setData({ status: "loading", errorMessage: "" });
     try {
       const today = getTodayBusinessDate(); const selectedDate = this.data.selectedDate || today; const goal = getActiveGoal(); const copy = dateCopy(selectedDate); const userProfile = getLocalUserProfile(); const displayName = userProfile?.nickname || "阿岚";
+      const displayAvatarUrl = userProfile?.avatarUrl || "";
+      const displayAvatarText = displayName.slice(0, 1) || "岚";
       const goalTasks = goal ? getTasksByGoal(goal.id) : [];
       const sourceTasks = goal ? getTodayPageTasks(goal.id, selectedDate, today) : [];
       const selectedTasks = sourceTasks.filter((task) => task.currentDate === selectedDate);
@@ -260,6 +264,8 @@ Page(withAppTheme({
       this.setData({
         status: "ready",
         displayName,
+        displayAvatarUrl,
+        displayAvatarText,
         goal,
         selectedDate,
         todayDate: today,
