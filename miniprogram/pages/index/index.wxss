@@ -4446,6 +4446,15 @@
   flex: 0 0 auto;
 }
 
+.today-page[data-theme] .reference-ring-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: 276rpx;
+  height: 276rpx;
+}
+
 .today-page[data-theme] .reference-ring-layer {
   position: absolute;
   z-index: 2;
