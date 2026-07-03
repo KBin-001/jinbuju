@@ -6,6 +6,7 @@
  * ========================================================= */
 
 @import "../../styles/theme.wxss";
+@import "../../styles/glass.wxss";
 
 /* ============ 墨绿成长主题 覆写 ============
  * 由于本页 WXSS 中存在大量硬编码的薄荷绿颜色（rgba/hex/gradient），
@@ -4245,6 +4246,491 @@
 }
 
 /* =========================================================
+ * 1:1 reference structure for the current Today page.
+ * This block intentionally overrides the legacy visual layers above.
+ * ======================================================= */
+.today-page[data-theme] {
+  padding: 0 32rpx calc(156rpx + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+  background: linear-gradient(145deg, #FAF6EF 0%, #F7F1E9 58%, #F2EEE5 100%);
+  color: #111820;
+}
+
+.today-page[data-theme] .reference-hero {
+  margin: 0 -32rpx;
+  padding: 26rpx 32rpx 30rpx;
+  border-radius: 0 0 44rpx 44rpx;
+  background: linear-gradient(145deg, #FCF8F1 0%, #F7F1E9 58%, #EDF5EF 100%);
+}
+
+.today-page[data-theme] .reference-identity-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 72rpx;
+}
+
+.today-page[data-theme] .reference-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  flex: 0 0 auto;
+  border: 3rpx solid rgba(255, 255, 255, 0.88);
+  border-radius: 50%;
+  box-shadow: 0 10rpx 24rpx rgba(55, 42, 29, 0.10);
+}
+
+.today-page[data-theme] .cockpit-status {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  max-width: 250rpx;
+  min-height: 52rpx;
+  margin: 0;
+  padding: 0 18rpx;
+  overflow: hidden;
+  border: 1rpx solid rgba(255, 255, 255, 0.84);
+  border-radius: 26rpx;
+  background: rgba(255, 255, 255, 0.72);
+  color: #58645E;
+  font-size: 20rpx;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: 0 9rpx 22rpx rgba(55, 42, 29, 0.06);
+}
+
+.today-page[data-theme] .cockpit-status-dot {
+  width: 10rpx;
+  height: 10rpx;
+  margin-right: 10rpx;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #35B77F;
+}
+
+.today-page[data-theme] .reference-greeting {
+  margin-top: 30rpx;
+}
+
+.today-page[data-theme] .today-greeting {
+  margin: 0;
+  color: #111820;
+  font-size: 52rpx;
+  font-weight: 850;
+  line-height: 62rpx;
+  letter-spacing: -1.4rpx;
+}
+
+.today-page[data-theme] .today-subtitle {
+  margin-top: 10rpx;
+  color: #727572;
+  font-size: 25rpx;
+  font-weight: 450;
+  line-height: 36rpx;
+}
+
+.today-page[data-theme] .reference-calendar-card {
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+  min-height: 216rpx;
+  margin-top: 30rpx;
+  padding: 24rpx 26rpx 22rpx;
+  overflow: visible;
+  border: 1rpx solid rgba(255, 255, 255, 0.88);
+  border-radius: 36rpx;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18rpx 40rpx rgba(55, 42, 29, 0.10);
+}
+
+.today-page[data-theme] .reference-calendar-card .week-head {
+  height: 38rpx;
+  min-height: 38rpx;
+  margin-bottom: 16rpx;
+}
+
+.today-page[data-theme] .reference-calendar-card .week-title {
+  color: #171D1A;
+  font-size: 27rpx;
+  font-weight: 800;
+  line-height: 38rpx;
+}
+
+.today-page[data-theme] .reference-calendar-card .week-title text {
+  color: #6F7471;
+  font-size: 23rpx;
+  font-weight: 600;
+}
+
+.today-page[data-theme] .reference-calendar-card .week-switch {
+  height: 38rpx;
+  padding: 0 4rpx;
+  color: #747A76;
+  font-size: 20rpx;
+}
+
+.today-page[data-theme] .reference-calendar-card .week-grid {
+  height: 112rpx;
+  min-height: 112rpx;
+  overflow: visible;
+}
+
+.today-page[data-theme] .reference-calendar-card .week-day {
+  height: 108rpx;
+  min-height: 108rpx;
+  gap: 8rpx;
+  overflow: visible;
+}
+
+.today-page[data-theme] .reference-calendar-card .week-label {
+  height: 26rpx;
+  color: #858A87;
+  font-size: 21rpx;
+  line-height: 26rpx;
+}
+
+.today-page[data-theme] .reference-calendar-card .week-number {
+  width: 54rpx;
+  height: 54rpx;
+  color: #252B28;
+  font-size: 29rpx;
+  font-weight: 800;
+  line-height: 54rpx;
+}
+
+.today-page[data-theme] .reference-calendar-card .week-day.is-selected .week-number {
+  width: 60rpx;
+  height: 60rpx;
+  border: 0;
+  background: #FFC34D;
+  color: #252B28;
+  font-size: 31rpx;
+  line-height: 60rpx;
+  box-shadow: 0 10rpx 22rpx rgba(248, 184, 56, 0.24);
+}
+
+.today-page[data-theme] .reference-summary-card {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 300rpx;
+  margin-top: 28rpx;
+  padding: 16rpx 30rpx 16rpx 16rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.86);
+  border-radius: 36rpx;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.93), rgba(246, 250, 247, 0.90));
+  box-shadow: 0 18rpx 42rpx rgba(55, 42, 29, 0.11);
+  transition: opacity 120ms ease;
+}
+
+.today-page[data-theme] .reference-card--pressed {
+  opacity: 0.68;
+}
+
+.today-page[data-theme] .reference-ring-wrap {
+  position: relative;
+  width: 276rpx;
+  height: 276rpx;
+  flex: 0 0 auto;
+}
+
+.today-page[data-theme] .reference-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: 276rpx;
+  height: 276rpx;
+}
+
+.today-page[data-theme] .reference-ring-aura {
+  position: absolute;
+  z-index: 1;
+  border-radius: 50%;
+  opacity: 0.30;
+}
+
+.today-page[data-theme] .reference-ring-aura--green {
+  right: 22rpx;
+  bottom: 8rpx;
+  width: 118rpx;
+  height: 118rpx;
+  background: #63D7AC;
+}
+
+.today-page[data-theme] .reference-ring-aura--blue {
+  top: 86rpx;
+  left: 4rpx;
+  width: 98rpx;
+  height: 98rpx;
+  background: #78B8FF;
+}
+
+.today-page[data-theme] .reference-ring-center {
+  position: absolute;
+  top: 74rpx;
+  left: 74rpx;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  width: 128rpx;
+}
+
+.today-page[data-theme] .reference-ring-value {
+  color: #111820;
+  font-size: 44rpx;
+  font-weight: 850;
+  line-height: 54rpx;
+}
+
+.today-page[data-theme] .reference-ring-label {
+  color: #595E64;
+  font-size: 21rpx;
+  line-height: 30rpx;
+}
+
+.today-page[data-theme] .reference-ring-check {
+  width: 28rpx;
+  height: 28rpx;
+  margin-top: 4rpx;
+  border-radius: 50%;
+  background: #13895E;
+  color: #FFFFFF;
+  font-size: 18rpx;
+  font-weight: 800;
+  line-height: 28rpx;
+  text-align: center;
+}
+
+.today-page[data-theme] .reference-summary-side {
+  flex: 1;
+  min-width: 0;
+  margin-left: 16rpx;
+}
+
+.today-page[data-theme] .reference-summary-metric {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.today-page[data-theme] .reference-summary-metric image {
+  width: 42rpx;
+  height: 42rpx;
+  flex: 0 0 auto;
+}
+
+.today-page[data-theme] .reference-summary-num {
+  color: #111820;
+  font-size: 42rpx;
+  font-weight: 850;
+  line-height: 48rpx;
+}
+
+.today-page[data-theme] .reference-summary-unit {
+  margin-left: 6rpx;
+  color: #2F3437;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.today-page[data-theme] .reference-summary-label {
+  margin-top: 4rpx;
+  color: #686D70;
+  font-size: 22rpx;
+  line-height: 30rpx;
+}
+
+.today-page[data-theme] .reference-summary-line {
+  height: 1rpx;
+  margin: 18rpx 0;
+  background: #E8E2D9;
+}
+
+.today-page[data-theme] .reference-coach-entry {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 110rpx;
+  margin-top: 22rpx;
+  padding: 20rpx 22rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.86);
+  border-radius: 30rpx;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 12rpx 30rpx rgba(55, 42, 29, 0.075);
+}
+
+.today-page[data-theme] .reference-coach-robot {
+  width: 64rpx;
+  height: 64rpx;
+  flex: 0 0 auto;
+}
+
+.today-page[data-theme] .reference-coach-copy {
+  min-width: 0;
+  margin-left: 18rpx;
+  flex: 1;
+}
+
+.today-page[data-theme] .reference-coach-title {
+  color: #17201C;
+  font-size: 28rpx;
+  font-weight: 800;
+  line-height: 38rpx;
+}
+
+.today-page[data-theme] .reference-coach-subtitle {
+  overflow: hidden;
+  margin-top: 4rpx;
+  color: #727773;
+  font-size: 21rpx;
+  line-height: 30rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today-page[data-theme] .reference-coach-arrow {
+  margin-left: 12rpx;
+  color: #8D928F;
+  font-size: 40rpx;
+  line-height: 48rpx;
+}
+
+.today-page[data-theme] .reference-task-panel {
+  width: 100%;
+  margin-top: 30rpx;
+  padding: 0;
+  background: transparent;
+}
+
+.today-page[data-theme] .reference-task-panel .task-section-head {
+  align-items: center;
+  margin-bottom: 18rpx;
+}
+
+.today-page[data-theme] .reference-task-panel .task-section-title {
+  color: #111820;
+  font-size: 34rpx;
+  font-weight: 850;
+  line-height: 44rpx;
+}
+
+.today-page[data-theme] .reference-task-panel .task-section-subtitle {
+  margin-top: 4rpx;
+  color: #747975;
+  font-size: 22rpx;
+  line-height: 32rpx;
+}
+
+.today-page[data-theme] .reference-task-panel .task-section-add {
+  min-width: 132rpx;
+  height: 56rpx;
+  padding: 0 20rpx;
+  border: 0;
+  border-radius: 28rpx;
+  background: #EEF6EF;
+  color: #0D805E;
+  font-size: 22rpx;
+  font-weight: 750;
+}
+
+.today-page[data-theme] .reference-task-panel .today-action-list {
+  gap: 16rpx;
+}
+
+.today-page[data-theme] .reference-task-panel .today-task-row,
+.today-page[data-theme] .reference-task-panel .today-task-row + .today-task-row {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 128rpx;
+  margin: 0;
+  padding: 20rpx 24rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.88);
+  border-radius: 30rpx;
+  background: rgba(255, 255, 255, 0.90);
+  box-shadow: 0 10rpx 26rpx rgba(65, 48, 30, 0.075);
+}
+
+.today-page[data-theme] .reference-task-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68rpx;
+  height: 68rpx;
+  flex: 0 0 auto;
+  border-radius: 20rpx;
+}
+
+.today-page[data-theme] .reference-task-icon image {
+  width: 50rpx;
+  height: 50rpx;
+}
+
+.today-page[data-theme] .reference-task-icon--book { background: #36C684; }
+.today-page[data-theme] .reference-task-icon--audio { background: #FFBF45; }
+.today-page[data-theme] .reference-task-icon--note { background: #4C9AF8; }
+
+.today-page[data-theme] .reference-task-panel .task-copy {
+  min-width: 0;
+  margin-left: 20rpx;
+}
+
+.today-page[data-theme] .reference-task-panel .task-title {
+  color: #171D1A;
+  font-size: 29rpx;
+  font-weight: 800;
+  line-height: 38rpx;
+}
+
+.today-page[data-theme] .reference-task-panel .task-meta {
+  overflow: hidden;
+  margin-top: 8rpx;
+  color: #666C72;
+  font-size: 21rpx;
+  line-height: 30rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today-page[data-theme] .reference-task-panel .task-tail-check {
+  width: 44rpx;
+  height: 44rpx;
+  border-color: rgba(22, 138, 97, 0.24);
+  background: #F7FBF9;
+}
+
+.today-page[data-theme] .reference-task-panel .task-tail-check.is-done {
+  border-color: #168A61;
+  background: #168A61;
+  color: #FFFFFF;
+  box-shadow: none;
+}
+
+@media (max-width: 350px) {
+  .today-page[data-theme] .reference-ring-wrap {
+    width: 242rpx;
+    height: 242rpx;
+  }
+
+  .today-page[data-theme] .reference-ring {
+    width: 242rpx;
+    height: 242rpx;
+  }
+
+  .today-page[data-theme] .reference-ring-center {
+    top: 60rpx;
+    left: 58rpx;
+  }
+
+  .today-page[data-theme] .reference-summary-num {
+    font-size: 36rpx;
+  }
+}
+
+/* =========================================================
  * Action-first today page
  * Priority: action queue > summary > coach advice.
  * ======================================================= */
@@ -5194,4 +5680,322 @@
 
 .coach-advice-link {
   font-size: 24rpx;
+}
+
+/* =========================================================
+ * Today-only light glass trial.
+ * Kept last intentionally: this page contains historical theme overrides.
+ * ======================================================= */
+.today-page[data-theme] {
+  background:
+    radial-gradient(circle at 94% 6%, rgba(248, 210, 106, 0.12), transparent 260rpx),
+    radial-gradient(circle at 2% 30%, rgba(53, 104, 89, 0.055), transparent 320rpx),
+    #F6F6F2;
+}
+
+.today-page[data-theme] .week-card.glass-card,
+.today-page[data-theme] .action-priority-card.glass-card,
+.today-page[data-theme] .execution-summary-card.glass-card,
+.today-page[data-theme] .coach-advice-card.glass-card {
+  border-color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 10rpx 32rpx rgba(31, 42, 36, 0.055);
+  -webkit-backdrop-filter: blur(22rpx) saturate(1.25);
+  backdrop-filter: blur(22rpx) saturate(1.25);
+}
+
+/* Content-driven sizing keeps the seven-day row visible with larger text. */
+.today-page[data-theme] .week-card.glass-card {
+  height: auto;
+  min-height: 230rpx;
+  overflow: visible;
+  box-sizing: border-box;
+  padding: 20rpx 18rpx 22rpx;
+}
+
+.today-page[data-theme] .cockpit-status.glass-pill {
+  border-color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 6rpx 20rpx rgba(31, 42, 36, 0.04);
+}
+
+.today-page[data-theme] .today-task-row.glass-action-item,
+.today-page[data-theme] .today-task-row.glass-action-item + .today-task-row.glass-action-item {
+  border-color: rgba(60, 60, 67, 0.08);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.today-page[data-theme] .task-tail-check.glass-check {
+  border-color: rgba(60, 60, 67, 0.20);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: none;
+}
+
+.today-page[data-theme] .task-tail-check.glass-check.is-done {
+  border-color: #356859;
+  background: #356859;
+  color: #FFFFFF;
+}
+
+.today-page[data-theme] .execution-summary-card.glass-card-soft {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.today-page[data-theme] .summary-progress.glass-progress {
+  height: 8rpx;
+  background: rgba(60, 60, 67, 0.10);
+}
+
+.today-page[data-theme] .summary-progress-inner.glass-progress-inner {
+  background: linear-gradient(90deg, #356859 0%, #7FAA91 100%);
+}
+
+.today-page[data-theme] .coach-advice-tag.glass-pill {
+  min-height: 40rpx;
+  padding: 0 14rpx;
+  border-color: rgba(53, 104, 89, 0.10);
+  background: rgba(234, 245, 239, 0.88);
+  color: #356859;
+  box-shadow: none;
+}
+
+/* =========================================================
+ * Reference-aligned light skeuomorphic finish.
+ * UI-only overrides; interaction and data selectors stay unchanged.
+ * ======================================================= */
+.today-page[data-theme] {
+  overflow-x: hidden;
+  box-sizing: border-box;
+  background: #F7F5EF;
+  color: #1D1D1F;
+}
+
+.today-page[data-theme] .cockpit-header {
+  margin-right: -32rpx;
+  margin-left: -32rpx;
+  padding-right: 32rpx;
+  padding-bottom: 30rpx;
+  padding-left: 32rpx;
+  border-radius: 0 0 44rpx 44rpx;
+  background: linear-gradient(155deg, #FBF6EE 0%, #F5F3EB 48%, #EDF5EF 100%);
+}
+
+.today-page[data-theme] .today-greeting {
+  color: #18251F;
+  font-size: 46rpx;
+  font-weight: 780;
+  line-height: 58rpx;
+  letter-spacing: -0.8rpx;
+}
+
+.today-page[data-theme] .today-subtitle {
+  color: #717773;
+  font-size: 25rpx;
+  line-height: 36rpx;
+}
+
+.today-page[data-theme] .cockpit-status.glass-pill {
+  overflow: hidden;
+  max-width: 228rpx;
+  min-height: 52rpx;
+  padding: 0 16rpx;
+  border-color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.76);
+  color: #53675E;
+  font-size: 20rpx;
+  line-height: 28rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: 0 8rpx 24rpx rgba(31, 42, 36, 0.05);
+}
+
+.today-page[data-theme] .week-card.glass-card {
+  width: 100%;
+  height: auto;
+  min-height: 224rpx;
+  margin-top: 26rpx;
+  padding: 22rpx 22rpx 20rpx;
+  overflow: visible;
+  border: 1rpx solid rgba(255, 255, 255, 0.94);
+  border-radius: 34rpx;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16rpx 42rpx rgba(31, 42, 36, 0.065);
+}
+
+.today-page[data-theme] .week-title {
+  color: #25312B;
+  font-size: 28rpx;
+  font-weight: 720;
+}
+
+.today-page[data-theme] .week-switch {
+  color: #717773;
+  font-size: 21rpx;
+}
+
+.today-page[data-theme] .week-day {
+  min-width: 0;
+  border-radius: 24rpx;
+}
+
+.today-page[data-theme] .week-label {
+  color: #858A87;
+  font-weight: 520;
+}
+
+.today-page[data-theme] .week-day.is-selected .week-number {
+  background: #F6C85F;
+  color: #273029;
+  box-shadow: 0 8rpx 18rpx rgba(246, 200, 95, 0.24);
+}
+
+.today-page[data-theme] .action-priority-card.glass-card,
+.today-page[data-theme] .execution-summary-card.glass-card,
+.today-page[data-theme] .coach-advice-card.glass-card {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1rpx solid rgba(255, 255, 255, 0.92);
+  border-radius: 34rpx;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 14rpx 38rpx rgba(31, 42, 36, 0.06);
+}
+
+.today-page[data-theme] .action-priority-card.glass-card {
+  padding: 30rpx;
+}
+
+.today-page[data-theme] .task-section-head {
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.today-page[data-theme] .task-section-title {
+  color: #1D2923;
+  font-size: 34rpx;
+  font-weight: 760;
+  line-height: 44rpx;
+}
+
+.today-page[data-theme] .task-section-subtitle {
+  margin-top: 6rpx;
+  color: #7B817D;
+  font-size: 23rpx;
+  line-height: 34rpx;
+}
+
+.today-page[data-theme] .task-section-add {
+  min-width: 108rpx;
+  height: 58rpx;
+  padding: 0 18rpx;
+  border: 1rpx solid rgba(53, 104, 89, 0.08);
+  border-radius: 29rpx;
+  background: #EEF6F1;
+  color: #356859;
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.today-page[data-theme] .today-action-list {
+  gap: 16rpx;
+}
+
+.today-page[data-theme] .today-task-row.glass-action-item,
+.today-page[data-theme] .today-task-row.glass-action-item + .today-task-row.glass-action-item {
+  width: 100%;
+  min-height: 124rpx;
+  margin: 0;
+  padding: 22rpx 20rpx 22rpx 22rpx;
+  border: 1rpx solid rgba(35, 59, 52, 0.07);
+  border-radius: 24rpx;
+  background: #FFFFFF;
+  box-shadow: 0 7rpx 20rpx rgba(31, 42, 36, 0.04);
+}
+
+.today-page[data-theme] .task-title {
+  color: #202B25;
+  font-size: 29rpx;
+  font-weight: 720;
+  line-height: 40rpx;
+}
+
+.today-page[data-theme] .task-meta {
+  overflow: hidden;
+  margin-top: 8rpx;
+  color: #7C827E;
+  font-size: 22rpx;
+  line-height: 32rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today-page[data-theme] .task-tail-check.glass-check {
+  width: 48rpx;
+  height: 48rpx;
+  border-color: rgba(53, 104, 89, 0.22);
+  background: #F8FBF9;
+}
+
+.today-page[data-theme] .task-tail-check.glass-check.is-done {
+  border-color: #356859;
+  background: #356859;
+  box-shadow: 0 7rpx 16rpx rgba(53, 104, 89, 0.18);
+}
+
+.today-page[data-theme] .execution-summary-card.glass-card-soft {
+  min-height: 188rpx;
+  padding: 28rpx 28rpx 24rpx;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96) 0%, rgba(241, 247, 242, 0.94) 100%);
+}
+
+.today-page[data-theme] .summary-card-title,
+.today-page[data-theme] .coach-advice-title {
+  color: #1D2923;
+  font-size: 30rpx;
+  font-weight: 740;
+}
+
+.today-page[data-theme] .summary-card-label {
+  color: #747A76;
+  font-size: 21rpx;
+}
+
+.today-page[data-theme] .summary-metric-value {
+  color: #202A25;
+  font-size: 30rpx;
+  font-weight: 760;
+}
+
+.today-page[data-theme] .summary-metric.is-primary .summary-metric-value {
+  color: #356859;
+}
+
+.today-page[data-theme] .summary-progress.glass-progress {
+  height: 7rpx;
+  margin-top: 20rpx;
+  background: rgba(53, 104, 89, 0.10);
+}
+
+.today-page[data-theme] .coach-advice-card.glass-card {
+  padding: 28rpx 30rpx;
+}
+
+.today-page[data-theme] .coach-advice-copy {
+  color: #59625D;
+  font-size: 25rpx;
+  line-height: 40rpx;
+}
+
+@media (max-width: 350px) {
+  .today-page[data-theme] .cockpit-status.glass-pill {
+    max-width: 190rpx;
+    font-size: 18rpx;
+  }
+
+  .today-page[data-theme] .summary-metric-value {
+    font-size: 26rpx;
+  }
+
+  .today-page[data-theme] .summary-metric-name {
+    font-size: 18rpx;
+  }
 }

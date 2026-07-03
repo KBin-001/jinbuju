@@ -1,0 +1,99 @@
+/* Apple-like light glass surfaces for WeChat Mini Program.
+ * These are project-owned visual utilities, not Apple components.
+ * Opaque fallbacks come first so content stays readable when blur is unavailable.
+ */
+
+page {
+  --glass-surface: rgba(255, 255, 255, 0.94);
+  --glass-surface-soft: rgba(249, 252, 249, 0.90);
+  --glass-line: rgba(35, 59, 52, 0.085);
+  --glass-highlight: rgba(255, 255, 255, 0.92);
+  --glass-shadow: 0 14rpx 38rpx rgba(31, 42, 36, 0.065);
+  --glass-green: #356859;
+  --glass-green-soft: rgba(53, 104, 89, 0.10);
+}
+
+.glass-card {
+  position: relative;
+  box-sizing: border-box;
+  border: 1rpx solid var(--glass-highlight);
+  background: #FFFFFF;
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(18rpx) saturate(1.18);
+  backdrop-filter: blur(18rpx) saturate(1.18);
+}
+
+.glass-card-soft {
+  background: rgba(255, 255, 255, 0.92);
+  background: var(--glass-surface-soft);
+  border-color: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 10rpx 30rpx rgba(31, 42, 36, 0.05);
+}
+
+.glass-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 48rpx;
+  padding: 0 18rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.72);
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--glass-green);
+  box-shadow: 0 6rpx 20rpx rgba(31, 42, 36, 0.045);
+  -webkit-backdrop-filter: blur(16rpx) saturate(1.2);
+  backdrop-filter: blur(16rpx) saturate(1.2);
+}
+
+.glass-action-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  border: 1rpx solid var(--glass-line);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6rpx 18rpx rgba(31, 42, 36, 0.035);
+}
+
+.glass-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 50rpx;
+  height: 50rpx;
+  border: 2rpx solid rgba(60, 60, 67, 0.20);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.84);
+  color: #FFFFFF;
+}
+
+.glass-check.is-done {
+  border-color: var(--glass-green);
+  background: var(--glass-green);
+}
+
+.glass-progress {
+  overflow: hidden;
+  height: 8rpx;
+  border-radius: 999rpx;
+  background: rgba(60, 60, 67, 0.10);
+}
+
+.glass-progress-inner {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #356859 0%, #7FAA91 100%);
+}
+
+/* Reserved for a future custom tab bar. Native tabBar cannot consume page WXSS. */
+.glass-tabbar {
+  border-top: 1rpx solid var(--glass-line);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 -8rpx 28rpx rgba(31, 42, 36, 0.045);
+  -webkit-backdrop-filter: blur(24rpx) saturate(1.25);
+  backdrop-filter: blur(24rpx) saturate(1.25);
+}

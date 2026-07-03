@@ -237,7 +237,10 @@ Page(withAppTheme({
       this.focusGoalHandler = null;
     }
   },
-  onShow() { this.setData({ appTheme: getCurrentThemeId() }); this.load(); },
+  onShow() {
+    this.setData({ appTheme: getCurrentThemeId() });
+    this.load();
+  },
   load() {
     this.setData({ status: "loading", errorMessage: "" });
     try {
@@ -344,6 +347,14 @@ Page(withAppTheme({
     wx.navigateTo({
       url: `/pages/today-data/index?date=${encodeURIComponent(date)}`,
       fail: () => wx.showToast({ title: "数据详情打开失败", icon: "none" }),
+    });
+  },
+  openDailyCoach() {
+    if (!this.data.goal) return;
+    const date = this.data.selectedDate || getTodayBusinessDate();
+    wx.navigateTo({
+      url: `/pages/daily-coach/index?date=${encodeURIComponent(date)}&goalId=${encodeURIComponent(this.data.goal.id)}`,
+      fail: () => wx.showToast({ title: "每日教练打开失败", icon: "none" }),
     });
   },
   addTask() {

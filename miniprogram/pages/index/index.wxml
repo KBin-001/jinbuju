@@ -12,19 +12,21 @@
   </view>
 
   <block wx:else>
-    <view class="cockpit-header">
-      <view class="cockpit-topline">
-        <view>
-          <view class="today-greeting">早上好，{{displayName}}</view>
-          <view class="today-subtitle">{{weekday}}</view>
-        </view>
+    <view class="reference-hero">
+      <view class="reference-identity-row">
+        <image class="reference-avatar" src="/assets/coach-ui/avatar.svg" mode="aspectFit" />
         <view class="cockpit-status status-{{todayMoodTone}}">
           <view class="cockpit-status-dot"></view>
           <text>{{todayMoodTitle}}</text>
         </view>
       </view>
 
-      <view class="week-card">
+      <view class="reference-greeting">
+        <view class="today-greeting">早上好，{{displayName}}</view>
+        <view class="today-subtitle">{{todayMoodCopy}}</view>
+      </view>
+
+      <view class="week-card reference-calendar-card">
         <view class="week-head">
           <view class="week-title">{{weekTitle}} <text>{{weekdayShort}}</text></view>
           <view class="week-switch" catchtap="openCalendar" aria-label="展开完整日历">
@@ -55,13 +57,52 @@
     </view>
 
     <block wx:else>
-      <view class="task-section action-priority-card">
+      <view class="reference-summary-card" bindtap="openTodayDataDetails" hover-class="reference-card--pressed">
+        <view class="reference-ring-wrap">
+          <view class="reference-ring-aura reference-ring-aura--green"></view>
+          <view class="reference-ring-aura reference-ring-aura--blue"></view>
+          <image class="reference-ring" src="/assets/coach-ui/progress-ring.svg" mode="aspectFit" />
+          <view class="reference-ring-center">
+            <view class="reference-ring-value">{{summary.completedCount}}/{{summary.totalCount}}</view>
+            <view class="reference-ring-label">已完成</view>
+            <view class="reference-ring-check">✓</view>
+          </view>
+        </view>
+        <view class="reference-summary-side">
+          <view class="reference-summary-metric">
+            <image src="/assets/coach-ui/icon-clock.svg" mode="aspectFit" />
+            <view>
+              <view><text class="reference-summary-num">{{summary.actualMinutes}}</text><text class="reference-summary-unit">min</text></view>
+              <view class="reference-summary-label">实际投入</view>
+            </view>
+          </view>
+          <view class="reference-summary-line"></view>
+          <view class="reference-summary-metric">
+            <image src="/assets/coach-ui/icon-chart.svg" mode="aspectFit" />
+            <view>
+              <view><text class="reference-summary-num">{{completionPercent}}</text><text class="reference-summary-unit">%</text></view>
+              <view class="reference-summary-label">今日进度</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="reference-coach-entry" bindtap="openDailyCoach" hover-class="reference-card--pressed">
+        <image class="reference-coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
+        <view class="reference-coach-copy">
+          <view class="reference-coach-title">每日 AI 教练</view>
+          <view class="reference-coach-subtitle">已根据今天的行动生成执行分析</view>
+        </view>
+        <view class="reference-coach-arrow">›</view>
+      </view>
+
+      <view class="task-section reference-task-panel">
         <view class="task-section-head">
           <view>
-            <view class="task-section-title">今日行动队列</view>
+            <view class="task-section-title">今日行动列表</view>
             <view class="task-section-subtitle">记录今天的行动与完成情况。</view>
           </view>
-          <view class="task-section-add" catchtap="addTask"><text>+</text> 添加</view>
+          <view class="task-section-add" catchtap="addTask"><text>＋</text> 添加任务</view>
         </view>
 
         <view class="today-action-list">
@@ -73,15 +114,20 @@
             wx:for="{{visibleTasks}}"
             wx:key="id"
             wx:for-item="task"
-            class="today-task-row {{task.status === 'completed' ? 'is-done' : ''}}"
+            class="today-task-row glass-action-item {{task.status === 'completed' ? 'is-done' : ''}}"
             data-id="{{task.id}}"
             bindlongpress="openTask"
           >
+            <view class="reference-task-icon reference-task-icon--{{task.actionIconType}}">
+              <image wx:if="{{task.actionIconType === 'book'}}" src="/assets/coach-ui/icon-book.svg" mode="aspectFit" />
+              <image wx:elif="{{task.actionIconType === 'audio'}}" src="/assets/coach-ui/icon-headphone.svg" mode="aspectFit" />
+              <image wx:else src="/assets/coach-ui/icon-doc.svg" mode="aspectFit" />
+            </view>
             <view class="task-copy">
               <view class="task-title-line"><view class="task-title">{{task.displayTitle}}</view></view>
               <view class="task-meta"><text>预计 {{task.estimatedMinutes}} 分钟</text><text class="task-meta-dot">·</text><text class="task-goal-name">{{goal.title}}</text></view>
             </view>
-            <view class="task-tail-check {{task.status === 'completed' ? 'is-done' : ''}}" data-id="{{task.id}}" catchtap="toggleTaskDone">
+            <view class="task-tail-check glass-check {{task.status === 'completed' ? 'is-done' : ''}}" data-id="{{task.id}}" catchtap="toggleTaskDone">
               <t-icon wx:if="{{task.status === 'completed'}}" name="check" />
             </view>
           </view>
@@ -90,29 +136,6 @@
           </view>
         </view>
       </view>
-
-      <view class="execution-summary-card" bindtap="openTodayDataDetails" hover-class="execution-summary-card--pressed">
-        <view class="summary-card-head">
-          <view class="summary-card-title">今日执行状态</view>
-          <view class="summary-card-label">查看详情 <text>›</text></view>
-        </view>
-        <view class="summary-metrics">
-          <view class="summary-metric is-primary"><view class="summary-metric-value">{{summary.completedCount}}/{{summary.totalCount}}</view><text class="summary-metric-name">已完成</text></view>
-          <view class="summary-metric"><view class="summary-metric-value">{{remainingCount}}<text class="summary-metric-unit"> 项</text></view><text class="summary-metric-name">待推进</text></view>
-          <view class="summary-metric"><view class="summary-metric-value">{{remainingEstimatedMinutes}}<text class="summary-metric-unit"> min</text></view><text class="summary-metric-name">预计剩余</text></view>
-          <view class="summary-metric"><view class="summary-metric-value">{{summary.actualMinutes}}<text class="summary-metric-unit"> min</text></view><text class="summary-metric-name">实际投入</text></view>
-        </view>
-        <view class="summary-progress"><view class="summary-progress-inner" style="width: {{completionPercent}}%;"></view></view>
-      </view>
-
-      <navigator class="coach-advice-card" url="/pages/ai-coach/index?scope=week&amp;goalId={{goal.id}}" hover-class="coach-advice-card--pressed">
-        <view class="coach-advice-head">
-          <view class="coach-advice-title">AI 进度教练</view>
-          <view class="coach-advice-tag">在线陪跑</view>
-        </view>
-        <view class="coach-advice-copy">{{dailyNudge}}</view>
-        <view class="coach-advice-link">和教练聊聊 <text>→</text></view>
-      </navigator>
     </block>
   </block>
 
