@@ -161,7 +161,7 @@ const TREND_RANGES: Array<{ key: TrendRange; label: string }> = [
   { key: "year", label: "年" },
 ];
 
-const MILESTONE_DAYS = [7, 14, 30, 60, 90];
+const MILESTONE_DAYS = [7, 14, 30, 60];
 
 const HEATMAP_CELL_SIZE = 14;
 const HEATMAP_CELL_GAP = 5;
@@ -781,7 +781,7 @@ function buildMilestones(actionDays: number): { milestones: MilestoneView[]; nex
   });
   return {
     milestones,
-    nextText: nextTarget ? `距离下个里程碑还差 ${nextTarget - actionDays} 天` : "90 天里程碑已达成",
+    nextText: nextTarget ? `距离下个里程碑还差 ${nextTarget - actionDays} 天` : "60 天里程碑已达成",
     medalState: { achieved: !nextTarget, current: Boolean(nextTarget) },
   };
 }
@@ -885,6 +885,8 @@ Page(withAppTheme({
     chartCanvasVisible: true,
     summary: null as ProgressSummary | null,
     levelLabel: "Lv.1 · 自律新兵",
+    levelNumber: "Lv.1",
+    levelName: "自律新兵",
     goalPeriod: "",
     goalStatusText: "添加行动后开始记录",
     goalProgressPercent: 0,
@@ -904,6 +906,7 @@ Page(withAppTheme({
     nextMilestoneText: "距离下个里程碑还差 7 天",
     medalState: { achieved: false, current: true } as MedalState,
     recentRecords: [] as RecentRecord[],
+    latestRecord: null as RecentRecord | null,
     hasRecentRecords: false,
     hasHistoryReview: false,
   },
@@ -958,6 +961,8 @@ Page(withAppTheme({
       const milestoneResult = buildMilestones(summary?.totalActionDays || 0);
 
       const recentRecords = buildRecentRecords(todayTasks);
+      const currentLevelLabel = levelLabel(summary?.totalActionDays || 0);
+      const [levelNumber, levelName] = currentLevelLabel.split(" · ");
       this.setData({
         status: "ready",
         goal,
@@ -965,7 +970,9 @@ Page(withAppTheme({
         canSwitchGoal: activeGoals.length > 1,
         goalPickerVisible: false,
         summary,
-        levelLabel: levelLabel(summary?.totalActionDays || 0),
+        levelLabel: currentLevelLabel,
+        levelNumber,
+        levelName,
         goalPeriod: goalPeriod(goal),
         goalStatusText: goalStatusText(rate, summary?.totalTasks || 0),
         goalProgressPercent: rate,
@@ -984,6 +991,7 @@ Page(withAppTheme({
         nextMilestoneText: milestoneResult.nextText,
         medalState: milestoneResult.medalState,
         recentRecords,
+        latestRecord: recentRecords[0] || null,
         hasRecentRecords: recentRecords.length > 0,
         hasHistoryReview: getArchivedGoals().length > 0,
       }, () => {

@@ -30,13 +30,11 @@
         <view class="hero-eyebrow">当前目标</view>
         <view class="hero-title">{{goal.title}}</view>
         <view class="hero-status glass-pill"><view class="hero-status-dot"></view>{{goalStatusText}}</view>
-        <view class="hero-progress-row">
-          <text>累计行动完成率</text>
-          <text class="hero-progress-value">{{goalProgressPercent}}%</text>
-        </view>
-        <view class="glass-progress hero-progress"><view class="glass-progress-inner" style="width: {{goalProgressPercent}}%;"></view></view>
         <view class="hero-footer">
-          <text class="hero-period">{{goalPeriod}}</text>
+          <view class="hero-progress-compact">
+            <view class="hero-progress-row"><text>累计行动完成率</text><text class="hero-progress-value">{{goalProgressPercent}}%</text></view>
+            <view class="glass-progress hero-progress"><view class="glass-progress-inner" style="width: {{goalProgressPercent}}%;"></view></view>
+          </view>
           <view class="hero-switch-button" catchtap="openGoalPicker">
             <text>{{canSwitchGoal ? '切换目标' : '查看目标'}}</text><text class="hero-switch-arrow">›</text>
           </view>
@@ -45,13 +43,7 @@
     </view>
 
     <view class="overview-card glass-card">
-      <view class="card-title-row">
-        <view>
-          <view class="card-title">进度总览</view>
-          <view class="card-subtitle">用真实行动记录持续推进</view>
-        </view>
-        <view class="overview-chip glass-pill">{{levelLabel}}</view>
-      </view>
+      <view class="card-title">进度总览</view>
       <view class="overview-grid">
         <view wx:for="{{overviewStats}}" wx:key="label" class="overview-item">
           <view class="overview-icon overview-icon--{{index}}">
@@ -61,6 +53,11 @@
           </view>
           <view class="overview-value">{{item.value}}<text class="value-unit">{{item.unit}}</text></view>
           <view class="overview-label">{{item.label}}</view>
+        </view>
+        <view class="overview-item overview-item--level">
+          <view class="overview-icon overview-icon--level">冠</view>
+          <view class="overview-value overview-level-value">{{levelNumber}}</view>
+          <view class="overview-label">{{levelName}}</view>
         </view>
       </view>
     </view>
@@ -81,13 +78,12 @@
           <view class="trend-metric-item">
             <view class="trend-metric-name">{{trendRange === 'week' ? '本周投入' : '本月投入'}}</view>
             <view class="trend-metric-value">{{trendSummary.totalMinutes}}<text class="value-unit">分钟</text></view>
-            <view class="trend-metric-compare compare-{{trendSummary.compareTone}}">{{trendSummary.compareText}}</view>
           </view>
           <view class="trend-metric-divider"></view>
           <view class="trend-metric-item">
             <view class="trend-metric-name">完成行动</view>
             <view class="trend-metric-value">{{trendSummary.totalActions}}<text class="value-unit">项</text></view>
-            <view class="trend-metric-compare">完成率 <text>{{trendSummary.completionRate}}%</text></view>
+            <view class="trend-metric-compare">完成率 {{trendSummary.completionRate}}%</view>
           </view>
         </view>
 
@@ -115,12 +111,6 @@
           <view class="bar-labels"><text wx:for="{{barChart.bars}}" wx:key="key" class="bar-label">{{item.label}}</text></view>
         </block>
 
-        <view class="trend-stats-grid">
-          <view class="trend-stat-item"><view class="trend-stat-label">日均投入</view><view class="trend-stat-value">{{trendSummary.avgMinutes}}<text class="value-unit">分钟</text></view></view>
-          <view class="trend-stat-item"><view class="trend-stat-label">完成率</view><view class="trend-stat-value">{{trendSummary.completionRate}}<text class="value-unit">%</text></view></view>
-          <view class="trend-stat-item"><view class="trend-stat-label">连续坚持</view><view class="trend-stat-value">{{trendSummary.streakDays}}<text class="value-unit">天</text></view></view>
-          <view class="trend-stat-item"><view class="trend-stat-label">最佳投入日</view><view class="trend-stat-value trend-stat-value--text">{{trendSummary.bestInvestLabel}}</view></view>
-        </view>
       </block>
 
       <block wx:else>
@@ -168,40 +158,38 @@
         </view>
         <view class="ai-coach-period glass-pill">{{aiCoach.periodLabel}}</view>
       </view>
-      <view class="ai-coach-message">
-        <view class="ai-coach-message-title"><text class="ai-coach-star">✦</text>{{trendSummary.adviceTitle || aiCoach.summary}}</view>
-        <view class="ai-coach-message-copy">{{trendSummary.adviceDetail || aiCoach.suggestion}}</view>
+      <view class="ai-coach-message"><view class="ai-coach-message-title"><text class="ai-coach-star">✦</text>{{trendSummary.adviceTitle || aiCoach.summary}}</view></view>
+      <view class="ai-coach-footer">
+        <view class="ai-coach-evidence">
+          <view class="evidence-item"><view class="evidence-icon">↗</view><view><text class="evidence-label">对比昨日</text><view class="evidence-value">{{trendSummary.vsYesterdayText}}</view></view></view>
+          <view class="evidence-item"><view class="evidence-icon">均</view><view><text class="evidence-label">{{trendRange === 'month' ? '本月平均' : '本周平均'}}</text><view class="evidence-value">{{trendSummary.avgMinutes}} 分钟</view></view></view>
+          <view class="evidence-item"><view class="evidence-icon is-gold">续</view><view><text class="evidence-label">连续投入</text><view class="evidence-value">{{trendSummary.streakDays}} 天</view></view></view>
+        </view>
+        <view class="ai-coach-action">查看详细分析 <text class="ai-coach-action-arrow">›</text></view>
       </view>
-      <view class="ai-coach-evidence">
-        <view class="evidence-item"><view class="evidence-icon">↗</view><view><text class="evidence-label">对比昨日</text><view class="evidence-value">{{trendSummary.vsYesterdayText}}</view></view></view>
-        <view class="evidence-item"><view class="evidence-icon">均</view><view><text class="evidence-label">{{trendRange === 'month' ? '本月平均' : '本周平均'}}</text><view class="evidence-value">{{trendSummary.avgMinutes}} 分钟</view></view></view>
-        <view class="evidence-item"><view class="evidence-icon is-gold">续</view><view><text class="evidence-label">连续投入</text><view class="evidence-value">{{trendSummary.streakDays}} 天</view></view></view>
-      </view>
-      <view class="ai-coach-action">查看详细分析 <text class="ai-coach-action-arrow">›</text></view>
     </view>
 
     <view class="milestone-card glass-card">
-      <view class="card-title-row"><view><view class="card-title">成长里程碑</view><view class="card-subtitle">{{nextMilestoneText}}</view></view></view>
-      <scroll-view scroll-x class="milestone-scroll" enhanced show-scrollbar="{{false}}">
-        <view class="milestone-row">
-          <view wx:for="{{milestones}}" wx:key="days" class="milestone-item state-{{item.state}}">
-            <view class="milestone-line"></view>
-            <view class="mini-medal"><view class="mini-medal-face">★</view><view class="mini-medal-ribbon"></view></view>
-            <view class="milestone-label">{{item.label}}</view><view class="milestone-status">{{item.statusText}}</view>
-          </view>
+      <view class="card-title-row"><view class="card-title">成长里程碑</view><view class="milestone-next">{{nextMilestoneText}}</view></view>
+      <view class="milestone-row">
+        <view wx:for="{{milestones}}" wx:key="days" class="milestone-item state-{{item.state}}">
+          <view class="milestone-line"></view>
+          <view class="mini-medal"><view class="mini-medal-face">★</view></view>
+          <view class="milestone-label">{{item.label}}</view><view class="milestone-status">{{item.statusText}}</view>
         </view>
-      </scroll-view>
+      </view>
     </view>
 
     <view class="record-card glass-card">
-      <view class="card-title-row">
-        <view><view class="card-title">最近记录</view><view class="card-subtitle">每一小步，都值得留下</view></view>
-        <view wx:if="{{hasHistoryReview}}" class="review-link" bindtap="openHistoryReview">历史复盘 ›</view>
+      <view class="record-compact" bindtap="openHistoryReview">
+        <view class="record-check">记</view>
+        <view class="record-copy">
+          <view class="record-title">最近记录</view>
+          <view wx:if="{{hasRecentRecords}}" class="record-meta">{{latestRecord.title}} · {{latestRecord.statusText}} · {{latestRecord.minutesText}}</view>
+          <view wx:else class="record-meta">今天还没有完成记录，完成一项小行动后会记录在这里。</view>
+        </view>
+        <view class="record-arrow">›</view>
       </view>
-      <view wx:if="{{hasRecentRecords}}" class="record-list">
-        <view wx:for="{{recentRecords}}" wx:key="id" class="record-item glass-action-item"><view class="record-check">✓</view><view class="record-copy"><view class="record-title">{{item.title}}</view><view class="record-meta">{{item.statusText}} · {{item.minutesText}}</view></view></view>
-      </view>
-      <view wx:else class="record-empty">今天还没有完成记录。先完成一项小行动，进度页会替你记下来。</view>
     </view>
   </block>
 
