@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Untitled</title>
+    <style id="theme-vars">
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的页</title>
+    <style id="theme-vars">
+:root {
+  /* ===== Color System ===== */
+  --color-primary: #356859;
+  --color-primary-dark: #1F5B4A;
+  --color-primary-light: #7DBB69;
+  --color-page-bg: #F5F7F2;
+  --color-card-bg: #FFFFFF;
+  --color-surface-green: #EAF5EF;
+  --color-surface-yellow: #F8D26A;
+  --color-text-primary: #233B34;
+  --color-text-secondary: #71827A;
+  --color-divider: #E6EEE9;
+
+  /* State Colors */
+  --state-success: #7DBB69;
+  --state-warning: #F8D26A;
+  --state-info: #5BA4CF;
+  --state-error: #D4726A;
+
+  /* ===== Radius Scale ===== */
+  --radius-sm: 4px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-card: 16px;
+  --radius-button: 44px;
+  --radius-chip: 20px;
+  --radius-full: 9999px;
+
+  /* ===== Spacing Scale ===== */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-base: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 36px;
+
+  /* ===== Typography Scale ===== */
+  /* Body base */
+  --font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 15px;
+  --font-size-xl: 17px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+  --font-size-hero: 28px;
+
+  /* Line heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+
+  /* Font weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+
+  /* ===== Shadow Scale ===== */
+  --shadow-card: 0 4px 16px rgba(31, 70, 58, 0.06);
+  --shadow-card-hover: 0 8px 24px rgba(31, 70, 58, 0.1);
+  --shadow-elevated: 0 12px 32px rgba(31, 70, 58, 0.12);
+}
+
+/* ===== Typography Classes ===== */
+.text-hero { font-size: var(--font-size-hero); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-3xl { font-size: var(--font-size-3xl); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-2xl { font-size: var(--font-size-2xl); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-xl { font-size: var(--font-size-xl); font-weight: var(--weight-semibold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-lg { font-size: var(--font-size-lg); font-weight: var(--weight-medium); line-height: var(--leading-normal); color: var(--color-text-primary); }
+.text-base { font-size: var(--font-size-base); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-primary); }
+.text-sm { font-size: var(--font-size-sm); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-secondary); }
+.text-xs { font-size: var(--font-size-xs); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-secondary); }
+
+/* Label English */
+.label-en { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-text-secondary); }
+.label-en-light { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+.label-en-dark { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.8); }
+
+/* Number emphasis */
+.number-bold { font-size: var(--font-size-2xl); font-weight: var(--weight-extrabold); color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+.number-hero { font-size: var(--font-size-hero); font-weight: var(--weight-extrabold); color: var(--color-primary); font-variant-numeric: tabular-nums; }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--color-primary);
+  }
+  @layer base {
+    body { background: var(--color-surface); color: var(--color-text-primary); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main class="min-h-screen" style="background: var(--color-page-bg); font-family: var(--font-body);">
+
+      <!-- Status bar spacer -->
+      <div class="h-11" style="background: var(--color-primary-dark);" aria-hidden="true"></div>
+
+      <!-- Navigation bar -->
+      <header class="sticky top-0 z-30" style="background: var(--color-primary-dark);">
+        <div class="flex h-11 items-center px-4">
+          <div class="flex w-[88px] items-center justify-start"></div>
+          <div class="min-w-0 flex-1 text-center text-[16px] font-semibold" style="color: #FFFFFF; letter-spacing: -0.02em;">我的</div>
+          <div class="flex h-8 w-[88px] items-center justify-center rounded-full" style="border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1);" aria-label="小程序菜单">
+            <button class="flex h-full flex-1 items-center justify-center" aria-label="更多">
+              <i data-lucide="more-horizontal" class="h-4 w-4" style="color: #FFFFFF;"></i>
+            </button>
+            <span class="h-4 w-px" style="background: rgba(255,255,255,0.2);" aria-hidden="true"></span>
+            <button class="flex h-full flex-1 items-center justify-center" aria-label="关闭">
+              <i data-lucide="x" class="h-4 w-4" style="color: #FFFFFF;"></i>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Page content area -->
+      <div class="px-4 pb-[100px]" style="margin-top: 0;">
+
+        <!-- Personal Hero Card with background image -->
+        <section class="relative overflow-hidden rounded-2xl" style="margin-bottom: var(--spacing-lg);">
+          <!-- Background image -->
+          <img src="../assets/profile-hero-bg.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" aria-hidden="true" />
+          <!-- Dark overlay -->
+          <div class="absolute inset-0" style="background: linear-gradient(180deg, rgba(31,91,74,0.7) 0%, rgba(31,91,74,0.85) 100%);" aria-hidden="true"></div>
+          <!-- Content -->
+          <div class="relative flex items-center p-4 pt-5 pb-5">
+            <!-- Left: Avatar + Info -->
+            <div class="flex items-center flex-1 min-w-0">
+              <!-- Avatar -->
+              <div class="shrink-0 w-14 h-14 rounded-full flex items-center justify-center text-[20px] font-bold" style="background: var(--color-card-bg); color: var(--color-primary-dark); border: 2px solid rgba(255,255,255,0.8);">
+                进
+              </div>
+              <!-- Name + Level -->
+              <div class="ml-3 min-w-0">
+                <p class="text-[20px] font-bold leading-[1.25] truncate" style="color: #FFFFFF; word-break: keep-all;">进步小达人</p>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="inline-flex items-center h-5 px-2 rounded-full text-[10px] font-semibold whitespace-nowrap" style="background: rgba(255,255,255,0.2); color: #FFFFFF;">Lv.3 行动派</span>
+                </div>
+                <p class="mt-1 text-[12px]" style="color: rgba(255,255,255,0.6);">已加入 15 天</p>
+              </div>
+            </div>
+            <!-- Right: Edit button -->
+            <button class="shrink-0 ml-3 inline-flex items-center justify-center h-8 px-4 rounded-full text-[12px] font-medium whitespace-nowrap transition-all duration-200"
+                    style="border: 1px solid rgba(255,255,255,0.5); color: #FFFFFF; background: transparent;"
+                    onmouseenter="this.style.background='rgba(255,255,255,0.15)';"
+                    onmouseleave="this.style.background='transparent';"
+                    data-dom-id="edit-profile">
+              编辑资料
+            </button>
+          </div>
+        </section>
+
+        <!-- Current Goal Card -->
+        <section class="rounded-2xl p-4" style="background: var(--color-card-bg); box-shadow: var(--shadow-card); margin-bottom: var(--spacing-lg);">
+          <!-- Section title with chevron -->
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-[15px] font-semibold" style="color: var(--color-text-primary);">当前目标</h2>
+            <i data-lucide="chevron-right" class="h-4 w-4" style="color: var(--color-text-secondary);"></i>
+          </div>
+          <!-- Goal info -->
+          <div class="flex items-center gap-2 mb-3">
+            <p class="text-[15px] font-semibold truncate flex-1 min-w-0" style="color: var(--color-text-primary);">通过英语四六级</p>
+            <span class="shrink-0 inline-flex items-center h-5 px-2 rounded-full text-[10px] font-semibold whitespace-nowrap" style="background: var(--color-surface-green); color: var(--color-primary);">进行中</span>
+          </div>
+          <!-- Progress bar -->
+          <div class="w-full rounded-full mb-2" style="height: 8px; background: #E8EFEA;">
+            <div class="rounded-full" style="width: 50%; height: 100%; background: var(--state-success);"></div>
+          </div>
+          <!-- Progress text -->
+          <p class="text-[12px] mb-4" style="color: var(--color-text-secondary);">已完成 50%</p>
+          <!-- Action row -->
+          <div class="flex items-center gap-4 pt-2" style="border-top: 1px solid var(--color-divider);">
+            <button class="text-[13px] font-medium transition-colors duration-200" style="color: var(--color-primary); background: none;"
+                    onmouseenter="this.style.opacity='0.8';"
+                    onmouseleave="this.style.opacity='1';"
+                    data-dom-id="view-progress">查看进度</button>
+            <button class="text-[13px] font-medium transition-colors duration-200" style="color: var(--color-text-secondary); background: none;"
+                    onmouseenter="this.style.opacity='0.8';"
+                    onmouseleave="this.style.opacity='1';"
+                    data-dom-id="switch-goal">更换目标</button>
+          </div>
+        </section>
+
+        <!-- Growth Data Card -->
+        <section class="rounded-2xl p-4" style="background: var(--color-card-bg); box-shadow: var(--shadow-card); margin-bottom: var(--spacing-lg);">
+          <h2 class="text-[15px] font-semibold mb-4" style="color: var(--color-text-primary);">成长数据</h2>
+          <div class="grid grid-cols-3 gap-0">
+            <!-- Column 1: 行动天数 -->
+            <div class="text-center py-2">
+              <p class="text-[24px] font-extrabold leading-[1.25] mb-1" style="color: var(--color-text-primary); font-variant-numeric: tabular-nums;">8</p>
+              <p class="text-[12px] font-normal" style="color: var(--color-text-secondary);">行动天数</p>
+            </div>
+            <!-- Column 2: 完成行动 -->
+            <div class="text-center py-2" style="border-left: 1px solid var(--color-divider); border-right: 1px solid var(--color-divider);">
+              <p class="text-[24px] font-extrabold leading-[1.25] mb-1" style="color: var(--color-text-primary); font-variant-numeric: tabular-nums;">12</p>
+              <p class="text-[12px] font-normal" style="color: var(--color-text-secondary);">完成行动</p>
+            </div>
+            <!-- Column 3: 实际投入 -->
+            <div class="text-center py-2">
+              <p class="text-[24px] font-extrabold leading-[1.25] mb-1" style="color: var(--color-text-primary); font-variant-numeric: tabular-nums;">360<span class="text-[12px] font-semibold ml-0.5">min</span></p>
+              <p class="text-[12px] font-normal" style="color: var(--color-text-secondary);">实际投入</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Management / Settings List -->
+        <section class="rounded-2xl overflow-hidden" style="background: var(--color-card-bg); box-shadow: var(--shadow-card);">
+          <!-- Item 1: 历史目标 -->
+          <div class="flex items-center px-4 py-3.5 transition-colors duration-200 cursor-pointer"
+               style="border-bottom: 1px solid var(--color-divider); padding-left: 16px;"
+               onmouseenter="this.style.background='rgba(53,104,89,0.03)';"
+               onmouseleave="this.style.background='transparent';"
+               data-dom-id="nav-history">
+            <div class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: var(--color-surface-green);">
+              <i data-lucide="clipboard-list" class="h-4 w-4" style="color: var(--color-primary);"></i>
+            </div>
+            <span class="flex-1 text-[14px] font-normal truncate" style="color: var(--color-text-primary);">历史目标</span>
+            <i data-lucide="chevron-right" class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary); opacity: 0.5;"></i>
+          </div>
+          <!-- Item 2: 数据设置 -->
+          <div class="flex items-center px-4 py-3.5 transition-colors duration-200 cursor-pointer"
+               style="border-bottom: 1px solid var(--color-divider); padding-left: 16px;"
+               onmouseenter="this.style.background='rgba(53,104,89,0.03)';"
+               onmouseleave="this.style.background='transparent';"
+               data-dom-id="nav-settings">
+            <div class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: var(--color-surface-green);">
+              <i data-lucide="settings" class="h-4 w-4" style="color: var(--color-primary);"></i>
+            </div>
+            <span class="flex-1 text-[14px] font-normal truncate" style="color: var(--color-text-primary);">数据设置</span>
+            <i data-lucide="chevron-right" class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary); opacity: 0.5;"></i>
+          </div>
+          <!-- Item 3: 隐私政策 -->
+          <div class="flex items-center px-4 py-3.5 transition-colors duration-200 cursor-pointer"
+               style="border-bottom: 1px solid var(--color-divider); padding-left: 16px;"
+               onmouseenter="this.style.background='rgba(53,104,89,0.03)';"
+               onmouseleave="this.style.background='transparent';"
+               data-dom-id="nav-privacy">
+            <div class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: var(--color-surface-green);">
+              <i data-lucide="shield-check" class="h-4 w-4" style="color: var(--color-primary);"></i>
+            </div>
+            <span class="flex-1 text-[14px] font-normal truncate" style="color: var(--color-text-primary);">隐私政策</span>
+            <i data-lucide="chevron-right" class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary); opacity: 0.5;"></i>
+          </div>
+          <!-- Item 4: 关于进步局 -->
+          <div class="flex items-center px-4 py-3.5 transition-colors duration-200 cursor-pointer"
+               style="padding-left: 16px;"
+               onmouseenter="this.style.background='rgba(53,104,89,0.03)';"
+               onmouseleave="this.style.background='transparent';"
+               data-dom-id="nav-about">
+            <div class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: var(--color-surface-green);">
+              <i data-lucide="info" class="h-4 w-4" style="color: var(--color-primary);"></i>
+            </div>
+            <span class="flex-1 text-[14px] font-normal truncate" style="color: var(--color-text-primary);">关于进步局</span>
+            <i data-lucide="chevron-right" class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary); opacity: 0.5;"></i>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Bottom Tab Bar -->
+      <nav class="fixed bottom-0 inset-x-0 z-40" style="background: var(--color-card-bg); border-top: 1px solid var(--color-divider);">
+        <div class="flex items-center justify-around h-[50px]">
+          <!-- 今日 (inactive) -->
+          <a href="today.html" class="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-200"
+             style="color: var(--color-text-secondary);"
+             data-dom-id="tab-today">
+            <i data-lucide="sun" class="h-5 w-5"></i>
+            <span class="text-[10px] font-medium">今日</span>
+          </a>
+          <!-- 进度 (inactive) -->
+          <a href="progress.html" class="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-200"
+             style="color: var(--color-text-secondary);"
+             data-dom-id="tab-progress">
+            <i data-lucide="trending-up" class="h-5 w-5"></i>
+            <span class="text-[10px] font-medium">进度</span>
+          </a>
+          <!-- 小队 (inactive) -->
+          <a href="team.html" class="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-200"
+             style="color: var(--color-text-secondary);"
+             data-dom-id="tab-team">
+            <i data-lucide="users" class="h-5 w-5"></i>
+            <span class="text-[10px] font-medium">小队</span>
+          </a>
+          <!-- 我的 (active) -->
+          <a href="profile.html" class="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-200"
+             style="color: var(--color-primary);"
+             data-dom-id="tab-profile-active">
+            <i data-lucide="user" class="h-5 w-5"></i>
+            <span class="text-[10px] font-semibold">我的</span>
+          </a>
+        </div>
+        <!-- Safe area bottom -->
+        <div class="h-[env(safe-area-inset-bottom,34px)]" style="background: var(--color-card-bg);" aria-hidden="true"></div>
+      </nav>
+
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--color-primary);
+  }
+  @layer base {
+    body { background: var(--color-surface); color: var(--color-text-primary); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main>
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

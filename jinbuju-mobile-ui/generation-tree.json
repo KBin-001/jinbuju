@@ -1,0 +1,69 @@
+{
+  "root": {
+    "nodeId": "gen-project-shell",
+    "kind": "project-shell",
+    "pageIds": ["page-welcome", "page-today", "page-progress", "page-team", "page-profile"],
+    "output": "partials/project-shell.html",
+    "sharedRegions": ["bottom tab bar", "global background #F5F7F2", "brand CSS variables"],
+    "privateRegions": [],
+    "mutableSlots": ["activeTab"],
+    "status": "planned",
+    "children": [
+      {
+        "nodeId": "gen-page-welcome",
+        "kind": "page-leaf",
+        "pageIds": ["page-welcome"],
+        "output": "pages/welcome.html",
+        "sharedRegions": [],
+        "privateRegions": ["full page welcome screen"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-today",
+        "kind": "page-leaf",
+        "pageIds": ["page-today"],
+        "output": "pages/today.html",
+        "sharedRegions": [],
+        "privateRegions": ["hero card, stats row, task list"],
+        "mutableSlots": ["activeTab=today"],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-progress",
+        "kind": "page-leaf",
+        "pageIds": ["page-progress"],
+        "output": "pages/progress.html",
+        "sharedRegions": [],
+        "privateRegions": ["growth archive hero, data cards, heatmap, pending list"],
+        "mutableSlots": ["activeTab=progress"],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-team",
+        "kind": "page-leaf",
+        "pageIds": ["page-team"],
+        "output": "pages/team.html",
+        "sharedRegions": [],
+        "privateRegions": ["team hero, team info, progress, members"],
+        "mutableSlots": ["activeTab=team"],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-profile",
+        "kind": "page-leaf",
+        "pageIds": ["page-profile"],
+        "output": "pages/profile.html",
+        "sharedRegions": [],
+        "privateRegions": ["profile hero, goal card, data, settings"],
+        "mutableSlots": ["activeTab=profile"],
+        "status": "planned",
+        "children": []
+      }
+    ]
+  }
+}

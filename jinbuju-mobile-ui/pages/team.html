@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小队页 - 进步局</title>
+    <style id="theme-vars">
+:root {
+  /* ===== Color System ===== */
+  --color-primary: #356859;
+  --color-primary-dark: #1F5B4A;
+  --color-primary-light: #7DBB69;
+  --color-page-bg: #F5F7F2;
+  --color-card-bg: #FFFFFF;
+  --color-surface-green: #EAF5EF;
+  --color-surface-yellow: #F8D26A;
+  --color-text-primary: #233B34;
+  --color-text-secondary: #71827A;
+  --color-divider: #E6EEE9;
+
+  /* State Colors */
+  --state-success: #7DBB69;
+  --state-warning: #F8D26A;
+  --state-info: #5BA4CF;
+  --state-error: #D4726A;
+
+  /* ===== Radius Scale ===== */
+  --radius-sm: 4px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-card: 16px;
+  --radius-button: 44px;
+  --radius-chip: 20px;
+  --radius-full: 9999px;
+
+  /* ===== Spacing Scale ===== */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-base: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 36px;
+
+  /* ===== Typography Scale ===== */
+  /* Body base */
+  --font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 15px;
+  --font-size-xl: 17px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+  --font-size-hero: 28px;
+
+  /* Line heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+
+  /* Font weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+
+  /* ===== Shadow Scale ===== */
+  --shadow-card: 0 4px 16px rgba(31, 70, 58, 0.06);
+  --shadow-card-hover: 0 8px 24px rgba(31, 70, 58, 0.1);
+  --shadow-elevated: 0 12px 32px rgba(31, 70, 58, 0.12);
+}
+
+/* ===== Typography Classes ===== */
+.text-hero { font-size: var(--font-size-hero); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-3xl { font-size: var(--font-size-3xl); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-2xl { font-size: var(--font-size-2xl); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-xl { font-size: var(--font-size-xl); font-weight: var(--weight-semibold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-lg { font-size: var(--font-size-lg); font-weight: var(--weight-medium); line-height: var(--leading-normal); color: var(--color-text-primary); }
+.text-base { font-size: var(--font-size-base); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-primary); }
+.text-sm { font-size: var(--font-size-sm); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-secondary); }
+.text-xs { font-size: var(--font-size-xs); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-secondary); }
+
+/* Label English */
+.label-en { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-text-secondary); }
+.label-en-light { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+.label-en-dark { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.8); }
+
+/* Number emphasis */
+.number-bold { font-size: var(--font-size-2xl); font-weight: var(--weight-extrabold); color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+.number-hero { font-size: var(--font-size-hero); font-weight: var(--weight-extrabold); color: var(--color-primary); font-variant-numeric: tabular-nums; }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--color-primary);
+  }
+  @layer base {
+    body { background: var(--color-surface); color: var(--color-text-primary); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main class="min-h-screen pb-[100px]" style="background: var(--color-page-bg); font-family: var(--font-body);">
+
+      <!-- Status bar spacer with system capsule -->
+      <div class="flex items-center justify-between px-5 h-11">
+          <div class="flex w-[88px] items-center justify-start"></div>
+          <div class="flex h-8 w-[88px] items-center justify-center rounded-full" style="border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1);" aria-label="小程序菜单">
+              <button class="flex h-full flex-1 items-center justify-center" aria-label="更多">
+                  <i data-lucide="more-horizontal" class="h-4 w-4" style="color: #FFFFFF;"></i>
+              </button>
+              <span class="h-4 w-px" style="background: rgba(255,255,255,0.2);" aria-hidden="true"></span>
+              <button class="flex h-full flex-1 items-center justify-center" aria-label="关闭">
+                  <i data-lucide="x" class="h-4 w-4" style="color: #FFFFFF;"></i>
+              </button>
+          </div>
+      </div>
+
+      <!-- Content area -->
+      <div class="px-4 space-y-5">
+
+        <!-- Team Hero Card -->
+        <div class="relative overflow-hidden rounded-[var(--radius-card)]" style="background: var(--color-primary-dark);">
+          <!-- Background image overlay -->
+          <img src="../assets/team-header-bg.png" alt="" class="absolute inset-0 w-full h-full object-cover opacity-20" aria-hidden="true" />
+          <div class="relative px-5 pt-5 pb-6">
+            <!-- English label -->
+            <p class="label-en-light mb-3">TEAM</p>
+            <!-- Team name -->
+            <h1 class="text-[24px] font-bold leading-[1.2] text-white mb-1" style="text-wrap: balance; word-break: keep-all;">考公小分队</h1>
+            <!-- Team description -->
+            <p class="text-[13px] leading-[1.5] mb-4" style="color: rgba(255,255,255,0.6);">一起自律，各自成长</p>
+            <!-- Member count with avatar stack -->
+            <div class="flex items-center gap-3 mb-3">
+              <div class="flex -space-x-2">
+                <div class="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold text-white border-2" style="background: var(--color-primary); border-color: var(--color-primary-dark);">林</div>
+                <div class="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold text-white border-2" style="background: #5BA4CF; border-color: var(--color-primary-dark);">张</div>
+                <div class="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold text-white border-2" style="background: #E8A849; border-color: var(--color-primary-dark);">王</div>
+                <div class="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold text-white border-2" style="background: var(--color-primary-light); border-color: var(--color-primary-dark);">我</div>
+              </div>
+              <span class="text-[13px] font-medium" style="color: rgba(255,255,255,0.8);">4 位成员</span>
+            </div>
+            <!-- Today progress -->
+            <div class="flex items-center justify-between">
+              <span class="text-[12px]" style="color: rgba(255,255,255,0.5);">今日完成率</span>
+              <span class="text-[13px] font-semibold text-white">75%</span>
+            </div>
+            <!-- Progress bar -->
+            <div class="mt-2 h-[6px] rounded-full overflow-hidden" style="background: rgba(255,255,255,0.15);">
+              <div class="h-full rounded-full" style="width: 75%; background: var(--color-primary-light);"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Team Info Card -->
+        <div class="rounded-[var(--radius-card)] overflow-hidden" style="background: var(--color-card-bg); border: 1px solid var(--color-divider);">
+          <!-- Room ID -->
+          <div class="flex items-center justify-between px-5 py-4">
+            <div class="flex items-center gap-2">
+              <i data-lucide="hash" class="w-4 h-4" style="color: var(--color-text-secondary);"></i>
+              <span class="text-[13px]" style="color: var(--color-text-secondary);">房间号</span>
+              <span class="text-[14px] font-semibold" style="color: var(--color-text-primary);">A8B2C3</span>
+            </div>
+            <button class="flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-150" style="background: var(--color-surface-green);" aria-label="复制房间号">
+              <i data-lucide="copy" class="w-4 h-4" style="color: var(--color-primary);"></i>
+            </button>
+          </div>
+          <!-- Divider -->
+          <div class="mx-5 h-[1px]" style="background: var(--color-divider);"></div>
+          <!-- Action buttons -->
+          <div class="flex items-center gap-3 px-5 py-4">
+            <button class="flex-1 h-[36px] rounded-full flex items-center justify-center text-[13px] font-semibold text-white transition-all duration-200" style="background: var(--color-primary);"
+                    onmouseenter="this.style.opacity='0.9';"
+                    onmouseleave="this.style.opacity='1';">
+              <i data-lucide="user-plus" class="w-4 h-4 mr-1.5"></i>
+              邀请好友
+            </button>
+            <button class="flex-1 h-[36px] rounded-full flex items-center justify-center text-[13px] font-medium transition-all duration-200" style="background: transparent; border: 1px solid var(--color-divider); color: var(--color-primary);"
+                    onmouseenter="this.style.background='var(--color-surface-green)';"
+                    onmouseleave="this.style.background='transparent';">
+              <i data-lucide="settings" class="w-4 h-4 mr-1.5"></i>
+              小队设置
+            </button>
+          </div>
+        </div>
+
+        <!-- Today's Team Progress -->
+        <div>
+          <h2 class="text-[15px] font-semibold mb-3" style="color: var(--color-text-primary);">今日小队进度</h2>
+          <div class="grid grid-cols-3 gap-2">
+            <!-- Stat 1 -->
+            <div class="rounded-[var(--radius-md)] p-3 text-center" style="background: var(--color-card-bg); border: 1px solid var(--color-divider);">
+              <div class="text-[18px] font-extrabold mb-0.5" style="color: var(--color-primary); font-variant-numeric: tabular-nums;">3/4</div>
+              <div class="text-[11px]" style="color: var(--color-text-secondary);">已完成成员</div>
+            </div>
+            <!-- Stat 2 -->
+            <div class="rounded-[var(--radius-md)] p-3 text-center" style="background: var(--color-card-bg); border: 1px solid var(--color-divider);">
+              <div class="text-[18px] font-extrabold mb-0.5" style="color: var(--color-primary); font-variant-numeric: tabular-nums;">45</div>
+              <div class="text-[11px]" style="color: var(--color-text-secondary);">累计行动min</div>
+            </div>
+            <!-- Stat 3 -->
+            <div class="rounded-[var(--radius-md)] p-3 text-center" style="background: var(--color-card-bg); border: 1px solid var(--color-divider);">
+              <div class="text-[18px] font-extrabold mb-0.5" style="color: var(--color-primary); font-variant-numeric: tabular-nums;">75%</div>
+              <div class="text-[11px]" style="color: var(--color-text-secondary);">小队完成率</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Team Member List -->
+        <div>
+          <h2 class="text-[15px] font-semibold mb-3" style="color: var(--color-text-primary);">小队成员</h2>
+          <div class="space-y-2">
+
+            <!-- Member 1 -->
+            <div class="flex items-center gap-3 rounded-[var(--radius-card)] px-4 py-3" style="background: var(--color-card-bg); border: 1px solid var(--color-divider);">
+              <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[13px] font-semibold text-white" style="background: var(--color-primary);">林</div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[14px] font-semibold" style="color: var(--color-text-primary);">林小明</div>
+                <div class="text-[12px] mt-0.5" style="color: var(--color-text-secondary);">今天完成了 2 个行动</div>
+              </div>
+              <button class="flex-shrink-0 h-[28px] px-3 rounded-full text-[12px] font-medium text-white transition-all duration-150" style="background: var(--color-primary);"
+                      onmouseenter="this.style.opacity='0.85';"
+                      onmouseleave="this.style.opacity='1';">
+                鼓励
+              </button>
+              <i data-lucide="chevron-right" class="w-4 h-4 flex-shrink-0" style="color: var(--color-text-secondary);"></i>
+            </div>
+
+            <!-- Member 2 -->
+            <div class="flex items-center gap-3 rounded-[var(--radius-card)] px-4 py-3" style="background: var(--color-card-bg); border: 1px solid var(--color-divider);">
+              <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[13px] font-semibold text-white" style="background: #5BA4CF;">张</div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[14px] font-semibold" style="color: var(--color-text-primary);">张小花</div>
+                <div class="text-[12px] mt-0.5" style="color: var(--color-text-secondary);">今天完成了 1 个行动</div>
+              </div>
+              <button class="flex-shrink-0 h-[28px] px-3 rounded-full text-[12px] font-medium text-white transition-all duration-150" style="background: var(--color-primary);"
+                      onmouseenter="this.style.opacity='0.85';"
+                      onmouseleave="this.style.opacity='1';">
+                鼓励
+              </button>
+              <i data-lucide="chevron-right" class="w-4 h-4 flex-shrink-0" style="color: var(--color-text-secondary);"></i>
+            </div>
+
+            <!-- Member 3 -->
+            <div class="flex items-center gap-3 rounded-[var(--radius-card)] px-4 py-3" style="background: var(--color-card-bg); border: 1px solid var(--color-divider);">
+              <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[13px] font-semibold text-white" style="background: #E8A849;">王</div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[14px] font-semibold" style="color: var(--color-text-primary);">王大伟</div>
+                <div class="text-[12px] mt-0.5" style="color: var(--color-text-secondary);">今天完成了 3 个行动</div>
+              </div>
+              <button class="flex-shrink-0 h-[28px] px-3 rounded-full text-[12px] font-medium text-white transition-all duration-150" style="background: var(--color-primary);"
+                      onmouseenter="this.style.opacity='0.85';"
+                      onmouseleave="this.style.opacity='1';">
+                鼓励
+              </button>
+              <i data-lucide="chevron-right" class="w-4 h-4 flex-shrink-0" style="color: var(--color-text-secondary);"></i>
+            </div>
+
+            <!-- Member 4 (self) -->
+            <div class="flex items-center gap-3 rounded-[var(--radius-card)] px-4 py-3" style="background: var(--color-card-bg); border: 1px solid var(--color-divider);">
+              <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[13px] font-semibold text-white" style="background: var(--color-primary-light);">我</div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[14px] font-semibold" style="color: var(--color-text-primary);">我</div>
+                <div class="text-[12px] mt-0.5" style="color: var(--color-text-secondary);">今天完成了 2 个行动</div>
+              </div>
+              <!-- No encourage button for self -->
+              <span class="text-[12px] px-2 py-1 rounded-full" style="background: var(--color-surface-green); color: var(--color-primary);">我</span>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Tab Bar -->
+      <nav class="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around" style="height: 64px; background: var(--color-card-bg); border-top: 1px solid var(--color-divider); padding-bottom: env(safe-area-inset-bottom);">
+        <!-- 今日 (inactive) -->
+        <a href="today.html" class="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150" style="color: var(--color-text-secondary);" data-dom-id="tab-today">
+          <i data-lucide="sun" class="w-5 h-5"></i>
+          <span class="text-[10px] font-medium">今日</span>
+        </a>
+        <!-- 进度 (inactive) -->
+        <a href="progress.html" class="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150" style="color: var(--color-text-secondary);" data-dom-id="tab-progress">
+          <i data-lucide="trending-up" class="w-5 h-5"></i>
+          <span class="text-[10px] font-medium">进度</span>
+        </a>
+        <!-- 小队 (active) -->
+        <a href="team.html" class="flex flex-col items-center justify-center gap-0.5 flex-1 h-full" style="color: var(--color-primary);" data-dom-id="tab-team-active">
+          <i data-lucide="users" class="w-5 h-5"></i>
+          <span class="text-[10px] font-semibold">小队</span>
+        </a>
+        <!-- 我的 (inactive) -->
+        <a href="profile.html" class="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150" style="color: var(--color-text-secondary);" data-dom-id="tab-profile">
+          <i data-lucide="user" class="w-5 h-5"></i>
+          <span class="text-[10px] font-medium">我的</span>
+        </a>
+      </nav>
+
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

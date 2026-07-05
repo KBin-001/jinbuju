@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的页</title>
+    <style id="theme-vars">
+:root {
+  /* ===== Color System ===== */
+  --color-primary: #356859;
+  --color-primary-dark: #1F5B4A;
+  --color-primary-light: #7DBB69;
+  --color-page-bg: #F5F7F2;
+  --color-card-bg: #FFFFFF;
+  --color-surface-green: #EAF5EF;
+  --color-surface-yellow: #F8D26A;
+  --color-text-primary: #233B34;
+  --color-text-secondary: #71827A;
+  --color-divider: #E6EEE9;
+
+  /* State Colors */
+  --state-success: #7DBB69;
+  --state-warning: #F8D26A;
+  --state-info: #5BA4CF;
+  --state-error: #D4726A;
+
+  /* ===== Radius Scale ===== */
+  --radius-sm: 4px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-card: 16px;
+  --radius-button: 44px;
+  --radius-chip: 20px;
+  --radius-full: 9999px;
+
+  /* ===== Spacing Scale ===== */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-base: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 36px;
+
+  /* ===== Typography Scale ===== */
+  /* Body base */
+  --font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 15px;
+  --font-size-xl: 17px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+  --font-size-hero: 28px;
+
+  /* Line heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+
+  /* Font weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+
+  /* ===== Shadow Scale ===== */
+  --shadow-card: 0 4px 16px rgba(31, 70, 58, 0.06);
+  --shadow-card-hover: 0 8px 24px rgba(31, 70, 58, 0.1);
+  --shadow-elevated: 0 12px 32px rgba(31, 70, 58, 0.12);
+}
+
+/* ===== Typography Classes ===== */
+.text-hero { font-size: var(--font-size-hero); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-3xl { font-size: var(--font-size-3xl); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-2xl { font-size: var(--font-size-2xl); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-xl { font-size: var(--font-size-xl); font-weight: var(--weight-semibold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-lg { font-size: var(--font-size-lg); font-weight: var(--weight-medium); line-height: var(--leading-normal); color: var(--color-text-primary); }
+.text-base { font-size: var(--font-size-base); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-primary); }
+.text-sm { font-size: var(--font-size-sm); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-secondary); }
+.text-xs { font-size: var(--font-size-xs); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-secondary); }
+
+/* Label English */
+.label-en { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-text-secondary); }
+.label-en-light { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+.label-en-dark { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.8); }
+
+/* Number emphasis */
+.number-bold { font-size: var(--font-size-2xl); font-weight: var(--weight-extrabold); color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+.number-hero { font-size: var(--font-size-hero); font-weight: var(--weight-extrabold); color: var(--color-primary); font-variant-numeric: tabular-nums; }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--color-primary);
+  }
+  @layer base {
+    body { background: var(--color-surface); color: var(--color-text-primary); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main class="min-h-screen" style="background: linear-gradient(180deg, #FFFDF7 0%, #F8F6EC 48%, #F6F5ED 100%); font-family: var(--font-body);">
+
+      <!-- 1. Header Area (山水背景) -->
+      <div class="relative" style="height: 200px;">
+        <!-- Background image -->
+        <img src="../assets/hero-card-bg.png" alt="" class="absolute inset-0 w-full h-full object-cover" aria-hidden="true" />
+        <!-- Overlay for readability -->
+        <div class="absolute inset-0" style="background: linear-gradient(180deg, rgba(255,253,247,0.15) 0%, rgba(248,246,236,0.3) 100%);" aria-hidden="true"></div>
+        <!-- Navigation title -->
+        <div class="relative flex items-center justify-between px-5" style="height: 44px;">
+          <div class="flex w-[88px] items-center justify-start"></div>
+          <div class="flex-1 text-center" style="color: #29463C; font-size: 17px; font-weight: 650; letter-spacing: 1px; text-shadow: 0 1px 5px rgba(255,255,255,0.75);">我的</div>
+          <!-- Mini Program Capsule -->
+          <div class="flex h-8 w-[88px] items-center justify-center rounded-full" style="border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.28); backdrop-filter: blur(6px);" aria-label="小程序菜单">
+            <button class="flex h-full flex-1 items-center justify-center" aria-label="更多">
+              <i data-lucide="more-horizontal" class="h-4 w-4" style="color: #29463C;"></i>
+            </button>
+            <span class="h-4 w-px" style="background: rgba(41,70,60,0.15);" aria-hidden="true"></span>
+            <button class="flex h-full flex-1 items-center justify-center" aria-label="关闭">
+              <i data-lucide="x" class="h-4 w-4" style="color: #29463C;"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Profile Card (悬浮用户卡 - Frosted Glass) -->
+      <div class="relative" style="margin-top: -33px;">
+        <div class="flex items-center px-4">
+          <div class="flex-1 flex items-center rounded-2xl" style="background: rgba(255,255,255,0.78); backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px); border: 1px solid rgba(255,255,255,0.88); box-shadow: 0 9px 21px rgba(55,82,70,0.10); padding: 14px 14px 14px 14px;">
+            <!-- Avatar -->
+            <div class="shrink-0 flex items-center justify-center rounded-full" style="width: 52px; height: 52px; background: linear-gradient(145deg, #FFFDF7, #EAF4EC); border: 2px solid rgba(255,255,255,0.92); box-shadow: 0 4px 11px rgba(67,103,87,0.12);">
+              <span style="font-size: 23px; font-weight: 750; color: #4D7C68;">岚</span>
+            </div>
+            <!-- Info -->
+            <div class="flex-1 min-w-0 ml-3">
+              <p style="font-size: 19px; font-weight: 750; color: #263D35; word-break: keep-all;">阿岚</p>
+              <div class="flex items-center" style="gap: 5px; margin-top: 4px;">
+                <span class="inline-flex items-center whitespace-nowrap" style="font-size: 11px; font-weight: 650; color: #6F5A2E; background: rgba(255,250,231,0.86); border: 1px solid rgba(230,181,80,0.38); border-radius: 999px; padding: 2px 8px; height: 20px;">&#9733; Lv.2 自律新星</span>
+                <span style="color: #BBC2BE; font-size: 11px;">&middot;</span>
+                <span style="color: #78867F; font-size: 11px;">入驻第 2 天</span>
+              </div>
+            </div>
+            <!-- Edit button -->
+            <button class="shrink-0 ml-2 flex items-center justify-center rounded-full transition-colors duration-200" style="width: 32px; height: 32px; background: rgba(255,255,255,0.72); border: 1px solid rgba(255,255,255,0.9);" aria-label="编辑资料"
+                    onmouseenter="this.style.background='rgba(255,255,255,0.9)';"
+                    onmouseleave="this.style.background='rgba(255,255,255,0.72)';"
+                    data-dom-id="edit-profile">
+              <span style="font-size: 15px; color: #4D7C68; transform: rotate(-8deg); display: inline-block;">&#9998;</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Page Content Area -->
+      <div style="padding: 14px 16px 85px 16px;">
+
+        <!-- 3a. 当前目标卡 (Current Goal Card) -->
+        <section class="rounded-2xl" style="background: #FFFFFF; box-shadow: 0 7px 18px rgba(55,82,70,0.075); padding: 16px;">
+          <!-- Header -->
+          <div class="flex items-center justify-between" style="margin-bottom: 10px;">
+            <h2 style="font-size: 17px; font-weight: 700; color: #263D35;">当前目标</h2>
+            <i data-lucide="chevron-right" style="width: 18px; height: 18px; color: #78867F; opacity: 0.5;"></i>
+          </div>
+          <!-- Goal title + status -->
+          <div class="flex items-center" style="gap: 8px; margin-bottom: 10px;">
+            <span style="font-size: 15px; font-weight: 600; color: #263D35;">通过英语四六级</span>
+            <span class="shrink-0 inline-flex items-center" style="font-size: 10px; font-weight: 650; color: #4D7C68; background: #EDF7F1; border: 1px solid #D6E8DE; border-radius: 999px; padding: 0 7px; height: 18px;">进行中</span>
+          </div>
+          <!-- Progress bar -->
+          <div class="flex items-center" style="gap: 8px;">
+            <div class="flex-1" style="height: 7px; background: #E8F0EB; border-radius: 3.5px; overflow: hidden;">
+              <div style="width: 50%; height: 100%; background: linear-gradient(90deg, #B9DCC8, #73A68E); border-radius: 3.5px;"></div>
+            </div>
+            <span style="font-size: 12px; color: #78867F; font-variant-numeric: tabular-nums;">已完成 50%</span>
+          </div>
+          <!-- Divider -->
+          <div style="height: 1px; background: #E4ECE7; margin-top: 12px;"></div>
+          <!-- Action row -->
+          <div class="flex items-center" style="gap: 16px; padding-top: 12px;">
+            <a href="progress.html" style="font-size: 13px; color: #4D7C68; text-decoration: none; white-space: nowrap;">查看进度</a>
+            <a href="#" style="font-size: 13px; color: #78867F; text-decoration: none; white-space: nowrap;">更换目标</a>
+          </div>
+        </section>
+
+        <!-- 3b. 成长数据卡 (Growth Data Card) -->
+        <section class="rounded-2xl" style="background: #FFFFFF; box-shadow: 0 7px 18px rgba(55,82,70,0.075); padding: 16px; margin-top: 12px;">
+          <h2 style="font-size: 17px; font-weight: 700; color: #263D35; margin-bottom: 14px;">成长数据</h2>
+          <!-- 3-column grid -->
+          <div class="grid grid-cols-3">
+            <!-- Column 1: 行动天数 -->
+            <div class="flex flex-col items-center">
+              <span style="font-size: 24px; font-weight: 800; color: #263D35; font-variant-numeric: tabular-nums;">8</span>
+              <span style="font-size: 12px; color: #78867F; margin-top: 4px;">行动天数</span>
+            </div>
+            <!-- Column 2: 完成行动 -->
+            <div class="flex flex-col items-center" style="border-left: 1px solid #E4ECE7;">
+              <span style="font-size: 24px; font-weight: 800; color: #263D35; font-variant-numeric: tabular-nums;">12</span>
+              <span style="font-size: 12px; color: #78867F; margin-top: 4px;">完成行动</span>
+            </div>
+            <!-- Column 3: 实际投入 -->
+            <div class="flex flex-col items-center" style="border-left: 1px solid #E4ECE7;">
+              <span style="font-size: 24px; font-weight: 800; color: #263D35; font-variant-numeric: tabular-nums;">360min</span>
+              <span style="font-size: 12px; color: #78867F; margin-top: 4px;">实际投入</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3c. 管理入口列表 (Management List) -->
+        <section class="rounded-2xl overflow-hidden" style="background: #FFFFFF; box-shadow: 0 7px 18px rgba(55,82,70,0.075); margin-top: 12px;">
+          <!-- Item 1: 历史目标 -->
+          <div class="flex items-center" style="padding: 14px 16px; transition: background 0.15s;"
+               onmouseenter="this.style.background='rgba(77,124,104,0.03)'"
+               onmouseleave="this.style.background='transparent'"
+               data-dom-id="nav-history">
+            <div class="shrink-0 flex items-center justify-center rounded-full" style="width: 32px; height: 32px; background: #EAF5EE;">
+              <i data-lucide="clipboard-list" style="width: 16px; height: 16px; color: #4D7C68;"></i>
+            </div>
+            <span class="flex-1" style="font-size: 14px; color: #263D35; margin-left: 12px;">历史目标</span>
+            <i data-lucide="chevron-right" style="width: 16px; height: 16px; color: #78867F; opacity: 0.5;"></i>
+          </div>
+          <div style="height: 1px; background: #E4ECE7; margin-left: 60px;"></div>
+          <!-- Item 2: 数据设置 -->
+          <div class="flex items-center" style="padding: 14px 16px; transition: background 0.15s;"
+               onmouseenter="this.style.background='rgba(77,124,104,0.03)'"
+               onmouseleave="this.style.background='transparent'"
+               data-dom-id="nav-settings">
+            <div class="shrink-0 flex items-center justify-center rounded-full" style="width: 32px; height: 32px; background: #EAF5EE;">
+              <i data-lucide="settings" style="width: 16px; height: 16px; color: #4D7C68;"></i>
+            </div>
+            <span class="flex-1" style="font-size: 14px; color: #263D35; margin-left: 12px;">数据设置</span>
+            <i data-lucide="chevron-right" style="width: 16px; height: 16px; color: #78867F; opacity: 0.5;"></i>
+          </div>
+          <div style="height: 1px; background: #E4ECE7; margin-left: 60px;"></div>
+          <!-- Item 3: 隐私政策 -->
+          <div class="flex items-center" style="padding: 14px 16px; transition: background 0.15s;"
+               onmouseenter="this.style.background='rgba(77,124,104,0.03)'"
+               onmouseleave="this.style.background='transparent'"
+               data-dom-id="nav-privacy">
+            <div class="shrink-0 flex items-center justify-center rounded-full" style="width: 32px; height: 32px; background: #EAF5EE;">
+              <i data-lucide="shield-check" style="width: 16px; height: 16px; color: #4D7C68;"></i>
+            </div>
+            <span class="flex-1" style="font-size: 14px; color: #263D35; margin-left: 12px;">隐私政策</span>
+            <i data-lucide="chevron-right" style="width: 16px; height: 16px; color: #78867F; opacity: 0.5;"></i>
+          </div>
+          <div style="height: 1px; background: #E4ECE7; margin-left: 60px;"></div>
+          <!-- Item 4: 关于进步局 -->
+          <div class="flex items-center" style="padding: 14px 16px; transition: background 0.15s;"
+               onmouseenter="this.style.background='rgba(77,124,104,0.03)'"
+               onmouseleave="this.style.background='transparent'"
+               data-dom-id="nav-about">
+            <div class="shrink-0 flex items-center justify-center rounded-full" style="width: 32px; height: 32px; background: #EAF5EE;">
+              <i data-lucide="info" style="width: 16px; height: 16px; color: #4D7C68;"></i>
+            </div>
+            <span class="flex-1" style="font-size: 14px; color: #263D35; margin-left: 12px;">关于进步局</span>
+            <i data-lucide="chevron-right" style="width: 16px; height: 16px; color: #78867F; opacity: 0.5;"></i>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- 4. Bottom Tab Bar -->
+      <nav class="fixed bottom-0 inset-x-0 z-40" style="background: #FFFFFF; border-top: 1px solid #E4ECE7;">
+        <div class="flex items-center justify-around" style="height: 50px;">
+          <!-- 今日 (inactive) -->
+          <a href="today.html" class="flex flex-col items-center justify-center flex-1 h-full transition-colors duration-200"
+             style="color: #A0AAA5; gap: 2px;"
+             data-dom-id="tab-today">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+            <span style="font-size: 10px; font-weight: 500;">今日</span>
+          </a>
+          <!-- 进度 (inactive) -->
+          <a href="progress.html" class="flex flex-col items-center justify-center flex-1 h-full transition-colors duration-200"
+             style="color: #A0AAA5; gap: 2px;"
+             data-dom-id="tab-progress">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+            <span style="font-size: 10px; font-weight: 500;">进度</span>
+          </a>
+          <!-- 小队 (inactive) -->
+          <a href="team.html" class="flex flex-col items-center justify-center flex-1 h-full transition-colors duration-200"
+             style="color: #A0AAA5; gap: 2px;"
+             data-dom-id="tab-team">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span style="font-size: 10px; font-weight: 500;">小队</span>
+          </a>
+          <!-- 我的 (active) -->
+          <a href="profile.html" class="flex flex-col items-center justify-center flex-1 h-full"
+             style="color: #4D7C68; gap: 2px;"
+             data-dom-id="tab-profile-active">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span style="font-size: 10px; font-weight: 600;">我的</span>
+          </a>
+        </div>
+        <!-- Safe area bottom -->
+        <div style="height: env(safe-area-inset-bottom, 34px); background: #FFFFFF;" aria-hidden="true"></div>
+      </nav>
+
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+{
+  "data": [
+    {
+      "id": "page-welcome",
+      "title": "欢迎页",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1782744000000,
+      "canvasData": {
+        "x": 0,
+        "y": 2026,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/welcome.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-today",
+      "title": "今日页",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1782744000000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/today.html",
+        "interactions": [
+          {
+            "domId": "tab-progress",
+            "targetPageId": "page-progress"
+          },
+          {
+            "domId": "tab-team",
+            "targetPageId": "page-team"
+          },
+          {
+            "domId": "tab-profile",
+            "targetPageId": "page-profile"
+          },
+          {
+            "domId": "tab-today-active",
+            "targetPageId": "page-today",
+            "hideEdge": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-progress",
+      "title": "进度页",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1782744000000,
+      "canvasData": {
+        "x": 420,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/progress.html",
+        "interactions": [
+          {
+            "domId": "tab-today",
+            "targetPageId": "page-today"
+          },
+          {
+            "domId": "tab-team",
+            "targetPageId": "page-team"
+          },
+          {
+            "domId": "tab-profile",
+            "targetPageId": "page-profile"
+          },
+          {
+            "domId": "tab-progress-active",
+            "targetPageId": "page-progress",
+            "hideEdge": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-team",
+      "title": "小队页",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1782744000000,
+      "canvasData": {
+        "x": 420,
+        "y": 691,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/team.html",
+        "interactions": [
+          {
+            "domId": "tab-today",
+            "targetPageId": "page-today"
+          },
+          {
+            "domId": "tab-progress",
+            "targetPageId": "page-progress"
+          },
+          {
+            "domId": "tab-profile",
+            "targetPageId": "page-profile"
+          },
+          {
+            "domId": "tab-team-active",
+            "targetPageId": "page-team",
+            "hideEdge": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-profile",
+      "title": "我的页",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1782744000000,
+      "canvasData": {
+        "x": 420,
+        "y": 1380,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/profile.html",
+        "interactions": [
+          {
+            "domId": "tab-today",
+            "targetPageId": "page-today"
+          },
+          {
+            "domId": "tab-progress",
+            "targetPageId": "page-progress"
+          },
+          {
+            "domId": "tab-team",
+            "targetPageId": "page-team"
+          },
+          {
+            "domId": "tab-profile-active",
+            "targetPageId": "page-profile",
+            "hideEdge": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-profile-components",
+      "title": "我的页 - 组件展示",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1782744000000,
+      "canvasData": {
+        "x": 420,
+        "y": 2026,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/profile-components.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "image-001",
+      "title": "今日页 Hero 背景",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1782744000000,
+      "canvasData": {
+        "x": 0,
+        "y": 3080
+      },
+      "devMetadata": {
+        "imageSrc": "assets/hero-card-bg.png"
+      }
+    },
+    {
+      "id": "image-002",
+      "title": "进度页 Hero 背景",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1782744000000,
+      "canvasData": {
+        "x": 420,
+        "y": 3080
+      },
+      "devMetadata": {
+        "imageSrc": "assets/progress-hero-v2.jpg"
+      }
+    },
+    {
+      "id": "image-003",
+      "title": "小队页 Header 背景",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1782744000000,
+      "canvasData": {
+        "x": 840,
+        "y": 3080
+      },
+      "devMetadata": {
+        "imageSrc": "assets/team-header-bg.png"
+      }
+    },
+    {
+      "id": "image-004",
+      "title": "我的页 Hero 背景",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1782744000000,
+      "canvasData": {
+        "x": 1260,
+        "y": 3080
+      },
+      "devMetadata": {
+        "imageSrc": "assets/profile-hero-bg.jpg"
+      }
+    },
+    {
+      "id": "image-5",
+      "title": "image",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1783228671070,
+      "canvasData": {
+        "x": 204,
+        "y": 2652
+      },
+      "devMetadata": {
+        "imageSrc": "assets/image.png"
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": true,
+    "deviceType": "mobile",
+    "projectName": "进步局 - 移动端 UI 稿",
+    "designLibrary": null
+  }
+}

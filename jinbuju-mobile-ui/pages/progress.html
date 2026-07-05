@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>进度页 - 进步局</title>
+    <style id="theme-vars">
+:root {
+  /* ===== Color System ===== */
+  --color-primary: #356859;
+  --color-primary-dark: #1F5B4A;
+  --color-primary-light: #7DBB69;
+  --color-page-bg: #F5F7F2;
+  --color-card-bg: #FFFFFF;
+  --color-surface-green: #EAF5EF;
+  --color-surface-yellow: #F8D26A;
+  --color-text-primary: #233B34;
+  --color-text-secondary: #71827A;
+  --color-divider: #E6EEE9;
+
+  /* State Colors */
+  --state-success: #7DBB69;
+  --state-warning: #F8D26A;
+  --state-info: #5BA4CF;
+  --state-error: #D4726A;
+
+  /* ===== Radius Scale ===== */
+  --radius-sm: 4px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-card: 16px;
+  --radius-button: 44px;
+  --radius-chip: 20px;
+  --radius-full: 9999px;
+
+  /* ===== Spacing Scale ===== */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-base: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 36px;
+
+  /* ===== Typography Scale ===== */
+  /* Body base */
+  --font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 15px;
+  --font-size-xl: 17px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+  --font-size-hero: 28px;
+
+  /* Line heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+
+  /* Font weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+
+  /* ===== Shadow Scale ===== */
+  --shadow-card: 0 4px 16px rgba(31, 70, 58, 0.06);
+  --shadow-card-hover: 0 8px 24px rgba(31, 70, 58, 0.1);
+  --shadow-elevated: 0 12px 32px rgba(31, 70, 58, 0.12);
+}
+
+/* ===== Typography Classes ===== */
+.text-hero { font-size: var(--font-size-hero); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-3xl { font-size: var(--font-size-3xl); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-2xl { font-size: var(--font-size-2xl); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-xl { font-size: var(--font-size-xl); font-weight: var(--weight-semibold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-lg { font-size: var(--font-size-lg); font-weight: var(--weight-medium); line-height: var(--leading-normal); color: var(--color-text-primary); }
+.text-base { font-size: var(--font-size-base); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-primary); }
+.text-sm { font-size: var(--font-size-sm); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-secondary); }
+.text-xs { font-size: var(--font-size-xs); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-secondary); }
+
+/* Label English */
+.label-en { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-text-secondary); }
+.label-en-light { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+.label-en-dark { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.8); }
+
+/* Number emphasis */
+.number-bold { font-size: var(--font-size-2xl); font-weight: var(--weight-extrabold); color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+.number-hero { font-size: var(--font-size-hero); font-weight: var(--weight-extrabold); color: var(--color-primary); font-variant-numeric: tabular-nums; }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--color-primary);
+  }
+  @layer base {
+    body { background: var(--color-page-bg); color: var(--color-text-primary); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main>
+        <!-- Status bar spacer with system capsule -->
+        <div class="flex items-center justify-between px-5 h-11">
+            <div class="flex w-[88px] items-center justify-start"></div>
+            <div class="flex h-8 w-[88px] items-center justify-center rounded-full" style="border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1);" aria-label="小程序菜单">
+                <button class="flex h-full flex-1 items-center justify-center" aria-label="更多">
+                    <i data-lucide="more-horizontal" class="h-4 w-4" style="color: #FFFFFF;"></i>
+                </button>
+                <span class="h-4 w-px" style="background: rgba(255,255,255,0.2);" aria-hidden="true"></span>
+                <button class="flex h-full flex-1 items-center justify-center" aria-label="关闭">
+                    <i data-lucide="x" class="h-4 w-4" style="color: #FFFFFF;"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hero Card -->
+        <div class="relative overflow-hidden rounded-none" style="background-color: var(--color-primary-dark);">
+            <img src="../assets/hero-card-bg.png" alt="" class="absolute inset-0 w-full h-full object-cover opacity-20">
+            <div class="relative px-5 pt-4 pb-5">
+                <!-- Top row: English label -->
+                <p class="label-en-light mb-1" style="font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.6);">GROWTH &middot; ARCHIVE</p>
+                <!-- Title -->
+                <h1 class="mb-1" style="font-size: 24px; font-weight: 700; line-height: 1.25; color: #FFFFFF;">成长档案</h1>
+                <!-- Goal name -->
+                <p class="mb-2" style="font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.9);">通过英语四六级</p>
+                <!-- Subtitle -->
+                <p class="mb-3" style="font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.65);">每一天的努力，都在成为更好的自己。</p>
+                <!-- Date + Progress row -->
+                <div class="flex items-center justify-between">
+                    <p style="font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.7);">累计完成率</p>
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1">
+                            <!-- Progress bar mini -->
+                            <div class="rounded-full" style="width: 56px; height: 6px; background: rgba(255,255,255,0.2);">
+                                <div class="rounded-full" style="width: 50%; height: 100%; background: var(--color-primary-light);"></div>
+                            </div>
+                            <span style="font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.9);">50%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="flex gap-3 px-5 py-4" style="margin-top: -1px;">
+            <!-- Stat card 1 -->
+            <div class="flex-1 rounded-2xl p-3 text-center" style="background: var(--color-card-bg); box-shadow: var(--shadow-card);">
+                <p class="mb-1" style="font-size: 11px; font-weight: 400; color: var(--color-text-secondary);">已完成行动</p>
+                <p class="number-bold" style="font-size: 20px; font-weight: 800; color: var(--color-text-primary); font-variant-numeric: tabular-nums;">12</p>
+            </div>
+            <!-- Stat card 2 -->
+            <div class="flex-1 rounded-2xl p-3 text-center" style="background: var(--color-card-bg); box-shadow: var(--shadow-card);">
+                <p class="mb-1" style="font-size: 11px; font-weight: 400; color: var(--color-text-secondary);">连续天数</p>
+                <div class="flex items-center justify-center gap-1">
+                    <p class="number-bold" style="font-size: 20px; font-weight: 800; color: var(--color-primary); font-variant-numeric: tabular-nums;">5</p>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-light)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                </div>
+            </div>
+            <!-- Stat card 3 -->
+            <div class="flex-1 rounded-2xl p-3 text-center" style="background: var(--color-card-bg); box-shadow: var(--shadow-card);">
+                <p class="mb-1" style="font-size: 11px; font-weight: 400; color: var(--color-text-secondary);">投入</p>
+                <p class="number-bold" style="font-size: 20px; font-weight: 800; color: var(--color-text-primary); font-variant-numeric: tabular-nums;">360<span style="font-size: 11px; font-weight: 400; color: var(--color-text-secondary); margin-left: 2px;">min</span></p>
+            </div>
+        </div>
+
+        <!-- Recent 7 Days Section -->
+        <div class="px-5 pb-4">
+            <!-- Section header -->
+            <div class="flex items-center justify-between mb-3">
+                <h2 style="font-size: 17px; font-weight: 600; color: var(--color-text-primary);">最近 7 天</h2>
+            </div>
+
+            <!-- 7-day dots card -->
+            <div class="rounded-2xl p-4 mb-3" style="background: var(--color-card-bg); border: 1px solid var(--color-divider);">
+                <div class="flex justify-between">
+                    <!-- 周一 -->
+                    <div class="flex-1 flex flex-col items-center gap-2">
+                        <span style="font-size: 11px; font-weight: 400; color: var(--color-text-secondary);">周一</span>
+                        <span style="font-size: 13px; font-weight: 600; color: var(--color-text-primary);">23</span>
+                        <div class="rounded-full" style="width: 12px; height: 12px; background: var(--state-success);"></div>
+                    </div>
+                    <!-- 周二 -->
+                    <div class="flex-1 flex flex-col items-center gap-2">
+                        <span style="font-size: 11px; font-weight: 400; color: var(--color-text-secondary);">周二</span>
+                        <span style="font-size: 13px; font-weight: 600; color: var(--color-text-primary);">24</span>
+                        <div class="rounded-full" style="width: 12px; height: 12px; background: var(--state-success);"></div>
+                    </div>
+                    <!-- 周三 -->
+                    <div class="flex-1 flex flex-col items-center gap-2">
+                        <span style="font-size: 11px; font-weight: 400; color: var(--color-text-secondary);">周三</span>
+                        <span style="font-size: 13px; font-weight: 600; color: var(--color-text-primary);">25</span>
+                        <div class="rounded-full" style="width: 12px; height: 12px; background: var(--state-success);"></div>
+                    </div>
+                    <!-- 周四 -->
+                    <div class="flex-1 flex flex-col items-center gap-2">
+                        <span style="font-size: 11px; font-weight: 400; color: var(--color-text-secondary);">周四</span>
+                        <span style="font-size: 13px; font-weight: 600; color: var(--color-text-primary);">26</span>
+                        <div class="rounded-full" style="width: 12px; height: 12px; background: var(--state-success);"></div>
+                    </div>
+                    <!-- 周五 -->
+                    <div class="flex-1 flex flex-col items-center gap-2">
+                        <span style="font-size: 11px; font-weight: 400; color: var(--color-text-secondary);">周五</span>
+                        <span style="font-size: 13px; font-weight: 600; color: var(--color-text-primary);">27</span>
+                        <div class="rounded-full" style="width: 12px; height: 12px; background: var(--state-success);"></div>
+                    </div>
+                    <!-- 周六 -->
+                    <div class="flex-1 flex flex-col items-center gap-2">
+                        <span style="font-size: 11px; font-weight: 400; color: var(--color-text-secondary);">周六</span>
+                        <span style="font-size: 13px; font-weight: 600; color: var(--color-text-primary);">28</span>
+                        <div class="rounded-full" style="width: 12px; height: 12px; background: var(--color-divider);"></div>
+                    </div>
+                    <!-- 周日 (today) -->
+                    <div class="flex-1 flex flex-col items-center gap-2">
+                        <span style="font-size: 11px; font-weight: 600; color: var(--color-primary);">周日</span>
+                        <span style="font-size: 13px; font-weight: 600; color: var(--color-primary);">29</span>
+                        <div class="rounded-full" style="width: 12px; height: 12px; border: 2px solid var(--color-primary); background: var(--color-primary-light); opacity: 0.5;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievement Collection Section -->
+        <div class="px-5 pb-4">
+            <!-- Section header -->
+            <div class="flex items-center justify-between mb-3">
+                <h2 style="font-size: 17px; font-weight: 600; color: var(--color-text-primary);">成就收藏册</h2>
+            </div>
+
+            <!-- Badges horizontal scroll -->
+            <div class="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+                <!-- Badge 1: 连续3天 -->
+                <div class="shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl" style="background: var(--color-surface-green);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--color-primary-dark)" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <span style="font-size: 12px; font-weight: 600; white-space: nowrap; color: var(--color-primary-dark);">连续3天</span>
+                </div>
+                <!-- Badge 2: 首次完成 -->
+                <div class="shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl" style="background: #FFF3E0;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#C4960C" stroke="none"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7 7 7 7M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 17 7 17 7M12 22c-4.97 0-9-2.582-9-7v-4l3-1 3 1v2h3v2h3v-2l3-1 3 1v4c0 4.418-4.03 7-9 7z"/></svg>
+                    <span style="font-size: 12px; font-weight: 600; white-space: nowrap; color: #C4960C;">首次完成</span>
+                </div>
+                <!-- Badge 3: 行动达人 -->
+                <div class="shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl" style="background: var(--color-surface-green);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--color-primary-dark)" stroke="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    <span style="font-size: 12px; font-weight: 600; white-space: nowrap; color: var(--color-primary-dark);">行动达人</span>
+                </div>
+                <!-- Badge 4: 连续5天 -->
+                <div class="shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl" style="background: #E8F0FE;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5BA4CF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                    <span style="font-size: 12px; font-weight: 600; white-space: nowrap; color: #5BA4CF;">连续5天</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Tasks Section -->
+        <div class="px-5 pb-4">
+            <!-- Section header -->
+            <div class="flex items-center justify-between mb-3">
+                <h2 style="font-size: 17px; font-weight: 600; color: var(--color-text-primary);">待继续行动</h2>
+                <button class="inline-flex items-center justify-center whitespace-nowrap" style="height: 32px; padding: 0 16px; border-radius: 16px; background: var(--color-primary); color: #FFFFFF; font-size: 12px; font-weight: 600;">
+                    <i data-lucide="plus" style="width: 14px; height: 14px; margin-right: 4px;"></i>添加
+                </button>
+            </div>
+
+            <!-- Task Card 1 -->
+            <div class="rounded-2xl p-4 mb-3" style="background: var(--color-card-bg); border: 1px solid var(--color-divider);">
+                <div class="flex items-start gap-3">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between mb-1">
+                            <!-- Status chip: 待继续 -->
+                            <span class="inline-flex items-center justify-center whitespace-nowrap" style="height: 22px; padding: 0 10px; border-radius: 11px; font-size: 11px; font-weight: 500; background: #FFF8E1; color: #C4960C;">待继续</span>
+                            <!-- Chevron right -->
+                            <i data-lucide="chevron-right" class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary);"></i>
+                        </div>
+                        <p class="truncate" style="font-size: 15px; font-weight: 600; color: var(--color-text-primary); line-height: 1.4;">逻辑推理错题复盘</p>
+                        <p style="font-size: 12px; font-weight: 400; color: var(--color-text-secondary); margin-top: 4px;">2026-06-22 &middot; 预计 30 分钟</p>
+                        <p style="font-size: 12px; font-weight: 400; color: var(--color-text-secondary); margin-top: 2px;">尚未开始</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Card 2 -->
+            <div class="rounded-2xl p-4 mb-3" style="background: var(--color-card-bg); border: 1px solid var(--color-divider);">
+                <div class="flex items-start gap-3">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between mb-1">
+                            <!-- Status chip: 待继续 -->
+                            <span class="inline-flex items-center justify-center whitespace-nowrap" style="height: 22px; padding: 0 10px; border-radius: 11px; font-size: 11px; font-weight: 500; background: #FFF8E1; color: #C4960C;">待继续</span>
+                            <!-- Chevron right -->
+                            <i data-lucide="chevron-right" class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary);"></i>
+                        </div>
+                        <p class="truncate" style="font-size: 15px; font-weight: 600; color: var(--color-text-primary); line-height: 1.4;">整理听力笔记</p>
+                        <p style="font-size: 12px; font-weight: 400; color: var(--color-text-secondary); margin-top: 4px;">2026-06-25 &middot; 预计 20 分钟</p>
+                        <p style="font-size: 12px; font-weight: 400; color: var(--color-text-secondary); margin-top: 2px;">尚未开始</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom spacer for tab bar -->
+        <div style="height: 84px;"></div>
+
+        <!-- Bottom Tab Bar -->
+        <nav class="fixed bottom-0 inset-x-0 z-40 border-t" style="background: var(--color-card-bg); border-color: var(--color-divider);">
+            <div class="flex items-center justify-around" style="height: 50px;">
+                <!-- Tab: 今日 -->
+                <button data-dom-id="tab-today" class="flex flex-col items-center justify-center gap-0.5 flex-1" style="color: var(--color-text-secondary);">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><circle cx="12" cy="16" r="2" fill="currentColor"></circle></svg>
+                    <span style="font-size: 10px; font-weight: 400;">今日</span>
+                </button>
+                <!-- Tab: 进度 (active) -->
+                <button data-dom-id="tab-progress-active" class="flex flex-col items-center justify-center gap-0.5 flex-1" style="color: var(--color-primary);">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    <span style="font-size: 10px; font-weight: 600;">进度</span>
+                </button>
+                <!-- Tab: 小队 -->
+                <button data-dom-id="tab-team" class="flex flex-col items-center justify-center gap-0.5 flex-1" style="color: var(--color-text-secondary);">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span style="font-size: 10px; font-weight: 400;">小队</span>
+                </button>
+                <!-- Tab: 我的 -->
+                <button data-dom-id="tab-profile" class="flex flex-col items-center justify-center gap-0.5 flex-1" style="color: var(--color-text-secondary);">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span style="font-size: 10px; font-weight: 400;">我的</span>
+                </button>
+            </div>
+            <!-- Safe area bottom -->
+            <div style="height: env(safe-area-inset-bottom, 34px); background: var(--color-card-bg);"></div>
+        </nav>
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

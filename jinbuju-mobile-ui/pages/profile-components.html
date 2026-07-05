@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>组件展示</title>
+    <style id="theme-vars">
+:root {
+  /* ===== Color System ===== */
+  --color-primary: #356859;
+  --color-primary-dark: #1F5B4A;
+  --color-primary-light: #7DBB69;
+  --color-page-bg: #F5F7F2;
+  --color-card-bg: #FFFFFF;
+  --color-surface-green: #EAF5EF;
+  --color-surface-yellow: #F8D26A;
+  --color-text-primary: #233B34;
+  --color-text-secondary: #71827A;
+  --color-divider: #E6EEE9;
+
+  /* State Colors */
+  --state-success: #7DBB69;
+  --state-warning: #F8D26A;
+  --state-info: #5BA4CF;
+  --state-error: #D4726A;
+
+  /* ===== Radius Scale ===== */
+  --radius-sm: 4px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-card: 16px;
+  --radius-button: 44px;
+  --radius-chip: 20px;
+  --radius-full: 9999px;
+
+  /* ===== Spacing Scale ===== */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-base: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 36px;
+
+  /* ===== Typography Scale ===== */
+  /* Body base */
+  --font-body: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 15px;
+  --font-size-xl: 17px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+  --font-size-hero: 28px;
+
+  /* Line heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+
+  /* Font weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+
+  /* ===== Shadow Scale ===== */
+  --shadow-card: 0 4px 16px rgba(31, 70, 58, 0.06);
+  --shadow-card-hover: 0 8px 24px rgba(31, 70, 58, 0.1);
+  --shadow-elevated: 0 12px 32px rgba(31, 70, 58, 0.12);
+}
+
+/* ===== Typography Classes ===== */
+.text-hero { font-size: var(--font-size-hero); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-3xl { font-size: var(--font-size-3xl); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-2xl { font-size: var(--font-size-2xl); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-xl { font-size: var(--font-size-xl); font-weight: var(--weight-semibold); line-height: var(--leading-tight); color: var(--color-text-primary); }
+.text-lg { font-size: var(--font-size-lg); font-weight: var(--weight-medium); line-height: var(--leading-normal); color: var(--color-text-primary); }
+.text-base { font-size: var(--font-size-base); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-primary); }
+.text-sm { font-size: var(--font-size-sm); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-secondary); }
+.text-xs { font-size: var(--font-size-xs); font-weight: var(--weight-regular); line-height: var(--leading-normal); color: var(--color-text-secondary); }
+
+/* Label English */
+.label-en { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-text-secondary); }
+.label-en-light { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+.label-en-dark { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.8); }
+
+/* Number emphasis */
+.number-bold { font-size: var(--font-size-2xl); font-weight: var(--weight-extrabold); color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+.number-hero { font-size: var(--font-size-hero); font-weight: var(--weight-extrabold); color: var(--color-primary); font-variant-numeric: tabular-nums; }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--color-primary);
+  }
+  @layer base {
+    body { background: var(--color-surface); color: var(--color-text-primary); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main class="min-h-screen" style="background: var(--color-page-bg); font-family: var(--font-body);">
+
+      <!-- Page Header -->
+      <header class="sticky top-0 z-30" style="background: var(--color-primary-dark);">
+        <div class="flex h-11 items-center px-4">
+          <div class="flex w-[88px] items-center justify-start"></div>
+          <div class="min-w-0 flex-1 text-center text-[16px] font-semibold" style="color: #FFFFFF; letter-spacing: -0.02em;">组件展示</div>
+          <div class="w-[88px]"></div>
+        </div>
+      </header>
+
+      <!-- Content padding -->
+      <div class="px-4 pb-8" style="padding-top: 20px;">
+
+        <!-- ===== 1. Avatar ===== -->
+        <section class="mb-5">
+          <p class="mb-3" style="font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #78867F;">用户头像 Avatar</p>
+          <div class="rounded-2xl p-4 flex items-end gap-5 flex-wrap" style="background: var(--color-card-bg); box-shadow: var(--shadow-card);">
+            <!-- Variant 1: Text initial 80px -->
+            <div class="flex flex-col items-center gap-2">
+              <div class="w-20 h-20 rounded-full flex items-center justify-center text-[36px] font-bold" style="background: linear-gradient(145deg, #FFFDF7, #EAF4EC); border: 2px solid rgba(255,255,255,0.92); color: #4D7C68; box-shadow: 0 4px 11px rgba(67,103,87,0.12);">岚</div>
+              <span class="text-[11px]" style="color: var(--color-text-secondary);">文字首字 80px</span>
+            </div>
+            <!-- Variant 2: Colored bg circle 80px -->
+            <div class="flex flex-col items-center gap-2">
+              <div class="w-20 h-20 rounded-full flex items-center justify-center text-[36px] font-bold" style="background: linear-gradient(145deg, #63D395, #24AA72); border: 2px solid rgba(255,255,255,0.92); color: #FFFFFF; box-shadow: 0 4px 11px rgba(67,103,87,0.12);">岚</div>
+              <span class="text-[11px]" style="color: var(--color-text-secondary);">彩色背景 80px</span>
+            </div>
+            <!-- Variant 3: Small 40px -->
+            <div class="flex flex-col items-center gap-2">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center text-[18px] font-bold" style="background: linear-gradient(145deg, #FFFDF7, #EAF4EC); border: 2px solid rgba(255,255,255,0.92); color: #4D7C68; box-shadow: 0 4px 11px rgba(67,103,87,0.12);">岚</div>
+              <span class="text-[11px]" style="color: var(--color-text-secondary);">小尺寸 40px</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 2. Level Badge ===== -->
+        <section class="mb-5">
+          <p class="mb-3" style="font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #78867F;">等级标签 Level Badge</p>
+          <div class="rounded-2xl p-4 flex items-center gap-3 flex-wrap" style="background: var(--color-card-bg); box-shadow: var(--shadow-card);">
+            <!-- Lv.1 -->
+            <span class="inline-flex items-center whitespace-nowrap" style="height: 21px; padding: 0 10px; border-radius: 10.5px; background: rgba(255,250,231,0.86); border: 1px solid rgba(230,181,80,0.38); font-size: 11px; font-weight: 650; color: #6F5A2E;">&#9733; Lv.1 入门者</span>
+            <!-- Lv.2 -->
+            <span class="inline-flex items-center whitespace-nowrap" style="height: 21px; padding: 0 10px; border-radius: 10.5px; background: rgba(255,250,231,0.86); border: 1px solid rgba(230,181,80,0.38); font-size: 11px; font-weight: 650; color: #6F5A2E;">&#9733; Lv.2 自律新星</span>
+            <!-- Lv.3 -->
+            <span class="inline-flex items-center whitespace-nowrap" style="height: 21px; padding: 0 10px; border-radius: 10.5px; background: rgba(255,250,231,0.86); border: 1px solid rgba(230,181,80,0.38); font-size: 11px; font-weight: 650; color: #6F5A2E;">&#9733; Lv.3 行动派</span>
+          </div>
+        </section>
+
+        <!-- ===== 3. Status Chips ===== -->
+        <section class="mb-5">
+          <p class="mb-3" style="font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #78867F;">状态标签 Status Chips</p>
+          <div class="rounded-2xl p-4 flex items-center gap-2 flex-wrap" style="background: var(--color-card-bg); box-shadow: var(--shadow-card);">
+            <!-- 进行中 -->
+            <span class="inline-flex items-center whitespace-nowrap" style="height: 21px; padding: 0 9px; border-radius: 10.5px; background: #EDF7F1; border: 1px solid #D6E8DE; font-size: 11px; font-weight: 500; color: #4D7C68;">进行中</span>
+            <!-- 待续 -->
+            <span class="inline-flex items-center whitespace-nowrap" style="height: 21px; padding: 0 9px; border-radius: 10.5px; background: #FFF8E1; border: 1px solid #F0E0A0; font-size: 11px; font-weight: 500; color: #C4960C;">待续</span>
+            <!-- 已完成 -->
+            <span class="inline-flex items-center whitespace-nowrap" style="height: 21px; padding: 0 9px; border-radius: 10.5px; background: #EDF7F1; border: 1px solid #D6E8DE; font-size: 11px; font-weight: 500; color: #4D7C68;">已完成</span>
+            <!-- 今天不做 -->
+            <span class="inline-flex items-center whitespace-nowrap" style="height: 21px; padding: 0 9px; border-radius: 10.5px; background: #F0F0F0; font-size: 11px; font-weight: 500; color: #999999;">今天不做</span>
+            <!-- 已顺延 -->
+            <span class="inline-flex items-center whitespace-nowrap" style="height: 21px; padding: 0 9px; border-radius: 10.5px; background: #FFF8E1; border: 1px solid #F0E0A0; font-size: 11px; font-weight: 500; color: #C4960C;">已顺延</span>
+          </div>
+        </section>
+
+        <!-- ===== 4. Achievement Medals ===== -->
+        <section class="mb-5">
+          <p class="mb-3" style="font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #78867F;">成就徽章 Achievement Medals</p>
+          <div class="rounded-2xl p-4 flex items-start justify-around" style="background: var(--color-card-bg); box-shadow: var(--shadow-card);">
+            <!-- Purple/Blue diamond -->
+            <div class="flex flex-col items-center gap-2">
+              <div class="w-[52px] h-[52px] flex items-center justify-center" style="border-radius: 38%; transform: rotate(45deg); background: linear-gradient(145deg, #78A7ED, #8D70D8);">
+                <span class="text-white text-[18px]" style="transform: rotate(-45deg);">&#9646;</span>
+              </div>
+              <p class="text-[18px] font-extrabold" style="color: var(--color-text-primary); font-variant-numeric: tabular-nums;">12</p>
+              <p class="text-[11px]" style="color: var(--color-text-secondary);">连续天数</p>
+            </div>
+            <!-- Green circle -->
+            <div class="flex flex-col items-center gap-2">
+              <div class="w-[52px] h-[52px] rounded-full flex items-center justify-center" style="background: linear-gradient(145deg, #63D395, #24AA72);">
+                <span class="text-white text-[20px]">&#10003;</span>
+              </div>
+              <p class="text-[18px] font-extrabold" style="color: var(--color-text-primary); font-variant-numeric: tabular-nums;">50%</p>
+              <p class="text-[11px]" style="color: var(--color-text-secondary);">完成率</p>
+            </div>
+            <!-- Coral circle -->
+            <div class="flex flex-col items-center gap-2">
+              <div class="w-[52px] h-[52px] rounded-full flex items-center justify-center" style="background: linear-gradient(145deg, #F59B8E, #ED6F78);">
+                <span class="text-white text-[20px]">&#8859;</span>
+              </div>
+              <p class="text-[18px] font-extrabold" style="color: var(--color-text-primary); font-variant-numeric: tabular-nums;">360</p>
+              <p class="text-[11px]" style="color: var(--color-text-secondary);">投入分钟</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 5. Progress Bar ===== -->
+        <section class="mb-5">
+          <p class="mb-3" style="font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #78867F;">进度条 Progress Bar</p>
+          <div class="rounded-2xl p-4 flex flex-col gap-4" style="background: var(--color-card-bg); box-shadow: var(--shadow-card);">
+            <!-- 0% -->
+            <div class="flex items-center gap-3">
+              <div class="flex-1 rounded-full" style="height: 7px; background: #E8F0EB;">
+                <div class="rounded-full" style="width: 0%; height: 100%; background: linear-gradient(90deg, #B9DCC8, #73A68E);"></div>
+              </div>
+              <span class="text-[12px] font-medium shrink-0" style="color: var(--color-text-secondary); width: 32px; text-align: right;">0%</span>
+            </div>
+            <!-- 25% -->
+            <div class="flex items-center gap-3">
+              <div class="flex-1 rounded-full" style="height: 7px; background: #E8F0EB;">
+                <div class="rounded-full" style="width: 25%; height: 100%; background: linear-gradient(90deg, #B9DCC8, #73A68E);"></div>
+              </div>
+              <span class="text-[12px] font-medium shrink-0" style="color: var(--color-text-secondary); width: 32px; text-align: right;">25%</span>
+            </div>
+            <!-- 50% -->
+            <div class="flex items-center gap-3">
+              <div class="flex-1 rounded-full" style="height: 7px; background: #E8F0EB;">
+                <div class="rounded-full" style="width: 50%; height: 100%; background: linear-gradient(90deg, #B9DCC8, #73A68E);"></div>
+              </div>
+              <span class="text-[12px] font-medium shrink-0" style="color: var(--color-text-secondary); width: 32px; text-align: right;">50%</span>
+            </div>
+            <!-- 75% -->
+            <div class="flex items-center gap-3">
+              <div class="flex-1 rounded-full" style="height: 7px; background: #E8F0EB;">
+                <div class="rounded-full" style="width: 75%; height: 100%; background: linear-gradient(90deg, #B9DCC8, #73A68E);"></div>
+              </div>
+              <span class="text-[12px] font-medium shrink-0" style="color: var(--color-text-secondary); width: 32px; text-align: right;">75%</span>
+            </div>
+            <!-- 100% -->
+            <div class="flex items-center gap-3">
+              <div class="flex-1 rounded-full" style="height: 7px; background: #E8F0EB;">
+                <div class="rounded-full" style="width: 100%; height: 100%; background: linear-gradient(90deg, #B9DCC8, #73A68E);"></div>
+              </div>
+              <span class="text-[12px] font-medium shrink-0" style="color: var(--color-text-secondary); width: 32px; text-align: right;">100%</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 6. Buttons ===== -->
+        <section class="mb-5">
+          <p class="mb-3" style="font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #78867F;">按钮样式 Buttons</p>
+          <div class="rounded-2xl p-4 flex flex-col gap-3" style="background: var(--color-card-bg); box-shadow: var(--shadow-card);">
+            <!-- Primary green pill -->
+            <button class="inline-flex items-center justify-center h-10 rounded-full text-[14px] font-semibold whitespace-nowrap transition-colors duration-200"
+                    style="background: #EAF5EE; border: 1px solid #D7E9DF; color: var(--color-primary);"
+                    onmouseenter="this.style.background='#DFF0E5';"
+                    onmouseleave="this.style.background='#EAF5EE';">
+              查看成长档案
+            </button>
+            <!-- Danger pill -->
+            <button class="inline-flex items-center justify-center h-10 rounded-full text-[14px] font-semibold whitespace-nowrap transition-colors duration-200"
+                    style="background: #FCEDEC; border: 1px solid #F2D9D6; color: #9A665F;"
+                    onmouseenter="this.style.background='#F8E4E2';"
+                    onmouseleave="this.style.background='#FCEDEC';">
+              结束目标
+            </button>
+            <!-- Add goal dashed -->
+            <button class="inline-flex items-center justify-center h-10 rounded-full text-[14px] font-medium whitespace-nowrap transition-colors duration-200"
+                    style="background: #F3F9F5; border: 1.5px dashed #BFD6CA; color: var(--color-primary);"
+                    onmouseenter="this.style.background='#EDF5EE';"
+                    onmouseleave="this.style.background='#F3F9F5';">
+              + 添加目标
+            </button>
+            <!-- Row: Edit circle + Encourage pill -->
+            <div class="flex items-center gap-3">
+              <!-- Edit profile circle -->
+              <button class="shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200"
+                      style="background: rgba(255,255,255,0.72); border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 3.5px 9px rgba(55,82,70,0.09);"
+                      onmouseenter="this.style.background='rgba(255,255,255,0.9)';"
+                      onmouseleave="this.style.background='rgba(255,255,255,0.72)';"
+                      aria-label="编辑">
+                <span style="color: #4D7C68; font-size: 16px; transform: rotate(-8deg); display: inline-block;">&#9998;</span>
+              </button>
+              <!-- Small encourage pill -->
+              <button class="inline-flex items-center justify-center h-8 px-5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-colors duration-200"
+                      style="background: #4D7C68; color: #FFFFFF;"
+                      onmouseenter="this.style.opacity='0.9';"
+                      onmouseleave="this.style.opacity='1';">
+                鼓励
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 7. Toolbox Icons ===== -->
+        <section class="mb-5">
+          <p class="mb-3" style="font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #78867F;">工具箱图标 Toolbox Icons</p>
+          <div class="rounded-2xl p-4 grid grid-cols-4 gap-3" style="background: var(--color-card-bg); box-shadow: var(--shadow-card);">
+            <!-- 历史数据 -->
+            <div class="flex flex-col items-center gap-2">
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: linear-gradient(145deg, #63D395, #24AA72);">
+                <span class="text-white text-[18px]">&#9637;</span>
+              </div>
+              <span class="text-[11px] font-medium" style="color: var(--color-text-primary);">历史数据</span>
+            </div>
+            <!-- 成就徽章 -->
+            <div class="flex flex-col items-center gap-2">
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: linear-gradient(145deg, #F0BD50, #E6A020);">
+                <span class="text-white text-[18px]">&#9830;</span>
+              </div>
+              <span class="text-[11px] font-medium" style="color: var(--color-text-primary);">成就徽章</span>
+            </div>
+            <!-- AI 教练 -->
+            <div class="flex flex-col items-center gap-2">
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: linear-gradient(145deg, #7DDFB8, #3CC494);">
+                <span class="text-white text-[16px]">&#10022;</span>
+              </div>
+              <span class="text-[11px] font-medium" style="color: var(--color-text-primary);">AI 教练</span>
+              <span class="text-[9px]" style="color: var(--color-text-secondary);">查看分析</span>
+            </div>
+            <!-- 数据设置 -->
+            <div class="flex flex-col items-center gap-2">
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: linear-gradient(145deg, #8D70D8, #78A7ED);">
+                <span class="text-white text-[18px]">&#9881;</span>
+              </div>
+              <span class="text-[11px] font-medium" style="color: var(--color-text-primary);">数据设置</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 8. Feedback Stars ===== -->
+        <section class="mb-5">
+          <p class="mb-3" style="font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #78867F;">用户反馈星星 Feedback Stars</p>
+          <div class="rounded-2xl p-4" style="background: var(--color-card-bg); box-shadow: var(--shadow-card);">
+            <!-- 5 gold stars -->
+            <div class="flex items-center gap-[1.5px]">
+              <span style="font-size: 15px; color: #F0BD50; text-shadow: 0 1px 2.5px rgba(233,180,70,0.18);">&#9733;</span>
+              <span style="font-size: 15px; color: #F0BD50; text-shadow: 0 1px 2.5px rgba(233,180,70,0.18);">&#9733;</span>
+              <span style="font-size: 15px; color: #F0BD50; text-shadow: 0 1px 2.5px rgba(233,180,70,0.18);">&#9733;</span>
+              <span style="font-size: 15px; color: #F0BD50; text-shadow: 0 1px 2.5px rgba(233,180,70,0.18);">&#9733;</span>
+              <span style="font-size: 15px; color: #F0BD50; text-shadow: 0 1px 2.5px rgba(233,180,70,0.18);">&#9733;</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== 9. Edit Button ===== -->
+        <section class="mb-5">
+          <p class="mb-3" style="font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #78867F;">编辑按钮 Edit Button</p>
+          <div class="rounded-2xl p-4 flex items-center gap-4" style="background: var(--color-card-bg); box-shadow: var(--shadow-card);">
+            <!-- 32px circle edit -->
+            <div class="flex flex-col items-center gap-2">
+              <button class="w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-200"
+                      style="background: rgba(255,255,255,0.72); border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 3.5px 9px rgba(55,82,70,0.09);"
+                      onmouseenter="this.style.background='rgba(255,255,255,0.92)';"
+                      onmouseleave="this.style.background='rgba(255,255,255,0.72)';"
+                      aria-label="编辑">
+                <span style="color: #4D7C68; font-size: 14px; transform: rotate(-8deg); display: inline-block;">&#9998;</span>
+              </button>
+              <span class="text-[11px]" style="color: var(--color-text-secondary);">编辑 32px</span>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

@@ -10,7 +10,7 @@
 
   <scroll-view class="coach-prompts" scroll-x show-scrollbar="{{false}}" enhanced>
     <view class="coach-prompts-inner">
-      <view wx:for="{{quickQuestions}}" wx:key="*this" class="coach-prompt" data-question="{{item}}" bindtap="chooseQuestion" hover-class="coach-pressed">
+      <view wx:for="{{quickQuestions}}" wx:key="*this" class="coach-prompt" data-question="{{item}}" bindtap="sendGuidedQuestion" hover-class="coach-pressed">
         <text wx:if="{{index === 0}}">📊</text><text wx:elif="{{index === 1}}">？</text><text wx:else>✦</text> {{item}}
       </view>
     </view>
@@ -61,21 +61,37 @@
           <view class="coach-analysis-line"><view class="coach-analysis-dot coach-analysis-dot--amber"></view><text>{{bottleneck}}</text></view>
         </view>
 
-        <view class="coach-report-actions">
-          <view class="coach-report-action" bindtap="acknowledgeReport" hover-class="coach-pressed"><text class="coach-report-action-icon">👍</text><text>很棒</text></view>
-          <view class="coach-report-action" bindtap="viewReportDetails" hover-class="coach-pressed"><text class="coach-report-action-icon">📈</text><text>查看详情</text></view>
+        <view class="coach-guided-actions coach-guided-actions--report">
+          <view wx:for="{{quickQuestions}}" wx:key="*this" class="coach-guided-action" data-question="{{item}}" bindtap="sendGuidedQuestion" hover-class="coach-pressed">{{index === 0 ? '查看情况' : (index === 1 ? '查看卡点' : '下一步建议')}}</view>
         </view>
       </view>
     </view>
 
     <view wx:for="{{messages}}" wx:key="id" id="{{item.id}}" class="{{item.role === 'assistant' ? 'coach-bot-row coach-followup-row' : 'coach-user-row coach-followup-row'}}">
       <image wx:if="{{item.role === 'assistant'}}" class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
-      <view class="coach-bubble {{item.role === 'assistant' ? 'coach-bot-bubble' : 'coach-user-bubble'}}">{{item.content}}</view>
+      <view wx:if="{{item.role === 'user'}}" class="coach-bubble coach-user-bubble">{{item.content}}</view>
+      <view wx:else class="coach-compact-reply">
+        <view class="coach-compact-summary">{{item.summary}}</view>
+        <view class="coach-compact-divider"></view>
+        <view class="coach-compact-advice-label">建议</view>
+        <view class="coach-compact-advice">{{item.suggestion}}</view>
+        <view class="coach-guided-actions">
+          <view wx:for="{{item.followUps}}" wx:for-item="questionItem" wx:key="*this" class="coach-guided-action" data-question="{{questionItem}}" catchtap="sendGuidedQuestion" hover-class="coach-pressed">{{questionItem}}</view>
+        </view>
+      </view>
     </view>
 
     <view wx:if="{{asking}}" id="coach-typing" class="coach-bot-row coach-followup-row">
       <image class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
-      <view class="coach-bubble coach-bot-bubble coach-typing"><view></view><view></view><view></view></view>
+      <view class="coach-bubble coach-bot-bubble coach-typing">
+        <view class="coach-breathe-wrap">
+          <view class="coach-breathe-stage">
+            <view class="coach-breathe-ring"></view>
+            <view class="coach-breathe-orb"></view>
+          </view>
+          <text class="coach-breathe-text">思考中</text>
+        </view>
+      </view>
     </view>
 
     <view wx:if="{{chatError}}" id="chat-error" class="coach-chat-error">

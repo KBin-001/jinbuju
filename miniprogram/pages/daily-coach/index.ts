@@ -30,6 +30,16 @@ function getTopInset(): number {
   }
 }
 
+function compactDailyReply(raw: string): { summary: string; suggestion: string } {
+  const normalized = String(raw || "").replace(/\s+/g, " ").trim();
+  const sentences = normalized.match(/[^。！？!?]+[。！？!?]?/g)?.map((item) => item.trim()).filter(Boolean) || [];
+  const shorten = (value: string, limit: number) => value.length > limit ? `${value.slice(0, limit)}…` : value;
+  return {
+    summary: shorten(sentences[0] || "今天的行动情况已经整理好了。", 64),
+    suggestion: shorten(sentences[1] || "先完成最容易推进的一项，保持轻量节奏。", 52),
+  };
+}
+
 Page({
   data: {
     appTheme: getCurrentThemeId(),
@@ -42,6 +52,9 @@ Page({
     analysis: EMPTY_ANALYSIS,
     question: "",
     coachReply: "",
+    coachReplySummary: "",
+    coachReplySuggestion: "",
+    replyQuestions: ["查看今日卡点", "给我明日建议", "解释今日完成率"],
     scrollIntoView: "",
   },
 
@@ -81,15 +94,7 @@ Page({
   chooseSuggestion(event: { currentTarget: { dataset: { suggestion?: string } } }) {
     const question = String(event.currentTarget.dataset.suggestion || "").slice(0, 160);
     if (!question) return;
-    this.setData({ question });
-  },
-
-  acknowledgeReport() {
-    wx.showToast({ title: "已记录今天的状态", icon: "none" });
-  },
-
-  viewReportDetails() {
-    this.setData({ question: "告诉我今天最需要关注的细节" });
+    this.setData({ question }, () => this.sendQuestion());
   },
 
   sendQuestion() {
@@ -98,8 +103,12 @@ Page({
       wx.showToast({ title: "先写下今天遇到的问题", icon: "none" });
       return;
     }
+    const coachReply = buildDailyCoachReply(question, this.data.analysis);
+    const compact = compactDailyReply(coachReply);
     this.setData({
-      coachReply: buildDailyCoachReply(question, this.data.analysis),
+      coachReply,
+      coachReplySummary: compact.summary,
+      coachReplySuggestion: compact.suggestion,
       question: "",
       scrollIntoView: "coach-reply",
     });

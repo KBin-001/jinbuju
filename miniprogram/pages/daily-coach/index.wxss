@@ -542,3 +542,66 @@ page {
     width: 540rpx;
   }
 }
+.coach-compact-reply {
+  box-sizing: border-box;
+  width: calc(100% - 76rpx);
+  padding: 24rpx;
+  border: 1rpx solid rgba(53, 104, 89, 0.10);
+  border-radius: 24rpx 24rpx 24rpx 8rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12rpx 30rpx rgba(31, 70, 58, 0.07);
+}
+
+.coach-compact-summary {
+  color: #233B34;
+  font-size: 25rpx;
+  font-weight: 600;
+  line-height: 38rpx;
+}
+
+.coach-compact-divider {
+  height: 1rpx;
+  margin: 20rpx 0 16rpx;
+  background: #E6EEE9;
+}
+
+.coach-compact-advice-label {
+  color: #D88A17;
+  font-size: 21rpx;
+  font-weight: 700;
+  line-height: 30rpx;
+}
+
+.coach-compact-advice {
+  margin-top: 6rpx;
+  color: #71827A;
+  font-size: 22rpx;
+  line-height: 34rpx;
+}
+
+.coach-guided-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.coach-guided-actions--report {
+  margin-top: 16rpx;
+}
+
+.coach-guided-action {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54rpx;
+  padding: 0 20rpx;
+  border: 1rpx solid #D7E4DE;
+  border-radius: 27rpx;
+  background: #F7FBF8;
+  color: #356859;
+  font-size: 21rpx;
+  font-weight: 600;
+  line-height: 28rpx;
+}

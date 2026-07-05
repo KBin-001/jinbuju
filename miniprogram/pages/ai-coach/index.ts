@@ -10,6 +10,9 @@ import { CoachRange, ProgressCoachChatMessage } from "../../types/progressCoach"
 
 interface ChatMessage extends ProgressCoachChatMessage {
   id: string;
+  summary?: string;
+  suggestion?: string;
+  followUps?: string[];
 }
 
 interface PeriodStats {
@@ -106,6 +109,22 @@ function errorMessage(rawError: unknown): string {
   return error?.message || "暂时没有生成回答，请稍后重试。";
 }
 
+function compactReply(raw: string): { summary: string; suggestion: string } {
+  const normalized = String(raw || "").replace(/\s+/g, " ").trim();
+  const sentences = normalized.match(/[^。！？!?]+[。！？!?]?/g)?.map((item) => item.trim()).filter(Boolean) || [];
+  const shorten = (value: string, limit: number) => value.length > limit ? `${value.slice(0, limit)}…` : value;
+  return {
+    summary: shorten(sentences[0] || "我已经整理好这段时间的行动情况。", 64),
+    suggestion: shorten(sentences[1] || "保持固定节奏，先完成最容易推进的一项。", 52),
+  };
+}
+
+function followUpQuestions(scope: CoachRange): string[] {
+  if (scope === "week") return ["查看本周卡点", "给我下周建议", "解释本周完成率"];
+  if (scope === "month") return ["查看本月卡点", "给我下月建议", "解释本月投入"];
+  return ["查看当前卡点", "给我下一步建议", "解释成长趋势"];
+}
+
 Page({
   data: {
     appTheme: getCurrentThemeId(),
@@ -185,17 +204,11 @@ Page({
 
   goBack() { wx.navigateBack({ delta: 1 }); },
 
-  chooseQuestion(event: { currentTarget: { dataset: { question?: string } } }) {
+  sendGuidedQuestion(event: { currentTarget: { dataset: { question?: string } } }) {
     if (this.data.asking) return;
-    this.setData({ question: String(event.currentTarget.dataset.question || "").slice(0, 120), chatError: "" });
-  },
-
-  acknowledgeReport() {
-    wx.showToast({ title: "已记录当前状态", icon: "none" });
-  },
-
-  viewReportDetails() {
-    this.setData({ question: `请详细分析我的${this.data.scopeLabel}，并告诉我最需要关注的地方` });
+    const question = String(event.currentTarget.dataset.question || "").slice(0, 120);
+    if (!question) return;
+    this.setData({ question, chatError: "" }, () => this.sendQuestion());
   },
 
   inputQuestion(event: { detail: { value?: string } }) {
@@ -221,7 +234,15 @@ Page({
     });
     try {
       const result = await askProgressCoach(this.data.scope, this.data.goalId || undefined, question, history);
-      const assistantMessage: ChatMessage = { id: `assistant_${Date.now()}`, role: "assistant", content: result.answer };
+      const compact = compactReply(result.answer);
+      const assistantMessage: ChatMessage = {
+        id: `assistant_${Date.now()}`,
+        role: "assistant",
+        content: result.answer,
+        summary: compact.summary,
+        suggestion: compact.suggestion,
+        followUps: followUpQuestions(this.data.scope),
+      };
       this.setData({ messages: this.data.messages.concat(assistantMessage), asking: false, scrollIntoView: assistantMessage.id });
     } catch (error) {
       this.setData({ asking: false, chatError: errorMessage(error), failedQuestion: question, scrollIntoView: "chat-error" });
