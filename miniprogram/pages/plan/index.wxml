@@ -91,7 +91,7 @@
         <block wx:else>
           <view class="chart-title-row">
             <view class="chart-legend"><view class="legend-dot"></view><text>投入分钟</text></view>
-            <view class="chart-legend"><view class="legend-line"></view><text>完成项数</text></view>
+            <view wx:if="{{trendLineEnabled}}" class="chart-legend"><view class="legend-line"></view><text>完成项数</text></view>
           </view>
           <view class="bar-chart" bindtap="onChartBackdropTap">
             <view class="bar-y-axis"><text>{{barChart.maxLabel}}</text><text>{{barChart.midLabel}}</text><text>0</text></view>
@@ -105,7 +105,7 @@
                   <view class="bar-fill {{item.isMax ? 'is-max' : ''}} {{item.isToday ? 'is-today' : ''}}" style="width: {{barChart.barWidth}}rpx; height: {{item.heightPercent}}%;"></view>
                 </view>
               </view>
-              <canvas wx:if="{{chartCanvasVisible && !goalPickerVisible}}" type="2d" id="trendLine" class="line-canvas"></canvas>
+              <canvas wx:if="{{trendLineEnabled && chartCanvasVisible && !goalPickerVisible}}" type="2d" id="trendLine" class="line-canvas"></canvas>
             </view>
           </view>
           <view class="bar-labels"><text wx:for="{{barChart.bars}}" wx:key="key" class="bar-label">{{item.label}}</text></view>

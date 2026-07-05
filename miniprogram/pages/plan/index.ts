@@ -1,3 +1,4 @@
+import { FEATURE_FLAGS } from "../../config/features";
 import { getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { getTasksByDate, getTasksByGoal } from "../../services/manualTask";
@@ -882,6 +883,7 @@ Page(withAppTheme({
     goalOptions: [] as GoalOption[],
     canSwitchGoal: false,
     goalPickerVisible: false,
+    trendLineEnabled: FEATURE_FLAGS.ENABLE_TREND_LINE,
     chartCanvasVisible: true,
     summary: null as ProgressSummary | null,
     levelLabel: "Lv.1 · 自律新兵",
@@ -1142,6 +1144,7 @@ Page(withAppTheme({
   },
 
   drawTrendLine() {
+    if (!FEATURE_FLAGS.ENABLE_TREND_LINE) return;
     if (this.data.trendRange === "year") return;
     const bars = this.data.barChart.bars;
     if (bars.length === 0 || this.data.barChart.insufficient) return;
