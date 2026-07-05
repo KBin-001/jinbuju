@@ -59,39 +59,25 @@
     </view>
 
     <block wx:else>
-      <view class="reference-summary-card" bindtap="openTodayDataDetails" hover-class="reference-card--pressed">
-        <view class="reference-ring-wrap">
-          <canvas
-            wx:if="{{!calendarVisible && !quickAddVisible && !completionSheetRendered}}"
-            type="2d"
-            id="summary-ring-canvas"
-            class="reference-ring-canvas"
-          ></canvas>
-          <view class="reference-ring-center">
-            <view class="reference-ring-value">{{summary.completedCount}}/{{summary.totalCount}}</view>
-            <view class="reference-ring-label">已完成</view>
-            <view class="reference-ring-check">✓</view>
-          </view>
+      <view class="stats-card" bindtap="openTodayDataDetails" hover-class="stats-card--pressed">
+        <view class="stats-col">
+          <view class="stats-col-label">已完成</view>
+          <view class="stats-col-value">{{summary.completedCount}}/{{summary.totalCount}}</view>
         </view>
-        <view class="reference-summary-side">
-          <view class="reference-summary-metric">
-            <view class="reference-metric-icon reference-metric-icon--clock"><view></view></view>
-            <view>
-              <view><text class="reference-summary-num">{{summary.actualMinutes}}</text><text class="reference-summary-unit">min</text></view>
-              <view class="reference-summary-label">实际投入</view>
-            </view>
-          </view>
-          <view class="reference-summary-line"></view>
-          <view class="reference-summary-metric">
-            <view class="reference-metric-icon reference-metric-icon--chart">
-              <view class="reference-chart-bar reference-chart-bar--one"></view>
-              <view class="reference-chart-bar reference-chart-bar--two"></view>
-              <view class="reference-chart-bar reference-chart-bar--three"></view>
-            </view>
-            <view>
-              <view><text class="reference-summary-num">{{completionPercent}}</text><text class="reference-summary-unit">%</text></view>
-              <view class="reference-summary-label">今日进度</view>
-            </view>
+        <view class="stats-col">
+          <view class="stats-col-label">今日投入</view>
+          <view class="stats-col-value">{{summary.actualMinutes}}<text class="stats-col-unit">min</text></view>
+        </view>
+        <view class="stats-col stats-col--progress">
+          <view class="stats-col-label">今日进度</view>
+          <view class="stats-ring-wrap">
+            <canvas
+              wx:if="{{!calendarVisible && !quickAddVisible && !completionSheetRendered}}"
+              type="2d"
+              id="stats-progress-ring"
+              class="stats-ring-canvas"
+            ></canvas>
+            <view class="stats-ring-text">{{completionPercent}}%</view>
           </view>
         </view>
       </view>

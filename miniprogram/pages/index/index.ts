@@ -300,7 +300,7 @@ Page(withAppTheme({
   drawSummaryRing() {
     wx.nextTick(() => {
       const query = wx.createSelectorQuery().in(this);
-      query.select("#summary-ring-canvas").fields({ node: true, size: true }).exec((result) => {
+      query.select("#stats-progress-ring").fields({ node: true, size: true }).exec((result) => {
         const field = result?.[0] as { node?: any; width?: number; height?: number } | undefined;
         const canvas = field?.node;
         const width = Number(field?.width || 0);
@@ -317,30 +317,26 @@ Page(withAppTheme({
 
         const centerX = width / 2;
         const centerY = height / 2;
+        const radius = Math.min(width, height) * 0.40;
+        const lineWidth = Math.min(width, height) * 0.13;
         const start = -Math.PI / 2;
-        const drawArc = (radius: number, lineWidth: number, track: string, color: string, ratio: number) => {
-          context.beginPath();
-          context.strokeStyle = track;
-          context.lineWidth = lineWidth;
-          context.arc(centerX, centerY, radius, 0, Math.PI * 2);
-          context.stroke();
+        const ratio = Math.max(0, Math.min(1, this.data.completionPercent / 100));
 
+        // 轨道
+        context.beginPath();
+        context.strokeStyle = "#D8F0E3";
+        context.lineWidth = lineWidth;
+        context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        context.stroke();
+
+        // 进度弧
+        if (ratio > 0) {
           context.beginPath();
-          context.strokeStyle = color;
+          context.strokeStyle = "#0B6B45";
           context.lineWidth = lineWidth;
           context.arc(centerX, centerY, radius, start, start + Math.PI * 2 * ratio);
           context.stroke();
-        };
-
-        const blue = context.createLinearGradient(0, 0, width, height);
-        blue.addColorStop(0, "#4AA0FF");
-        blue.addColorStop(1, "#247FEA");
-        const orange = context.createLinearGradient(0, 0, width, height);
-        orange.addColorStop(0, "#FFC12F");
-        orange.addColorStop(1, "#F6A400");
-
-        drawArc(Math.min(width, height) * 0.40, Math.min(width, height) * 0.055, "#EEF0F1", blue, 0.80);
-        drawArc(Math.min(width, height) * 0.29, Math.min(width, height) * 0.048, "#F1F1F1", orange, 0.72);
+        }
       });
     });
   },
