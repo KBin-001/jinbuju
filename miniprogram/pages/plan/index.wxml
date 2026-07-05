@@ -154,19 +154,11 @@
       <view class="ai-coach-head">
         <view class="ai-coach-identity">
           <image class="ai-coach-avatar" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
-          <view><view class="ai-coach-title">AI 进度教练</view><view class="ai-coach-subtitle">{{trendRange === 'month' ? '基于本月行动分析' : trendRange === 'year' ? '基于年度成长记录' : '基于本周行动分析'}}</view></view>
+          <view class="ai-coach-title">AI 进度教练</view>
         </view>
-        <view class="ai-coach-period glass-pill">{{aiCoach.periodLabel}}</view>
+        <view class="ai-coach-entry-arrow">›</view>
       </view>
       <view class="ai-coach-message"><view class="ai-coach-message-title"><text class="ai-coach-star">✦</text>{{trendSummary.adviceTitle || aiCoach.summary}}</view></view>
-      <view class="ai-coach-footer">
-        <view class="ai-coach-evidence">
-          <view class="evidence-item"><view class="evidence-icon">↗</view><view><text class="evidence-label">对比昨日</text><view class="evidence-value">{{trendSummary.vsYesterdayText}}</view></view></view>
-          <view class="evidence-item"><view class="evidence-icon">均</view><view><text class="evidence-label">{{trendRange === 'month' ? '本月平均' : '本周平均'}}</text><view class="evidence-value">{{trendSummary.avgMinutes}} 分钟</view></view></view>
-          <view class="evidence-item"><view class="evidence-icon is-gold">续</view><view><text class="evidence-label">连续投入</text><view class="evidence-value">{{trendSummary.streakDays}} 天</view></view></view>
-        </view>
-        <view class="ai-coach-action">查看详细分析 <text class="ai-coach-action-arrow">›</text></view>
-      </view>
     </view>
 
     <view class="milestone-card glass-card">

@@ -946,3 +946,99 @@
   .ai-coach-footer { display: block; }
   .ai-coach-action { width: 100%; min-height: 54rpx; margin-top: 8rpx; }
 }
+
+/* Typography alignment with the Today page */
+.hero-card {
+  min-height: 286rpx;
+  padding: 24rpx 26rpx 22rpx;
+}
+
+.hero-card-content { width: 100%; }
+.hero-title { max-width: 62%; font-size: 40rpx; line-height: 50rpx; }
+.hero-eyebrow { font-size: 22rpx; line-height: 30rpx; }
+.hero-status { max-width: 58%; min-height: 42rpx; margin-top: 9rpx; padding: 0 14rpx; font-size: 21rpx; }
+.hero-footer { width: 100%; margin-top: 20rpx; }
+.hero-progress-compact { max-width: 58%; }
+.hero-progress-row { font-size: 20rpx; line-height: 28rpx; }
+.hero-progress-value { font-size: 30rpx; line-height: 34rpx; }
+.hero-progress { height: 9rpx; margin-top: 8rpx; }
+.hero-switch-button { min-height: 56rpx; padding: 0 20rpx; border-radius: 28rpx; font-size: 22rpx; }
+.hero-switch-arrow { font-size: 30rpx; }
+
+.overview-card,
+.trend-card,
+.ai-coach-card,
+.milestone-card { padding: 24rpx; }
+
+.card-title { font-size: 33rpx; line-height: 43rpx; }
+.card-subtitle { margin-top: 3rpx; font-size: 21rpx; line-height: 30rpx; }
+
+.overview-grid { margin-top: 18rpx; }
+.overview-item { min-height: 142rpx; padding: 15rpx 5rpx 12rpx; }
+.overview-icon { width: 38rpx; height: 38rpx; margin-bottom: 6rpx; font-size: 18rpx; }
+.overview-value { font-size: 34rpx; line-height: 40rpx; }
+.overview-label { margin-top: 2rpx; font-size: 19rpx; line-height: 26rpx; }
+.value-unit { font-size: 18rpx; }
+
+.trend-range-tabs { height: 56rpx; padding: 5rpx; border-radius: 28rpx; }
+.trend-range-tab { width: 56rpx; height: 46rpx; border-radius: 23rpx; font-size: 21rpx; }
+.trend-metric-panel,
+.year-top-stats { padding: 17rpx 18rpx; }
+.trend-metric-name,
+.year-stat-label { font-size: 21rpx; }
+.trend-metric-value { margin-top: 5rpx; font-size: 37rpx; line-height: 44rpx; }
+.trend-metric-compare { font-size: 19rpx; line-height: 27rpx; }
+.chart-legend { font-size: 19rpx; }
+.bar-y-axis,
+.bar-labels { font-size: 18rpx; }
+.bar-tooltip { font-size: 19rpx; line-height: 27rpx; }
+.bar-tooltip-sub { font-size: 17rpx; }
+.year-stat-value { font-size: 34rpx; }
+.heatmap-month-label,
+.heatmap-weekday,
+.heatmap-legend { font-size: 18rpx; }
+.highlights-title { font-size: 24rpx; }
+.highlight-date { font-size: 20rpx; }
+.highlight-label { font-size: 18rpx; line-height: 26rpx; }
+
+.ai-coach-card { padding: 22rpx 24rpx; }
+.ai-coach-avatar { width: 54rpx; height: 54rpx; margin-right: 13rpx; }
+.ai-coach-title { font-size: 29rpx; line-height: 38rpx; }
+.ai-coach-entry-arrow { color: #75847D; font-size: 38rpx; line-height: 40rpx; }
+.ai-coach-message { margin-top: 14rpx; padding: 15rpx 17rpx; }
+.ai-coach-message-title {
+  max-height: 62rpx;
+  overflow: hidden;
+  font-size: 22rpx;
+  line-height: 31rpx;
+  text-overflow: clip;
+  white-space: normal;
+}
+.ai-coach-star { margin-right: 10rpx; font-size: 23rpx; }
+
+.milestone-card { min-height: 220rpx; }
+.milestone-next { font-size: 19rpx; }
+.milestone-row { margin-top: 15rpx; }
+.mini-medal { width: 56rpx; height: 56rpx; }
+.mini-medal-face { width: 56rpx; height: 56rpx; font-size: 21rpx; }
+.milestone-line { top: 27rpx; }
+.milestone-label { margin-top: 7rpx; font-size: 21rpx; }
+.milestone-status { margin-top: 2rpx; font-size: 17rpx; }
+
+.record-compact { min-height: 108rpx; padding: 0 24rpx; }
+.record-check { width: 48rpx; height: 48rpx; margin-right: 15rpx; font-size: 19rpx; }
+.record-title { font-size: 26rpx; line-height: 34rpx; }
+.record-meta { margin-top: 3rpx; font-size: 19rpx; line-height: 27rpx; }
+.record-arrow { font-size: 40rpx; }
+
+@media (max-width: 340px) {
+  .hero-card { min-height: 278rpx; }
+  .hero-card-content { width: 100%; }
+  .hero-title { max-width: 64%; font-size: 37rpx; }
+  .hero-status,
+  .hero-progress-compact { max-width: 62%; }
+  .hero-switch-button { min-height: 52rpx; padding: 0 16rpx; font-size: 20rpx; }
+  .overview-grid { gap: 6rpx; }
+  .overview-value { font-size: 31rpx; }
+  .overview-label { font-size: 17rpx; }
+}
