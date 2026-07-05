@@ -178,6 +178,7 @@ Page(withAppTheme({
     todayMoodCopy: "先放一件小事上来，别让今天空过去。",
     todayMoodTone: "empty",
     todayMoodMark: "启",
+    streakLabel: "从今天开始",
     dailyNudge: "今天还没有行动记录。先添加一项可以在 15～30 分钟内完成的具体行动。",
     weekday: "",
     weekdayShort: "",
@@ -285,6 +286,7 @@ Page(withAppTheme({
         todayMoodCopy: mood.copy,
         todayMoodTone: mood.tone,
         todayMoodMark: mood.mark,
+        streakLabel: progress?.currentStreakDays ? `已自律${progress.currentStreakDays}天` : "从今天开始",
         dailyNudge: dailyNudge(tasks, selectedDate, today),
         weekday: copy.weekday,
         weekdayShort: copy.weekday.replace("星期", "周"),
@@ -500,6 +502,7 @@ Page(withAppTheme({
       todayMoodCopy: mood.copy,
       todayMoodTone: mood.tone,
       todayMoodMark: mood.mark,
+      streakLabel: progress?.currentStreakDays ? `已自律${progress.currentStreakDays}天` : "从今天开始",
       dailyNudge: dailyNudge(tasks, selectedDate, today),
     });
     wx.nextTick(() => wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 }));

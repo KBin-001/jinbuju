@@ -70,12 +70,24 @@
     <view wx:for="{{messages}}" wx:key="id" id="{{item.id}}" class="{{item.role === 'assistant' ? 'coach-bot-row coach-followup-row' : 'coach-user-row coach-followup-row'}}">
       <image wx:if="{{item.role === 'assistant'}}" class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
       <view wx:if="{{item.role === 'user'}}" class="coach-bubble coach-user-bubble">{{item.content}}</view>
+      <view wx:elif="{{item.mode === 'direct'}}" class="coach-bubble coach-bot-bubble coach-direct-reply">{{item.content}}</view>
       <view wx:else class="coach-compact-reply">
-        <view class="coach-compact-summary">{{item.summary}}</view>
-        <view class="coach-compact-divider"></view>
-        <view class="coach-compact-advice-label">建议</view>
-        <view class="coach-compact-advice">{{item.suggestion}}</view>
-        <view class="coach-guided-actions">
+        <view wx:if="{{item.summary}}" class="coach-compact-summary">{{item.summary}}</view>
+        <view wx:if="{{item.metrics.length}}" class="coach-compact-metrics">
+          <view wx:for="{{item.metrics}}" wx:for-item="metric" wx:key="label" class="coach-compact-metric">
+            <text class="coach-compact-metric-value">{{metric.value}}</text>
+            <text class="coach-compact-metric-label">{{metric.label}}</text>
+          </view>
+        </view>
+        <view wx:if="{{item.insights.length}}" class="coach-compact-insights">
+          <view wx:for="{{item.insights}}" wx:for-item="insight" wx:key="*this" class="coach-compact-insight"><view></view><text>{{insight}}</text></view>
+        </view>
+        <view wx:if="{{item.suggestion}}" class="coach-compact-divider"></view>
+        <view wx:if="{{item.suggestion}}" class="coach-compact-advice-label">建议</view>
+        <view wx:if="{{item.suggestion}}" class="coach-compact-advice">{{item.suggestion}}</view>
+        <view wx:if="{{item.showFull}}" class="coach-compact-full">{{item.content}}</view>
+        <view wx:if="{{item.canExpand}}" class="coach-compact-toggle" data-id="{{item.id}}" catchtap="toggleFullReply">{{item.showFull ? '收起完整回复' : '展开完整回复'}}</view>
+        <view wx:if="{{item.followUps.length}}" class="coach-guided-actions">
           <view wx:for="{{item.followUps}}" wx:for-item="questionItem" wx:key="*this" class="coach-guided-action" data-question="{{questionItem}}" catchtap="sendGuidedQuestion" hover-class="coach-pressed">{{questionItem}}</view>
         </view>
       </view>

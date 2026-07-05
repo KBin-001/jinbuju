@@ -152,12 +152,66 @@ async function run() {
     assert.match(prompt, /上次你建议我先缩短听力练习/);
     return modelResult({
       answer: "最近单词和错题整理已经完成，听力练习只完成一部分。下周可以保留这三类行动，但先缩短单次听力练习，避免同时增加新任务。",
+      mode: "compact",
+      summary: "词汇与错题推进稳定，听力仍需缩小任务",
+      statKeys: ["completedActions", "totalMinutes", "completionRate"],
+      insights: ["听力练习只完成一部分"],
+      advice: "下周保留三类行动，先缩短单次听力练习。",
+      followUps: ["查看听力卡点", "给我下周建议"],
       evidenceTaskIds: ["task_words", "task_listening", "task_errors"],
       evidenceDates: ["2026-06-28", "2026-06-29", "2026-06-30"],
     });
   }, [{ role: "user", content: "上次你建议我先缩短听力练习" }]);
   assert.match(questionPrompt, /我下周应该怎么安排更稳/);
+  assert.match(questionPrompt, /progress-coach-v2|statKeys/);
   assert.match(answer.answer, /听力练习/);
+  assert.strictEqual(answer.mode, "compact");
+  assert.deepStrictEqual(answer.stats.map((item) => item.key), ["completedActions", "totalMinutes", "completionRate"]);
+  assert.strictEqual(answer.stats[0].value, "2/3");
+  assert.strictEqual(answer.stats[1].value, "65min");
+
+  const detailedAnswer = await answerSnapshot(snapshot("英语四六级", englishTasks), "详细解释本周节奏", "2026-06-30", async () => modelResult({
+    answer: "本周完成了单词和错题整理，听力只完成一部分。当前已有稳定基础，但听力任务还需要缩小完成单位。建议下周保持已有节奏，不额外增加任务。",
+    mode: "detailed",
+    summary: "本周已有稳定基础，听力任务仍需缩小",
+    statKeys: ["completedActions", "totalMinutes", "activeDays", "completionRate", "recentActionDate"],
+    insights: ["单词和错题已经完成", "听力任务只完成一部分"],
+    advice: "下周保持已有节奏，先缩短听力任务，不额外增加任务。",
+    followUps: ["听力怎么缩短", "查看下周建议", "解释投入趋势"],
+    evidenceTaskIds: ["task_words", "task_listening", "task_errors"],
+    evidenceDates: ["2026-06-28", "2026-06-29", "2026-06-30"],
+  }));
+  assert.strictEqual(detailedAnswer.mode, "detailed");
+  assert.strictEqual(detailedAnswer.stats.length, 5);
+  assert.strictEqual(detailedAnswer.stats[4].value, "6/30");
+
+  const directAnswer = await answerSnapshot(snapshot("英语四六级", englishTasks), "我昨天干啥了？", "2026-06-30", async () => modelResult({
+    answer: "昨天你进行了听力练习，完成了一部分，实际投入25分钟。",
+    mode: "direct",
+    evidenceTaskIds: ["task_listening"],
+    evidenceDates: ["2026-06-29"],
+  }));
+  assert.strictEqual(directAnswer.mode, "direct");
+  assert.match(directAnswer.answer, /听力练习/);
+  assert.strictEqual(directAnswer.stats, undefined);
+
+  const noRecordAnswer = await answerSnapshot(snapshot("英语四六级", englishTasks), "6月27日做了什么？", "2026-06-30", async () => modelResult({
+    answer: "6月27日没有行动记录，因此目前无法判断当天做了什么。",
+    mode: "direct",
+    evidenceTaskIds: [],
+    evidenceDates: [],
+  }));
+  assert.match(noRecordAnswer.answer, /没有行动记录/);
+
+  const optionalCardAnswer = await answerSnapshot(snapshot("英语四六级", englishTasks), "简单说说当前状态", "2026-06-30", async () => modelResult({
+    answer: "当前已经完成两项行动，听力练习完成了一部分。",
+    mode: "compact",
+    evidenceTaskIds: ["task_words", "task_listening", "task_errors"],
+    evidenceDates: ["2026-06-28", "2026-06-29", "2026-06-30"],
+  }));
+  assert.strictEqual(optionalCardAnswer.mode, "compact");
+  assert.deepStrictEqual(optionalCardAnswer.stats, []);
+  assert.deepStrictEqual(optionalCardAnswer.followUps, []);
 
   let goalOnlyQuestionCalls = 0;
   const goalOnlyAnswer = await answerSnapshot(snapshot("完成个人博客", []), "我应该从哪里开始？", "2026-06-30", async (prompt) => {
@@ -171,6 +225,31 @@ async function run() {
   });
   assert.match(goalOnlyAnswer.answer, /暂无行动记录/);
   assert.strictEqual(goalOnlyQuestionCalls, 1);
+
+  await assert.rejects(
+    () => answerSnapshot(snapshot("英语四六级", englishTasks), "分析一下", "2026-06-30", async () => modelResult({
+      answer: "当前行动有真实记录，但这个回答使用了不允许的数据字段，因此必须被拒绝。",
+      mode: "compact",
+      summary: "当前行动节奏基本稳定",
+      statKeys: ["completedActions", "totalMinutes", "inventedScore"],
+      insights: ["已有两项行动完成"],
+      advice: "先完成剩余的一项行动。",
+      followUps: ["查看当前卡点", "给我下一步建议"],
+      evidenceTaskIds: ["task_words"],
+      evidenceDates: ["2026-06-28"],
+    })),
+    (error) => error.code === "AI_COACH_INVALID",
+  );
+
+  await assert.rejects(
+    () => answerSnapshot(snapshot("英语四六级", englishTasks), "详细分析", "2026-06-30", async () => modelResult({
+      answer: "过".repeat(501),
+      mode: "detailed",
+      evidenceTaskIds: ["task_words"],
+      evidenceDates: ["2026-06-28"],
+    })),
+    (error) => error.code === "AI_COACH_INVALID",
+  );
 
   await assert.rejects(
     () => analyzeSnapshot(snapshot("考公", civilTasks), "2026-06-30", async () => modelResult("not-json")),

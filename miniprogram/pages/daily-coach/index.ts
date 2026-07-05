@@ -33,10 +33,10 @@ function getTopInset(): number {
 function compactDailyReply(raw: string): { summary: string; suggestion: string } {
   const normalized = String(raw || "").replace(/\s+/g, " ").trim();
   const sentences = normalized.match(/[^。！？!?]+[。！？!?]?/g)?.map((item) => item.trim()).filter(Boolean) || [];
-  const shorten = (value: string, limit: number) => value.length > limit ? `${value.slice(0, limit)}…` : value;
+  const clauses = (sentences[0] || "").split(/[，,；;]/).map((item) => item.trim()).filter(Boolean);
   return {
-    summary: shorten(sentences[0] || "今天的行动情况已经整理好了。", 64),
-    suggestion: shorten(sentences[1] || "先完成最容易推进的一项，保持轻量节奏。", 52),
+    summary: clauses.slice(0, 2).join("，") || "今天的行动情况已经整理好了。",
+    suggestion: sentences[1] || clauses[2] || "先完成最容易推进的一项，保持轻量节奏。",
   };
 }
 
@@ -54,6 +54,8 @@ Page({
     coachReply: "",
     coachReplySummary: "",
     coachReplySuggestion: "",
+    coachReplyInsights: [] as string[],
+    showFullReply: false,
     replyQuestions: ["查看今日卡点", "给我明日建议", "解释今日完成率"],
     scrollIntoView: "",
   },
@@ -97,6 +99,10 @@ Page({
     this.setData({ question }, () => this.sendQuestion());
   },
 
+  toggleFullReply() {
+    this.setData({ showFullReply: !this.data.showFullReply });
+  },
+
   sendQuestion() {
     const question = this.data.question.trim();
     if (!question) {
@@ -109,6 +115,10 @@ Page({
       coachReply,
       coachReplySummary: compact.summary,
       coachReplySuggestion: compact.suggestion,
+      coachReplyInsights: [this.data.analysis.judgement]
+        .concat(this.data.analysis.bottlenecks.slice(0, 1))
+        .filter(Boolean),
+      showFullReply: false,
       question: "",
       scrollIntoView: "coach-reply",
     });

@@ -25,48 +25,41 @@
   <block wx:else>
     <view class="hero-card glass-card" bindtap="openGoalPicker" hover-class="card-pressed" hover-stay-time="120">
       <image class="hero-card-bg" src="/assets/progress-hero-light.jpg" mode="aspectFill" />
-      <view class="hero-card-shade"></view>
-      <view class="hero-card-content">
-        <view class="hero-eyebrow">当前目标</view>
-        <view class="hero-title">{{goal.title}}</view>
-        <view class="hero-status glass-pill"><view class="hero-status-dot"></view>{{goalStatusText}}</view>
-        <view class="hero-footer">
-          <view class="hero-progress-compact">
-            <view class="hero-progress-row"><text>累计行动完成率</text><text class="hero-progress-value">{{goalProgressPercent}}%</text></view>
-            <view class="glass-progress hero-progress"><view class="glass-progress-inner" style="width: {{goalProgressPercent}}%;"></view></view>
-          </view>
-          <view class="hero-switch-button" catchtap="openGoalPicker">
-            <text>{{canSwitchGoal ? '切换目标' : '查看目标'}}</text><text class="hero-switch-arrow">›</text>
-          </view>
+      <view class="hero-card-overlay"></view>
+      <view class="hero-heading">
+        <view class="hero-heading-main"><view class="hero-target-icon">◎</view><view class="hero-title">当前目标：{{goal.title}}</view></view>
+        <view class="hero-switch-button" catchtap="openGoalPicker"><text>{{canSwitchGoal ? '切换目标' : '查看目标'}}</text><text class="hero-switch-arrow">›</text></view>
+      </view>
+      <view class="hero-main">
+        <view class="goal-ring-wrap">
+          <canvas wx:if="{{chartCanvasVisible && !goalPickerVisible}}" type="2d" id="goalRing" class="goal-ring-canvas"></canvas>
+          <view class="goal-ring-copy"><view><text>{{goalProgressPercent}}</text>%</view><text>目标进度</text></view>
         </view>
+        <view class="hero-encouragement">
+          <view>坚持的每一分钟，</view><view>都是未来更好的自己。</view>
+          <view class="hero-seedling"><view class="seedling-stem"></view><view class="seedling-leaf seedling-leaf--left"></view><view class="seedling-leaf seedling-leaf--right"></view><view class="seedling-ground"></view></view>
+        </view>
+      </view>
+      <view class="hero-stats">
+        <view class="hero-stat"><view class="hero-stat-icon">◷</view><view><text>累计投入</text><view>{{summary.totalActualMinutes || 0}}<text>分钟</text></view></view></view>
+        <view class="hero-stat-divider"></view>
+        <view class="hero-stat"><view class="hero-stat-icon">✓</view><view><text>已完成行动</text><view>{{summary.completedTasks || 0}}<text>项</text></view></view></view>
       </view>
     </view>
 
-    <view class="overview-card glass-card">
-      <view class="card-title">进度总览</view>
-      <view class="overview-grid">
-        <view wx:for="{{overviewStats}}" wx:key="label" class="overview-item">
-          <view class="overview-icon overview-icon--{{index}}">
-            <text wx:if="{{index === 0}}">日</text>
-            <text wx:elif="{{index === 1}}">✓</text>
-            <text wx:else>时</text>
-          </view>
-          <view class="overview-value">{{item.value}}<text class="value-unit">{{item.unit}}</text></view>
-          <view class="overview-label">{{item.label}}</view>
-        </view>
-        <view class="overview-item overview-item--level">
-          <view class="overview-icon overview-icon--level">冠</view>
-          <view class="overview-value overview-level-value">{{levelNumber}}</view>
-          <view class="overview-label">{{levelName}}</view>
-        </view>
+    <view class="growth-conclusion-card glass-card" bindtap="openAiCoach" hover-class="card-pressed">
+      <image class="conclusion-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFit" />
+      <view class="conclusion-content">
+        <view class="conclusion-title"><text>✦</text>{{growthConclusionTitle}}</view>
+        <view class="conclusion-copy">{{aiCoach.summary}} {{aiCoach.suggestion}}</view>
+        <view class="conclusion-action" catchtap="openAiCoach">查看详细分析 <text>›</text></view>
       </view>
     </view>
 
     <view class="trend-card glass-card">
       <view class="card-title-row trend-head">
         <view>
-          <view class="card-title">投入趋势</view>
-          <view class="card-subtitle">看看最近的行动节奏</view>
+          <view class="card-title"><text class="trend-title-icon">↗</text>{{trendRange === 'week' ? '本周趋势' : (trendRange === 'month' ? '本月趋势' : '年度趋势')}}</view>
         </view>
         <view class="trend-range-tabs">
           <view wx:for="{{trendRanges}}" wx:key="key" class="trend-range-tab {{item.active ? 'is-active' : ''}}" data-key="{{item.key}}" bindtap="switchTrendRange">{{item.label}}</view>
@@ -74,24 +67,11 @@
       </view>
 
       <block wx:if="{{trendRange !== 'year'}}">
-        <view class="trend-metric-panel">
-          <view class="trend-metric-item">
-            <view class="trend-metric-name">{{trendRange === 'week' ? '本周投入' : '本月投入'}}</view>
-            <view class="trend-metric-value">{{trendSummary.totalMinutes}}<text class="value-unit">分钟</text></view>
-          </view>
-          <view class="trend-metric-divider"></view>
-          <view class="trend-metric-item">
-            <view class="trend-metric-name">完成行动</view>
-            <view class="trend-metric-value">{{trendSummary.totalActions}}<text class="value-unit">项</text></view>
-            <view class="trend-metric-compare">完成率 {{trendSummary.completionRate}}%</view>
-          </view>
-        </view>
-
         <view wx:if="{{trendSummary.insufficient}}" class="trend-insufficient">{{trendSummary.summaryText}}</view>
         <block wx:else>
-          <view class="chart-title-row">
-            <view class="chart-legend"><view class="legend-dot"></view><text>投入分钟</text></view>
-            <view wx:if="{{trendLineEnabled}}" class="chart-legend"><view class="legend-line"></view><text>完成项数</text></view>
+          <view class="chart-legend-row">
+            <view class="chart-legend"><view class="legend-dot"></view><text>投入时间</text></view>
+            <view wx:if="{{trendLineEnabled}}" class="chart-legend"><view class="legend-line"></view><text>完成任务</text></view>
           </view>
           <view class="bar-chart" bindtap="onChartBackdropTap">
             <view class="bar-y-axis"><text>{{barChart.maxLabel}}</text><text>{{barChart.midLabel}}</text><text>0</text></view>
@@ -99,7 +79,7 @@
               <view class="bar-grid"><view class="bar-grid-line"></view><view class="bar-grid-line"></view><view class="bar-grid-line"></view><view class="bar-grid-line"></view></view>
               <view class="bar-columns">
                 <view wx:for="{{barChart.bars}}" wx:key="key" class="bar-column {{item.active ? 'is-active' : ''}}" catchtap="onBarTap" data-key="{{item.key}}">
-                  <view wx:if="{{item.active}}" class="bar-tooltip tooltip-{{item.tooltipAlign}}" style="bottom: calc({{item.heightPercent}}% + 12rpx);">
+                  <view wx:if="{{item.active}}" class="bar-tooltip tooltip-{{item.tooltipAlign}}" style="bottom: calc({{item.tooltipBottomPercent}}% + 10rpx);">
                     <view>{{item.minutes}} 分钟</view><text class="bar-tooltip-sub">{{item.actions}} 项完成</text>
                   </view>
                   <view class="bar-fill {{item.isMax ? 'is-max' : ''}} {{item.isToday ? 'is-today' : ''}}" style="width: {{barChart.barWidth}}rpx; height: {{item.heightPercent}}%;"></view>
@@ -107,8 +87,10 @@
               </view>
               <canvas wx:if="{{trendLineEnabled && chartCanvasVisible && !goalPickerVisible}}" type="2d" id="trendLine" class="line-canvas"></canvas>
             </view>
+            <view class="bar-y-axis bar-y-axis--right"><text>{{barChart.maxActions}}</text><text>{{barChart.midActions}}</text><text>0</text></view>
           </view>
           <view class="bar-labels"><text wx:for="{{barChart.bars}}" wx:key="key" class="bar-label">{{item.label}}</text></view>
+          <view class="trend-footer"><view class="trend-footer-copy"><text class="trend-footer-icon">↗</text><text>{{trendRange === 'week' ? '本周' : '本月'}}累计投入 </text><text class="trend-footer-strong">{{trendSummary.totalMinutes}}</text><text> 分钟，完成 </text><text class="trend-footer-strong">{{trendSummary.totalActions}}</text><text> 项行动。</text></view><view class="trend-history" catchtap="openHistoryReview">历史 ›</view></view>
         </block>
 
       </block>
@@ -147,42 +129,10 @@
             <view wx:if="{{yearHighlights.maxMonth}}" class="highlight-item"><view class="highlight-icon">↗</view><view class="highlight-date">{{yearHighlights.maxMonth.month}}</view><view class="highlight-label">投入最多的月份</view></view>
           </view>
         </view>
+        <view class="trend-footer"><view class="trend-footer-copy"><text class="trend-footer-icon">↗</text><text>年度累计投入 </text><text class="trend-footer-strong">{{yearSummary.totalMinutes}}</text><text> 分钟，行动 </text><text class="trend-footer-strong">{{yearSummary.checkinDays}}</text><text> 天。</text></view><view class="trend-history" catchtap="openHistoryReview">历史 ›</view></view>
       </block>
     </view>
 
-    <view class="ai-coach-card glass-card" bindtap="openAiCoach" hover-class="card-pressed">
-      <view class="ai-coach-head">
-        <view class="ai-coach-identity">
-          <image class="ai-coach-avatar" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
-          <view class="ai-coach-title">AI 进度教练</view>
-        </view>
-        <view class="ai-coach-entry-arrow">›</view>
-      </view>
-      <view class="ai-coach-message"><view class="ai-coach-message-title"><text class="ai-coach-star">✦</text>{{trendSummary.adviceTitle || aiCoach.summary}}</view></view>
-    </view>
-
-    <view class="milestone-card glass-card">
-      <view class="card-title-row"><view class="card-title">成长里程碑</view><view class="milestone-next">{{nextMilestoneText}}</view></view>
-      <view class="milestone-row">
-        <view wx:for="{{milestones}}" wx:key="days" class="milestone-item state-{{item.state}}">
-          <view class="milestone-line"></view>
-          <view class="mini-medal"><view class="mini-medal-face">★</view></view>
-          <view class="milestone-label">{{item.label}}</view><view class="milestone-status">{{item.statusText}}</view>
-        </view>
-      </view>
-    </view>
-
-    <view class="record-card glass-card">
-      <view class="record-compact" bindtap="openHistoryReview">
-        <view class="record-check">记</view>
-        <view class="record-copy">
-          <view class="record-title">最近记录</view>
-          <view wx:if="{{hasRecentRecords}}" class="record-meta">{{latestRecord.title}} · {{latestRecord.statusText}} · {{latestRecord.minutesText}}</view>
-          <view wx:else class="record-meta">今天还没有完成记录，完成一项小行动后会记录在这里。</view>
-        </view>
-        <view class="record-arrow">›</view>
-      </view>
-    </view>
   </block>
 
   <view wx:if="{{goalPickerVisible}}" class="goal-picker-layer" catchtouchmove="noop">

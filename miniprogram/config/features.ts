@@ -20,6 +20,6 @@ export const FEATURE_FLAGS = {
    *
    * 启用方式：将本字段改为 true 即可。
    */
-  ENABLE_TREND_LINE: false,
+  ENABLE_TREND_LINE: true,
 } as const;
 

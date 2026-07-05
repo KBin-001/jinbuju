@@ -90,9 +90,19 @@
       <image class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
       <view class="coach-compact-reply">
         <view class="coach-compact-summary">{{coachReplySummary}}</view>
+        <view class="coach-compact-metrics">
+          <view class="coach-compact-metric"><text class="coach-compact-metric-value">{{analysis.completedCount}}/{{analysis.totalCount}}</text><text class="coach-compact-metric-label">完成任务</text></view>
+          <view class="coach-compact-metric"><text class="coach-compact-metric-value">{{analysis.actualMinutes}}min</text><text class="coach-compact-metric-label">实际投入</text></view>
+          <view class="coach-compact-metric"><text class="coach-compact-metric-value">{{analysis.completionPercent}}%</text><text class="coach-compact-metric-label">完成率</text></view>
+        </view>
+        <view wx:if="{{coachReplyInsights.length}}" class="coach-compact-insights">
+          <view wx:for="{{coachReplyInsights}}" wx:key="*this" class="coach-compact-insight"><view></view><text>{{item}}</text></view>
+        </view>
         <view class="coach-compact-divider"></view>
         <view class="coach-compact-advice-label">建议</view>
         <view class="coach-compact-advice">{{coachReplySuggestion}}</view>
+        <view wx:if="{{showFullReply}}" class="coach-compact-full">{{coachReply}}</view>
+        <view class="coach-compact-toggle" bindtap="toggleFullReply">{{showFullReply ? '收起完整回复' : '展开完整回复'}}</view>
         <view class="coach-guided-actions">
           <view wx:for="{{replyQuestions}}" wx:key="*this" class="coach-guided-action" data-suggestion="{{item}}" bindtap="chooseSuggestion" hover-class="coach-pressed">{{item}}</view>
         </view>

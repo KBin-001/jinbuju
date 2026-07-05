@@ -13,6 +13,11 @@ interface ChatMessage extends ProgressCoachChatMessage {
   summary?: string;
   suggestion?: string;
   followUps?: string[];
+  metrics?: Array<{ value: string; label: string }>;
+  insights?: string[];
+  mode?: "direct" | "compact" | "detailed";
+  showFull?: boolean;
+  canExpand?: boolean;
 }
 
 interface PeriodStats {
@@ -109,22 +114,6 @@ function errorMessage(rawError: unknown): string {
   return error?.message || "暂时没有生成回答，请稍后重试。";
 }
 
-function compactReply(raw: string): { summary: string; suggestion: string } {
-  const normalized = String(raw || "").replace(/\s+/g, " ").trim();
-  const sentences = normalized.match(/[^。！？!?]+[。！？!?]?/g)?.map((item) => item.trim()).filter(Boolean) || [];
-  const shorten = (value: string, limit: number) => value.length > limit ? `${value.slice(0, limit)}…` : value;
-  return {
-    summary: shorten(sentences[0] || "我已经整理好这段时间的行动情况。", 64),
-    suggestion: shorten(sentences[1] || "保持固定节奏，先完成最容易推进的一项。", 52),
-  };
-}
-
-function followUpQuestions(scope: CoachRange): string[] {
-  if (scope === "week") return ["查看本周卡点", "给我下周建议", "解释本周完成率"];
-  if (scope === "month") return ["查看本月卡点", "给我下月建议", "解释本月投入"];
-  return ["查看当前卡点", "给我下一步建议", "解释成长趋势"];
-}
-
 Page({
   data: {
     appTheme: getCurrentThemeId(),
@@ -142,6 +131,9 @@ Page({
     totalCount: 0,
     periodMinutes: 0,
     completionRate: 0,
+    activeDays: 0,
+    streakDays: 0,
+    recentActionDate: "暂无",
     judgement: "正在整理你的行动记录。",
     bottleneck: "完成更多行动后，会形成更具体的建议。",
     quickQuestions: [] as string[],
@@ -181,6 +173,10 @@ Page({
       .filter((task) => !start || (task.currentDate >= start && task.currentDate <= today));
     const stats = summarize(tasks);
     const streakDays = goals.reduce((max, goal) => Math.max(max, getProgressSummary(goal.id, today).currentStreakDays || 0), 0);
+    const activeDates = Array.from(new Set(tasks
+      .filter((task) => task.status === "completed" || task.status === "partially_completed" || (task.actualMinutes || 0) > 0)
+      .map((task) => task.currentDate)));
+    const recentActionDate = activeDates.sort().pop();
     const profile = getLocalUserProfile();
     const title = goals.length > 1 ? `${goals.length} 个进行中目标` : goals[0]?.title || "当前目标";
     this.setData({
@@ -191,6 +187,9 @@ Page({
       totalCount: stats.totalActions,
       periodMinutes: stats.minutes,
       completionRate: stats.completionRate,
+      activeDays: activeDates.length,
+      streakDays,
+      recentActionDate: recentActionDate ? `${Number(recentActionDate.slice(5, 7))}/${Number(recentActionDate.slice(8, 10))}` : "暂无",
       judgement: judgement(stats, this.data.scopeLabel),
       bottleneck: bottleneck(stats, streakDays),
     }, () => this.prepareContext());
@@ -209,6 +208,14 @@ Page({
     const question = String(event.currentTarget.dataset.question || "").slice(0, 120);
     if (!question) return;
     this.setData({ question, chatError: "" }, () => this.sendQuestion());
+  },
+
+  toggleFullReply(event: { currentTarget: { dataset: { id?: string } } }) {
+    const id = String(event.currentTarget.dataset.id || "");
+    if (!id) return;
+    this.setData({
+      messages: this.data.messages.map((item) => item.id === id ? { ...item, showFull: !item.showFull } : item),
+    });
   },
 
   inputQuestion(event: { detail: { value?: string } }) {
@@ -234,14 +241,19 @@ Page({
     });
     try {
       const result = await askProgressCoach(this.data.scope, this.data.goalId || undefined, question, history);
-      const compact = compactReply(result.answer);
+      const mode = result.mode || "direct";
       const assistantMessage: ChatMessage = {
         id: `assistant_${Date.now()}`,
         role: "assistant",
         content: result.answer,
-        summary: compact.summary,
-        suggestion: compact.suggestion,
-        followUps: followUpQuestions(this.data.scope),
+        summary: mode === "direct" ? "" : result.summary || result.answer,
+        suggestion: mode === "direct" ? "" : result.advice || "",
+        followUps: mode === "direct" ? [] : result.followUps || [],
+        metrics: mode === "direct" ? [] : (result.stats || []).map((item) => ({ value: item.value, label: item.label })),
+        insights: result.insights || [],
+        mode,
+        showFull: false,
+        canExpand: mode !== "direct" && result.answer.length > 180,
       };
       this.setData({ messages: this.data.messages.concat(assistantMessage), asking: false, scrollIntoView: assistantMessage.id });
     } catch (error) {

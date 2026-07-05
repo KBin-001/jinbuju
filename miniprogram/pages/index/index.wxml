@@ -13,19 +13,20 @@
 
   <block wx:else>
     <view class="reference-hero">
-      <view class="reference-identity-row">
+      <view class="reference-profile-row">
         <image wx:if="{{displayAvatarUrl}}" class="reference-avatar" src="{{displayAvatarUrl}}" mode="aspectFill" />
         <image wx:elif="{{!displayAvatarText}}" class="reference-avatar" src="/assets/coach-ui/avatar.svg" mode="aspectFit" />
         <view wx:else class="reference-avatar reference-avatar--text">{{displayAvatarText}}</view>
-        <view class="cockpit-status status-{{todayMoodTone}}">
-          <view class="cockpit-status-dot"></view>
-          <text>{{todayMoodTitle}}</text>
-        </view>
-      </view>
 
-      <view class="reference-greeting">
-        <view class="today-greeting">早上好，{{displayName}}</view>
-        <view class="today-subtitle">{{todayMoodCopy}}</view>
+        <view class="reference-greeting">
+          <view class="today-greeting">早上好，{{displayName}}</view>
+          <view class="today-subtitle">{{todayMoodCopy}}</view>
+        </view>
+
+        <view class="reference-streak">
+          <view class="reference-streak-icon"></view>
+          <text>{{streakLabel}}</text>
+        </view>
       </view>
 
       <view class="week-card reference-calendar-card">
@@ -83,20 +84,22 @@
       </view>
 
       <view class="reference-coach-entry" bindtap="openDailyCoach" hover-class="reference-card--pressed">
-        <image class="reference-coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
         <view class="reference-coach-copy">
-          <view class="reference-coach-title">每日 AI 教练</view>
-          <view class="reference-coach-subtitle">已根据今天的行动生成执行分析</view>
+          <view class="reference-coach-title">
+            <view class="reference-coach-mark">✦</view>
+            <text>AI 建议</text>
+            <text class="reference-coach-arrow">›</text>
+          </view>
+          <view class="reference-coach-subtitle">{{dailyNudge}}</view>
         </view>
-        <view class="reference-coach-arrow">›</view>
+        <view class="reference-coach-glow reference-coach-glow--top"></view>
+        <view class="reference-coach-glow reference-coach-glow--bottom"></view>
+        <image class="reference-coach-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFit" />
       </view>
 
       <view class="task-section reference-task-panel">
         <view class="task-section-head">
-          <view>
-            <view class="task-section-title">今日行动列表</view>
-            <view class="task-section-subtitle">记录今天的行动与完成情况。</view>
-          </view>
+          <view class="task-section-title">今日行动列表</view>
           <view class="task-section-add" catchtap="addTask"><text>＋</text> 添加任务</view>
         </view>
 

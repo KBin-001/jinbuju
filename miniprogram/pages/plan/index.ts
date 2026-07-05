@@ -44,6 +44,7 @@ interface TrendBar {
   minutes: number;
   actions: number;
   heightPercent: number;
+  tooltipBottomPercent: number;
   isMax: boolean;
   isToday: boolean;
   active: boolean;
@@ -55,6 +56,8 @@ interface BarChartData {
   maxLabel: string;
   midLabel: string;
   maxValue: number;
+  maxActions: number;
+  midActions: number;
   barWidth: number;
   insufficient: boolean;
 }
@@ -207,6 +210,12 @@ function goalPeriod(goal: Goal | null): string {
   return start ? `目标周期 · ${start} 起` : "目标周期 · 已开始";
 }
 
+function growthConclusionTitle(range: TrendRange): string {
+  if (range === "month") return "本月成长结论";
+  if (range === "year") return "年度成长结论";
+  return "本周成长结论";
+}
+
 function buildTrendRanges(activeKey: TrendRange): TrendRangeOption[] {
   return TREND_RANGES.map((item) => ({ ...item, active: item.key === activeKey }));
 }
@@ -254,6 +263,12 @@ function niceMaxMinutes(value: number): number {
   if (value <= 720) return 720;
   if (value <= 1080) return 1080;
   return Math.ceil(value / 60) * 60;
+}
+
+function niceMaxActions(value: number): number {
+  if (value <= 4) return 4;
+  if (value <= 8) return 8;
+  return Math.ceil(value / 5) * 5;
 }
 
 function formatAxisLabel(minutes: number): string {
@@ -423,6 +438,7 @@ function buildBarChart(
   barWidth: number,
 ): BarChartData {
   const maxValue = niceMaxMinutes(Math.max(30, ...bars.map((item) => item.minutes)));
+  const maxActions = niceMaxActions(Math.max(1, ...bars.map((item) => item.actions)));
   const nonZeroCount = bars.filter((item) => item.minutes > 0).length;
   const maxMinuteValue = Math.max(...bars.map((item) => item.minutes));
   const selected = selectedKey && bars.some((item) => item.key === selectedKey)
@@ -439,6 +455,7 @@ function buildBarChart(
       minutes: item.minutes,
       actions: item.actions,
       heightPercent,
+      tooltipBottomPercent: Math.min(68, heightPercent),
       isMax: item.minutes > 0 && item.minutes === maxMinuteValue,
       isToday: item.isToday,
       active: item.key === selected,
@@ -451,6 +468,8 @@ function buildBarChart(
     maxLabel: formatAxisLabel(maxValue),
     midLabel: formatAxisLabel(Math.round(maxValue / 2)),
     maxValue,
+    maxActions,
+    midActions: Math.round(maxActions / 2),
     barWidth,
     insufficient: nonZeroCount < 1,
   };
@@ -865,7 +884,7 @@ function buildTrendView(
 
   const { weeks, monthLabels } = buildYearHeatmap(year, today, tasks, selectedHeatDate);
   return {
-    barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, barWidth: 0, insufficient: false },
+    barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, maxActions: 0, midActions: 0, barWidth: 0, insufficient: false },
     trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, completionRate: 0, compareText: "", compareTone: "flat", bestInvestLabel: "-", adviceText: "", adviceTitle: "", adviceDetail: "", vsYesterdayText: "暂无数据", summaryText: "", insufficient: false },
     heatmapWeeks: weeks,
     heatmapMonthLabels: monthLabels,
@@ -893,10 +912,11 @@ Page(withAppTheme({
     goalStatusText: "添加行动后开始记录",
     goalProgressPercent: 0,
     overviewStats: [] as OverviewStat[],
+    growthConclusionTitle: "本周成长结论",
     trendRange: "week" as TrendRange,
     trendRanges: buildTrendRanges("week"),
     aiCoach: { periodLabel: "本周复盘", summary: "数据正在整理中。", suggestion: "完成更多行动后，这里会展示 AI 进度教练建议。" } as AiCoachView,
-    barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, barWidth: WEEK_BAR_WIDTH, insufficient: false } as BarChartData,
+    barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, maxActions: 0, midActions: 0, barWidth: WEEK_BAR_WIDTH, insufficient: false } as BarChartData,
     trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, completionRate: 0, compareText: "", compareTone: "flat", bestInvestLabel: "-", adviceText: "", adviceTitle: "", adviceDetail: "", vsYesterdayText: "暂无数据", summaryText: "", insufficient: false } as TrendSummary,
     selectedTrendItem: null as TrendBar | null,
     heatmapWeeks: [] as HeatmapWeek[],
@@ -936,7 +956,7 @@ Page(withAppTheme({
     this.setData({ appTheme: getCurrentThemeId(), chartCanvasVisible: false });
     this.load();
     this.chartCanvasTimer = setTimeout(() => {
-      this.setData({ chartCanvasVisible: true }, () => wx.nextTick(() => this.drawTrendLine()));
+      this.setData({ chartCanvasVisible: true }, () => wx.nextTick(() => { this.drawGoalRing(); this.drawTrendLine(); }));
       this.chartCanvasTimer = null;
     }, 220);
   },
@@ -979,6 +999,7 @@ Page(withAppTheme({
         goalStatusText: goalStatusText(rate, summary?.totalTasks || 0),
         goalProgressPercent: rate,
         overviewStats: buildOverview(summary),
+        growthConclusionTitle: growthConclusionTitle(this.data.trendRange),
         trendRanges: buildTrendRanges(this.data.trendRange),
         aiCoach: buildAiCoachView(goal, this.data.trendRange, trendView.trendSummary),
         barChart: trendView.barChart,
@@ -997,6 +1018,7 @@ Page(withAppTheme({
         hasRecentRecords: recentRecords.length > 0,
         hasHistoryReview: getArchivedGoals().length > 0,
       }, () => {
+        this.drawGoalRing();
         this.drawTrendLine();
         if (goal?.id && this.data.trendRange !== "year") {
           prepareProgressCoach(this.data.trendRange, goal.id).catch(() => undefined);
@@ -1030,7 +1052,10 @@ Page(withAppTheme({
 
   closeGoalPicker() {
     this.setData({ goalPickerVisible: false }, () => {
-      this.drawTrendLine();
+      wx.nextTick(() => {
+        this.drawGoalRing();
+        this.drawTrendLine();
+      });
     });
   },
 
@@ -1059,6 +1084,7 @@ Page(withAppTheme({
       trendRange: range,
       trendRanges: buildTrendRanges(range),
       aiCoach: buildAiCoachView(this.data.goal, range, trendView.trendSummary),
+      growthConclusionTitle: growthConclusionTitle(range),
       barChart: trendView.barChart,
       trendSummary: trendView.trendSummary,
       heatmapWeeks: trendView.heatmapWeeks,
@@ -1096,7 +1122,7 @@ Page(withAppTheme({
     this.setData({
       barChart: trendView.barChart,
       selectedTrendItem: trendView.barChart.bars.find((bar) => bar.active) || null,
-    });
+    }, () => this.drawTrendLine());
   },
 
   onChartBackdropTap() {
@@ -1105,7 +1131,7 @@ Page(withAppTheme({
     this.setData({
       barChart: { ...this.data.barChart, bars },
       selectedTrendItem: null,
-    });
+    }, () => this.drawTrendLine());
   },
 
   onHeatmapDayTap(event: { currentTarget: { dataset: { date?: string } } }) {
@@ -1143,6 +1169,45 @@ Page(withAppTheme({
     });
   },
 
+  drawGoalRing() {
+    if (!this.data.goal || !this.data.chartCanvasVisible || this.data.goalPickerVisible) return;
+    const query = wx.createSelectorQuery();
+    query.select("#goalRing").fields({ node: true, size: true }).exec((res) => {
+      if (!res || !res[0] || !res[0].node) return;
+      const canvas = res[0].node as { width: number; height: number; getContext: (type: "2d") => CanvasRenderingContext2D };
+      const ctx = canvas.getContext("2d");
+      const dpr = wx.getWindowInfo().pixelRatio;
+      const width = res[0].width;
+      const height = res[0].height;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, width, height);
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const lineWidth = Math.max(10, width * 0.075);
+      const radius = Math.max(1, Math.min(width, height) / 2 - lineWidth);
+      const startAngle = -Math.PI / 2;
+      const progress = Math.max(0, Math.min(100, this.data.goalProgressPercent)) / 100;
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = "#EAF1E5";
+      ctx.lineWidth = lineWidth;
+      ctx.lineCap = "round";
+      ctx.stroke();
+
+      if (progress > 0) {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + Math.PI * 2 * progress);
+        ctx.strokeStyle = "#2F6F4B";
+        ctx.lineWidth = lineWidth;
+        ctx.lineCap = "round";
+        ctx.stroke();
+      }
+    });
+  },
+
   drawTrendLine() {
     if (!FEATURE_FLAGS.ENABLE_TREND_LINE) return;
     if (this.data.trendRange === "year") return;
@@ -1162,41 +1227,67 @@ Page(withAppTheme({
       ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, width, height);
 
-      const maxValue = Math.max(1, ...bars.map((bar) => bar.actions));
+      const maxValue = Math.max(1, this.data.barChart.maxActions);
       const count = bars.length;
-      const pointRadius = 5;
-      const chartTopPadding = pointRadius + 2;
-      const chartBottomPadding = pointRadius + 3;
+      const chartTopPadding = 28;
+      const chartBottomPadding = 9;
       const drawableHeight = Math.max(1, height - chartTopPadding - chartBottomPadding);
       const points = bars.map((bar, index) => {
-        const heightPercent = bar.actions <= 0 ? 0 : Math.max(4, (bar.actions / maxValue) * 78);
+        const ratio = Math.max(0, Math.min(1, bar.actions / maxValue));
         return {
           x: ((index + 0.5) / count) * width,
-          y: height - chartBottomPadding - (heightPercent / 100) * drawableHeight,
+          y: chartTopPadding + (1 - ratio) * drawableHeight,
         };
       });
 
-      // 折线
+      // 平滑曲线
       ctx.beginPath();
-      ctx.strokeStyle = "#f5b94e";
+      ctx.strokeStyle = "#55A84F";
       ctx.lineWidth = 3;
       ctx.lineJoin = "round";
       ctx.lineCap = "round";
-      points.forEach((point, index) => {
-        if (index === 0) ctx.moveTo(point.x, point.y);
-        else ctx.lineTo(point.x, point.y);
-      });
+      if (points.length === 1) {
+        ctx.moveTo(points[0].x, points[0].y);
+        ctx.lineTo(points[0].x, points[0].y);
+      } else {
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 0; i < points.length - 1; i += 1) {
+          const curr = points[i];
+          const next = points[i + 1];
+          const midX = (curr.x + next.x) / 2;
+          ctx.bezierCurveTo(midX, curr.y, midX, next.y, next.x, next.y);
+        }
+      }
       ctx.stroke();
 
-      // 数据点
       points.forEach((point) => {
         ctx.beginPath();
-        ctx.arc(point.x, point.y, pointRadius, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffffff";
+        ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = "#FFFFFF";
         ctx.fill();
-        ctx.strokeStyle = "#f5b94e";
+        ctx.strokeStyle = "#55A84F";
         ctx.lineWidth = 2;
         ctx.stroke();
+      });
+
+      const selectedIndex = bars.findIndex((bar) => bar.active);
+      points.forEach((point, index) => {
+        if (bars[index].actions <= 0) return;
+        if (selectedIndex >= 0 && Math.abs(selectedIndex - index) <= 1) return;
+        const label = String(bars[index].actions);
+        ctx.font = "12px sans-serif";
+        const textWidth = ctx.measureText(label).width;
+        const labelWidth = textWidth + 12;
+        const labelHeight = 20;
+        const centerX = Math.max(labelWidth / 2 + 2, Math.min(width - labelWidth / 2 - 2, point.x));
+        const placeBelow = point.y < chartTopPadding + labelHeight;
+        const labelTop = placeBelow ? point.y + 8 : point.y - labelHeight - 8;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+        ctx.fillRect(centerX - labelWidth / 2, labelTop, labelWidth, labelHeight);
+        ctx.fillStyle = "#426B4D";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(label, centerX, labelTop + labelHeight / 2);
       });
     });
   },

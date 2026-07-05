@@ -45,10 +45,32 @@ export interface ProgressCoachSuccess {
 
 export type ProgressCoachAnalysis = ProgressCoachSuccess;
 
+export type ProgressCoachReplyMode = "direct" | "compact" | "detailed";
+export type ProgressCoachStatKey =
+  | "completedActions"
+  | "totalMinutes"
+  | "activeDays"
+  | "completionRate"
+  | "currentStreakDays"
+  | "recentActionDate";
+
+export interface ProgressCoachReplyStat {
+  key: ProgressCoachStatKey;
+  label: string;
+  value: string;
+}
+
 export interface ProgressCoachAnswer {
   answer: string;
   evidenceTaskIds: string[];
   evidenceDates: string[];
+  mode?: ProgressCoachReplyMode;
+  summary?: string;
+  statKeys?: ProgressCoachStatKey[];
+  stats?: ProgressCoachReplyStat[];
+  insights?: string[];
+  advice?: string;
+  followUps?: string[];
 }
 
 export interface ProgressCoachChatMessage {
