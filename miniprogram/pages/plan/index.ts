@@ -880,11 +880,14 @@ Page(withAppTheme({
     errorMessage: "",
     goal: null as Goal | null,
     goalOptions: [] as GoalOption[],
+    canSwitchGoal: false,
     goalPickerVisible: false,
+    chartCanvasVisible: true,
     summary: null as ProgressSummary | null,
     levelLabel: "Lv.1 · 自律新兵",
     goalPeriod: "",
     goalStatusText: "添加行动后开始记录",
+    goalProgressPercent: 0,
     overviewStats: [] as OverviewStat[],
     trendRange: "week" as TrendRange,
     trendRanges: buildTrendRanges("week"),
@@ -901,9 +904,11 @@ Page(withAppTheme({
     nextMilestoneText: "距离下个里程碑还差 7 天",
     medalState: { achieved: false, current: true } as MedalState,
     recentRecords: [] as RecentRecord[],
+    hasRecentRecords: false,
     hasHistoryReview: false,
   },
   focusGoalHandler: null as null | (() => void),
+  chartCanvasTimer: null as ReturnType<typeof setTimeout> | null,
 
   onLoad() {
     this.focusGoalHandler = () => this.load();
@@ -911,6 +916,10 @@ Page(withAppTheme({
   },
 
   onUnload() {
+    if (this.chartCanvasTimer) {
+      clearTimeout(this.chartCanvasTimer);
+      this.chartCanvasTimer = null;
+    }
     if (this.focusGoalHandler) {
       off("goal:focus:update", this.focusGoalHandler);
       this.focusGoalHandler = null;
@@ -918,8 +927,21 @@ Page(withAppTheme({
   },
 
   onShow() {
-    this.setData({ appTheme: getCurrentThemeId() });
+    if (this.chartCanvasTimer) clearTimeout(this.chartCanvasTimer);
+    this.setData({ appTheme: getCurrentThemeId(), chartCanvasVisible: false });
     this.load();
+    this.chartCanvasTimer = setTimeout(() => {
+      this.setData({ chartCanvasVisible: true }, () => wx.nextTick(() => this.drawTrendLine()));
+      this.chartCanvasTimer = null;
+    }, 220);
+  },
+
+  onHide() {
+    if (this.chartCanvasTimer) {
+      clearTimeout(this.chartCanvasTimer);
+      this.chartCanvasTimer = null;
+    }
+    this.setData({ chartCanvasVisible: false });
   },
 
   load() {
@@ -935,15 +957,18 @@ Page(withAppTheme({
       const trendView = buildTrendView(this.data.trendRange, allTasks, today);
       const milestoneResult = buildMilestones(summary?.totalActionDays || 0);
 
+      const recentRecords = buildRecentRecords(todayTasks);
       this.setData({
         status: "ready",
         goal,
         goalOptions: buildGoalOptions(activeGoals, goal?.id || "", today),
+        canSwitchGoal: activeGoals.length > 1,
         goalPickerVisible: false,
         summary,
         levelLabel: levelLabel(summary?.totalActionDays || 0),
         goalPeriod: goalPeriod(goal),
         goalStatusText: goalStatusText(rate, summary?.totalTasks || 0),
+        goalProgressPercent: rate,
         overviewStats: buildOverview(summary),
         trendRanges: buildTrendRanges(this.data.trendRange),
         aiCoach: buildAiCoachView(goal, this.data.trendRange, trendView.trendSummary),
@@ -958,7 +983,8 @@ Page(withAppTheme({
         milestones: milestoneResult.milestones,
         nextMilestoneText: milestoneResult.nextText,
         medalState: milestoneResult.medalState,
-        recentRecords: buildRecentRecords(todayTasks),
+        recentRecords,
+        hasRecentRecords: recentRecords.length > 0,
         hasHistoryReview: getArchivedGoals().length > 0,
       }, () => {
         this.drawTrendLine();
@@ -1127,11 +1153,15 @@ Page(withAppTheme({
 
       const maxValue = Math.max(1, ...bars.map((bar) => bar.actions));
       const count = bars.length;
+      const pointRadius = 5;
+      const chartTopPadding = pointRadius + 2;
+      const chartBottomPadding = pointRadius + 3;
+      const drawableHeight = Math.max(1, height - chartTopPadding - chartBottomPadding);
       const points = bars.map((bar, index) => {
         const heightPercent = bar.actions <= 0 ? 0 : Math.max(4, (bar.actions / maxValue) * 78);
         return {
           x: ((index + 0.5) / count) * width,
-          y: height - (heightPercent / 100) * height,
+          y: height - chartBottomPadding - (heightPercent / 100) * drawableHeight,
         };
       });
 
@@ -1150,7 +1180,7 @@ Page(withAppTheme({
       // 数据点
       points.forEach((point) => {
         ctx.beginPath();
-        ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+        ctx.arc(point.x, point.y, pointRadius, 0, Math.PI * 2);
         ctx.fillStyle = "#ffffff";
         ctx.fill();
         ctx.strokeStyle = "#f5b94e";

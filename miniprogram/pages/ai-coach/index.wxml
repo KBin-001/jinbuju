@@ -1,187 +1,93 @@
-<view class="coach-page">
-  <image class="coach-page__mountain" src="/assets/ai-coach/mountain-bg.svg" mode="aspectFill" />
-  <view class="coach-page__fade"></view>
-
-  <!-- 导航栏 -->
-  <view class="coach-nav">
-    <view class="coach-nav__back" bindtap="goBack" hover-class="coach-nav__back--pressed">
-      <text class="coach-nav__back-arrow">‹</text>
+<view class="coach-page progress-coach-page" data-theme="{{appTheme}}" style="padding-top: {{topInset}}px;">
+  <view class="coach-header">
+    <view class="coach-back" bindtap="goBack" hover-class="coach-pressed" aria-label="返回">‹</view>
+    <view class="coach-heading">
+      <view class="coach-title">AI 教练 <text>✦</text></view>
+      <view class="coach-subtitle">{{scopeSubtitle}}</view>
     </view>
-    <text class="coach-nav__title">{{pageTitle}}</text>
-    <view class="coach-nav__safe"></view>
+    <view class="coach-online"><view class="coach-online-dot"></view><text>在线</text></view>
   </view>
 
-  <!-- 主滚动区 -->
-  <scroll-view class="coach-scroll coach-scroll--chat" scroll-y enhanced show-scrollbar="{{false}}" scroll-into-view="{{scrollIntoView}}" scroll-with-animation>
-    <view class="coach-content coach-content--chat">
-
-      <!-- 教练概览 Hero -->
-      <view class="coach-hero">
-        <view class="coach-hero__avatar-wrap">
-          <image class="coach-hero__avatar" src="/assets/ai-coach/robot.svg" mode="aspectFit" />
-          <view class="coach-hero__pulse"></view>
-        </view>
-        <view class="coach-hero__copy">
-          <text class="coach-hero__greeting">{{displayName}}，我开始了解你了</text>
-          <text class="coach-hero__line">{{goalTitle}}</text>
-          <text class="coach-hero__line">{{scopeLabel}} · 已投入 {{periodMinutes}} 分钟</text>
-          <view class="coach-hero__status">
-            <view class="coach-hero__status-dot"></view>
-            <text class="coach-hero__status-text">{{statusText}}</text>
-          </view>
-        </view>
-        <view class="coach-score" style="background: conic-gradient(#4F9876 {{completionRate * 3.6}}deg, #E5EEE8 0deg);">
-          <view class="coach-score__inner">
-            <view class="coach-score__number-wrap">
-              <text class="coach-score__number">{{completionRate}}</text>
-              <text class="coach-score__unit">%</text>
-            </view>
-            <text class="coach-score__label">完成率</text>
-          </view>
-        </view>
+  <scroll-view class="coach-prompts" scroll-x show-scrollbar="{{false}}" enhanced>
+    <view class="coach-prompts-inner">
+      <view wx:for="{{quickQuestions}}" wx:key="*this" class="coach-prompt" data-question="{{item}}" bindtap="chooseQuestion" hover-class="coach-pressed">
+        <text wx:if="{{index === 0}}">📊</text><text wx:elif="{{index === 1}}">？</text><text wx:else>✦</text> {{item}}
       </view>
-
-      <!-- 教练发现 -->
-      <view class="coach-section discovery-section">
-        <view class="section-heading">
-          <text class="section-heading__title section-heading__title--compact">教练发现</text>
-          <text class="section-heading__meta">{{scopeLabel}}</text>
-        </view>
-        <view class="discovery-grid">
-          <view wx:for="{{metrics}}" wx:key="key" class="discovery-card">
-            <view class="discovery-card__head">
-              <text class="discovery-card__label">{{item.label}}</text>
-              <text class="discovery-card__signal discovery-card__signal--{{item.signalTone}}">{{item.signal}}</text>
-            </view>
-            <view class="discovery-card__value">
-              <text class="discovery-card__number">{{item.value}}</text>
-              <text class="discovery-card__unit">{{item.unit}}</text>
-            </view>
-            <text class="discovery-card__helper">{{item.helper}}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 对话区域 -->
-      <view class="coach-section conversation-section">
-        <view class="section-heading">
-          <text class="section-heading__title">和教练聊聊</text>
-          <text class="section-heading__meta">仅保留本次会话</text>
-        </view>
-
-        <!-- 快捷问题（无消息时显示） -->
-        <view wx:if="{{messages.length === 0}}" class="question-area">
-          <scroll-view class="question-scroll" scroll-x enhanced show-scrollbar="{{false}}">
-            <view class="question-row">
-              <view wx:for="{{quickQuestions}}" wx:key="*this" class="question-chip" data-question="{{item}}" bindtap="chooseQuestion" hover-class="question-chip--pressed">
-                <text class="question-chip__dot"></text>
-                <text>{{item}}</text>
-              </view>
-            </view>
-          </scroll-view>
-          <view class="chat-empty">
-            <view class="chat-empty__avatar">
-              <image src="/assets/ai-coach/robot.svg" mode="aspectFit" />
-            </view>
-            <view class="chat-empty__body">
-              <text class="chat-empty__text">我会结合你的真实目标和行动记录回答。数据越多，我越了解你的节奏。</text>
-            </view>
-          </view>
-        </view>
-
-        <!-- 消息列表 -->
-        <view class="message-list">
-          <block wx:for="{{messages}}" wx:key="id">
-            <!-- AI 消息 -->
-            <view wx:if="{{item.role === 'assistant'}}" id="{{item.id}}" class="message-row message-row--assistant">
-              <view class="message-avatar-wrap">
-                <image class="message-avatar" src="/assets/ai-coach/robot.svg" mode="aspectFit" />
-              </view>
-              <view class="message-content">
-                <text class="message-sender">AI 教练</text>
-                <view class="message-bubble message-bubble--assistant">
-                  <text>{{item.content}}</text>
-                </view>
-              </view>
-            </view>
-            <!-- 用户消息 -->
-            <view wx:else id="{{item.id}}" class="message-row message-row--user">
-              <view class="message-content message-content--user">
-                <view class="message-bubble message-bubble--user">
-                  <text>{{item.content}}</text>
-                </view>
-              </view>
-              <view class="message-avatar-wrap message-avatar-wrap--user">
-                <text class="message-user-avatar">{{displayName[0] || '我'}}</text>
-              </view>
-            </view>
-          </block>
-
-          <!-- 正在输入 -->
-          <view wx:if="{{asking}}" id="chat-typing" class="message-row message-row--assistant">
-            <view class="message-avatar-wrap">
-              <image class="message-avatar" src="/assets/ai-coach/robot.svg" mode="aspectFit" />
-            </view>
-            <view class="message-content">
-              <text class="message-sender">AI 教练</text>
-              <view class="message-bubble message-bubble--assistant message-bubble--typing">
-                <view class="typing-dots">
-                  <view class="typing-dot"></view>
-                  <view class="typing-dot"></view>
-                  <view class="typing-dot"></view>
-                </view>
-              </view>
-            </view>
-          </view>
-
-          <!-- 错误提示 -->
-          <view wx:if="{{chatError}}" id="chat-error" class="chat-error">
-            <text class="chat-error__text">{{chatError}}</text>
-            <view class="chat-error__retry" bindtap="retryLastQuestion">重新发送</view>
-          </view>
-        </view>
-      </view>
-
     </view>
   </scroll-view>
 
-  <!-- 底部输入栏 -->
-  <view class="chat-composer">
-    <view class="chat-composer__inner">
-      <t-input
-        class="chat-composer__input"
-        value="{{question}}"
-        maxlength="120"
-        disabled="{{asking}}"
-        placeholder="问问教练..."
-        bindchange="inputQuestion"
-        confirm-type="send"
-        bindconfirm="sendQuestion"
-      />
-      <view class="chat-composer__send {{asking ? 'is-disabled' : ''}}" bindtap="sendQuestion" hover-class="chat-composer__send--pressed">
-        <image wx:if="{{!asking}}" src="/assets/ai-coach/icon-send.svg" mode="aspectFit" />
-        <view wx:else class="composer-spinner"></view>
+  <scroll-view class="coach-conversation" scroll-y show-scrollbar="{{false}}" enhanced scroll-into-view="{{scrollIntoView}}" scroll-with-animation>
+    <view class="coach-bot-row">
+      <image class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
+      <view class="coach-bubble coach-bot-bubble">
+        <text>你好，{{displayName}}！</text>
+        <text>我已经整理了「{{goalTitle}}」的{{scopeLabel}}记录。</text>
+        <text>{{scopeSubtitle}}。</text>
       </view>
     </view>
-  </view>
 
-  <!-- 底部 TabBar -->
-  <view class="coach-tabbar">
-    <view class="coach-tabbar__item" data-url="/pages/index/index" bindtap="switchMainTab">
-      <image src="/assets/ai-coach/icon-calendar.svg" mode="aspectFit" />
-      <text>今日</text>
+    <view class="coach-user-row">
+      <view class="coach-bubble coach-user-bubble">{{initialPrompt}}</view>
+      <text class="coach-time">{{scopeLabel}}</text>
     </view>
-    <view class="coach-tabbar__item {{scope !== 'overall' ? 'coach-tabbar__item--active' : ''}}" data-url="/pages/plan/index" bindtap="switchMainTab">
-      <image src="/assets/ai-coach/icon-progress.svg" mode="aspectFit" />
-      <text>进度</text>
+
+    <view class="coach-bot-row coach-report-row">
+      <image class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
+      <view class="coach-bubble coach-report-bubble">
+        <view class="coach-report-intro">好的，以下是你的{{scopeLabel}}分析报告：</view>
+
+        <view class="coach-report-card">
+          <view class="coach-report-title">{{reportName}}</view>
+          <view class="coach-report-metrics">
+            <view class="coach-report-metric">
+              <text class="coach-report-value coach-report-value--green">{{completedCount}}/{{totalCount}}</text>
+              <text class="coach-report-label">已完成</text>
+            </view>
+            <view class="coach-report-metric">
+              <view><text class="coach-report-value">{{periodMinutes}}</text><text class="coach-report-unit">min</text></view>
+              <text class="coach-report-label">实际投入</text>
+            </view>
+            <view class="coach-report-metric">
+              <view><text class="coach-report-value">{{completionRate}}</text><text class="coach-report-unit">%</text></view>
+              <text class="coach-report-label">完成率</text>
+            </view>
+          </view>
+          <view class="coach-report-progress"><view class="coach-report-progress-inner" style="width: {{completionRate}}%;"></view></view>
+        </view>
+
+        <view class="coach-report-card coach-analysis-card">
+          <view class="coach-report-title">表现分析</view>
+          <view class="coach-analysis-line"><view class="coach-analysis-dot coach-analysis-dot--green"></view><text>{{judgement}}</text></view>
+          <view class="coach-analysis-line"><view class="coach-analysis-dot coach-analysis-dot--amber"></view><text>{{bottleneck}}</text></view>
+        </view>
+
+        <view class="coach-report-actions">
+          <view class="coach-report-action" bindtap="acknowledgeReport" hover-class="coach-pressed"><text class="coach-report-action-icon">👍</text><text>很棒</text></view>
+          <view class="coach-report-action" bindtap="viewReportDetails" hover-class="coach-pressed"><text class="coach-report-action-icon">📈</text><text>查看详情</text></view>
+        </view>
+      </view>
     </view>
-    <view class="coach-tabbar__item" data-url="/pages/team/index" bindtap="switchMainTab">
-      <image src="/assets/ai-coach/icon-team.svg" mode="aspectFit" />
-      <text>小队</text>
+
+    <view wx:for="{{messages}}" wx:key="id" id="{{item.id}}" class="{{item.role === 'assistant' ? 'coach-bot-row coach-followup-row' : 'coach-user-row coach-followup-row'}}">
+      <image wx:if="{{item.role === 'assistant'}}" class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
+      <view class="coach-bubble {{item.role === 'assistant' ? 'coach-bot-bubble' : 'coach-user-bubble'}}">{{item.content}}</view>
     </view>
-    <view class="coach-tabbar__item {{scope === 'overall' ? 'coach-tabbar__item--active' : ''}}" data-url="/pages/profile/index" bindtap="switchMainTab">
-      <image src="/assets/ai-coach/icon-user.svg" mode="aspectFit" />
-      <text>我的</text>
+
+    <view wx:if="{{asking}}" id="coach-typing" class="coach-bot-row coach-followup-row">
+      <image class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
+      <view class="coach-bubble coach-bot-bubble coach-typing"><view></view><view></view><view></view></view>
     </view>
+
+    <view wx:if="{{chatError}}" id="chat-error" class="coach-chat-error">
+      <text>{{chatError}}</text><view bindtap="retryLastQuestion">重新发送</view>
+    </view>
+    <view class="coach-scroll-spacer"></view>
+  </scroll-view>
+
+  <view class="coach-message-bar">
+    <view class="coach-input-wrap">
+      <input class="coach-input" value="{{question}}" maxlength="120" disabled="{{asking}}" placeholder="向 AI 教练发送消息..." placeholder-class="coach-placeholder" bindinput="inputQuestion" confirm-type="send" bindconfirm="sendQuestion" />
+    </view>
+    <view class="coach-send {{asking ? 'is-disabled' : ''}}" bindtap="sendQuestion" hover-class="coach-pressed">➤</view>
   </view>
 </view>

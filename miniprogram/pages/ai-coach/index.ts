@@ -3,19 +3,10 @@ import { getTasksByGoal } from "../../services/manualTask";
 import { getProgressSummary } from "../../services/manualStats";
 import { getLocalUserProfile } from "../../services/profile";
 import { askProgressCoach, prepareProgressCoach } from "../../services/progressCoach";
+import { getCurrentThemeId } from "../../services/theme";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
 import { ActionTask } from "../../types/manual";
 import { CoachRange, ProgressCoachChatMessage } from "../../types/progressCoach";
-
-interface CoachMetric {
-  key: string;
-  label: string;
-  value: number;
-  unit: string;
-  helper: string;
-  signal: string;
-  signalTone: string;
-}
 
 interface ChatMessage extends ProgressCoachChatMessage {
   id: string;
@@ -27,8 +18,6 @@ interface PeriodStats {
   totalActions: number;
   completionRate: number;
 }
-
-const QUICK_QUESTIONS = ["我最近最大的不足是什么？", "下一步怎么安排更稳？", "哪些行动应该优先？", "我的节奏适合什么方式？"];
 
 function normalizeScope(value?: string): CoachRange {
   if (value === "week" || value === "month") return value;
@@ -60,6 +49,54 @@ function summarize(tasks: ActionTask[]): PeriodStats {
   };
 }
 
+function getTopInset(): number {
+  try {
+    return wx.getWindowInfo().statusBarHeight + 8;
+  } catch (_error) {
+    return 52;
+  }
+}
+
+function scopeCopy(scope: CoachRange) {
+  if (scope === "week") return {
+    label: "本周复盘",
+    subtitle: "只分析本周行动，不做长期评价",
+    reportName: "本周完成情况",
+    prompt: "帮我分析一下本周的完成情况",
+    questions: ["帮我分析一下本周的完成情况", "我本周最需要调整什么", "告诉我下周最适合做的下一步"],
+  };
+  if (scope === "month") return {
+    label: "本月观察",
+    subtitle: "只分析本月行动，不做长期评价",
+    reportName: "本月完成情况",
+    prompt: "帮我分析一下本月的完成情况",
+    questions: ["帮我分析一下本月的完成情况", "我本月最需要调整什么", "告诉我下个月最适合做的下一步"],
+  };
+  return {
+    label: "整体成长",
+    subtitle: "结合当前目标与累计行动分析",
+    reportName: "累计完成情况",
+    prompt: "帮我分析一下当前的整体成长情况",
+    questions: ["帮我分析整体成长情况", "我目前最大的卡点是什么", "告诉我接下来最值得做的一步"],
+  };
+}
+
+function judgement(stats: PeriodStats, scopeLabel: string): string {
+  if (!stats.totalActions) return `${scopeLabel}还没有行动记录，先完成一件低启动成本的小事。`;
+  if (stats.completionRate === 100) return `${scopeLabel}计划内行动已经全部完成，当前节奏稳定，可以记录有效做法。`;
+  if (stats.completionRate >= 60) return `${scopeLabel}已经完成大部分行动，保持当前节奏并优先收尾剩余事项。`;
+  if (stats.completedActions > 0) return `${scopeLabel}已经开始推进，但完成节奏仍有提升空间，建议缩小下一步。`;
+  return `${scopeLabel}尚未形成完成记录，先选择最容易开始的一项行动。`;
+}
+
+function bottleneck(stats: PeriodStats, streakDays: number): string {
+  const pending = Math.max(0, stats.totalActions - stats.completedActions);
+  if (!stats.totalActions) return "当前更需要建立第一条行动记录，而不是继续增加任务。";
+  if (pending > 0) return `还有 ${pending} 项行动待推进，建议先处理最接近完成的一项。`;
+  if (!stats.minutes) return "行动已完成但尚未记录实际投入，补充时间后分析会更准确。";
+  return streakDays > 0 ? `已经连续行动 ${streakDays} 天，注意保持节奏，不必临时加码。` : "当前没有明显卡点，继续保持稳定投入。";
+}
+
 function errorMessage(rawError: unknown): string {
   const error = rawError as Error & { code?: string };
   if (error?.code === "FUNCTION_NOT_FOUND") return "AI 云函数尚未上传，请先部署服务。";
@@ -71,18 +108,24 @@ function errorMessage(rawError: unknown): string {
 
 Page({
   data: {
+    appTheme: getCurrentThemeId(),
+    topInset: getTopInset(),
     scope: "overall" as CoachRange,
     requestedGoalId: "",
     goalId: "",
-    pageTitle: "AI 成长教练",
     scopeLabel: "整体成长",
+    scopeSubtitle: "结合当前目标与累计行动分析",
+    reportName: "累计完成情况",
+    initialPrompt: "帮我分析一下当前的整体成长情况",
     displayName: "阿岚",
     goalTitle: "当前目标",
+    completedCount: 0,
+    totalCount: 0,
     periodMinutes: 0,
     completionRate: 0,
-    statusText: "正在了解你",
-    metrics: [] as CoachMetric[],
-    quickQuestions: QUICK_QUESTIONS,
+    judgement: "正在整理你的行动记录。",
+    bottleneck: "完成更多行动后，会形成更具体的建议。",
+    quickQuestions: [] as string[],
     messages: [] as ChatMessage[],
     question: "",
     asking: false,
@@ -93,14 +136,20 @@ Page({
 
   onLoad(query: Record<string, string>) {
     const scope = normalizeScope(query.scope || query.range);
+    const copy = scopeCopy(scope);
     this.setData({
       scope,
       requestedGoalId: String(query.goalId || ""),
-      pageTitle: scope === "overall" ? "AI 成长教练" : "AI 进度教练",
-      scopeLabel: scope === "week" ? "本周复盘" : scope === "month" ? "本月观察" : "整体成长",
-    }, () => {
-      this.loadLocalOverview();
-    });
+      scopeLabel: copy.label,
+      scopeSubtitle: copy.subtitle,
+      reportName: copy.reportName,
+      initialPrompt: copy.prompt,
+      quickQuestions: copy.questions,
+    }, () => this.loadLocalOverview());
+  },
+
+  onShow() {
+    this.setData({ appTheme: getCurrentThemeId(), topInset: getTopInset() });
   },
 
   loadLocalOverview() {
@@ -115,20 +164,16 @@ Page({
     const streakDays = goals.reduce((max, goal) => Math.max(max, getProgressSummary(goal.id, today).currentStreakDays || 0), 0);
     const profile = getLocalUserProfile();
     const title = goals.length > 1 ? `${goals.length} 个进行中目标` : goals[0]?.title || "当前目标";
-    const scopePrefix = this.data.scope === "week" ? "本周" : this.data.scope === "month" ? "本月" : "累计";
     this.setData({
       goalId: this.data.scope === "overall" ? "" : selectedGoal?.id || "",
       displayName: profile?.nickname || "阿岚",
       goalTitle: title,
+      completedCount: stats.completedActions,
+      totalCount: stats.totalActions,
       periodMinutes: stats.minutes,
       completionRate: stats.completionRate,
-      statusText: stats.totalActions ? "已了解你的行动节奏" : "已了解你的目标方向",
-      metrics: [
-        { key: "focus", label: `${scopePrefix}专注`, value: stats.minutes, unit: "分", helper: stats.minutes ? "每一分钟都算数。" : "有记录后会更了解你的节奏。", signal: "↗", signalTone: "up" },
-        { key: "streak", label: "连续坚持", value: streakDays, unit: "天", helper: streakDays ? `已经连续行动 ${streakDays} 天。` : "从第一次行动开始认识你。", signal: "🔥", signalTone: "warm" },
-        { key: "actions", label: "完成行动", value: stats.completedActions, unit: "项", helper: stats.completedActions ? "真实行动正在沉淀。" : "完成后会形成更具体的建议。", signal: "↗", signalTone: "up" },
-        { key: "rate", label: "完成率", value: stats.completionRate, unit: "%", helper: stats.totalActions ? `已读取 ${stats.totalActions} 项行动。` : "目前先基于目标与你对话。", signal: "📊", signalTone: "chart" },
-      ],
+      judgement: judgement(stats, this.data.scopeLabel),
+      bottleneck: bottleneck(stats, streakDays),
     }, () => this.prepareContext());
   },
 
@@ -142,7 +187,15 @@ Page({
 
   chooseQuestion(event: { currentTarget: { dataset: { question?: string } } }) {
     if (this.data.asking) return;
-    this.setData({ question: String(event.currentTarget.dataset.question || ""), chatError: "" });
+    this.setData({ question: String(event.currentTarget.dataset.question || "").slice(0, 120), chatError: "" });
+  },
+
+  acknowledgeReport() {
+    wx.showToast({ title: "已记录当前状态", icon: "none" });
+  },
+
+  viewReportDetails() {
+    this.setData({ question: `请详细分析我的${this.data.scopeLabel}，并告诉我最需要关注的地方` });
   },
 
   inputQuestion(event: { detail: { value?: string } }) {
@@ -169,11 +222,7 @@ Page({
     try {
       const result = await askProgressCoach(this.data.scope, this.data.goalId || undefined, question, history);
       const assistantMessage: ChatMessage = { id: `assistant_${Date.now()}`, role: "assistant", content: result.answer };
-      this.setData({
-        messages: this.data.messages.concat(assistantMessage),
-        asking: false,
-        scrollIntoView: assistantMessage.id,
-      });
+      this.setData({ messages: this.data.messages.concat(assistantMessage), asking: false, scrollIntoView: assistantMessage.id });
     } catch (error) {
       this.setData({ asking: false, chatError: errorMessage(error), failedQuestion: question, scrollIntoView: "chat-error" });
     }
@@ -184,10 +233,5 @@ Page({
     const failedQuestion = this.data.failedQuestion;
     const messages = this.data.messages.filter((item) => !(item.role === "user" && item.content === failedQuestion && item === this.data.messages[this.data.messages.length - 1]));
     this.setData({ messages, question: failedQuestion, failedQuestion: "", chatError: "" }, () => this.sendQuestion());
-  },
-
-  switchMainTab(event: { currentTarget: { dataset: { url?: string } } }) {
-    const url = String(event.currentTarget.dataset.url || "");
-    if (url) wx.switchTab({ url });
   },
 });

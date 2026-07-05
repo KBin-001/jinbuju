@@ -3,7 +3,8 @@
  * Opaque fallbacks come first so content stays readable when blur is unavailable.
  */
 
-page {
+.today-page,
+.progress-page {
   --glass-surface: rgba(255, 255, 255, 0.94);
   --glass-surface-soft: rgba(249, 252, 249, 0.90);
   --glass-line: rgba(35, 59, 52, 0.085);
