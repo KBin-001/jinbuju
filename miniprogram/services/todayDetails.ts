@@ -148,7 +148,12 @@ export function getTodayDataDetails(goalId: string, date: string, period: Detail
 
 export function getTodayDataBounds(goalId: string, today: string): { minDate: string; maxDate: string } {
   const dates = getTasksByGoal(goalId).map((task) => task.currentDate).filter((date) => date <= today).sort();
-  return { minDate: dates[0] || today, maxDate: today };
+  if (dates.length === 0) {
+    // 没有历史任务时，默认展示最近 30 天范围，避免日历只有一天
+    const minDate = formatDate(addDays(new Date(`${today}T00:00:00`), -29));
+    return { minDate, maxDate: today };
+  }
+  return { minDate: dates[0], maxDate: today };
 }
 
 export function getTodayDataCalendar(goalId: string, selectedDate: string, monthValue: string, minDate: string, today: string): { title: string; days: DetailCalendarDay[] } {

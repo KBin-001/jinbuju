@@ -155,10 +155,10 @@ export function archiveGoal(goalId: string, nextStatus: ArchivedGoal["status"] =
   store.archivedGoals.push(archivedGoal);
   if (store.activeGoalId === goalId) {
     const nextActive = sortActiveGoals(store.goals).find((item) => item.id !== goalId);
-    store.activeGoalId = nextActive?.id;
+    store.activeGoalId = nextActive?.id || undefined;
   }
   writeManualStore(store);
-  emit("goal:focus:update", { goalId: store.activeGoalId });
+  emit("goal:focus:update", { goalId: store.activeGoalId || "" });
 
   return archivedGoal;
 }

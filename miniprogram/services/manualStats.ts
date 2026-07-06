@@ -43,7 +43,16 @@ export function getProgressSummary(goalId: string, today = formatDate(new Date()
     heatmapDays.push({ date, label: `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`, completedCount: dayCompleted, partialCount: dayPartial, totalCount: dayTasks.length, completionRate, level, isToday: date === today });
   }
   const heatmapWeeks: GrowthHeatmapDay[][] = [];
-  for (let index = 0; index < heatmapDays.length; index += 7) heatmapWeeks.push(heatmapDays.slice(index, index + 7));
+  for (let index = 0; index < heatmapDays.length; index += 7) {
+    const week = heatmapDays.slice(index, index + 7);
+    // 为每周第一天标记月份，便于 UI 在周边界显示月份标签
+    if (week.length > 0) {
+      const firstDay = week[0];
+      const monthNum = Number(firstDay.date.slice(5, 7));
+      firstDay.monthLabel = `${monthNum}月`;
+    }
+    heatmapWeeks.push(week);
+  }
   const badges: GrowthBadge[] = [
     { key: "first_action", title: "开局行动", description: "完成第 1 件行动", unlocked: completedTasks >= 1, progressText: completedTasks >= 1 ? "已解锁" : `${completedTasks}/1` },
     { key: "streak_3", title: "三天不断", description: "连续行动 3 天", unlocked: currentStreakDays >= 3, progressText: currentStreakDays >= 3 ? "已解锁" : `${currentStreakDays}/3 天` },

@@ -144,7 +144,7 @@ function createSelfMember(teamId: string, input: CreateTeamInput): TeamMember {
 }
 
 function detail(id: string, title: string, status: MemberTodayStatus, estimatedMinutes: number, growthMinutes: number): TeamMemberActionDetail {
-  return { id, title, status, estimatedMinutes, growthMinutes };
+  return { id, title, status, estimatedMinutes, growthMinutes, actualMinutes: growthMinutes };
 }
 
 function createDemoMembers(teamId: string): TeamMember[] {

@@ -57,6 +57,7 @@ export interface DailyActionSummary {
 export interface GrowthHeatmapDay {
   date: string;
   label: string;
+  monthLabel?: string;
   completedCount: number;
   partialCount: number;
   totalCount: number;

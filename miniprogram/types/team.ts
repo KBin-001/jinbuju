@@ -54,6 +54,7 @@ export interface TeamMemberActionDetail {
   status: MemberTodayStatus;
   estimatedMinutes: number;
   growthMinutes: number;
+  actualMinutes?: number;
 }
 
 export interface TeamDailyStats {
