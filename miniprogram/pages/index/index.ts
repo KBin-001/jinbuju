@@ -4,7 +4,7 @@ import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getToday
 import { getLocalUserProfile } from "../../services/profile";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { syncManualData } from "../../services/manualSync";
-import { ActionIssueReason, ActionTask, Goal, TodaySummary } from "../../types/manual";
+import { ActionIssueReason, ActionTask, ActionTaskStatus, Goal, TodaySummary } from "../../types/manual";
 import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
 import { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask } from "../../utils/taskStatus";
@@ -564,8 +564,12 @@ Page(withAppTheme({
     const prevScrollTop = this.data.currentScrollTop;
     try {
       const today = getTodayBusinessDate();
-      const nextStatus = task.status === "completed" ? "pending" : "completed";
-      const nextActual = nextStatus === "completed" ? task.actualMinutes || task.estimatedMinutes : undefined;
+      // 取消完成时：如果之前有 issueReason（曾标记为完成一部分），回退到 partially_completed
+      // 否则回退到 pending（待开始）
+      const nextStatus: ActionTaskStatus = task.status === "completed"
+        ? (task.issueReason ? "partially_completed" : "pending")
+        : "completed";
+      const nextActual = nextStatus === "completed" ? task.actualMinutes || task.estimatedMinutes : task.actualMinutes;
       const updatedTask = toViewTask(updateTaskStatus(task.id, nextStatus, nextActual), this.data.selectedDate || today);
       this.applyTaskPatch(updatedTask, prevScrollTop);
       if (nextStatus === "completed") {

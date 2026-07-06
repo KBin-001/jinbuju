@@ -31,7 +31,8 @@ export function getProgressSummary(goalId: string, today = formatDate(new Date()
     const dayCompleted = dayTasks.filter((task) => task.status === "completed").length;
     const dayPartial = dayTasks.filter((task) => task.status === "partially_completed").length;
     const activeCount = dayCompleted + dayPartial;
-    const completionRate = dayTasks.length ? Math.round((dayCompleted / dayTasks.length) * 100) : 0;
+    // 热力图完成率：completed 权重 1，partially_completed 权重 0.5
+    const completionRate = dayTasks.length ? Math.round(((dayCompleted + dayPartial * 0.5) / dayTasks.length) * 100) : 0;
     let level: GrowthHeatmapDay["level"] = 0;
     if (dayTasks.length > 0) {
       if (completionRate >= 100) level = 3;
