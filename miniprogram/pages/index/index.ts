@@ -36,7 +36,12 @@ function dateCopy(value: string): { weekday: string } {
   return { weekday: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"][date.getDay()] };
 }
 function emptySummary(): TodaySummary { return { estimatedMinutes: 0, actualMinutes: 0, completedCount: 0, partialCount: 0, unfinishedCount: 0, totalCount: 0 }; }
-function completionPercent(summary: TodaySummary): number { return summary.totalCount ? Math.round(summary.completedCount / summary.totalCount * 100) : 0; }
+function completionPercent(summary: TodaySummary): number {
+  if (!summary.totalCount) return 0;
+  // completed 计为 1，partially_completed 计为 0.5，体现部分进度
+  const weighted = summary.completedCount + summary.partialCount * 0.5;
+  return Math.round(weighted / summary.totalCount * 100);
+}
 function focusPercent(summary: TodaySummary): number { return completionPercent(summary); }
 function remainingCount(summary: TodaySummary): number { return Math.max(0, summary.totalCount - summary.completedCount); }
 function remainingEstimatedMinutes(tasks: ViewTask[], today: string): number {
@@ -46,14 +51,17 @@ function remainingEstimatedMinutes(tasks: ViewTask[], today: string): number {
 }
 function progressSegments(summary: TodaySummary): ProgressSegment[] {
   const total = summary.totalCount || 4;
-  return Array.from({ length: total }, (_, index) => ({ active: index < summary.completedCount }));
+  // completed 和 partially_completed 都标记为 active，体现已推进的进度
+  const activeCount = summary.completedCount + summary.partialCount;
+  return Array.from({ length: total }, (_, index) => ({ active: index < activeCount }));
 }
 function todayMood(summary: TodaySummary): TodayMood {
   const percent = completionPercent(summary);
   if (!summary.totalCount) return { title: "今天还没开局", copy: "先放一件小事上来，别让今天空过去。", tone: "empty", mark: "启" };
   if (percent >= 100) return { title: "今天你赢下来了", copy: "该完成的都收住了，节奏很漂亮。", tone: "done", mark: "赢" };
   if (percent >= 50) return { title: "差一点，但已经上桌了", copy: `还剩 ${remainingCount(summary)} 项，顺手收掉一件就很赚。`, tone: "half", mark: "冲" };
-  if (percent > 0) return { title: "先拿下 1 项，节奏已经起来了", copy: `已经完成 ${summary.completedCount} 项，剩下的慢慢推进。`, tone: "low", mark: "进" };
+  if (summary.completedCount > 0) return { title: "先拿下 1 项，节奏已经起来了", copy: `已经完成 ${summary.completedCount} 项，剩下的慢慢推进。`, tone: "low", mark: "进" };
+  if (summary.partialCount > 0) return { title: "已经开始推进了", copy: `有 ${summary.partialCount} 项完成了一部分，继续把它收住。`, tone: "low", mark: "进" };
   return { title: "今天别空手离开", copy: `还有 ${summary.totalCount} 项等你开动，挑最小的一件先做。`, tone: "low", mark: "动" };
 }
 function dailyNudge(tasks: ViewTask[], selectedDate: string, today: string): string {

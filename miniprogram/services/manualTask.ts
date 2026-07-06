@@ -97,7 +97,11 @@ export function rescheduleTask(taskId: string): ActionTask {
   const task = store.tasks.find((item) => item.id === taskId);
   if (!task) throw new Error("行动不存在");
   if (task.status === "completed") throw new Error("已完成行动无需顺延");
-  task.currentDate = formatDate(addDays(new Date(`${task.currentDate}T00:00:00`), 1));
+  // 顺延到明天：基于今天业务日期 +1，确保时区一致。
+  // 如果任务已在未来，则从任务当前日期 +1，避免把未来任务往回移。
+  const today = getTodayBusinessDate();
+  const baseDate = task.currentDate > today ? task.currentDate : today;
+  task.currentDate = formatDate(addDays(new Date(`${baseDate}T00:00:00`), 1));
   task.status = "pending"; task.issueReason = undefined; task.updatedAt = new Date().toISOString();
   writeManualStore(store);
   return task;

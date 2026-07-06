@@ -167,67 +167,71 @@ async function executeCoachAction(openid, event) {
   await ensureManualCollections();
   const proposalId = String(event && event.proposalId || "");
   if (!proposalId) throw createError("COACH_ACTION_INVALID", "操作确认信息无效。");
-  let stage = "proposal_lookup";
+  let stage = "transaction_begin";
   logAction(stage, event, { proposalIdSuffix: proposalId.slice(-8) });
   try {
-    const ref = db.collection(COLLECTIONS.proposals).doc(proposalId);
-    const found = await ref.get().catch(() => null);
-    const proposal = found && found.data;
-    if (!proposal || proposal._openid !== openid) throw createError("COACH_ACTION_NOT_FOUND", "操作不存在或无权执行。");
-    if (proposal.status === "executed" && proposal.result) return proposal.result;
-    if (proposal.status !== "pending" || proposal.expiresAtMs < Date.now()) throw createError("COACH_ACTION_EXPIRED", "操作确认已过期，请重新告诉 AI。");
+    const result = await db.runTransaction(async (transaction) => {
+      const ref = transaction.collection(COLLECTIONS.proposals).doc(proposalId);
+      const found = await ref.get().catch(() => null);
+      const proposal = found && found.data;
+      if (!proposal || proposal._openid !== openid) throw createError("COACH_ACTION_NOT_FOUND", "操作不存在或无权执行。");
+      if (proposal.status === "executed" && proposal.result) return proposal.result;
+      if (proposal.status !== "pending") throw createError("COACH_ACTION_EXPIRED", "操作确认已过期，请重新告诉 AI。");
 
-    let task;
-    if (proposal.type === "complete_task") {
-      stage = "task_validation";
-      logAction(stage, event, { type: proposal.type });
-      const query = await db.collection(COLLECTIONS.tasks).where({ _openid: openid, id: proposal.taskId }).limit(1).get();
-      const current = query.data && query.data[0];
-      if (!current) throw createError("COACH_ACTION_CONFLICT", "行动已不存在，请刷新后重试。");
-      if (current.status === "completed") {
-        task = publicRecord(current);
-      } else {
-        if (current.updatedAt !== proposal.expectedUpdatedAt) throw createError("COACH_ACTION_CONFLICT", "行动已发生变化，请重新确认。");
-        if (!Number.isInteger(proposal.actualMinutes) || proposal.actualMinutes < 1 || proposal.actualMinutes > 480) throw createError("COACH_ACTION_INVALID", "实际投入时间无效。");
-        stage = "task_write";
-        logAction(stage, event, { type: proposal.type });
-        await db.collection(COLLECTIONS.tasks).doc(current._id).update({ data: {
-          status: "completed",
-          actualMinutes: proposal.actualMinutes,
-          completedAt: proposal.completedAt,
-          updatedAt: new Date().toISOString(),
-          serverUpdatedAt: db.serverDate(),
-        } });
-        const updated = await db.collection(COLLECTIONS.tasks).doc(current._id).get();
-        task = publicRecord(updated.data);
-      }
-    } else if (proposal.type === "create_task") {
-      stage = "goal_validation";
-      logAction(stage, event, { type: proposal.type });
-      const goal = await db.collection(COLLECTIONS.goals).where({ _openid: openid, id: proposal.goalId, status: "active" }).limit(1).get();
-      if (!goal.data || !goal.data.length) throw createError("COACH_ACTION_CONFLICT", "当前目标已变化，请重新确认。");
-      stage = "task_write";
-      logAction(stage, event, { type: proposal.type });
-      const taskId = `task_ai_${proposalId.slice(-20)}`;
-      const docId = stableId(COLLECTIONS.tasks, `${openid}:${taskId}`);
-      const existing = await db.collection(COLLECTIONS.tasks).doc(docId).get().catch(() => null);
-      if (existing && existing.data) task = publicRecord(existing.data);
-      else {
-        const now = new Date().toISOString();
-        task = {
-          id: taskId, goalId: proposal.goalId, title: proposal.title, plannedDate: proposal.currentDate,
-          currentDate: proposal.currentDate, estimatedMinutes: proposal.estimatedMinutes, status: "pending",
-          source: "ai", createdAt: now, updatedAt: now,
-        };
-        await db.collection(COLLECTIONS.tasks).doc(docId).set({ data: { ...task, _openid: openid, serverUpdatedAt: db.serverDate() } });
-      }
-    } else throw createError("COACH_ACTION_INVALID", "暂不支持此操作。");
+      let task;
+      let reconciled = false;
+      if (proposal.type === "complete_task") {
+        stage = "task_validation";
+        const query = await transaction.collection(COLLECTIONS.tasks).where({ _openid: openid, id: proposal.taskId }).limit(1).get();
+        const current = query.data && query.data[0];
+        if (!current) throw createError("COACH_ACTION_CONFLICT", "行动已不存在，请刷新后重试。");
+        if (current.status === "completed") {
+          task = publicRecord(current);
+          reconciled = true;
+        } else {
+          if (proposal.expiresAtMs < Date.now()) throw createError("COACH_ACTION_EXPIRED", "操作确认已过期，请重新告诉 AI。");
+          if (current.updatedAt !== proposal.expectedUpdatedAt) throw createError("COACH_ACTION_CONFLICT", "行动已发生变化，请重新确认。");
+          if (!Number.isInteger(proposal.actualMinutes) || proposal.actualMinutes < 1 || proposal.actualMinutes > 480) throw createError("COACH_ACTION_INVALID", "实际投入时间无效。");
+          stage = "task_write";
+          const changes = {
+            status: "completed", actualMinutes: proposal.actualMinutes, completedAt: proposal.completedAt,
+            updatedAt: new Date().toISOString(), serverUpdatedAt: db.serverDate(),
+          };
+          await transaction.collection(COLLECTIONS.tasks).doc(current._id).update({ data: changes });
+          task = { ...publicRecord(current), status: changes.status, actualMinutes: changes.actualMinutes, completedAt: changes.completedAt, updatedAt: changes.updatedAt };
+        }
+      } else if (proposal.type === "create_task") {
+        const taskId = `task_ai_${proposalId.slice(-20)}`;
+        const docId = stableId(COLLECTIONS.tasks, `${openid}:${taskId}`);
+        const existing = await transaction.collection(COLLECTIONS.tasks).doc(docId).get().catch(() => null);
+        if (existing && existing.data) {
+          if (existing.data._openid !== openid) throw createError("COACH_ACTION_CONFLICT", "行动归属校验失败。");
+          task = publicRecord(existing.data);
+          reconciled = true;
+        } else {
+          if (proposal.expiresAtMs < Date.now()) throw createError("COACH_ACTION_EXPIRED", "操作确认已过期，请重新告诉 AI。");
+          stage = "goal_validation";
+          const goal = await transaction.collection(COLLECTIONS.goals).where({ _openid: openid, id: proposal.goalId, status: "active" }).limit(1).get();
+          if (!goal.data || !goal.data.length) throw createError("COACH_ACTION_CONFLICT", "当前目标已变化，请重新确认。");
+          stage = "task_write";
+          const now = new Date().toISOString();
+          task = {
+            id: taskId, goalId: proposal.goalId, title: proposal.title, plannedDate: proposal.currentDate,
+            currentDate: proposal.currentDate, estimatedMinutes: proposal.estimatedMinutes, status: "pending",
+            source: "ai", createdAt: now, updatedAt: now,
+          };
+          await transaction.collection(COLLECTIONS.tasks).doc(docId).set({ data: { ...task, _openid: openid, serverUpdatedAt: db.serverDate() } });
+        }
+      } else throw createError("COACH_ACTION_INVALID", "暂不支持此操作。");
 
-    const result = { proposalId, type: proposal.type, status: "executed", task };
-    stage = "proposal_commit";
-    logAction(stage, event, { type: proposal.type });
-    await ref.update({ data: { status: "executed", executedAt: db.serverDate(), result } });
-    logAction("completed", event, { type: proposal.type });
+      if (reconciled) logAction("task_reconciled", event, { type: proposal.type });
+      const actionResult = { proposalId, type: proposal.type, status: "executed", task };
+      stage = "proposal_commit";
+      await ref.update({ data: { status: "executed", executedAt: db.serverDate(), result: actionResult } });
+      return actionResult;
+    });
+    stage = "transaction_committed";
+    logAction(stage, event, { type: result.type });
     return result;
   } catch (error) {
     console.error("coach action failed", {
@@ -241,4 +245,18 @@ async function executeCoachAction(openid, event) {
   }
 }
 
-module.exports = { createCoachProposal, executeCoachAction, syncManualData };
+async function getCoachActionStatus(openid, event) {
+  await ensureManualCollections();
+  const proposalId = String(event && event.proposalId || "");
+  if (!proposalId) throw createError("COACH_ACTION_INVALID", "操作确认信息无效。");
+  const found = await db.collection(COLLECTIONS.proposals).doc(proposalId).get().catch(() => null);
+  const proposal = found && found.data;
+  if (!proposal || proposal._openid !== openid) throw createError("COACH_ACTION_NOT_FOUND", "操作不存在或无权查看。");
+  const status = proposal.status === "executed" && proposal.result
+    ? "executed"
+    : proposal.expiresAtMs < Date.now() ? "expired" : "pending";
+  logAction("status_checked", event, { status, proposalIdSuffix: proposalId.slice(-8) });
+  return { proposalId, type: proposal.type, status, result: status === "executed" ? proposal.result : undefined };
+}
+
+module.exports = { createCoachProposal, executeCoachAction, getCoachActionStatus, syncManualData };

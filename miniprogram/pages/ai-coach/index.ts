@@ -285,6 +285,7 @@ Page({
       await executeCoachAction(proposalId);
       this.setData({
         executingProposalId: "",
+        chatError: "",
         messages: this.data.messages.map((item) => item.actionProposal?.id === proposalId
           ? { ...item, actionProposal: { ...item.actionProposal, status: "executed" as const } }
           : item),

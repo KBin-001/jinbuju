@@ -102,6 +102,13 @@ export interface CoachActionResult {
   task: import("./manual").ActionTask;
 }
 
+export interface CoachActionStatusResult {
+  proposalId: string;
+  type: "complete_task" | "create_task";
+  status: "pending" | "executed" | "expired";
+  result?: CoachActionResult;
+}
+
 export interface ProgressCoachChatMessage {
   role: "user" | "assistant";
   content: string;

@@ -66,8 +66,8 @@ const {
   askProgressCoach,
   prepareProgressCoach,
 } = require("./progress-coach");
-const { executeCoachAction, syncManualData } = require("./manual-sync");
-const COACH_RUNTIME_VERSION = "coach-actions-2026-07-06.2";
+const { executeCoachAction, getCoachActionStatus, syncManualData } = require("./manual-sync");
+const COACH_RUNTIME_VERSION = "coach-actions-2026-07-07.3";
 
 function success(data) {
   return { success: true, data };
@@ -585,6 +585,11 @@ exports.main = async (event) => {
     }
     if (event.action === "executeCoachAction") {
       const data = await executeCoachAction(context.OPENID, event);
+      console.info("generatePlan success", { action, requestId, durationMs: Date.now() - requestStartedAt });
+      return success(data);
+    }
+    if (event.action === "getCoachActionStatus") {
+      const data = await getCoachActionStatus(context.OPENID, event);
       console.info("generatePlan success", { action, requestId, durationMs: Date.now() - requestStartedAt });
       return success(data);
     }

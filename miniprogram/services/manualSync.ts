@@ -1,5 +1,5 @@
 import { ManualDataStore } from "../types/manual";
-import { CoachActionResult } from "../types/progressCoach";
+import { CoachActionResult, CoachActionStatusResult } from "../types/progressCoach";
 import { emit } from "../utils/eventBus";
 import { readManualStore, writeManualStore } from "./manualStore";
 import { CloudRequestError, createCloudRequestId, logCloudRequest } from "../utils/cloudRequest";
@@ -32,7 +32,7 @@ function call<T>(data: Record<string, unknown>, timeout = 20000): Promise<T> {
   });
 }
 
-const EXPECTED_COACH_RUNTIME_VERSION = "coach-actions-2026-07-06.2";
+const EXPECTED_COACH_RUNTIME_VERSION = "coach-actions-2026-07-07.3";
 let verifiedRuntime: Promise<void> | undefined;
 
 export function verifyCoachRuntime(): Promise<void> {
@@ -59,8 +59,7 @@ export async function syncManualData(): Promise<ManualDataStore> {
   return merged;
 }
 
-export async function executeCoachAction(proposalId: string): Promise<CoachActionResult> {
-  const result = await call<CoachActionResult>({ action: "executeCoachAction", proposalId });
+function cacheCoachActionResult(result: CoachActionResult): CoachActionResult {
   const store = readManualStore();
   const index = store.tasks.findIndex((task) => task.id === result.task.id);
   if (index >= 0) store.tasks[index] = result.task;
@@ -68,4 +67,31 @@ export async function executeCoachAction(proposalId: string): Promise<CoachActio
   writeManualStore(store);
   emit("manual:sync", store);
   return result;
+}
+
+export function getCoachActionStatus(proposalId: string): Promise<CoachActionStatusResult> {
+  return call<CoachActionStatusResult>({ action: "getCoachActionStatus", proposalId });
+}
+
+export async function executeCoachAction(proposalId: string): Promise<CoachActionResult> {
+  try {
+    return cacheCoachActionResult(await call<CoachActionResult>({ action: "executeCoachAction", proposalId }));
+  } catch (error) {
+    const ambiguousCodes = new Set(["FUNCTION_TIMEOUT", "NETWORK_ERROR", "INTERNAL_ERROR"]);
+    if (!ambiguousCodes.has(String((error as CloudRequestError)?.code || ""))) throw error;
+    try {
+      const status = await getCoachActionStatus(proposalId);
+      if (status.status === "executed" && status.result) return cacheCoachActionResult(status.result);
+      if (status.status === "expired") {
+        throw Object.assign(new Error("操作确认已过期，请重新告诉 AI。"), { code: "COACH_ACTION_EXPIRED" });
+      }
+    } catch (statusError) {
+      if ((statusError as CloudRequestError)?.code === "COACH_ACTION_EXPIRED") throw statusError;
+      console.error("[coach action] status check failed", {
+        proposalIdSuffix: proposalId.slice(-8),
+        code: (statusError as CloudRequestError)?.code || "",
+      });
+    }
+    throw error;
+  }
 }

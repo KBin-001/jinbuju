@@ -12,13 +12,16 @@ export function getProgressSummary(goalId: string, today = formatDate(new Date()
     const dayTasks = tasks.filter((task) => task.currentDate === date);
     recentDays.push({ date, label: offset === 0 ? "今天" : `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`, completedCount: dayTasks.filter((task) => task.status === "completed").length, partialCount: dayTasks.filter((task) => task.status === "partially_completed").length, totalCount: dayTasks.length, isToday: offset === 0 });
   }
+    // 行动天数：completed 或 partially_completed 都算有行动记录
   const actionDates = new Set(tasks.filter((task) => task.status === "completed" || task.status === "partially_completed").map((task) => task.currentDate));
+  // 连续打卡天数：只有 completed 才算真正打卡完成，partially_completed 不计入连续打卡
+  const streakDates = new Set(tasks.filter((task) => task.status === "completed").map((task) => task.currentDate));
   const completedTasks = tasks.filter((task) => task.status === "completed").length;
   const totalActualMinutes = tasks.reduce((sum, task) => sum + (task.actualMinutes || 0), 0);
   let currentStreakDays = 0;
   for (let offset = 0; offset > -365; offset -= 1) {
     const date = formatDate(addDays(new Date(`${today}T00:00:00`), offset));
-    if (!actionDates.has(date)) break;
+    if (!streakDates.has(date)) break;
     currentStreakDays += 1;
   }
   const heatmapDays: GrowthHeatmapDay[] = [];
