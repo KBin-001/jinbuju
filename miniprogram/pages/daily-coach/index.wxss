@@ -557,6 +557,56 @@ page {
   word-break: break-all;
 }
 
+.coach-real-thinking {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  min-width: 140rpx;
+}
+
+.coach-real-thinking view {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: #F0A13B;
+  box-shadow: 0 0 0 0 rgba(240, 161, 59, 0.30);
+  animation: coach-real-pulse 1.4s ease-in-out infinite;
+}
+
+.coach-real-thinking text { color: #7B817D; font-size: 21rpx; }
+
+@keyframes coach-real-pulse {
+  0%, 100% { opacity: 0.65; transform: scale(0.82); box-shadow: 0 0 0 0 rgba(240, 161, 59, 0.26); }
+  50% { opacity: 1; transform: scale(1.08); box-shadow: 0 0 0 12rpx rgba(240, 161, 59, 0); }
+}
+
+.coach-chat-error {
+  width: calc(100% - 80rpx);
+  margin: 18rpx 0 0 76rpx;
+  padding: 18rpx 20rpx;
+  box-sizing: border-box;
+  border: 1rpx solid rgba(214, 170, 66, 0.28);
+  border-radius: 18rpx;
+  background: #FFF8E5;
+  color: #7E6528;
+  font-size: 20rpx;
+  line-height: 31rpx;
+}
+
+.coach-chat-error view { margin-top: 8rpx; color: #356859; font-weight: 700; }
+
+.coach-direct-wrap { max-width: 82%; }
+.coach-direct-wrap .coach-bubble { max-width: 100%; }
+.coach-action-proposal { margin-top: 12rpx; padding: 20rpx; border: 1rpx solid #D7E4DE; border-radius: 22rpx; background: #FFFFFF; box-shadow: 0 10rpx 24rpx rgba(31, 70, 58, 0.07); }
+.coach-action-proposal-label { color: #71827A; font-size: 20rpx; font-weight: 700; }
+.coach-action-proposal-summary { margin-top: 8rpx; color: #233B34; font-size: 25rpx; font-weight: 700; line-height: 38rpx; }
+.coach-action-proposal-actions { display: flex; justify-content: flex-end; margin-top: 16rpx; }
+.coach-action-confirm { min-height: 60rpx; padding: 0 28rpx; border-radius: 30rpx; background: #356859; color: #FFFFFF; font-size: 24rpx; font-weight: 700; line-height: 60rpx; }
+.coach-action-success { margin-top: 16rpx; color: #356859; font-size: 23rpx; font-weight: 700; }
+.coach-action-candidates { display: flex; flex-wrap: wrap; gap: 10rpx; margin-top: 12rpx; }
+.coach-action-candidate { min-height: 52rpx; padding: 0 20rpx; border: 1rpx solid #D7E4DE; border-radius: 26rpx; background: #FFFFFF; color: #356859; font-size: 22rpx; font-weight: 700; line-height: 52rpx; }
+.coach-send.is-disabled { opacity: 0.48; }
+
 .coach-compact-summary {
   color: #233B34;
   font-size: 25rpx;

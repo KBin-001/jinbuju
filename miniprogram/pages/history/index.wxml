@@ -1,0 +1,53 @@
+<view class="history-page" data-theme="{{appTheme}}">
+  <view class="custom-nav">
+    <view class="nav-back" bindtap="goBack" hover-class="tap-pressed" aria-label="返回">‹</view>
+    <text class="nav-title">历史数据</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <view class="page-content">
+    <view class="history-hero">
+      <view class="hero-mark">足</view>
+      <view class="hero-copy">
+        <text class="hero-title">成长足迹</text>
+        <text class="hero-subtitle">走过的每一步，都值得被好好保存。</text>
+      </view>
+      <view class="hero-leaf hero-leaf--one"></view><view class="hero-leaf hero-leaf--two"></view>
+    </view>
+
+    <view class="summary-card">
+      <view class="summary-item"><text class="summary-label">历史目标</text><view class="summary-value"><text>{{summary.goalCount}}</text><text class="summary-unit">个</text></view></view>
+      <view class="summary-item"><text class="summary-label">完成行动</text><view class="summary-value"><text>{{summary.completedActions}}</text><text class="summary-unit">项</text></view></view>
+      <view class="summary-item"><text class="summary-label">累计投入</text><view class="summary-value"><text>{{summary.actualMinutes}}</text><text class="summary-unit">分钟</text></view></view>
+      <view class="summary-item"><text class="summary-label">平均完成率</text><view class="summary-value"><text>{{summary.averageRate}}</text><text class="summary-unit">%</text></view></view>
+    </view>
+
+    <view wx:if="{{goals.length === 0}}" class="empty-card">
+      <view class="empty-icon">⌁</view>
+      <text class="empty-title">成长记录正在等待第一笔</text>
+      <text class="empty-desc">结束或完成目标后，它会被完整保存在这里。</text>
+      <view class="empty-button" bindtap="backProfile" hover-class="tap-pressed">回到我的</view>
+    </view>
+
+    <block wx:else>
+      <view class="section-head"><text class="section-title">目标档案</text><text class="section-note">按时间记录</text></view>
+      <view class="archive-list">
+        <view wx:for="{{goals}}" wx:key="id" class="archive-card" data-id="{{item.id}}" bindtap="openReview" hover-class="archive-card--pressed">
+          <view class="archive-head">
+            <view class="archive-icon">◎</view>
+            <view class="archive-main"><text class="archive-title">{{item.title}}</text><text class="archive-date">{{item.dateRange}}</text></view>
+            <view class="status-chip">{{item.statusText}}</view>
+          </view>
+          <view class="archive-metrics">
+            <view class="archive-metric"><text class="metric-label">坚持天数</text><view class="metric-value">{{item.totalDays}}<text class="metric-unit">天</text></view></view>
+            <view class="archive-metric"><text class="metric-label">完成率</text><view class="metric-value">{{item.completionRate}}<text class="metric-unit">%</text></view><view class="mini-track"><view class="mini-fill" style="width: {{item.completionRate}}%;"></view></view></view>
+            <view class="archive-metric"><text class="metric-label">完成行动</text><view class="metric-value">{{item.completedActions}}<text class="metric-unit">项</text></view></view>
+            <view class="archive-metric"><text class="metric-label">实际投入</text><view class="metric-value">{{item.actualMinutes}}<text class="metric-unit">分钟</text></view></view>
+          </view>
+          <view class="archive-link">查看成长回顾 <text>›</text></view>
+        </view>
+      </view>
+      <view class="page-ending">所有记录，都在时光里静静生长。</view>
+    </block>
+  </view>
+</view>

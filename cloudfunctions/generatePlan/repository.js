@@ -20,6 +20,10 @@ const REQUIRED_COLLECTIONS = [
   "goal_analysis_drafts",
   "stage_preview_versions",
   "progress_ai_snapshots",
+  "manual_goals",
+  "manual_tasks",
+  "manual_checkins",
+  "coach_action_proposals",
 ];
 let collectionsReady = false;
 

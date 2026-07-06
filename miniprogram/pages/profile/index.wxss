@@ -281,46 +281,73 @@ page {
 
 /* 成长概览 */
 .growth-card {
-  height: 348rpx;
+  min-height: 374rpx;
   overflow: hidden;
-  padding-bottom: 24rpx;
-  border-color: rgba(243, 213, 153, 0.30);
-  background: linear-gradient(135deg, rgba(255, 253, 245, 0.78) 0%, rgba(255, 238, 197, 0.72) 100%);
+  padding-bottom: 28rpx;
+  border-color: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.72);
 }
 
-.growth-visual {
+.growth-summary {
   position: relative;
-  height: 156rpx;
-  margin: 0 30rpx;
+  min-height: 148rpx;
+  margin: 0 26rpx;
+  padding: 24rpx 28rpx;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1rpx solid rgba(53, 104, 89, 0.10);
+  border-radius: 26rpx 26rpx 0 0;
+  background: linear-gradient(135deg, rgba(234, 245, 239, 0.90) 0%, rgba(247, 250, 247, 0.76) 100%);
 }
 
-.growth-wave {
+.growth-summary::after {
+  content: "";
   position: absolute;
-  left: 70rpx;
-  right: 70rpx;
-  bottom: 0;
-  width: calc(100% - 140rpx);
-  height: 64rpx;
+  right: -48rpx;
+  bottom: -72rpx;
+  width: 190rpx;
+  height: 190rpx;
+  border: 18rpx solid rgba(53, 104, 89, 0.035);
+  border-radius: 100% 0 100% 0;
+  transform: rotate(24deg);
 }
 
-.growth-medal {
-  position: absolute;
-  top: 2rpx;
-  width: 120rpx;
-  height: 136rpx;
+.growth-summary__mark {
+  position: relative;
+  z-index: 1;
+  width: 76rpx;
+  height: 76rpx;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(53, 104, 89, 0.10);
+  color: var(--profile-green);
+  font-size: 28rpx;
+  font-weight: 800;
 }
 
-.growth-medal--calendar { left: 28rpx; }
-.growth-medal--check { left: 50%; transform: translateX(-50%); }
-.growth-medal--timer { right: 28rpx; }
+.growth-summary__copy { position: relative; z-index: 1; min-width: 0; margin-left: 24rpx; }
+.growth-summary__headline { display: flex; align-items: baseline; color: var(--profile-ink); font-size: 28rpx; line-height: 40rpx; font-weight: 700; }
+.growth-summary__days { margin: 0 8rpx; color: var(--profile-green); font-size: 44rpx; line-height: 48rpx; font-weight: 800; }
+.growth-summary__hint { display: block; margin-top: 6rpx; color: var(--profile-muted); font-size: 22rpx; line-height: 32rpx; }
 
 .growth-metrics {
-  margin-top: -8rpx;
+  margin: 0 26rpx;
+  padding: 22rpx 8rpx 18rpx;
   display: flex;
+  border: 1rpx solid rgba(53, 104, 89, 0.10);
+  border-top: 0;
+  border-radius: 0 0 26rpx 26rpx;
+  background: rgba(255, 255, 255, 0.52);
   text-align: center;
 }
 
 .growth-metric {
+  position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
@@ -328,10 +355,11 @@ page {
   align-items: center;
 }
 
-.growth-metric__value { display: flex; align-items: baseline; justify-content: center; }
-.growth-metric__number { color: var(--profile-ink); font-size: 46rpx; font-weight: 800; line-height: 1; letter-spacing: -2rpx; }
-.growth-metric__unit { margin-left: 4rpx; color: var(--profile-ink); font-size: 23rpx; font-weight: 500; }
-.growth-metric__label { margin-top: 7rpx; color: var(--profile-ink); font-size: 22rpx; line-height: 1; }
+.growth-metric + .growth-metric::before { content: ""; position: absolute; top: 4rpx; bottom: 4rpx; left: 0; width: 1rpx; background: var(--profile-line); }
+.growth-metric__value { margin-top: 8rpx; display: flex; align-items: baseline; justify-content: center; max-width: 100%; }
+.growth-metric__number { overflow: hidden; color: var(--profile-green); font-size: 38rpx; font-weight: 800; line-height: 1; letter-spacing: -1rpx; text-overflow: ellipsis; }
+.growth-metric__unit { margin-left: 4rpx; flex: none; color: var(--profile-muted); font-size: 19rpx; font-weight: 500; }
+.growth-metric__label { color: var(--profile-muted); font-size: 21rpx; line-height: 30rpx; }
 
 /* 我的目标 */
 .goal-card { padding-bottom: 28rpx; }

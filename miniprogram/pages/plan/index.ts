@@ -25,8 +25,7 @@ interface OverviewStat {
 
 interface AiCoachView {
   periodLabel: string;
-  summary: string;
-  suggestion: string;
+  message: string;
 }
 
 interface GoalOption {
@@ -211,9 +210,7 @@ function goalPeriod(goal: Goal | null): string {
 }
 
 function growthConclusionTitle(range: TrendRange): string {
-  if (range === "month") return "本月成长结论";
-  if (range === "year") return "年度成长结论";
-  return "本周成长结论";
+  return range === "year" ? "AI 教练 · 年度一句话" : range === "month" ? "AI 教练 · 本月一句话" : "AI 教练 · 本周一句话";
 }
 
 function buildTrendRanges(activeKey: TrendRange): TrendRangeOption[] {
@@ -226,14 +223,24 @@ function buildAiCoachView(goal: Goal | null, trendRange: TrendRange, trendSummar
   if (trendSummary.insufficient || trendSummary.totalActions <= 0) {
     return {
       periodLabel,
-      summary: `当前「${goalTitle}」的数据还在积累中，先保持每天一小步。`,
-      suggestion: "等完成更多行动后，这里会展示节奏变化、薄弱时段和下一步建议。",
+      message: `先为“${goalTitle}”完成一次小行动，成长记录会从这一步慢慢清晰起来。`,
+    };
+  }
+  if (trendSummary.compareTone === "up") {
+    return {
+      periodLabel,
+      message: `这段时间的行动节奏正在变稳，下一步继续为“${goalTitle}”留出一段专注时间。`,
+    };
+  }
+  if (trendSummary.compareTone === "down") {
+    return {
+      periodLabel,
+      message: `节奏偶尔放慢没关系，先为“${goalTitle}”选一件最容易开始的小事。`,
     };
   }
   return {
     periodLabel,
-    summary: `${periodLabel}显示，${trendSummary.compareText}，累计完成 ${trendSummary.totalActions} 项行动。`,
-    suggestion: trendSummary.adviceText || `继续围绕「${goalTitle}」保持稳定输出，优先安排最容易启动的一小步。`,
+    message: `保持现在的节奏，继续为“${goalTitle}”完成一件清晰、轻量的小事。`,
   };
 }
 
@@ -912,10 +919,10 @@ Page(withAppTheme({
     goalStatusText: "添加行动后开始记录",
     goalProgressPercent: 0,
     overviewStats: [] as OverviewStat[],
-    growthConclusionTitle: "本周成长结论",
+    growthConclusionTitle: "AI 教练 · 本周一句话",
     trendRange: "week" as TrendRange,
     trendRanges: buildTrendRanges("week"),
-    aiCoach: { periodLabel: "本周复盘", summary: "数据正在整理中。", suggestion: "完成更多行动后，这里会展示 AI 进度教练建议。" } as AiCoachView,
+    aiCoach: { periodLabel: "本周复盘", message: "先完成一次小行动，让成长记录从今天开始。" } as AiCoachView,
     barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, maxActions: 0, midActions: 0, barWidth: WEEK_BAR_WIDTH, insufficient: false } as BarChartData,
     trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, completionRate: 0, compareText: "", compareTone: "flat", bestInvestLabel: "-", adviceText: "", adviceTitle: "", adviceDetail: "", vsYesterdayText: "暂无数据", summaryText: "", insufficient: false } as TrendSummary,
     selectedTrendItem: null as TrendBar | null,

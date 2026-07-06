@@ -3,10 +3,11 @@ import { getTasksByGoal } from "../../services/manualTask";
 import { getProgressSummary } from "../../services/manualStats";
 import { getLocalUserProfile } from "../../services/profile";
 import { askProgressCoach, prepareProgressCoach } from "../../services/progressCoach";
+import { executeCoachAction } from "../../services/manualSync";
 import { getCurrentThemeId } from "../../services/theme";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
 import { ActionTask } from "../../types/manual";
-import { CoachRange, ProgressCoachChatMessage } from "../../types/progressCoach";
+import { CoachActionProposal, CoachRange, ProgressCoachChatMessage } from "../../types/progressCoach";
 
 interface ChatMessage extends ProgressCoachChatMessage {
   id: string;
@@ -18,6 +19,7 @@ interface ChatMessage extends ProgressCoachChatMessage {
   mode?: "direct" | "compact" | "detailed";
   showFull?: boolean;
   canExpand?: boolean;
+  actionProposal?: CoachActionProposal;
 }
 
 interface PeriodStats {
@@ -108,8 +110,12 @@ function bottleneck(stats: PeriodStats, streakDays: number): string {
 function errorMessage(rawError: unknown): string {
   const error = rawError as Error & { code?: string };
   if (error?.code === "FUNCTION_NOT_FOUND") return "AI 云函数尚未上传，请先部署服务。";
+  if (error?.code === "COACH_RUNTIME_MISMATCH") return "云端 AI 教练版本较旧，请重新上传 generatePlan 云函数。";
   if (error?.code === "AI_COACH_INVALID") return "这次回答没有通过数据校验，请再试一次。";
   if (error?.code === "AI_COACH_FAILED") return "AI 服务尚未配置或暂时不可用。";
+  if (error?.code === "MANUAL_STORAGE_UNAVAILABLE") return "行动数据存储尚未初始化，请重新进入页面后再试。";
+  if (error?.code === "COACH_ACTION_CONFLICT") return error.message || "行动数据已变化，请重新发送指令。";
+  if (error?.code === "COACH_ACTION_EXPIRED") return "确认操作已过期，请重新发送指令。";
   if (error?.code === "FUNCTION_TIMEOUT" || error?.code === "NETWORK_ERROR") return "连接有点慢，请稍后重试。";
   return error?.message || "暂时没有生成回答，请稍后重试。";
 }
@@ -143,6 +149,7 @@ Page({
     chatError: "",
     failedQuestion: "",
     scrollIntoView: "",
+    executingProposalId: "",
   },
 
   onLoad(query: Record<string, string>) {
@@ -229,8 +236,9 @@ Page({
       wx.showToast({ title: "先写下你想问的问题", icon: "none" });
       return;
     }
-    const history = this.data.messages.map((item) => ({ role: item.role, content: item.content })).slice(-12);
-    const userMessage: ChatMessage = { id: `user_${Date.now()}`, role: "user", content: question };
+    const history = this.data.messages.map((item) => ({ role: item.role, content: item.content, sentAt: item.sentAt })).slice(-12);
+    const messageSentAt = new Date().toISOString();
+    const userMessage: ChatMessage = { id: `user_${Date.now()}`, role: "user", content: question, sentAt: messageSentAt };
     this.setData({
       messages: this.data.messages.concat(userMessage),
       question: "",
@@ -240,7 +248,7 @@ Page({
       scrollIntoView: userMessage.id,
     });
     try {
-      const result = await askProgressCoach(this.data.scope, this.data.goalId || undefined, question, history);
+      const result = await askProgressCoach(this.data.scope, this.data.goalId || undefined, question, history, getTodayBusinessDate(), messageSentAt);
       const mode = result.mode || "direct";
       const assistantMessage: ChatMessage = {
         id: `assistant_${Date.now()}`,
@@ -254,6 +262,7 @@ Page({
         mode,
         showFull: false,
         canExpand: mode !== "direct" && result.answer.length > 180,
+        actionProposal: result.actionProposal,
       };
       this.setData({ messages: this.data.messages.concat(assistantMessage), asking: false, scrollIntoView: assistantMessage.id });
     } catch (error) {
@@ -267,4 +276,24 @@ Page({
     const messages = this.data.messages.filter((item) => !(item.role === "user" && item.content === failedQuestion && item === this.data.messages[this.data.messages.length - 1]));
     this.setData({ messages, question: failedQuestion, failedQuestion: "", chatError: "" }, () => this.sendQuestion());
   },
+
+  async confirmCoachAction(event: { currentTarget: { dataset: { proposalId?: string } } }) {
+    const proposalId = String(event.currentTarget.dataset.proposalId || "");
+    if (!proposalId || this.data.executingProposalId) return;
+    this.setData({ executingProposalId: proposalId });
+    try {
+      await executeCoachAction(proposalId);
+      this.setData({
+        executingProposalId: "",
+        messages: this.data.messages.map((item) => item.actionProposal?.id === proposalId
+          ? { ...item, actionProposal: { ...item.actionProposal, status: "executed" as const } }
+          : item),
+      }, () => this.loadLocalOverview());
+      wx.showToast({ title: "已同步到今日行动", icon: "success" });
+    } catch (error) {
+      this.setData({ executingProposalId: "", chatError: errorMessage(error) });
+    }
+  },
+
+  goToday() { wx.switchTab({ url: "/pages/index/index" }); },
 });

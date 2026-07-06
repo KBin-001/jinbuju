@@ -37,29 +37,35 @@
   <view class="profile-content">
     <view class="profile-card growth-card">
       <view class="card-heading">
-        <text class="card-heading__title">成长概览</text>
+        <text class="card-heading__title">我的成长</text>
         <view class="card-heading__link" bindtap="viewAllStats">查看全部 ›</view>
       </view>
 
-      <view class="growth-visual">
-        <image class="growth-wave" src="/assets/profile/growth-wave.svg" mode="scaleToFill" />
-        <image class="growth-medal growth-medal--calendar" src="/assets/profile/medal-calendar.svg" mode="aspectFit" />
-        <image class="growth-medal growth-medal--check" src="/assets/profile/medal-check.svg" mode="aspectFit" />
-        <image class="growth-medal growth-medal--timer" src="/assets/profile/medal-timer.svg" mode="aspectFit" />
+      <view class="growth-summary">
+        <view class="growth-summary__mark">芽</view>
+        <view class="growth-summary__copy">
+          <view wx:if="{{stats.streakDays > 0}}" class="growth-summary__headline">
+            <text>已经连续行动</text>
+            <text class="growth-summary__days">{{stats.streakDays}}</text>
+            <text>天</text>
+          </view>
+          <view wx:else class="growth-summary__headline">从今天的一小步开始</view>
+          <text class="growth-summary__hint">每一次行动，都在让目标更靠近一点。</text>
+        </view>
       </view>
 
       <view class="growth-metrics">
         <view class="growth-metric">
-          <view class="growth-metric__value"><text class="growth-metric__number">{{stats.streakDays}}</text><text class="growth-metric__unit">天</text></view>
-          <text class="growth-metric__label">连续坚持</text>
+          <text class="growth-metric__label">进行中目标</text>
+          <view class="growth-metric__value"><text class="growth-metric__number">{{activeGoalCount}}</text><text class="growth-metric__unit">个</text></view>
         </view>
         <view class="growth-metric">
-          <view class="growth-metric__value"><text class="growth-metric__number">{{stats.completedActions}}</text><text class="growth-metric__unit">项</text></view>
           <text class="growth-metric__label">完成行动</text>
+          <view class="growth-metric__value"><text class="growth-metric__number">{{stats.completedActions}}</text><text class="growth-metric__unit">项</text></view>
         </view>
         <view class="growth-metric">
-          <view class="growth-metric__value"><text class="growth-metric__number">{{stats.totalMinutes}}</text><text class="growth-metric__unit">分钟</text></view>
           <text class="growth-metric__label">累计投入</text>
+          <view class="growth-metric__value"><text class="growth-metric__number">{{stats.totalMinutes}}</text><text class="growth-metric__unit">分钟</text></view>
         </view>
       </view>
     </view>

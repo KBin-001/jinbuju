@@ -1,4 +1,4 @@
-export type CoachRange = "week" | "month" | "overall";
+export type CoachRange = "day" | "week" | "month" | "overall";
 export type ProgressCoachDataLevel = "goal_only" | "sparse" | "rich";
 
 export interface CoachDailyMetric {
@@ -71,9 +71,39 @@ export interface ProgressCoachAnswer {
   insights?: string[];
   advice?: string;
   followUps?: string[];
+  actionProposal?: CoachActionProposal;
+}
+
+export type CoachActionRequiredField = "taskId" | "actualMinutes" | "title" | "estimatedMinutes" | "goalId";
+export type CoachActionType = "complete_task" | "create_task" | "needs_clarification";
+
+export interface CoachActionProposal {
+  id?: string;
+  type: CoachActionType;
+  status: "pending" | "needs_input" | "executed" | "failed";
+  summary?: string;
+  requiredFields?: CoachActionRequiredField[];
+  taskId?: string;
+  taskTitle?: string;
+  candidateTaskIds?: string[];
+  candidateTaskTitles?: string[];
+  actualMinutes?: number;
+  completedAt?: string;
+  title?: string;
+  estimatedMinutes?: number;
+  currentDate?: string;
+  expiresAt?: string;
+}
+
+export interface CoachActionResult {
+  proposalId: string;
+  type: "complete_task" | "create_task";
+  status: "executed";
+  task: import("./manual").ActionTask;
 }
 
 export interface ProgressCoachChatMessage {
   role: "user" | "assistant";
   content: string;
+  sentAt?: string;
 }

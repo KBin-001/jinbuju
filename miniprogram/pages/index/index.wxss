@@ -4798,16 +4798,13 @@
 }
 
 .today-page[data-theme] .reference-coach-subtitle {
-  display: -webkit-box;
-  overflow: hidden;
   margin-top: 20rpx;
   color: #365D50;
   font-size: 25rpx;
   font-weight: 600;
   line-height: 39rpx;
-  text-overflow: ellipsis;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .today-page[data-theme] .reference-coach-arrow {
@@ -6519,4 +6516,64 @@
 
 .today-page[data-theme] .calendar-day.is-today.is-outside:not(.is-selected) {
   color: #2B5E41;
+}
+
+/* Stats card optical alignment: equal columns, label baselines and value slots. */
+.today-page[data-theme] .stats-card {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  padding-right: 18rpx;
+  padding-left: 18rpx;
+}
+
+.today-page[data-theme] .stats-col,
+.today-page[data-theme] .stats-col--progress {
+  display: grid;
+  grid-template-rows: 34rpx 88rpx;
+  align-items: center;
+  justify-content: stretch;
+  justify-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  flex: none;
+}
+
+.today-page[data-theme] .stats-col-label {
+  align-self: start;
+  width: 100%;
+  height: 34rpx;
+  margin: 0;
+  line-height: 34rpx;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.today-page[data-theme] .stats-col-value {
+  display: flex;
+  align-items: baseline;
+  align-self: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.today-page[data-theme] .stats-col-unit {
+  display: inline-block;
+  line-height: 32rpx;
+}
+
+.today-page[data-theme] .stats-ring-wrap {
+  align-self: center;
+  justify-self: center;
+}
+
+.today-page[data-theme] .stats-col:not(:last-child)::after {
+  top: 4rpx;
+  height: 114rpx;
 }

@@ -3,9 +3,10 @@ const crypto = require("crypto");
 const { generateTextWithMetadata } = require("./ai");
 const { addBusinessDays, formatBusinessDate } = require("./date");
 const { stableId } = require("./repository");
+const { createCoachProposal } = require("./manual-sync");
 
 const db = cloud.database();
-const VALID_RANGES = new Set(["week", "month", "overall"]);
+const VALID_RANGES = new Set(["day", "week", "month", "overall"]);
 const VALID_GOAL_STATUSES = new Set(["active", "completed", "ended", "archived"]);
 const VALID_TASK_STATUSES = new Set(["pending", "completed", "partially_completed", "skipped", "rescheduled"]);
 const VALID_CATEGORIES = new Set(["cet", "teacher", "postgraduate", "civil_service", "ai_learning", "custom"]);
@@ -163,10 +164,12 @@ function normalizeSnapshot(event) {
     .filter(Boolean)
     .sort()
     .pop() || new Date().toISOString();
-  return { goalId, range, goal: goals[0], goals, tasks, checkins, sourceUpdatedAt };
+  const referenceDate = event && event.analysisDate ? requiredDate(event.analysisDate, "分析日期") : formatBusinessDate();
+  return { goalId, range, goal: goals[0], goals, tasks, checkins, sourceUpdatedAt, referenceDate };
 }
 
 function buildPeriod(range, today, snapshot) {
+  if (range === "day") return { startDate: today, endDate: today };
   if (range === "week") return { startDate: addBusinessDays(today, -6), endDate: today };
   if (range === "month") {
     const day = new Date(`${today}T00:00:00Z`).getUTCDay();
@@ -276,6 +279,7 @@ function buildCoachProfile(snapshot, metrics) {
 function analysisInput(snapshot, period, calculated) {
   return {
     scope: snapshot.range,
+    scopeInstruction: snapshot.range === "day" ? "只分析指定当天，不延伸为周、月或长期评价" : "按当前 scope 分析",
     dataLevel: getDataLevel(calculated.metrics),
     goals: snapshot.goals || [snapshot.goal],
     coachProfile: buildCoachProfile(snapshot, calculated.metrics),
@@ -304,7 +308,10 @@ function normalizeHistory(value) {
   if (value.length > 12) fail("PROGRESS_SNAPSHOT_INVALID", "对话上下文过长。");
   return value.map((item) => {
     if (!isPlainObject(item) || !["user", "assistant"].includes(item.role)) fail("PROGRESS_SNAPSHOT_INVALID", "对话上下文无效。");
-    return { role: item.role, content: requiredText(item.content, "对话内容", 1, 1000) };
+    const normalized = { role: item.role, content: requiredText(item.content, "对话内容", 1, 1000) };
+    const sentAt = optionalIsoDate(item.sentAt, "消息时间");
+    if (sentAt) normalized.sentAt = sentAt;
+    return normalized;
   });
 }
 
@@ -471,14 +478,15 @@ async function answerSnapshot(snapshot, question, today = formatBusinessDate(), 
 }
 
 async function saveAndReloadSnapshot(openid, snapshot) {
-  const id = stableId("progress_ai_snapshot", `${openid}:${snapshot.goalId}:${snapshot.range}`);
+  const dateKey = snapshot.range === "day" ? snapshot.referenceDate : "";
+  const storageKey = dateKey ? `${openid}:${snapshot.goalId}:${snapshot.range}:${dateKey}` : `${openid}:${snapshot.goalId}:${snapshot.range}`;
+  const id = stableId("progress_ai_snapshot", storageKey);
   const existing = await db.collection("progress_ai_snapshots").doc(id).get().catch(() => null);
-  const sourceHash = crypto.createHash("sha256").update(JSON.stringify({ goals: snapshot.goals, tasks: snapshot.tasks, checkins: snapshot.checkins })).digest("hex");
+  const sourceHash = crypto.createHash("sha256").update(JSON.stringify({ goals: snapshot.goals, tasks: snapshot.tasks, checkins: snapshot.checkins, referenceDate: snapshot.referenceDate })).digest("hex");
   if (existing && existing.data && existing.data._openid === openid && existing.data.sourceHash === sourceHash) {
     return { ...existing.data, unchanged: true };
   }
-  const today = formatBusinessDate();
-  const period = buildPeriod(snapshot.range, today, snapshot);
+  const period = buildPeriod(snapshot.range, snapshot.referenceDate || formatBusinessDate(), snapshot);
   await db.collection("progress_ai_snapshots").doc(id).set({
     data: {
       _openid: openid,
@@ -492,6 +500,7 @@ async function saveAndReloadSnapshot(openid, snapshot) {
       endDate: period.endDate,
       sourceUpdatedAt: snapshot.sourceUpdatedAt,
       sourceHash,
+      referenceDate: snapshot.referenceDate,
       createdAt: existing && existing.data && existing.data.createdAt || db.serverDate(),
       updatedAt: db.serverDate(),
     },
@@ -525,11 +534,105 @@ async function askProgressCoach(openid, event, generator = generateTextWithMetad
   const question = String(event && event.question || "").trim();
   if (!question || question.length > 120) fail("PROGRESS_SNAPSHOT_INVALID", "问题请控制在 1～120 个字。");
   const history = normalizeHistory(event && event.history);
-  const id = stableId("progress_ai_snapshot", `${openid}:${goalId}:${range}`);
+  const messageSentAt = optionalIsoDate(event && event.messageSentAt, "消息发送时间") || new Date().toISOString();
+  const sentAtMs = Date.parse(messageSentAt);
+  if (sentAtMs > Date.now() + 5000 || Math.abs(Date.now() - sentAtMs) > 5 * 60 * 1000) {
+    fail("PROGRESS_SNAPSHOT_INVALID", "消息发送时间无效，请重新发送。");
+  }
+  const analysisDate = range === "day" ? requiredDate(event && event.analysisDate, "分析日期") : "";
+  const storageKey = analysisDate ? `${openid}:${goalId}:${range}:${analysisDate}` : `${openid}:${goalId}:${range}`;
+  const id = stableId("progress_ai_snapshot", storageKey);
   const result = await db.collection("progress_ai_snapshots").doc(id).get().catch(() => null);
   const snapshot = result && result.data;
   if (!snapshot || snapshot._openid !== openid) fail("PROGRESS_CONTEXT_NOT_FOUND", "请先生成一次进度分析。");
-  return answerSnapshot(snapshot, question, formatBusinessDate(), generator, history);
+  const commandResult = await buildCoachCommand(openid, snapshot, question, history, messageSentAt, analysisDate || snapshot.referenceDate);
+  if (commandResult) return commandResult;
+  return answerSnapshot(snapshot, question, snapshot.referenceDate || formatBusinessDate(), generator, history);
+}
+
+function recentUserCommand(question, history) {
+  const previous = history.slice().reverse().find((item) => item.role === "user" && /(完成|做完|添加|增加|新增|安排|设定|设置|创建)/.test(item.content));
+  return { text: previous ? `${previous.content}；${question}` : question, commandSentAt: previous && previous.sentAt || "" };
+}
+
+function extractMinutes(text) {
+  const matches = Array.from(String(text).matchAll(/(\d{1,3})\s*(?:分钟|min)/gi));
+  return matches.length ? Number(matches[matches.length - 1][1]) : 0;
+}
+
+function taskCandidates(tasks, text) {
+  const normalized = String(text).replace(/[“”"'，,。.!！?？\s]/g, "");
+  return tasks.filter((task) => {
+    const title = String(task.title || "").replace(/\s/g, "");
+    const stem = title.replace(/练习|任务|一套|一组|完成/g, "");
+    return normalized.includes(title) || (stem.length >= 2 && normalized.includes(stem));
+  });
+}
+
+function clarification(answer, requiredFields, extra = {}) {
+  return {
+    answer,
+    mode: "direct",
+    evidenceTaskIds: extra.candidateTaskIds || [],
+    evidenceDates: extra.currentDate ? [extra.currentDate] : [],
+    actionProposal: { type: "needs_clarification", status: "needs_input", requiredFields, ...extra },
+  };
+}
+
+function resolveCommandDate(text, analysisDate) {
+  if (/后天/.test(text)) return addBusinessDays(analysisDate, 2);
+  if (/明天|明日/.test(text)) return addBusinessDays(analysisDate, 1);
+  if (/今天|今日/.test(text)) return analysisDate;
+  const explicit = String(text).match(/(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})日?/);
+  if (!explicit) return analysisDate;
+  const date = `${explicit[1]}-${String(explicit[2]).padStart(2, "0")}-${String(explicit[3]).padStart(2, "0")}`;
+  return requiredDate(date, "行动日期");
+}
+
+function extractCreateTaskTitle(text) {
+  const commandText = String(text).split("；")[0];
+  const titleMatch = commandText.match(/(?:添加|增加|新增|安排|设定|设置|创建)(?:一个|一项)?(?:任务|行动|计划)?[：:]?(.+?)(?=，|,|预计|大概|用时|\d+\s*(?:分钟|min)|$)/i);
+  return String(titleMatch && titleMatch[1] || "")
+    .replace(/^(?:今天|今日|明天|明日|后天)(?:上午|下午|晚上|早上)?(?:\d{1,2}(?::\d{1,2})?点?)?/, "")
+    .replace(/^(?:上午|下午|晚上|早上)?\d{1,2}(?::\d{1,2})?点?/, "")
+    .replace(/计划$/, "")
+    .trim()
+    .replace(/[“”"']/g, "");
+}
+
+async function buildCoachCommand(openid, snapshot, question, history, messageSentAt, analysisDate, proposalCreator = createCoachProposal) {
+  const command = recentUserCommand(question, history);
+  const text = command.text;
+  const minutes = extractMinutes(text);
+  const pendingTasks = snapshot.tasks.filter((task) => task.status === "pending" || task.status === "partially_completed");
+
+  if (/(完成了|已完成|做完了|做完|完成)/.test(text) && !/(完成率|完成情况|如何完成|怎么完成)/.test(text)) {
+    const candidates = taskCandidates(pendingTasks, text);
+    if (!candidates.length) return clarification("我没有找到对应的未完成行动，请告诉我更完整的任务名称。", ["taskId"], { candidateTaskIds: [] });
+    if (candidates.length > 1) return clarification("我找到了多项相似行动，请选择你刚刚完成的是哪一项。", ["taskId"], { candidateTaskIds: candidates.map((item) => item.id), candidateTaskTitles: candidates.map((item) => item.title) });
+    const task = candidates[0];
+    if (!minutes) return clarification(`已找到“${task.title}”。这次实际投入了多少分钟？`, ["actualMinutes"], { taskId: task.id, taskTitle: task.title, candidateTaskIds: [task.id], currentDate: task.currentDate });
+    if (minutes < 1 || minutes > 480) return clarification("实际投入时间需要在 1～480 分钟之间，请重新告诉我。", ["actualMinutes"], { taskId: task.id, taskTitle: task.title, candidateTaskIds: [task.id], currentDate: task.currentDate });
+    const proposal = await proposalCreator(openid, {
+      type: "complete_task", goalId: task.goalId, taskId: task.id, taskTitle: task.title,
+      actualMinutes: minutes, completedAt: command.commandSentAt || messageSentAt, currentDate: task.currentDate,
+      expectedUpdatedAt: task.updatedAt, messageSentAt,
+    });
+    return { answer: `我已整理好操作，请确认是否将“${task.title}”标记为已完成。`, mode: "direct", evidenceTaskIds: [task.id], evidenceDates: [task.currentDate], actionProposal: proposal };
+  }
+
+  if (/(添加|增加|新增|安排|设定|设置|创建)/.test(text) && /(任务|行动|计划|预计|分钟|今天|明天|后天)/.test(text)) {
+    const currentDate = resolveCommandDate(text, analysisDate);
+    const title = extractCreateTaskTitle(text);
+    if (!title || title.length < 2) return clarification("可以，请先告诉我需要添加的行动名称。", ["title"], { currentDate });
+    if (!minutes) return clarification(`“${title}”预计需要多少分钟？`, ["estimatedMinutes"], { title, currentDate });
+    if (minutes < 5 || minutes > 240) return clarification("预计时间需要在 5～240 分钟之间，请重新告诉我。", ["estimatedMinutes"], { title, currentDate });
+    const targetGoal = snapshot.goals.find((goal) => goal.status === "active" && (snapshot.goalId === "overall" || goal.id === snapshot.goalId)) || snapshot.goals.find((goal) => goal.status === "active");
+    if (!targetGoal) return clarification("当前没有可添加行动的进行中目标。", ["goalId"]);
+    const proposal = await proposalCreator(openid, { type: "create_task", goalId: targetGoal.id, title, estimatedMinutes: minutes, currentDate, messageSentAt });
+    return { answer: `我已生成“${title}”的新增行动，请确认后写入对应日期的行动列表。`, mode: "direct", evidenceTaskIds: [], evidenceDates: [currentDate], actionProposal: proposal };
+  }
+  return null;
 }
 
 module.exports = {
@@ -538,6 +641,7 @@ module.exports = {
   prepareProgressCoach,
   analyzeSnapshot,
   answerSnapshot,
+  buildCoachCommand,
   buildAnalysisPrompt,
   buildPeriod,
   buildQuestionPrompt,

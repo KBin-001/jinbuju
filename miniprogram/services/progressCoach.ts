@@ -1,6 +1,8 @@
 import { readManualStore } from "./manualStore";
 import { addDays, formatDate, getTodayBusinessDate } from "../utils/date";
 import { CoachRange, ProgressCoachAnalysis, ProgressCoachAnswer, ProgressCoachChatMessage } from "../types/progressCoach";
+import { syncManualData, verifyCoachRuntime } from "./manualSync";
+import { CloudRequestError, createCloudRequestId, logCloudRequest } from "../utils/cloudRequest";
 
 interface CloudFunctionResult<T> {
   success: boolean;
@@ -20,13 +22,17 @@ const preparedFingerprints = new Map<string, string>();
 const pendingPreparations = new Map<string, Promise<PrepareResult>>();
 
 function callProgressCoach<T>(data: Record<string, unknown>, timeoutMilliseconds = 30000): Promise<T> {
+  const action = String(data.action || "progressCoach");
+  const requestId = createCloudRequestId(action);
+  const startedAt = Date.now();
   return new Promise<{ result?: CloudFunctionResult<T> }>((resolve, reject) => {
     const timer = setTimeout(() => {
       const error = new Error("AI 服务请求超时，请稍后重试。") as Error & { code?: string };
       error.code = "FUNCTION_TIMEOUT";
+      (error as CloudRequestError).requestId = requestId;
       reject(error);
     }, timeoutMilliseconds);
-    wx.cloud.callFunction({ name: "generatePlan", data }).then(
+    wx.cloud.callFunction({ name: "generatePlan", data: { ...data, requestId } }).then(
       (response: any) => { clearTimeout(timer); resolve(response); },
       (error: unknown) => { clearTimeout(timer); reject(error); },
     );
@@ -35,11 +41,17 @@ function callProgressCoach<T>(data: Record<string, unknown>, timeoutMilliseconds
     if (!result || !result.success || result.data === undefined) {
       const error = new Error(result?.error?.message || "AI 服务暂时不可用，请稍后重试。") as Error & { code?: string };
       error.code = result?.error?.code || "INTERNAL_ERROR";
+      (error as CloudRequestError).requestId = requestId;
       throw error;
     }
+    logCloudRequest(action, requestId, startedAt);
     return result.data;
   }).catch((rawError: any) => {
-    if (rawError?.code && !String(rawError.message || "").includes("cloud.callFunction")) throw rawError;
+    if (rawError?.code && !String(rawError.message || "").includes("cloud.callFunction")) {
+      rawError.requestId = requestId;
+      logCloudRequest(action, requestId, startedAt, rawError);
+      throw rawError;
+    }
     const rawMessage = String(rawError?.errMsg || rawError?.message || "");
     const error = new Error("云端 AI 服务暂时不可用，请稍后重试。") as Error & { code?: string };
     if (rawMessage.includes("FUNCTION_NOT_FOUND") || rawMessage.includes("FunctionName")) {
@@ -54,12 +66,15 @@ function callProgressCoach<T>(data: Record<string, unknown>, timeoutMilliseconds
     } else {
       error.code = "NETWORK_ERROR";
     }
+    (error as CloudRequestError).requestId = requestId;
+    logCloudRequest(action, requestId, startedAt, error);
     throw error;
   });
 }
 
 function rangeStart(scope: CoachRange, today: string): string | undefined {
   const todayDate = new Date(`${today}T00:00:00`);
+  if (scope === "day") return today;
   if (scope === "week") return formatDate(addDays(todayDate, -6));
   if (scope === "month") {
     const day = todayDate.getDay();
@@ -69,16 +84,15 @@ function rangeStart(scope: CoachRange, today: string): string | undefined {
   return undefined;
 }
 
-function buildSnapshot(scope: CoachRange, requestedGoalId?: string) {
+function buildSnapshot(scope: CoachRange, requestedGoalId?: string, analysisDate = getTodayBusinessDate()) {
   const store = readManualStore();
   const goals = scope === "overall"
     ? store.goals.filter((goal) => goal.status === "active")
     : store.goals.filter((goal) => goal.id === requestedGoalId && goal.status === "active");
   if (!goals.length) throw new Error("当前没有可以分析的目标。");
   const goalIds = new Set(goals.map((goal) => goal.id));
-  const today = getTodayBusinessDate();
-  const start = rangeStart(scope, today);
-  const inRange = (date: string) => !start || (date >= start && date <= today);
+  const start = rangeStart(scope, analysisDate);
+  const inRange = (date: string) => !start || (date >= start && date <= analysisDate);
   const tasks = store.tasks.filter((task) => goalIds.has(task.goalId) && inRange(task.currentDate));
   const checkins = store.checkins.filter((item) => goalIds.has(item.goalId) && inRange(item.businessDate));
   const normalizedGoals = goals.map((goal) => ({
@@ -122,9 +136,13 @@ function snapshotFingerprint(snapshot: ReturnType<typeof buildSnapshot>): string
   return `${goalPart}#${taskPart}#${checkinPart}`;
 }
 
-export function prepareProgressCoach(scope: CoachRange, goalId?: string, force = false): Promise<PrepareResult> {
-  const snapshot = buildSnapshot(scope, goalId);
-  const key = `${scope}:${scope === "overall" ? "overall" : goalId || ""}`;
+export function prepareProgressCoach(scope: CoachRange, goalId?: string, force = false, analysisDate = getTodayBusinessDate()): Promise<PrepareResult> {
+  return verifyCoachRuntime().then(() => syncManualData()).then(() => prepareProgressCoachSnapshot(scope, goalId, force, analysisDate));
+}
+
+function prepareProgressCoachSnapshot(scope: CoachRange, goalId?: string, force = false, analysisDate = getTodayBusinessDate()): Promise<PrepareResult> {
+  const snapshot = buildSnapshot(scope, goalId, analysisDate);
+  const key = `${scope}:${scope === "overall" ? "overall" : goalId || ""}:${scope === "day" ? analysisDate : ""}`;
   const fingerprint = snapshotFingerprint(snapshot);
   if (!force && preparedFingerprints.get(key) === fingerprint) {
     return Promise.resolve({ prepared: true, unchanged: true, scope, goalId: scope === "overall" ? "overall" : goalId || "", sourceUpdatedAt: "" });
@@ -135,6 +153,7 @@ export function prepareProgressCoach(scope: CoachRange, goalId?: string, force =
     action: "prepareProgressCoach",
     scope,
     goalId: scope === "overall" ? undefined : goalId,
+    analysisDate,
     snapshot,
   }, 12000).then((result) => {
     preparedFingerprints.set(key, fingerprint);
@@ -158,13 +177,17 @@ export async function askProgressCoach(
   goalId: string | undefined,
   question: string,
   history: ProgressCoachChatMessage[],
+  analysisDate = getTodayBusinessDate(),
+  messageSentAt = new Date().toISOString(),
 ): Promise<ProgressCoachAnswer> {
-  await prepareProgressCoach(scope, goalId);
+  await prepareProgressCoach(scope, goalId, false, analysisDate);
   return callProgressCoach<ProgressCoachAnswer>({
     action: "askProgressCoach",
     scope,
     goalId: scope === "overall" ? undefined : goalId,
     question: question.trim(),
     history: history.slice(-12),
+    analysisDate,
+    messageSentAt,
   });
 }

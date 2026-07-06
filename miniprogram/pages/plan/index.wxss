@@ -85,7 +85,7 @@
 .conclusion-content { min-width: 0; flex: 1; }
 .conclusion-title { display: flex; align-items: center; color: #285E42; font-size: 30rpx; line-height: 40rpx; font-weight: 800; }
 .conclusion-title text { margin-right: 10rpx; color: #2E7050; font-size: 30rpx; }
-.conclusion-copy { margin-top: 15rpx; color: #3E4A45; font-size: 23rpx; line-height: 39rpx; }
+.conclusion-copy { margin-top: 15rpx; color: #3E4A45; font-size: 23rpx; line-height: 39rpx; white-space: normal; overflow-wrap: break-word; }
 .conclusion-action { display: flex; align-items: center; justify-content: center; width: 190rpx; min-height: 54rpx; margin: 18rpx 0 0 auto; border-radius: 27rpx; background: #356859; color: #FFFFFF; font-size: 19rpx; font-weight: 700; box-shadow: 0 8rpx 18rpx rgba(53,104,89,0.15); }
 .conclusion-action text { margin-left: 7rpx; font-size: 28rpx; line-height: 24rpx; }
 

@@ -1,7 +1,23 @@
-import { buildDailyCoachReply, DailyCoachAnalysis, getDailyCoachAnalysis } from "../../services/dailyCoach";
+import { DailyCoachAnalysis, getDailyCoachAnalysis } from "../../services/dailyCoach";
+import { askProgressCoach, prepareProgressCoach } from "../../services/progressCoach";
+import { executeCoachAction } from "../../services/manualSync";
 import { getLocalUserProfile } from "../../services/profile";
 import { getCurrentThemeId } from "../../services/theme";
 import { getTodayBusinessDate } from "../../utils/date";
+import { CoachActionProposal, ProgressCoachChatMessage } from "../../types/progressCoach";
+
+interface DailyChatMessage extends ProgressCoachChatMessage {
+  id: string;
+  mode: "direct" | "compact" | "detailed";
+  summary: string;
+  advice: string;
+  insights: string[];
+  metrics: Array<{ label: string; value: string }>;
+  followUps: string[];
+  showFull: boolean;
+  canExpand: boolean;
+  actionProposal?: CoachActionProposal;
+}
 
 const EMPTY_ANALYSIS: DailyCoachAnalysis = {
   date: "",
@@ -30,14 +46,16 @@ function getTopInset(): number {
   }
 }
 
-function compactDailyReply(raw: string): { summary: string; suggestion: string } {
-  const normalized = String(raw || "").replace(/\s+/g, " ").trim();
-  const sentences = normalized.match(/[^。！？!?]+[。！？!?]?/g)?.map((item) => item.trim()).filter(Boolean) || [];
-  const clauses = (sentences[0] || "").split(/[，,；;]/).map((item) => item.trim()).filter(Boolean);
-  return {
-    summary: clauses.slice(0, 2).join("，") || "今天的行动情况已经整理好了。",
-    suggestion: sentences[1] || clauses[2] || "先完成最容易推进的一项，保持轻量节奏。",
-  };
+function aiErrorMessage(rawError: unknown): string {
+  const error = rawError as Error & { code?: string };
+  if (error?.code === "FUNCTION_NOT_FOUND") return "AI 云函数尚未上传，请先部署服务。";
+  if (error?.code === "COACH_RUNTIME_MISMATCH") return "云端 AI 教练版本较旧，请重新上传 generatePlan 云函数。";
+  if (error?.code === "AI_COACH_INVALID") return "这次回答没有通过数据校验，请再试一次。";
+  if (error?.code === "MANUAL_STORAGE_UNAVAILABLE") return "行动数据存储尚未初始化，请重新进入页面后再试。";
+  if (error?.code === "COACH_ACTION_CONFLICT") return error.message || "行动数据已变化，请重新发送指令。";
+  if (error?.code === "COACH_ACTION_EXPIRED") return "确认操作已过期，请重新发送指令。";
+  if (error?.code === "FUNCTION_TIMEOUT" || error?.code === "NETWORK_ERROR") return "连接有点慢，请稍后重试。";
+  return error?.message || "AI 教练暂时没有生成回答，请稍后再试。";
 }
 
 Page({
@@ -51,13 +69,13 @@ Page({
     requestedGoalId: "",
     analysis: EMPTY_ANALYSIS,
     question: "",
-    coachReply: "",
-    coachReplySummary: "",
-    coachReplySuggestion: "",
-    coachReplyInsights: [] as string[],
-    showFullReply: false,
     replyQuestions: ["查看今日卡点", "给我明日建议", "解释今日完成率"],
+    messages: [] as DailyChatMessage[],
+    asking: false,
+    chatError: "",
+    failedQuestion: "",
     scrollIntoView: "",
+    executingProposalId: "",
   },
 
   onLoad(query: Record<string, string>) {
@@ -76,7 +94,11 @@ Page({
   loadAnalysis() {
     try {
       const analysis = getDailyCoachAnalysis(this.data.requestedDate || getTodayBusinessDate(), this.data.requestedGoalId);
-      this.setData({ status: "ready", errorMessage: "", analysis });
+      this.setData({ status: "ready", errorMessage: "", analysis, asking: false }, () => {
+        if (!analysis.goalId) return;
+        prepareProgressCoach("day", analysis.goalId, false, analysis.date)
+          .catch((error) => this.setData({ chatError: aiErrorMessage(error) }));
+      });
     } catch (error) {
       this.setData({
         status: "error",
@@ -95,12 +117,54 @@ Page({
 
   chooseSuggestion(event: { currentTarget: { dataset: { suggestion?: string } } }) {
     const question = String(event.currentTarget.dataset.suggestion || "").slice(0, 160);
-    if (!question) return;
-    this.setData({ question }, () => this.sendQuestion());
+    if (!question || this.data.asking) return;
+    this.askQuestion(question, true);
   },
 
-  toggleFullReply() {
-    this.setData({ showFullReply: !this.data.showFullReply });
+  toggleFullReply(event: { currentTarget: { dataset: { id?: string } } }) {
+    const id = String(event.currentTarget.dataset.id || "");
+    this.setData({ messages: this.data.messages.map((item) => item.id === id ? { ...item, showFull: !item.showFull } : item) });
+  },
+
+  async askQuestion(question: string, showUser: boolean) {
+    if (this.data.asking || !question) return;
+    if (!this.data.analysis.goalId) {
+      wx.showToast({ title: "请先创建目标", icon: "none" });
+      return;
+    }
+    const history = this.data.messages.map((item) => ({ role: item.role, content: item.content, sentAt: item.sentAt })).slice(-12);
+    const now = Date.now();
+    const userMessage: DailyChatMessage = {
+      id: `daily_user_${now}`, role: "user", content: question, sentAt: new Date(now).toISOString(), mode: "direct", summary: "", advice: "", insights: [], metrics: [], followUps: [], showFull: false, canExpand: false,
+    };
+    const nextMessages = showUser ? this.data.messages.concat(userMessage) : this.data.messages;
+    this.setData({ messages: nextMessages, asking: true, chatError: "", failedQuestion: "", question: "", scrollIntoView: showUser ? userMessage.id : "coach-thinking" });
+    try {
+      const result = await askProgressCoach("day", this.data.analysis.goalId, question, history, this.data.analysis.date, new Date(now).toISOString());
+      const mode = result.mode || "direct";
+      const fallbackMetrics = [
+        { label: "完成任务", value: `${this.data.analysis.completedCount}/${this.data.analysis.totalCount}` },
+        { label: "实际投入", value: `${this.data.analysis.actualMinutes}min` },
+        { label: "完成率", value: `${this.data.analysis.completionPercent}%` },
+      ];
+      const assistantMessage: DailyChatMessage = {
+        id: `daily_ai_${Date.now()}`,
+        role: "assistant",
+        content: result.answer,
+        mode,
+        summary: mode === "direct" ? "" : result.summary || result.answer,
+        advice: mode === "direct" ? "" : result.advice || "",
+        insights: mode === "direct" ? [] : result.insights || [],
+        metrics: mode === "direct" ? [] : (result.stats?.length ? result.stats.map((item) => ({ label: item.label, value: item.value })) : fallbackMetrics),
+        followUps: result.followUps || [],
+        showFull: false,
+        canExpand: mode !== "direct" && result.answer.length > 180,
+        actionProposal: result.actionProposal,
+      };
+      this.setData({ messages: this.data.messages.concat(assistantMessage), asking: false, scrollIntoView: assistantMessage.id });
+    } catch (error) {
+      this.setData({ asking: false, chatError: aiErrorMessage(error), failedQuestion: question, scrollIntoView: "daily-chat-error" });
+    }
   },
 
   sendQuestion() {
@@ -109,18 +173,35 @@ Page({
       wx.showToast({ title: "先写下今天遇到的问题", icon: "none" });
       return;
     }
-    const coachReply = buildDailyCoachReply(question, this.data.analysis);
-    const compact = compactDailyReply(coachReply);
-    this.setData({
-      coachReply,
-      coachReplySummary: compact.summary,
-      coachReplySuggestion: compact.suggestion,
-      coachReplyInsights: [this.data.analysis.judgement]
-        .concat(this.data.analysis.bottlenecks.slice(0, 1))
-        .filter(Boolean),
-      showFullReply: false,
-      question: "",
-      scrollIntoView: "coach-reply",
-    });
+    this.askQuestion(question, true);
+  },
+
+  retryLastQuestion() {
+    if (!this.data.failedQuestion || this.data.asking) return;
+    this.askQuestion(this.data.failedQuestion, false);
+  },
+
+  async confirmCoachAction(event: { currentTarget: { dataset: { proposalId?: string } } }) {
+    const proposalId = String(event.currentTarget.dataset.proposalId || "");
+    if (!proposalId || this.data.executingProposalId) return;
+    this.setData({ executingProposalId: proposalId });
+    try {
+      await executeCoachAction(proposalId);
+      const analysis = getDailyCoachAnalysis(this.data.requestedDate || getTodayBusinessDate(), this.data.requestedGoalId);
+      this.setData({
+        analysis,
+        executingProposalId: "",
+        messages: this.data.messages.map((item) => item.actionProposal?.id === proposalId
+          ? { ...item, actionProposal: { ...item.actionProposal, status: "executed" as const } }
+          : item),
+      });
+      wx.showToast({ title: "已同步到今日行动", icon: "success" });
+    } catch (error) {
+      this.setData({ executingProposalId: "", chatError: aiErrorMessage(error) });
+    }
+  },
+
+  goToday() {
+    wx.switchTab({ url: "/pages/index/index" });
   },
 });

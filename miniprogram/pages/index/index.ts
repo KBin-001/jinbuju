@@ -3,6 +3,7 @@ import { getProgressSummary } from "../../services/manualStats";
 import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTaskStatus } from "../../services/manualTask";
 import { getLocalUserProfile } from "../../services/profile";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
+import { syncManualData } from "../../services/manualSync";
 import { ActionIssueReason, ActionTask, Goal, TodaySummary } from "../../types/manual";
 import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
@@ -60,15 +61,15 @@ function dailyNudge(tasks: ViewTask[], selectedDate: string, today: string): str
   const remaining = tasks.filter((task) => task.status === "pending" || task.status === "partially_completed");
   if (remaining.length > 0) {
     const nextTask = remaining[0];
-    return `${dayLabel}还有 ${remaining.length} 项待推进，建议先完成“${nextTask.displayTitle}”的第一步，不追求做多，只完成一次明确推进。`;
+    return `先从“${nextTask.displayTitle}”开始，专注 10 分钟，就是${dayLabel}扎实的一步。`;
   }
   if (tasks.length > 0 && tasks.every((task) => task.status === "completed")) {
-    return `${dayLabel}的基础行动已完成，可以简单复盘 2 分钟，记录一个有效做法，为明天减少阻力。`;
+    return `${dayLabel}已经稳稳推进了，花 2 分钟记下最有效的做法吧。`;
   }
   if (tasks.length > 0) {
-    return `${dayLabel}没有待推进事项，可以用 2 分钟确认跳过或顺延的原因，避免同一阻力再次出现。`;
+    return `${dayLabel}先照顾好自己的节奏，下一次从一件最小的事重新开始。`;
   }
-  return `${dayLabel}还没有行动记录。先添加一项可以在 15～30 分钟内完成的具体行动。`;
+  return `先添加一件 15～30 分钟能完成的小事，让${dayLabel}轻轻开个头。`;
 }
 function buildWeekDays(today: string, selectedDate: string, weekOffset: number): { weekTitle: string; weekDays: WeekDayView[] } {
   const selected = new Date(`${selectedDate}T00:00:00`);
@@ -179,7 +180,7 @@ Page(withAppTheme({
     todayMoodTone: "empty",
     todayMoodMark: "启",
     streakLabel: "从今天开始",
-    dailyNudge: "今天还没有行动记录。先添加一项可以在 15～30 分钟内完成的具体行动。",
+    dailyNudge: "先添加一件 15～30 分钟能完成的小事，让今天轻轻开个头。",
     weekday: "",
     weekdayShort: "",
     selectedDate: "",
@@ -242,7 +243,7 @@ Page(withAppTheme({
   },
   onShow() {
     this.setData({ appTheme: getCurrentThemeId() });
-    this.load();
+    syncManualData().catch(() => undefined).then(() => this.load());
   },
   load() {
     this.setData({ status: "loading", errorMessage: "" });

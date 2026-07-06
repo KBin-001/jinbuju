@@ -87,7 +87,7 @@
         <view class="reference-coach-copy">
           <view class="reference-coach-title">
             <view class="reference-coach-mark">✦</view>
-            <text>AI 建议</text>
+            <text>AI 教练</text>
             <text class="reference-coach-arrow">›</text>
           </view>
           <view class="reference-coach-subtitle">{{dailyNudge}}</view>

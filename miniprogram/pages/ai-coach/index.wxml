@@ -70,7 +70,18 @@
     <view wx:for="{{messages}}" wx:key="id" id="{{item.id}}" class="{{item.role === 'assistant' ? 'coach-bot-row coach-followup-row' : 'coach-user-row coach-followup-row'}}">
       <image wx:if="{{item.role === 'assistant'}}" class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
       <view wx:if="{{item.role === 'user'}}" class="coach-bubble coach-user-bubble">{{item.content}}</view>
-      <view wx:elif="{{item.mode === 'direct'}}" class="coach-bubble coach-bot-bubble coach-direct-reply">{{item.content}}</view>
+      <view wx:elif="{{item.mode === 'direct'}}" class="coach-direct-wrap">
+        <view class="coach-bubble coach-bot-bubble coach-direct-reply">{{item.content}}</view>
+        <view wx:if="{{item.actionProposal && item.actionProposal.candidateTaskTitles && item.actionProposal.candidateTaskTitles.length}}" class="coach-action-candidates">
+          <view wx:for="{{item.actionProposal.candidateTaskTitles}}" wx:key="*this" class="coach-action-candidate" data-question="我完成的是{{item}}" bindtap="sendGuidedQuestion">{{item}}</view>
+        </view>
+        <view wx:if="{{item.actionProposal && item.actionProposal.id}}" class="coach-action-proposal">
+          <view class="coach-action-proposal-label">待确认操作</view>
+          <view class="coach-action-proposal-summary">{{item.actionProposal.summary}}</view>
+          <view wx:if="{{item.actionProposal.status === 'pending'}}" class="coach-action-proposal-actions"><view class="coach-action-confirm" data-proposal-id="{{item.actionProposal.id}}" bindtap="confirmCoachAction">{{executingProposalId === item.actionProposal.id ? '正在执行…' : '确认执行'}}</view></view>
+          <view wx:else class="coach-action-success" bindtap="goToday">已完成并同步 · 返回今日页 ›</view>
+        </view>
+      </view>
       <view wx:else class="coach-compact-reply">
         <view wx:if="{{item.summary}}" class="coach-compact-summary">{{item.summary}}</view>
         <view wx:if="{{item.metrics.length}}" class="coach-compact-metrics">

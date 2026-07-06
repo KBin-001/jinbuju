@@ -1,4 +1,4 @@
-import { endGoal, getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } from "../../services/manualGoal";
+import { endGoal, getActiveGoal, getActiveGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { getLocalUserProfile, saveLocalUserProfile } from "../../services/profile";
 import { prepareProgressCoach } from "../../services/progressCoach";
@@ -287,9 +287,9 @@ Page({
     });
   },
 
-  /** 管理目标 — 跳转到目标创建 */
+  /** 管理目标 — 进入目标总览 */
   manageGoals() {
-    wx.navigateTo({ url: "/pages/goal-create/index" });
+    wx.navigateTo({ url: "/pages/goal-manage/index" });
   },
 
   /** 查看全部统计 — 跳转到进度 Tab */
@@ -305,9 +305,7 @@ Page({
       return;
     }
     if (key === "history") {
-      const archivedGoal = getArchivedGoals()[0];
-      if (archivedGoal) wx.navigateTo({ url: `/pages/goal-review/index?id=${archivedGoal.id}` });
-      else wx.showToast({ title: "暂无历史目标", icon: "none" });
+      wx.navigateTo({ url: "/pages/history/index" });
       return;
     }
     if (key === "badges") {

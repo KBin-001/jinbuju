@@ -51,8 +51,8 @@
       <image class="conclusion-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFit" />
       <view class="conclusion-content">
         <view class="conclusion-title"><text>✦</text>{{growthConclusionTitle}}</view>
-        <view class="conclusion-copy">{{aiCoach.summary}} {{aiCoach.suggestion}}</view>
-        <view class="conclusion-action" catchtap="openAiCoach">查看详细分析 <text>›</text></view>
+        <view class="conclusion-copy">{{aiCoach.message}}</view>
+        <view class="conclusion-action" catchtap="openAiCoach">和教练聊聊 <text>›</text></view>
       </view>
     </view>
 

@@ -4,6 +4,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const {
   analyzeSnapshot,
   answerSnapshot,
+  buildCoachCommand,
   buildPeriod,
   calculateMetrics,
   normalizeHistory,
@@ -195,6 +196,25 @@ async function run() {
   assert.match(directAnswer.answer, /听力练习/);
   assert.strictEqual(directAnswer.stats, undefined);
 
+  let dayPrompt = "";
+  const dayAnswer = await answerSnapshot(snapshot("英语四六级", [englishTasks[2]], "day"), "我今天最需要调整什么？", "2026-06-30", async (prompt) => {
+    dayPrompt = prompt;
+    return modelResult({
+      answer: "今天已经完成整理错题，实际投入20分钟。当前更适合记录有效做法，不需要临时增加任务。",
+      mode: "compact",
+      summary: "今天的整理行动已经完成",
+      statKeys: ["completedActions", "totalMinutes", "completionRate"],
+      insights: ["整理错题已完成"],
+      advice: "记录一次顺利完成的原因。",
+      followUps: ["如何记录原因", "明天怎么开始"],
+      evidenceTaskIds: ["task_errors"],
+      evidenceDates: ["2026-06-30"],
+    });
+  });
+  assert.match(dayPrompt, /只分析指定当天/);
+  assert.strictEqual(dayAnswer.stats[1].value, "20min");
+  assert.deepStrictEqual(buildPeriod("day", "2026-06-30", snapshot("英语四六级", englishTasks, "day")), { startDate: "2026-06-30", endDate: "2026-06-30" });
+
   const noRecordAnswer = await answerSnapshot(snapshot("英语四六级", englishTasks), "6月27日做了什么？", "2026-06-30", async () => modelResult({
     answer: "6月27日没有行动记录，因此目前无法判断当天做了什么。",
     mode: "direct",
@@ -281,6 +301,44 @@ async function run() {
   assert.strictEqual(metrics.totalTasks, 3);
   assert.strictEqual(metrics.activeDays, 2);
   assert.strictEqual(metrics.actualMinutes, 75);
+
+  const commandSnapshot = {
+    ...snapshot("英语四六级", [task("task_listening", "听力练习", "2026-06-30", "pending")], "day"),
+    goals: [snapshot("英语四六级", []).goal],
+    referenceDate: "2026-06-30",
+  };
+  const missingMinutes = await buildCoachCommand("openid_test", commandSnapshot, "我已经完成了听力练习", [], "2026-06-30T08:30:00.000Z", "2026-06-30", async () => { throw new Error("不应创建 proposal"); });
+  assert.strictEqual(missingMinutes.actionProposal.type, "needs_clarification");
+  assert.deepStrictEqual(missingMinutes.actionProposal.requiredFields, ["actualMinutes"]);
+
+  let completionPayload;
+  const completion = await buildCoachCommand("openid_test", commandSnapshot, "35分钟", [{ role: "user", content: "我已经完成了听力练习", sentAt: "2026-06-30T08:30:00.000Z" }], "2026-06-30T08:35:00.000Z", "2026-06-30", async (_openid, payload) => {
+    completionPayload = payload;
+    return { id: "proposal_complete", type: payload.type, status: "pending", summary: "确认完成" };
+  });
+  assert.strictEqual(completion.actionProposal.id, "proposal_complete");
+  assert.strictEqual(completionPayload.taskId, "task_listening");
+  assert.strictEqual(completionPayload.actualMinutes, 35);
+  assert.strictEqual(completionPayload.completedAt, "2026-06-30T08:30:00.000Z");
+
+  let createPayload;
+  const created = await buildCoachCommand("openid_test", commandSnapshot, "今天添加整理错题，预计30分钟", [], "2026-06-30T09:00:00.000Z", "2026-06-30", async (_openid, payload) => {
+    createPayload = payload;
+    return { id: "proposal_create", type: payload.type, status: "pending", summary: "确认新增" };
+  });
+  assert.strictEqual(created.actionProposal.id, "proposal_create");
+  assert.strictEqual(createPayload.title, "整理错题");
+  assert.strictEqual(createPayload.estimatedMinutes, 30);
+
+  let tomorrowPayload;
+  const tomorrowTask = await buildCoachCommand("openid_test", commandSnapshot, "明天8点设定背单词计划30分钟", [], "2026-06-30T09:05:00.000Z", "2026-06-30", async (_openid, payload) => {
+    tomorrowPayload = payload;
+    return { id: "proposal_tomorrow", type: payload.type, status: "pending", summary: "确认新增" };
+  });
+  assert.strictEqual(tomorrowTask.actionProposal.id, "proposal_tomorrow");
+  assert.strictEqual(tomorrowPayload.title, "背单词");
+  assert.strictEqual(tomorrowPayload.estimatedMinutes, 30);
+  assert.strictEqual(tomorrowPayload.currentDate, "2026-07-01");
 
   console.log("progress coach tests passed");
 }

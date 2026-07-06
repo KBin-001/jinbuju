@@ -66,6 +66,8 @@ const {
   askProgressCoach,
   prepareProgressCoach,
 } = require("./progress-coach");
+const { executeCoachAction, syncManualData } = require("./manual-sync");
+const COACH_RUNTIME_VERSION = "coach-actions-2026-07-06.2";
 
 function success(data) {
   return { success: true, data };
@@ -87,6 +89,12 @@ function failure(error) {
     "PLAN_WINDOW_ALREADY_GENERATED",
     "PLAN_WINDOW_INVALID",
     "MANUAL_ACTION_INVALID",
+    "MANUAL_SYNC_INVALID",
+    "MANUAL_STORAGE_UNAVAILABLE",
+    "COACH_ACTION_INVALID",
+    "COACH_ACTION_NOT_FOUND",
+    "COACH_ACTION_EXPIRED",
+    "COACH_ACTION_CONFLICT",
     "ACTION_ROLLOVER_FAILED",
     "TASK_NOT_FOUND",
     "CHECKIN_ALREADY_EXISTS",
@@ -419,12 +427,21 @@ async function handleGetCheckinStatus(openid) {
 }
 
 exports.main = async (event) => {
+  const action = String(event && event.action || "");
+  const requestId = String(event && event.requestId || "").slice(0, 100);
+  const requestStartedAt = Date.now();
+  console.info("generatePlan request", { action, requestId });
   try {
     const context = cloud.getWXContext();
     if (!context.OPENID) {
       const error = new Error("Missing OPENID");
       error.code = "UNAUTHORIZED";
       throw error;
+    }
+
+    if (action === "getCoachRuntimeInfo") {
+      console.info("generatePlan success", { action, requestId, durationMs: Date.now() - requestStartedAt });
+      return success({ version: COACH_RUNTIME_VERSION });
     }
 
     await ensureCollections();
@@ -547,13 +564,29 @@ exports.main = async (event) => {
       return success(await submitStageReview(context.OPENID, event));
     }
     if (event.action === "analyzeProgress") {
-      return success(await analyzeProgress(context.OPENID, event));
+      const data = await analyzeProgress(context.OPENID, event);
+      console.info("generatePlan success", { action, requestId, durationMs: Date.now() - requestStartedAt });
+      return success(data);
     }
     if (event.action === "prepareProgressCoach") {
-      return success(await prepareProgressCoach(context.OPENID, event));
+      const data = await prepareProgressCoach(context.OPENID, event);
+      console.info("generatePlan success", { action, requestId, durationMs: Date.now() - requestStartedAt });
+      return success(data);
     }
     if (event.action === "askProgressCoach") {
-      return success(await askProgressCoach(context.OPENID, event));
+      const data = await askProgressCoach(context.OPENID, event);
+      console.info("generatePlan success", { action, requestId, durationMs: Date.now() - requestStartedAt });
+      return success(data);
+    }
+    if (event.action === "syncManualData") {
+      const data = await syncManualData(context.OPENID, event);
+      console.info("generatePlan success", { action, requestId, durationMs: Date.now() - requestStartedAt });
+      return success(data);
+    }
+    if (event.action === "executeCoachAction") {
+      const data = await executeCoachAction(context.OPENID, event);
+      console.info("generatePlan success", { action, requestId, durationMs: Date.now() - requestStartedAt });
+      return success(data);
     }
 
     const error = new Error("不支持的操作。");
@@ -562,6 +595,8 @@ exports.main = async (event) => {
   } catch (error) {
     console.error("generatePlan failed", {
       action: event && event.action,
+      requestId,
+      durationMs: Date.now() - requestStartedAt,
       code: error.code || "INTERNAL_ERROR",
       message: error && error.message ? String(error.message).slice(0, 160) : "",
       analysisIdSuffix: event && event.analysisId ? String(event.analysisId).slice(-8) : "",
