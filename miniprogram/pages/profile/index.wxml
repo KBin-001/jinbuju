@@ -136,8 +136,7 @@
         </view>
         <view class="toolbox-item toolbox-item--ai" data-key="ai" bindtap="openToolboxItem" hover-class="toolbox-item--pressed">
           <image class="toolbox-item__icon" src="/assets/profile/tool-ai.svg" mode="aspectFit" />
-          <text class="toolbox-item__title toolbox-item__title--strong">AI 成长教练</text>
-          <text class="toolbox-item__sub">了解我的整体成长节奏</text>
+          <text class="toolbox-item__title">AI 成长教练</text>
         </view>
         <view class="toolbox-item toolbox-item--settings" data-key="settings" bindtap="openToolboxItem" hover-class="toolbox-item--pressed">
           <image class="toolbox-item__icon" src="/assets/profile/tool-settings.svg" mode="aspectFit" />

@@ -23,9 +23,15 @@
           <view class="today-subtitle">{{todayMoodCopy}}</view>
         </view>
 
-        <view class="reference-streak">
-          <view class="reference-streak-icon"></view>
-          <text>{{streakLabel}}</text>
+        <view class="spark-checkin {{sparkStatus.checkedInToday ? 'is-lit' : 'is-unlit'}} {{sparkAnimating ? 'is-animating' : ''}}" catchtap="checkInSpark" hover-class="spark-checkin--pressed" aria-label="每日火花签到">
+          <view class="spark-icon-wrap">
+            <view wx:if="{{sparkAnimating}}" class="spark-halo"></view>
+            <image class="spark-icon" src="/assets/spark-fire-generated.png" mode="aspectFit" />
+          </view>
+          <view class="spark-copy">
+            <view class="spark-count">{{sparkStatus.checkedInToday ? sparkStatus.currentStreak : 0}}<text>天</text></view>
+            <view class="spark-action">{{sparkStatus.checkedInToday ? '已签到' : '签到'}}</view>
+          </view>
         </view>
       </view>
 

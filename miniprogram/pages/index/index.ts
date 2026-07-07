@@ -4,7 +4,9 @@ import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getToday
 import { getLocalUserProfile } from "../../services/profile";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { syncManualData } from "../../services/manualSync";
+import { checkInSpark, getSparkStatus } from "../../services/spark";
 import { ActionIssueReason, ActionTask, ActionTaskStatus, Goal, TodaySummary } from "../../types/manual";
+import { SparkStatus } from "../../types/spark";
 import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
 import { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask } from "../../utils/taskStatus";
@@ -187,7 +189,8 @@ Page(withAppTheme({
     todayMoodCopy: "先放一件小事上来，别让今天空过去。",
     todayMoodTone: "empty",
     todayMoodMark: "启",
-    streakLabel: "从今天开始",
+    sparkStatus: { checkedInToday: false, currentStreak: 0, totalCheckins: 0 } as SparkStatus,
+    sparkAnimating: false,
     dailyNudge: "先添加一件 15～30 分钟能完成的小事，让今天轻轻开个头。",
     weekday: "",
     weekdayShort: "",
@@ -226,6 +229,7 @@ Page(withAppTheme({
   profileHandler: null as null | (() => void),
   focusGoalHandler: null as null | (() => void),
   completionSheetTimer: null as ReturnType<typeof setTimeout> | null,
+  sparkAnimationTimer: null as ReturnType<typeof setTimeout> | null,
   onPageScroll(event: { scrollTop: number }) {
     this.setData({ currentScrollTop: event.scrollTop });
   },
@@ -239,6 +243,10 @@ Page(withAppTheme({
     if (this.completionSheetTimer) {
       clearTimeout(this.completionSheetTimer);
       this.completionSheetTimer = null;
+    }
+    if (this.sparkAnimationTimer) {
+      clearTimeout(this.sparkAnimationTimer);
+      this.sparkAnimationTimer = null;
     }
     if (this.profileHandler) {
       off("profile:update", this.profileHandler);
@@ -271,6 +279,7 @@ Page(withAppTheme({
       const week = buildWeekDays(today, selectedDate, this.data.weekOffset);
       const calendarMonth = this.data.calendarMonth || monthStart(selectedDate);
       const calendar = buildCalendar(today, selectedDate, calendarMonth, goalTasks);
+      const sparkStatus = getSparkStatus(today);
       this.setData({
         status: "ready",
         displayName,
@@ -295,7 +304,7 @@ Page(withAppTheme({
         todayMoodCopy: mood.copy,
         todayMoodTone: mood.tone,
         todayMoodMark: mood.mark,
-        streakLabel: progress?.currentStreakDays ? `已自律${progress.currentStreakDays}天` : "从今天开始",
+        sparkStatus,
         dailyNudge: dailyNudge(tasks, selectedDate, today),
         weekday: copy.weekday,
         weekdayShort: copy.weekday.replace("星期", "周"),
@@ -307,6 +316,22 @@ Page(withAppTheme({
         navigating: false,
       }, () => this.drawSummaryRing());
     } catch (error) { this.setData({ status: "error", errorMessage: error instanceof Error ? error.message : "本地数据读取失败" }); }
+  },
+  checkInSpark() {
+    const today = getTodayBusinessDate();
+    const current = getSparkStatus(today);
+    if (current.checkedInToday) {
+      wx.showToast({ title: `今日已签到 · 连续 ${current.currentStreak} 天`, icon: "none" });
+      return;
+    }
+    const sparkStatus = checkInSpark(today);
+    if (this.sparkAnimationTimer) clearTimeout(this.sparkAnimationTimer);
+    this.setData({ sparkStatus, sparkAnimating: true });
+    this.sparkAnimationTimer = setTimeout(() => {
+      this.setData({ sparkAnimating: false });
+      this.sparkAnimationTimer = null;
+    }, 900);
+    wx.showToast({ title: `火花已点亮 · 连续 ${sparkStatus.currentStreak} 天`, icon: "none" });
   },
   drawSummaryRing() {
     wx.nextTick(() => {
@@ -511,7 +536,7 @@ Page(withAppTheme({
       todayMoodCopy: mood.copy,
       todayMoodTone: mood.tone,
       todayMoodMark: mood.mark,
-      streakLabel: progress?.currentStreakDays ? `已自律${progress.currentStreakDays}天` : "从今天开始",
+      sparkStatus: getSparkStatus(today),
       dailyNudge: dailyNudge(tasks, selectedDate, today),
     });
     wx.nextTick(() => wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 }));

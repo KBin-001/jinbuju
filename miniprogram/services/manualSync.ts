@@ -53,7 +53,19 @@ export function verifyCoachRuntime(): Promise<void> {
 }
 
 export async function syncManualData(): Promise<ManualDataStore> {
-  const merged = await call<ManualDataStore>({ action: "syncManualData", store: readManualStore() });
+  const local = readManualStore();
+  const merged = await call<ManualDataStore>({ action: "syncManualData", store: local });
+  const achievementMap = new Map((merged.achievementUnlocks || []).map((item) => [item.achievementId, item]));
+  (local.achievementUnlocks || []).forEach((item) => {
+    if (!achievementMap.has(item.achievementId)) achievementMap.set(item.achievementId, item);
+  });
+  const sparkMap = new Map((merged.sparkCheckins || []).map((item) => [item.businessDate, item]));
+  (local.sparkCheckins || []).forEach((item) => {
+    const existing = sparkMap.get(item.businessDate);
+    if (!existing || item.checkedAt < existing.checkedAt) sparkMap.set(item.businessDate, item);
+  });
+  merged.achievementUnlocks = Array.from(achievementMap.values());
+  merged.sparkCheckins = Array.from(sparkMap.values()).sort((a, b) => a.businessDate.localeCompare(b.businessDate));
   writeManualStore(merged);
   emit("manual:sync", merged);
   return merged;

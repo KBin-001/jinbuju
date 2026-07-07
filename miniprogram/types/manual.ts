@@ -1,4 +1,5 @@
 import { AchievementUnlockRecord } from "./achievement";
+import { SparkCheckin } from "./spark";
 
 export type GoalCategory = "cet" | "teacher" | "postgraduate" | "civil_service" | "ai_learning" | "custom";
 export type GoalStatus = "active" | "completed" | "ended" | "archived";
@@ -129,4 +130,5 @@ export interface ManualDataStore {
   checkins: DailyCheckin[];
   archivedGoals: ArchivedGoal[];
   achievementUnlocks?: AchievementUnlockRecord[];
+  sparkCheckins?: SparkCheckin[];
 }

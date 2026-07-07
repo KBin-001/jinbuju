@@ -548,9 +548,7 @@ page {
 .toolbox-item--settings { background: rgba(243, 239, 248, 0.70); }
 .toolbox-item--pressed { opacity: 0.75; transform: scale(0.96); }
 .toolbox-item__icon { width: 72rpx; height: 72rpx; }
-.toolbox-item__title { color: var(--profile-ink); font-size: 21rpx; font-weight: 600; line-height: 1.15; text-align: center; white-space: nowrap; }
-.toolbox-item__title--strong { font-size: 23rpx; font-weight: 800; }
-.toolbox-item__sub { margin-top: 2rpx; color: var(--profile-ink); font-size: 18rpx; line-height: 1; }
+.toolbox-item__title { margin-top: 4rpx; color: var(--profile-ink); font-size: 21rpx; font-weight: 700; line-height: 1.2; text-align: center; white-space: nowrap; }
 
 /* 编辑资料弹层 */
 .profile-editor-layer {
