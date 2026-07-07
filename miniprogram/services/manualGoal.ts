@@ -33,7 +33,8 @@ export function getGoals(): Goal[] {
 }
 
 function buildStats(actions: ActionTask[]): ArchivedGoalStats {
-  const visibleActions = actions.filter((task) => task.status !== "rescheduled");
+  // 过滤掉 rescheduled（已顺延）和 skipped（今天不做），它们不应计入可见行动总数
+  const visibleActions = actions.filter((task) => task.status !== "rescheduled" && task.status !== "skipped");
   const completedActions = visibleActions.filter((task) => task.status === "completed").length;
   const totalActions = visibleActions.length;
 

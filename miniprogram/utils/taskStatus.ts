@@ -104,7 +104,7 @@ export function getActionTaskDisplayStatus(
     default:
       if (dateStatus === "future") return { text: "未到日期", tone: "muted" };
       if (dateStatus === "past") return { text: "待继续", tone: "warning" };
-      return { text: "待开始", tone: "success" };
+      return { text: "待开始", tone: "neutral" };
   }
 }
 
@@ -140,7 +140,10 @@ export function groupTodayTasks<T extends DisplayStatusTask>(
       continue;
     }
     if (dateStatus === "past") {
-      const status = String(task.status || "pending");
+      const status = String(task.status || "pending") as ActionTaskStatus;
+      // 明确校验合法状态值，防止异常数据导致分组错误
+      const validStatuses: ActionTaskStatus[] = ["pending", "completed", "partially_completed", "skipped", "rescheduled"];
+      if (!validStatuses.includes(status)) continue;
       if (status === "pending" || status === "partially_completed") {
         continueTasks.push(task);
       }

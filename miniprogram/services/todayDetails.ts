@@ -101,7 +101,8 @@ function buildBars(tasks: ActionTask[], selectedDate: string, period: DetailPeri
   } else {
     raw = dateRange(period, selectedDate).map((item) => {
       const [startDate, endText] = item.date.split("|");
-      const endDate = `${startDate.slice(0, 8)}${String(endText).padStart(2, "0")}`;
+      // 用 slice(0, 7) 取 "YYYY-MM"，再拼上 "-DD"，避免 slice(0, 8) 含末尾横杠的脆弱写法
+      const endDate = `${startDate.slice(0, 7)}-${String(endText).padStart(2, "0")}`;
       return { label: item.label, value: tasks.filter((task) => task.currentDate >= startDate && task.currentDate <= endDate).reduce((sum, task) => sum + (task.actualMinutes || 0), 0) };
     });
   }

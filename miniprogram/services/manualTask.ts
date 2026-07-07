@@ -9,6 +9,11 @@ function validate(input: SaveTaskInput): void {
   if (title.length < 2 || title.length > 40) throw new Error("行动标题请控制在 2～40 个字");
   if ((input.description || "").trim().length > 150) throw new Error("说明最多 150 个字");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.currentDate)) throw new Error("请选择有效日期");
+  // 验证真实日历日期，防止 "2026-02-30" 等无效日期通过正则
+  const parsed = new Date(`${input.currentDate}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) throw new Error("请选择有效日期");
+  const [y, m, d] = input.currentDate.split("-").map(Number);
+  if (parsed.getFullYear() !== y || parsed.getMonth() + 1 !== m || parsed.getDate() !== d) throw new Error("请选择有效日期");
   if (!Number.isInteger(input.estimatedMinutes) || input.estimatedMinutes < 5 || input.estimatedMinutes > 240) throw new Error("预计时间应为 5～240 分钟");
 }
 
@@ -66,7 +71,10 @@ export function updateTaskStatus(taskId: string, status: ActionTaskStatus, actua
   const store = readManualStore();
   const task = store.tasks.find((item) => item.id === taskId);
   if (!task) throw new Error("行动不存在");
-  if (actualMinutes !== undefined && (!Number.isInteger(actualMinutes) || actualMinutes < 1 || actualMinutes > 480)) throw new Error("实际时间应为 1～480 分钟");
+  if (actualMinutes !== undefined) {
+    if (!Number.isInteger(actualMinutes)) throw new Error("实际时间请输入整数分钟");
+    if (actualMinutes < 1 || actualMinutes > 480) throw new Error("实际时间应在 1～480 分钟之间");
+  }
   const now = new Date().toISOString();
   task.status = status; task.actualMinutes = actualMinutes; task.issueReason = issueReason; task.updatedAt = now;
   task.completedAt = status === "completed" ? now : undefined;
@@ -116,13 +124,16 @@ export function deleteTask(taskId: string): void {
 }
 
 export function calculateTodaySummary(tasks: ActionTask[]): TodaySummary {
-  return tasks.reduce((summary, task) => {
-    summary.totalCount += 1; summary.estimatedMinutes += task.estimatedMinutes;
-    summary.actualMinutes += task.actualMinutes || 0;
-    if (task.status === "completed") summary.completedCount += 1;
-    else if (task.status === "partially_completed") summary.partialCount += 1;
-    else summary.unfinishedCount += 1;
-    return summary;
-  }, { estimatedMinutes: 0, actualMinutes: 0, completedCount: 0, partialCount: 0, unfinishedCount: 0, totalCount: 0 });
+  const summary = tasks.reduce((acc, task) => {
+    acc.totalCount += 1;
+    acc.estimatedMinutes += task.estimatedMinutes;
+    acc.actualMinutes += task.actualMinutes || 0;
+    if (task.status === "completed") acc.completedCount += 1;
+    else if (task.status === "partially_completed") acc.partialCount += 1;
+    return acc;
+  }, { estimatedMinutes: 0, actualMinutes: 0, completedCount: 0, partialCount: 0, totalCount: 0 });
+  // unfinishedCount = 总数 - 已完成 - 完成一部分，避免 else 兜底将异常状态误计为未完成
+  summary.unfinishedCount = summary.totalCount - summary.completedCount - summary.partialCount;
+  return summary as TodaySummary;
 }
 
