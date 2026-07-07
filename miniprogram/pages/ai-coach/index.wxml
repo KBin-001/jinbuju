@@ -10,7 +10,6 @@
       <view class="coach-title">AI 教练 <text>✦</text></view>
       <view class="coach-subtitle">{{scopeSubtitle}}</view>
     </view>
-    <view class="coach-online"><view class="coach-online-dot"></view><text>在线</text></view>
   </view>
 
   <scroll-view class="coach-prompts" scroll-x show-scrollbar="{{false}}" enhanced>
@@ -67,7 +66,7 @@
         </view>
 
         <view class="coach-guided-actions coach-guided-actions--report">
-          <view wx:for="{{quickQuestions}}" wx:key="*this" class="coach-guided-action" data-question="{{item}}" bindtap="sendGuidedQuestion" hover-class="coach-pressed">{{index === 0 ? '查看情况' : (index === 1 ? '查看卡点' : '下一步建议')}}</view>
+          <view wx:for="{{quickQuestions}}" wx:key="*this" class="coach-guided-action" data-question="{{item}}" bindtap="sendGuidedQuestion" hover-class="coach-pressed">{{index === 0 ? '查看详情' : (index === 1 ? '查看卡点' : '下一步建议')}}</view>
         </view>
       </view>
     </view>

@@ -16,6 +16,23 @@
   margin-left: auto;
 }
 
+.progress-coach-page .coach-guided-actions--report {
+  flex-wrap: nowrap;
+  gap: 14rpx;
+}
+
+.progress-coach-page .coach-guided-actions--report .coach-guided-action {
+  min-width: 0;
+  min-height: 64rpx;
+  padding: 0 12rpx;
+  flex: 1;
+  border-radius: 32rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 32rpx;
+  white-space: nowrap;
+}
+
 .coach-typing {
   display: flex;
   align-items: center;
@@ -106,10 +123,20 @@
 
 @media (max-width: 350px) {
   .progress-coach-page .coach-header {
-    padding-right: 150rpx;
+    padding-right: 12rpx;
   }
 
   .progress-coach-page .coach-subtitle {
     max-width: 310rpx;
+  }
+
+  .progress-coach-page .coach-guided-actions--report {
+    gap: 10rpx;
+  }
+
+  .progress-coach-page .coach-guided-actions--report .coach-guided-action {
+    min-height: 60rpx;
+    padding: 0 8rpx;
+    font-size: 22rpx;
   }
 }

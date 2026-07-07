@@ -1249,8 +1249,8 @@ Page(withAppTheme({
 
       // 平滑曲线
       ctx.beginPath();
-      ctx.strokeStyle = "#55A84F";
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#7FA88B";
+      ctx.lineWidth = 2;
       ctx.lineJoin = "round";
       ctx.lineCap = "round";
       if (points.length === 1) {
@@ -1266,36 +1266,6 @@ Page(withAppTheme({
         }
       }
       ctx.stroke();
-
-      points.forEach((point) => {
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fill();
-        ctx.strokeStyle = "#55A84F";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      });
-
-      const selectedIndex = bars.findIndex((bar) => bar.active);
-      points.forEach((point, index) => {
-        if (bars[index].actions <= 0) return;
-        if (selectedIndex >= 0 && Math.abs(selectedIndex - index) <= 1) return;
-        const label = String(bars[index].actions);
-        ctx.font = "12px sans-serif";
-        const textWidth = ctx.measureText(label).width;
-        const labelWidth = textWidth + 12;
-        const labelHeight = 20;
-        const centerX = Math.max(labelWidth / 2 + 2, Math.min(width - labelWidth / 2 - 2, point.x));
-        const placeBelow = point.y < chartTopPadding + labelHeight;
-        const labelTop = placeBelow ? point.y + 8 : point.y - labelHeight - 8;
-        ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
-        ctx.fillRect(centerX - labelWidth / 2, labelTop, labelWidth, labelHeight);
-        ctx.fillStyle = "#426B4D";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(label, centerX, labelTop + labelHeight / 2);
-      });
     });
   },
 

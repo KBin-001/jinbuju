@@ -1,3 +1,5 @@
+import { AchievementUnlockRecord } from "./achievement";
+
 export type GoalCategory = "cet" | "teacher" | "postgraduate" | "civil_service" | "ai_learning" | "custom";
 export type GoalStatus = "active" | "completed" | "ended" | "archived";
 
@@ -126,5 +128,5 @@ export interface ManualDataStore {
   tasks: ActionTask[];
   checkins: DailyCheckin[];
   archivedGoals: ArchivedGoal[];
+  achievementUnlocks?: AchievementUnlockRecord[];
 }
-

@@ -309,7 +309,7 @@ Page({
       return;
     }
     if (key === "badges") {
-      wx.showToast({ title: "成就系统开发中", icon: "none" });
+      wx.navigateTo({ url: "/pages/achievements/index" });
       return;
     }
     if (key === "ai") {

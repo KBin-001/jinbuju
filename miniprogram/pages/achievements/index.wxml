@@ -1,0 +1,78 @@
+<view class="achievement-page" style="padding-top: {{topInset}}px;">
+  <view class="achievement-ambient achievement-ambient--one"></view>
+  <view class="achievement-ambient achievement-ambient--two"></view>
+
+  <view class="achievement-nav">
+    <view class="achievement-back" bindtap="goBack" hover-class="is-pressed">‹</view>
+    <view class="achievement-nav-title">成长收藏册</view>
+    <view class="achievement-nav-space"></view>
+  </view>
+
+  <scroll-view class="achievement-scroll" scroll-y show-scrollbar="{{false}}" enhanced>
+    <view class="achievement-content">
+      <view class="achievement-hero">
+        <view class="achievement-hero-kicker">GROWTH HONORS</view>
+        <view class="achievement-hero-title">每一步，都值得被收藏</view>
+        <view class="achievement-hero-copy">这里不比较快慢，只记录你认真推进过的时刻。</view>
+        <view class="achievement-hero-summary">
+          <view><text class="achievement-hero-number">{{unlockedCount}}</text><text class="achievement-hero-total"> / {{totalCount}} 枚</text></view>
+          <text class="achievement-hero-percent">{{progressPercent}}%</text>
+        </view>
+        <view class="achievement-hero-track"><view class="achievement-hero-fill" style="width: {{progressPercent}}%;"></view></view>
+        <view class="achievement-hero-orbit"></view>
+        <view class="achievement-hero-star">✦</view>
+      </view>
+
+      <view wx:for="{{categories}}" wx:for-item="category" wx:key="key" class="achievement-section">
+        <view class="achievement-section-head">
+          <view>
+            <view class="achievement-section-title">{{category.title}}</view>
+            <view class="achievement-section-subtitle">{{category.subtitle}}</view>
+          </view>
+          <view class="achievement-section-count">{{category.unlockedCount}} / {{category.achievements.length}}</view>
+        </view>
+
+        <view class="achievement-grid">
+          <view
+            wx:for="{{category.achievements}}"
+            wx:for-item="achievement"
+            wx:key="id"
+            class="achievement-card {{achievement.unlocked ? 'is-unlocked' : 'is-locked'}}"
+            data-id="{{achievement.id}}"
+            bindtap="openAchievement"
+            hover-class="is-pressed"
+          >
+            <view class="achievement-badge-shell accent-{{achievement.accent}}">
+              <image class="achievement-badge-image" src="{{achievement.icon}}" mode="aspectFit" />
+              <view wx:if="{{!achievement.unlocked}}" class="achievement-lock">◇</view>
+            </view>
+            <view class="achievement-card-title">{{achievement.title}}</view>
+            <view class="achievement-card-progress">{{achievement.progressText}}</view>
+          </view>
+        </view>
+      </view>
+      <view class="achievement-bottom-copy">把想做的事，变成今天能完成的一小步。</view>
+    </view>
+  </scroll-view>
+
+  <view wx:if="{{selected}}" class="achievement-detail-layer" catchtouchmove="noop">
+    <view class="achievement-detail-mask" catchtap="closeAchievement"></view>
+    <view class="achievement-detail-panel" catchtap="noop">
+      <view class="achievement-detail-handle"></view>
+      <view class="achievement-detail-close" catchtap="closeAchievement">×</view>
+      <view class="achievement-detail-badge accent-{{selected.accent}} {{selected.unlocked ? 'is-unlocked' : 'is-locked'}}">
+        <image src="{{selected.icon}}" mode="aspectFit" />
+      </view>
+      <view class="achievement-detail-status">{{selected.unlocked ? '已收入成长档案' : '等待你慢慢解锁'}}</view>
+      <view class="achievement-detail-title">{{selected.title}}</view>
+      <view class="achievement-detail-description">{{selected.description}}</view>
+      <view wx:if="{{selected.unlocked}}" class="achievement-earned-date">获得于 {{selectedUnlockedDate}}</view>
+      <block wx:else>
+        <view class="achievement-detail-progress-row"><text>{{selected.progressText}}</text><text>{{selected.progressPercent}}%</text></view>
+        <view class="achievement-detail-track"><view style="width: {{selected.progressPercent}}%;"></view></view>
+        <view class="achievement-detail-remaining">{{selected.remainingText}}</view>
+      </block>
+      <view class="achievement-detail-note">不必赶进度，稳定行动自然会带你抵达。</view>
+    </view>
+  </view>
+</view>

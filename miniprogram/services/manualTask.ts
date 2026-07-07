@@ -124,16 +124,16 @@ export function deleteTask(taskId: string): void {
 }
 
 export function calculateTodaySummary(tasks: ActionTask[]): TodaySummary {
-  const summary = tasks.reduce((acc, task) => {
+  const summary = tasks.reduce<TodaySummary>((acc, task) => {
     acc.totalCount += 1;
     acc.estimatedMinutes += task.estimatedMinutes;
     acc.actualMinutes += task.actualMinutes || 0;
     if (task.status === "completed") acc.completedCount += 1;
     else if (task.status === "partially_completed") acc.partialCount += 1;
     return acc;
-  }, { estimatedMinutes: 0, actualMinutes: 0, completedCount: 0, partialCount: 0, totalCount: 0 });
+  }, { estimatedMinutes: 0, actualMinutes: 0, completedCount: 0, partialCount: 0, unfinishedCount: 0, totalCount: 0 });
   // unfinishedCount = 总数 - 已完成 - 完成一部分，避免 else 兜底将异常状态误计为未完成
   summary.unfinishedCount = summary.totalCount - summary.completedCount - summary.partialCount;
-  return summary as TodaySummary;
+  return summary;
 }
 

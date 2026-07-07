@@ -25,7 +25,7 @@ page {
   align-items: center;
   height: 90rpx;
   flex: 0 0 auto;
-  padding-right: 176rpx;
+  padding-right: 12rpx;
 }
 
 .coach-back {
@@ -70,24 +70,6 @@ page {
   line-height: 28rpx;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.coach-online {
-  display: flex;
-  align-items: center;
-  position: absolute;
-  top: 84rpx;
-  right: 38rpx;
-  color: #68706C;
-  font-size: 20rpx;
-}
-
-.coach-online-dot {
-  width: 10rpx;
-  height: 10rpx;
-  margin-right: 8rpx;
-  border-radius: 50%;
-  background: #35BD82;
 }
 
 .coach-prompts {
@@ -779,18 +761,6 @@ page {
 .coach-title text { color: #C89B43; }
 .coach-subtitle { color: #728179; }
 
-.coach-online {
-  border: 1rpx solid rgba(53, 104, 89, 0.12);
-  background: rgba(234, 245, 239, 0.78);
-  color: #356859;
-  box-shadow: 0 8rpx 18rpx rgba(31, 70, 58, 0.06);
-}
-
-.coach-online-dot {
-  background: #70A985;
-  box-shadow: 0 0 0 6rpx rgba(112, 169, 133, 0.12);
-}
-
 .coach-prompt {
   border-color: rgba(53, 104, 89, 0.10);
   background: rgba(255, 255, 255, 0.74);
@@ -983,7 +953,7 @@ page {
 
 @media (max-width: 350px) {
   .coach-page { padding-right: 24rpx; padding-left: 24rpx; }
-  .coach-header { padding-right: 148rpx; }
+  .coach-header { padding-right: 12rpx; }
   .coach-robot { width: 60rpx; height: 60rpx; border-radius: 20rpx; }
   .coach-bot-bubble,
   .coach-report-bubble { max-width: calc(100% - 76rpx); }

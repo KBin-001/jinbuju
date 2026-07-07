@@ -3,7 +3,7 @@ import { ActionTask, ArchivedGoal, DailyCheckin, Goal, ManualDataStore } from ".
 const STORAGE_KEY = "JINBUJU_MANUAL_MVP_V1";
 
 function emptyStore(): ManualDataStore {
-  return { version: 1, goals: [], tasks: [], checkins: [], archivedGoals: [] };
+  return { version: 1, goals: [], tasks: [], checkins: [], archivedGoals: [], achievementUnlocks: [] };
 }
 
 export function readManualStore(): ManualDataStore {
@@ -25,6 +25,7 @@ export function readManualStore(): ManualDataStore {
     tasks,
     checkins: Array.isArray(value.checkins) ? value.checkins as DailyCheckin[] : [],
     archivedGoals: Array.isArray(value.archivedGoals) ? value.archivedGoals as ArchivedGoal[] : [],
+    achievementUnlocks: Array.isArray(value.achievementUnlocks) ? value.achievementUnlocks : [],
   };
 }
 

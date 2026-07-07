@@ -99,8 +99,7 @@
 .chart-legend-row { display: flex; align-items: center; gap: 26rpx; margin-top: 20rpx; padding-left: 48rpx; }
 .chart-legend { display: flex; align-items: center; color: #71827A; font-size: 17rpx; }
 .legend-dot { width: 11rpx; height: 11rpx; margin-right: 7rpx; border-radius: 50%; background: #16825C; }
-.legend-line { position: relative; width: 23rpx; height: 3rpx; margin-right: 7rpx; border-radius: 3rpx; background: #55A84F; }
-.legend-line::after { position: absolute; width: 8rpx; height: 8rpx; top: -3rpx; left: 8rpx; border: 2rpx solid #55A84F; border-radius: 50%; background: #FFFFFF; content: ""; }
+.legend-line { width: 25rpx; height: 3rpx; margin-right: 7rpx; border-radius: 3rpx; background: #7FA88B; }
 .bar-chart { display: flex; height: 310rpx; margin-top: 8rpx; }
 .bar-y-axis { display: flex; box-sizing: border-box; width: 46rpx; padding: 8rpx 7rpx 8rpx 0; flex: 0 0 auto; flex-direction: column; justify-content: space-between; color: #95A099; font-size: 16rpx; text-align: right; }
 .bar-y-axis--right { padding-right: 0; padding-left: 8rpx; text-align: left; }
@@ -115,7 +114,7 @@
 .bar-fill { min-height: 4rpx; border-radius: 10rpx 10rpx 4rpx 4rpx; background: linear-gradient(180deg, #25A975, #08704B); }
 .bar-fill.is-max,
 .bar-column.is-active .bar-fill { box-shadow: 0 6rpx 14rpx rgba(11, 107, 69, 0.22); }
-.line-canvas { z-index: 3; pointer-events: none; }
+.line-canvas { z-index: 1; pointer-events: none; }
 .bar-tooltip { position: absolute; z-index: 5; min-width: 106rpx; padding: 9rpx 11rpx; border-radius: 13rpx; background: #244D40; color: #FFFFFF; font-size: 17rpx; line-height: 25rpx; text-align: center; box-shadow: 0 8rpx 18rpx rgba(31,70,58,0.16); transform: translateX(-50%); }
 .bar-tooltip-sub { display: block; color: #D1E2D9; font-size: 15rpx; }
 .tooltip-left { left: 0; transform: none; }
