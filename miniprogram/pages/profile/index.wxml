@@ -12,8 +12,8 @@
 
   <view class="profile-user-card">
     <view class="profile-avatar">
-      <t-avatar wx:if="{{displayAvatarUrl}}" class="profile-avatar__image" image="{{displayAvatarUrl}}" size="128rpx" />
-      <t-avatar wx:else class="profile-avatar__text" size="128rpx">{{displayAvatarText}}</t-avatar>
+      <image wx:if="{{displayAvatarUrl}}" class="profile-avatar__image" src="{{displayAvatarUrl}}" mode="aspectFill" />
+      <view wx:else class="profile-avatar__text">{{displayAvatarText}}</view>
       <t-button class="profile-avatar__picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></t-button>
     </view>
 

@@ -1,4 +1,9 @@
 <view class="coach-page" data-theme="{{appTheme}}" style="padding-top: {{topInset}}px;">
+  <view class="coach-ambient" aria-hidden="true">
+    <image class="coach-ambient-mountain" src="/assets/ai-coach/mountain-bg.svg" mode="aspectFill" />
+    <view class="coach-ambient-glow coach-ambient-glow--top"></view>
+    <view class="coach-ambient-glow coach-ambient-glow--bottom"></view>
+  </view>
   <view class="coach-header">
     <view class="coach-back" bindtap="goBack" hover-class="coach-pressed" aria-label="返回">‹</view>
     <view class="coach-heading">
@@ -17,7 +22,7 @@
   </scroll-view>
 
   <view wx:if="{{status === 'loading'}}" class="coach-state">
-    <image src="/assets/coach-ui/robot.svg" mode="aspectFit" />
+    <image src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFit" />
     <text>正在整理今天的行动分析</text>
   </view>
 
@@ -29,7 +34,7 @@
 
   <scroll-view wx:else class="coach-conversation" scroll-y show-scrollbar="{{false}}" enhanced scroll-into-view="{{scrollIntoView}}">
     <view class="coach-bot-row">
-      <image class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
+      <image class="coach-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFill" />
       <view class="coach-bubble coach-bot-bubble">
         <text>早上好，{{displayName}}！</text>
         <text>我已经分析了 {{analysis.dateLabel}} 的执行情况。</text>
@@ -43,7 +48,7 @@
     </view>
 
     <view class="coach-bot-row coach-report-row">
-      <image class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
+      <image class="coach-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFill" />
       <view class="coach-bubble coach-report-bubble">
         <view class="coach-report-intro">好的，以下是你的今日分析报告：</view>
 
@@ -87,7 +92,7 @@
     </view>
 
     <view wx:for="{{messages}}" wx:key="id" id="{{item.id}}" class="{{item.role === 'assistant' ? 'coach-bot-row coach-followup-row' : 'coach-user-row coach-followup-row'}}">
-      <image wx:if="{{item.role === 'assistant'}}" class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
+      <image wx:if="{{item.role === 'assistant'}}" class="coach-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFill" />
       <view wx:if="{{item.role === 'user'}}" class="coach-bubble coach-user-bubble">{{item.content}}</view>
       <view wx:elif="{{item.mode === 'direct'}}" class="coach-direct-wrap">
         <view class="coach-bubble coach-bot-bubble coach-direct-reply">{{item.content}}</view>
@@ -123,8 +128,16 @@
     </view>
 
     <view wx:if="{{asking}}" id="coach-thinking" class="coach-bot-row coach-followup-row">
-      <image class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
-      <view class="coach-bubble coach-bot-bubble coach-real-thinking"><view></view><text>思考中</text></view>
+      <image class="coach-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFill" />
+      <view class="coach-bubble coach-bot-bubble coach-typing">
+        <view class="coach-breathe-wrap">
+          <view class="coach-breathe-stage">
+            <view class="coach-breathe-ring"></view>
+            <view class="coach-breathe-orb"></view>
+          </view>
+          <text class="coach-breathe-text">思考中</text>
+        </view>
+      </view>
     </view>
 
     <view wx:if="{{chatError}}" id="daily-chat-error" class="coach-chat-error"><text>{{chatError}}</text><view bindtap="retryLastQuestion">重新发送</view></view>

@@ -1,4 +1,9 @@
 <view class="coach-page progress-coach-page" data-theme="{{appTheme}}" style="padding-top: {{topInset}}px;">
+  <view class="coach-ambient" aria-hidden="true">
+    <image class="coach-ambient-mountain" src="/assets/ai-coach/mountain-bg.svg" mode="aspectFill" />
+    <view class="coach-ambient-glow coach-ambient-glow--top"></view>
+    <view class="coach-ambient-glow coach-ambient-glow--bottom"></view>
+  </view>
   <view class="coach-header">
     <view class="coach-back" bindtap="goBack" hover-class="coach-pressed" aria-label="返回">‹</view>
     <view class="coach-heading">
@@ -18,7 +23,7 @@
 
   <scroll-view class="coach-conversation" scroll-y show-scrollbar="{{false}}" enhanced scroll-into-view="{{scrollIntoView}}" scroll-with-animation>
     <view class="coach-bot-row">
-      <image class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
+      <image class="coach-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFill" />
       <view class="coach-bubble coach-bot-bubble">
         <text>你好，{{displayName}}！</text>
         <text>我已经整理了「{{goalTitle}}」的{{scopeLabel}}记录。</text>
@@ -32,7 +37,7 @@
     </view>
 
     <view class="coach-bot-row coach-report-row">
-      <image class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
+      <image class="coach-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFill" />
       <view class="coach-bubble coach-report-bubble">
         <view class="coach-report-intro">好的，以下是你的{{scopeLabel}}分析报告：</view>
 
@@ -68,7 +73,7 @@
     </view>
 
     <view wx:for="{{messages}}" wx:key="id" id="{{item.id}}" class="{{item.role === 'assistant' ? 'coach-bot-row coach-followup-row' : 'coach-user-row coach-followup-row'}}">
-      <image wx:if="{{item.role === 'assistant'}}" class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
+      <image wx:if="{{item.role === 'assistant'}}" class="coach-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFill" />
       <view wx:if="{{item.role === 'user'}}" class="coach-bubble coach-user-bubble">{{item.content}}</view>
       <view wx:elif="{{item.mode === 'direct'}}" class="coach-direct-wrap">
         <view class="coach-bubble coach-bot-bubble coach-direct-reply">{{item.content}}</view>
@@ -105,7 +110,7 @@
     </view>
 
     <view wx:if="{{asking}}" id="coach-typing" class="coach-bot-row coach-followup-row">
-      <image class="coach-robot" src="/assets/coach-ui/robot.svg" mode="aspectFit" />
+      <image class="coach-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFill" />
       <view class="coach-bubble coach-bot-bubble coach-typing">
         <view class="coach-breathe-wrap">
           <view class="coach-breathe-stage">

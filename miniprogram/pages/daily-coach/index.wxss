@@ -694,6 +694,303 @@ page {
   line-height: 34rpx;
 }
 
+/* Natural-light premium chat skin shared by daily and progress coach pages. */
+.coach-page {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(160deg, #F8F5EC 0%, #F3F3E9 52%, #EAF1EA 100%);
+  color: #233B34;
+}
+
+.coach-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.coach-ambient::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(250, 248, 241, 0.12) 0%, rgba(247, 245, 237, 0.76) 48%, rgba(238, 244, 237, 0.94) 100%);
+}
+
+.coach-ambient-mountain {
+  position: absolute;
+  right: -100rpx;
+  bottom: 76rpx;
+  width: 920rpx;
+  height: 720rpx;
+  opacity: 0.18;
+  filter: saturate(0.72);
+}
+
+.coach-ambient-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(18rpx);
+}
+
+.coach-ambient-glow--top {
+  top: -130rpx;
+  right: -150rpx;
+  width: 470rpx;
+  height: 470rpx;
+  background: radial-gradient(circle, rgba(248, 210, 106, 0.28) 0%, rgba(248, 210, 106, 0) 70%);
+}
+
+.coach-ambient-glow--bottom {
+  left: -220rpx;
+  bottom: 30rpx;
+  width: 540rpx;
+  height: 540rpx;
+  background: radial-gradient(circle, rgba(88, 147, 120, 0.18) 0%, rgba(88, 147, 120, 0) 72%);
+}
+
+.coach-header,
+.coach-prompts,
+.coach-conversation,
+.coach-state,
+.coach-message-bar {
+  position: relative;
+  z-index: 1;
+}
+
+.coach-header {
+  margin: 8rpx -4rpx 0;
+  padding-left: 12rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.72);
+  border-radius: 30rpx;
+  background: rgba(255, 255, 255, 0.48);
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.9), 0 14rpx 36rpx rgba(31, 70, 58, 0.06);
+  backdrop-filter: blur(22rpx);
+  -webkit-backdrop-filter: blur(22rpx);
+}
+
+.coach-back {
+  background: rgba(255, 255, 255, 0.68);
+  color: #315F50;
+  box-shadow: inset 0 0 0 1rpx rgba(53, 104, 89, 0.08);
+}
+
+.coach-title { color: #1F4E40; }
+.coach-title text { color: #C89B43; }
+.coach-subtitle { color: #728179; }
+
+.coach-online {
+  border: 1rpx solid rgba(53, 104, 89, 0.12);
+  background: rgba(234, 245, 239, 0.78);
+  color: #356859;
+  box-shadow: 0 8rpx 18rpx rgba(31, 70, 58, 0.06);
+}
+
+.coach-online-dot {
+  background: #70A985;
+  box-shadow: 0 0 0 6rpx rgba(112, 169, 133, 0.12);
+}
+
+.coach-prompt {
+  border-color: rgba(53, 104, 89, 0.10);
+  background: rgba(255, 255, 255, 0.74);
+  color: #31594D;
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.92), 0 10rpx 24rpx rgba(31, 70, 58, 0.06);
+  backdrop-filter: blur(18rpx);
+  -webkit-backdrop-filter: blur(18rpx);
+}
+
+.coach-bot-row { gap: 16rpx; }
+
+.coach-robot {
+  box-sizing: border-box;
+  width: 68rpx;
+  height: 68rpx;
+  overflow: hidden;
+  border: 3rpx solid rgba(255, 255, 255, 0.92);
+  border-radius: 22rpx;
+  background: linear-gradient(145deg, #EDF6F0, #DCECE2);
+  box-shadow: 0 8rpx 22rpx rgba(31, 70, 58, 0.13), 0 0 0 1rpx rgba(53, 104, 89, 0.08);
+}
+
+.coach-bubble,
+.coach-compact-reply {
+  border-color: rgba(53, 104, 89, 0.10);
+  background: linear-gradient(145deg, rgba(255, 255, 253, 0.94), rgba(247, 249, 244, 0.92));
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.95), 0 14rpx 34rpx rgba(31, 70, 58, 0.08);
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+}
+
+.coach-bot-bubble {
+  max-width: calc(100% - 84rpx);
+  border-radius: 10rpx 28rpx 28rpx 28rpx;
+  color: #30483F;
+}
+
+.coach-user-bubble {
+  border: 1rpx solid rgba(255, 255, 255, 0.30);
+  background: linear-gradient(135deg, #2B6553 0%, #3E7B67 58%, #5A8C74 100%);
+  color: #FFFFFF;
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.18), 0 12rpx 28rpx rgba(31, 91, 74, 0.20);
+}
+
+.coach-time { color: #85918B; }
+
+.coach-report-bubble {
+  max-width: calc(100% - 84rpx);
+  border-radius: 10rpx 30rpx 30rpx 30rpx;
+  background: linear-gradient(155deg, rgba(255, 255, 252, 0.96), rgba(241, 247, 241, 0.92));
+}
+
+.coach-report-intro { color: #29483E; }
+
+.coach-report-card {
+  border: 1rpx solid rgba(53, 104, 89, 0.09);
+  border-radius: 24rpx;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(238, 246, 239, 0.82));
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.96), 0 10rpx 26rpx rgba(31, 70, 58, 0.055);
+}
+
+.coach-report-title,
+.coach-compact-summary { color: #234C3F; }
+.coach-report-value--green,
+.coach-compact-metric-value { color: #356859; }
+
+.coach-report-progress { background: rgba(53, 104, 89, 0.10); }
+.coach-report-progress-inner { background: linear-gradient(90deg, #356859, #7EAF85, #D5B55C); }
+
+.coach-compact-metric {
+  border: 1rpx solid rgba(53, 104, 89, 0.08);
+  background: linear-gradient(150deg, #F7FAF5, #EDF5EF);
+}
+
+.coach-guided-action,
+.coach-action-candidate {
+  border-color: rgba(53, 104, 89, 0.16);
+  background: rgba(241, 248, 243, 0.86);
+  color: #356859;
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.90);
+}
+
+.coach-action-proposal {
+  border-color: rgba(200, 155, 67, 0.18);
+  background: linear-gradient(145deg, #FFFCF3, #F5F8EF);
+}
+
+.coach-message-bar {
+  box-sizing: border-box;
+  margin: 0 -8rpx;
+  padding: 14rpx 10rpx calc(18rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid rgba(255, 255, 255, 0.80);
+  border-radius: 34rpx 34rpx 0 0;
+  background: rgba(248, 248, 242, 0.76);
+  box-shadow: 0 -16rpx 40rpx rgba(31, 70, 58, 0.07);
+  backdrop-filter: blur(28rpx);
+  -webkit-backdrop-filter: blur(28rpx);
+}
+
+.coach-input-wrap {
+  border-color: rgba(53, 104, 89, 0.12);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.96), 0 8rpx 24rpx rgba(31, 70, 58, 0.06);
+}
+
+.coach-input { color: #29483E; }
+.coach-placeholder { color: #96A09B; }
+
+.coach-send {
+  background: linear-gradient(145deg, #245B4A 0%, #3D7964 58%, #719C79 100%);
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.20), 0 10rpx 24rpx rgba(31, 91, 74, 0.24);
+}
+
+.coach-page .coach-typing {
+  display: flex;
+  align-items: center;
+  width: auto;
+  min-width: 172rpx;
+  min-height: 54rpx;
+  padding: 16rpx 24rpx;
+  overflow: hidden;
+}
+
+.coach-page .coach-breathe-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.coach-page .coach-breathe-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32rpx;
+  height: 32rpx;
+  flex: 0 0 auto;
+}
+
+.coach-page .coach-breathe-orb,
+.coach-page .coach-breathe-ring {
+  position: absolute;
+  box-sizing: border-box;
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 50%;
+}
+
+.coach-page .coach-breathe-orb {
+  z-index: 2;
+  background: radial-gradient(circle at 36% 30%, #FFF1B8 0%, #BFD7B7 36%, #4C846D 74%, #245B4A 100%);
+  box-shadow: 0 4rpx 16rpx rgba(53, 104, 89, 0.24);
+  animation: coach-premium-breathe 1.7s ease-in-out infinite;
+}
+
+.coach-page .coach-breathe-ring {
+  z-index: 1;
+  border: 2rpx solid rgba(71, 126, 102, 0.30);
+  animation: coach-premium-ring 1.7s ease-out infinite;
+}
+
+.coach-page .coach-breathe-text {
+  color: transparent;
+  font-size: 23rpx;
+  font-weight: 700;
+  line-height: 32rpx;
+  letter-spacing: 2rpx;
+  white-space: nowrap;
+  background: linear-gradient(90deg, #245B4A 0%, #6B9A7B 28%, #D0A94E 50%, #6B9A7B 72%, #245B4A 100%);
+  background-size: 240% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: coach-thinking-shimmer 2.2s linear infinite;
+}
+
+@keyframes coach-premium-breathe {
+  0%, 100% { opacity: 0.72; transform: scale(0.82); }
+  50% { opacity: 1; transform: scale(1.12); }
+}
+
+@keyframes coach-premium-ring {
+  0% { opacity: 0.54; transform: scale(0.66); }
+  72%, 100% { opacity: 0; transform: scale(2); }
+}
+
+@keyframes coach-thinking-shimmer {
+  0% { background-position: 120% 50%; }
+  100% { background-position: -120% 50%; }
+}
+
+@media (max-width: 350px) {
+  .coach-page { padding-right: 24rpx; padding-left: 24rpx; }
+  .coach-header { padding-right: 148rpx; }
+  .coach-robot { width: 60rpx; height: 60rpx; border-radius: 20rpx; }
+  .coach-bot-bubble,
+  .coach-report-bubble { max-width: calc(100% - 76rpx); }
+  .coach-user-bubble { max-width: 440rpx; }
+  .coach-message-bar { margin-right: -4rpx; margin-left: -4rpx; }
+}
+
 .coach-compact-full {
   margin-top: 16rpx;
   padding: 18rpx;
@@ -740,4 +1037,20 @@ page {
   font-size: 21rpx;
   font-weight: 600;
   line-height: 28rpx;
+}
+
+/* Keep late-defined interactive reply styles aligned with the premium skin. */
+.coach-compact-full {
+  border: 1rpx solid rgba(53, 104, 89, 0.08);
+  background: rgba(247, 250, 246, 0.86);
+  color: #52645C;
+}
+
+.coach-compact-toggle { color: #356859; }
+
+.coach-guided-action {
+  border-color: rgba(53, 104, 89, 0.16);
+  background: rgba(241, 248, 243, 0.88);
+  color: #356859;
+  box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.90), 0 6rpx 14rpx rgba(31, 70, 58, 0.04);
 }
