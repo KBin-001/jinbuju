@@ -174,6 +174,19 @@ const HEATMAP_WEEKDAY_WIDTH = 36;
 const WEEK_BAR_WIDTH = 34;
 const MONTH_BAR_WIDTH = 50;
 
+function getProgressLayout(): { menuTop: number; menuHeight: number } {
+  try {
+    const windowInfo = wx.getWindowInfo();
+    const menu = wx.getMenuButtonBoundingClientRect();
+    return {
+      menuTop: Math.max(windowInfo.statusBarHeight || 0, menu.top || 0),
+      menuHeight: menu.height || 32,
+    };
+  } catch (_) {
+    return { menuTop: 28, menuHeight: 32 };
+  }
+}
+
 function toDate(value: string): Date {
   return new Date(`${value}T00:00:00`);
 }
@@ -902,6 +915,7 @@ function buildTrendView(
 
 Page(withAppTheme({
   data: {
+    ...getProgressLayout(),
     appTheme: getCurrentThemeId() as string,
     status: "loading",
     errorMessage: "",
@@ -1199,7 +1213,7 @@ Page(withAppTheme({
 
       ctx.beginPath();
       ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      ctx.strokeStyle = "#EAF1E5";
+      ctx.strokeStyle = "#E8DDC3";
       ctx.lineWidth = lineWidth;
       ctx.lineCap = "round";
       ctx.stroke();
@@ -1207,7 +1221,7 @@ Page(withAppTheme({
       if (progress > 0) {
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, startAngle, startAngle + Math.PI * 2 * progress);
-        ctx.strokeStyle = "#2F6F4B";
+        ctx.strokeStyle = "#31584B";
         ctx.lineWidth = lineWidth;
         ctx.lineCap = "round";
         ctx.stroke();
@@ -1249,8 +1263,8 @@ Page(withAppTheme({
 
       // 平滑曲线
       ctx.beginPath();
-      ctx.strokeStyle = "#7FA88B";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#91A99E";
+      ctx.lineWidth = 1.5;
       ctx.lineJoin = "round";
       ctx.lineCap = "round";
       if (points.length === 1) {
