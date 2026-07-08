@@ -67,6 +67,13 @@ const {
   prepareProgressCoach,
 } = require("./progress-coach");
 const { executeCoachAction, getCoachActionStatus, syncManualData } = require("./manual-sync");
+const {
+  bindPhone,
+  bootstrapAccount,
+  deleteCloudAccount,
+  importLegacyProfile,
+  updateCloudProfile,
+} = require("./account");
 const COACH_RUNTIME_VERSION = "coach-actions-2026-07-07.3";
 
 function success(data) {
@@ -118,6 +125,11 @@ function failure(error) {
     "DELETE_CONFIRMATION_INVALID",
     "DELETE_IN_PROGRESS",
     "DATA_DELETE_FAILED",
+    "PROFILE_INVALID",
+    "PHONE_CODE_INVALID",
+    "PHONE_AUTH_FAILED",
+    "PHONE_ALREADY_BOUND",
+    "CONFIRMATION_REQUIRED",
     "STAGE_ALREADY_EXISTS",
     "STAGE_GENERATION_IN_PROGRESS",
     "STAGE_GENERATION_LIMIT_REACHED",
@@ -445,6 +457,12 @@ exports.main = async (event) => {
     }
 
     await ensureCollections();
+
+    if (event.action === "bootstrapAccount") return success(await bootstrapAccount(context.OPENID));
+    if (event.action === "updateCloudProfile") return success(await updateCloudProfile(context.OPENID, event));
+    if (event.action === "bindPhone") return success(await bindPhone(context.OPENID, event));
+    if (event.action === "importLegacyProfile") return success(await importLegacyProfile(context.OPENID, event));
+    if (event.action === "deleteCloudAccount") return success(await deleteCloudAccount(context.OPENID, event));
 
     if (event.action === "generate") {
       return await generate(event, context.OPENID);

@@ -57,6 +57,7 @@
     "t-textarea": "tdesign-miniprogram/textarea/textarea"
   },
   "tabBar": {
+    "custom": true,
     "color": "#71827A",
     "selectedColor": "#356859",
     "backgroundColor": "#FFFFFF",

@@ -1,11 +1,15 @@
 const cloud = require("wx-server-sdk");
 const { stableId } = require("./repository");
+const { resolveAccount } = require("./account");
 
 const db = cloud.database();
 const COLLECTIONS = {
   goals: "manual_goals",
   tasks: "manual_tasks",
   checkins: "manual_checkins",
+  archivedGoals: "manual_archived_goals",
+  achievementUnlocks: "achievement_unlocks",
+  sparkCheckins: "spark_checkins",
   proposals: "coach_action_proposals",
 };
 let collectionsReady;
@@ -82,7 +86,7 @@ async function listOwned(collection, openid, limit = 500) {
   return (result.data || []).map(publicRecord);
 }
 
-async function mergeCollection(openid, collection, rawItems, kind) {
+async function mergeCollection(openid, userId, collection, rawItems, kind) {
   const incoming = (Array.isArray(rawItems) ? rawItems : []).map((item) => cleanRecord(item, kind));
   const current = await listOwned(collection, openid);
   const merged = new Map(current.map((item) => [item.id, item]));
@@ -92,29 +96,38 @@ async function mergeCollection(openid, collection, rawItems, kind) {
   }
   for (const item of merged.values()) {
     const docId = stableId(collection, `${openid}:${item.id}`);
-    await db.collection(collection).doc(docId).set({ data: { ...item, _openid: openid, serverUpdatedAt: db.serverDate() } });
+    await db.collection(collection).doc(docId).set({ data: { ...item, _openid: openid, userId, serverUpdatedAt: db.serverDate() } });
   }
   return Array.from(merged.values());
 }
 
 async function syncManualData(openid, event) {
   await ensureManualCollections();
+  const account = await resolveAccount(openid, true);
   const store = event && event.store;
   if (!store || store.version !== 1) throw createError("MANUAL_SYNC_INVALID", "本地行动数据无效。");
-  const goals = await mergeCollection(openid, COLLECTIONS.goals, store.goals, "目标");
+  const goals = await mergeCollection(openid, account.userId, COLLECTIONS.goals, store.goals, "目标");
   const goalIds = new Set(goals.map((item) => item.id));
-  const tasks = await mergeCollection(openid, COLLECTIONS.tasks, store.tasks, "行动");
-  const checkins = await mergeCollection(openid, COLLECTIONS.checkins, store.checkins, "打卡");
+  const tasks = await mergeCollection(openid, account.userId, COLLECTIONS.tasks, store.tasks, "行动");
+  const checkins = await mergeCollection(openid, account.userId, COLLECTIONS.checkins, store.checkins, "打卡");
   if (tasks.some((item) => !goalIds.has(item.goalId)) || checkins.some((item) => !goalIds.has(item.goalId))) {
     throw createError("MANUAL_SYNC_INVALID", "行动或打卡不属于当前目标。");
   }
+  const archivedGoals = await mergeCollection(openid, account.userId, COLLECTIONS.archivedGoals, store.archivedGoals, "归档目标");
+  const achievementUnlocks = await mergeCollection(openid, account.userId, COLLECTIONS.achievementUnlocks,
+    (store.achievementUnlocks || []).map((item) => ({ ...item, id: item.achievementId, updatedAt: item.unlockedAt })), "成就");
+  const sparkCheckins = await mergeCollection(openid, account.userId, COLLECTIONS.sparkCheckins,
+    (store.sparkCheckins || []).map((item) => ({ ...item, id: item.businessDate, updatedAt: item.checkedAt })), "火花签到");
+  await db.collection("users").doc(account.userId).update({ data: { legacyMigrationCompleted: true, updatedAt: db.serverDate() } });
   return {
     version: 1,
     activeGoalId: goals.some((item) => item.id === store.activeGoalId) ? store.activeGoalId : goals.find((item) => item.status === "active")?.id,
     goals,
     tasks,
     checkins,
-    archivedGoals: Array.isArray(store.archivedGoals) ? store.archivedGoals : [],
+    archivedGoals,
+    achievementUnlocks,
+    sparkCheckins,
   };
 }
 

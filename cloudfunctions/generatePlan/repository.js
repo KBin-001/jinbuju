@@ -24,6 +24,7 @@ const REQUIRED_COLLECTIONS = [
   "manual_tasks",
   "manual_checkins",
   "coach_action_proposals",
+  "account_bindings",
 ];
 let collectionsReady = false;
 

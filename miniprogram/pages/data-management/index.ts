@@ -1,8 +1,6 @@
-import {
-  deleteUserData,
-  ProfileServiceError,
-} from "../../services/profile";
+import { ProfileServiceError } from "../../services/profile";
 import { clearManualStore } from "../../services/manualStore";
+import { deleteCloudAccount } from "../../services/account";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { isMockSeeded, seedMockData } from "../../utils/mockData";
 
@@ -87,9 +85,9 @@ Page(withAppTheme({
   submitDelete() {
     if (this.data.deleting || this.data.confirmation !== "确认清除") return;
     this.setData({ deleting: true, errorMessage: "" });
-    deleteUserData(this.data.confirmation)
+    deleteCloudAccount()
       .then(() => {
-        wx.clearStorageSync();
+        clearManualStore();
         wx.reLaunch({
           url: "/pages/welcome/index?dataCleared=1",
           success: () => {

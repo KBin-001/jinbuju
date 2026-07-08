@@ -1,6 +1,7 @@
 interface IAppOption {
   globalData: {
     cloudEnvId: string;
+    accountReady?: boolean;
   };
   onLaunch(): void;
 }
@@ -8,6 +9,7 @@ interface IAppOption {
 declare const wx: any;
 declare function App<T>(options: T): void;
 declare function Page<T>(options: T): void;
+declare function Component<T>(options: T): void;
 declare function getCurrentPages(): Array<{ route?: string }>;
 
 declare namespace WechatMiniprogram {

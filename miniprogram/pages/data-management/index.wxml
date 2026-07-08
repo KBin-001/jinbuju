@@ -16,18 +16,6 @@
     </view>
   </view>
 
-  <view class="card local-card">
-    <view class="section-title">本地数据</view>
-    <view class="local-copy">清除当前设备上的本地目标、行动和历史复盘缓存，不会影响线上数据库。</view>
-    <t-button class="local-danger-button" bindtap="clearLocalData">清除本地数据</t-button>
-  </view>
-
-  <view class="card local-card">
-    <view class="section-title">演示数据</view>
-    <view class="local-copy">载入 1 个目标、约 10 天行动记录和 20 位各行各业的小队成员，用于预览体验。会覆盖当前本地数据。</view>
-    <t-button class="mock-button" bindtap="loadMockData">{{mockSeeded ? '重新载入演示数据' : '载入演示数据'}}</t-button>
-  </view>
-
   <view class="warning-card">
     清除完成后无法恢复。小队中其他成员的数据不会受到影响，系统只会更新相应的小队人数。
   </view>
@@ -36,7 +24,7 @@
     wx:if="{{!confirmedRisk}}"
     class="danger-outline-button"
     bindtap="startDelete"
-  >清除我的全部数据</t-button>
+  >注销账号并删除全部数据</t-button>
 
   <view wx:else class="card confirmation-card">
     <view class="section-title">再次确认</view>
@@ -57,6 +45,6 @@
       loading="{{deleting}}"
       disabled="{{confirmation !== '确认清除' || deleting}}"
       bindtap="submitDelete"
-    >{{deleting ? '正在清除' : '确认清除全部数据'}}</t-button>
+    >{{deleting ? '正在注销' : '确认注销账号'}}</t-button>
   </view>
 </view>

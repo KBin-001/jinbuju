@@ -26,8 +26,18 @@ Page({
     selectedUnlockedDate: "",
   },
 
+  pendingAchievementId: "",
+
+  onLoad(options: { achievementId?: string }) {
+    this.pendingAchievementId = decodeURIComponent(String(options?.achievementId || ""));
+  },
+
   onShow() {
     this.loadAchievements();
+    if (this.pendingAchievementId) {
+      this.selectAchievement(this.pendingAchievementId);
+      this.pendingAchievementId = "";
+    }
   },
 
   loadAchievements() {
@@ -46,6 +56,11 @@ Page({
 
   openAchievement(event: { currentTarget: { dataset: { id?: string } } }) {
     const id = String(event.currentTarget.dataset.id || "");
+    this.selectAchievement(id);
+  },
+
+  selectAchievement(id: string) {
+    if (!id) return;
     let selected: AchievementProgress | null = null;
     for (const category of this.data.categories) {
       selected = category.achievements.find((item) => item.id === id) || null;
