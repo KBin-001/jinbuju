@@ -1,10 +1,27 @@
 <view class="page today-page" data-theme="{{appTheme}}">
-  <view wx:if="{{status === 'loading'}}" class="card state-card">
+  <view class="today-hero">
+    <image class="today-hero__background" src="/assets/today-hero-mountain-v2.jpg" mode="aspectFill" />
+    <view class="today-hero__veil"></view>
+    <view class="today-nav" style="padding-top: {{menuTop}}px; height: {{menuHeight}}px;"><text>今日</text></view>
+
+    <view wx:if="{{status === 'ready'}}" class="today-profile-row">
+      <image wx:if="{{displayAvatarUrl}}" class="today-avatar" src="{{displayAvatarUrl}}" mode="aspectFill" />
+      <image wx:elif="{{!displayAvatarText}}" class="today-avatar" src="/assets/coach-ui/avatar.svg" mode="aspectFit" />
+      <view wx:else class="today-avatar today-avatar--text">{{displayAvatarText}}</view>
+      <view class="today-greeting-copy"><text class="today-greeting">早上好，{{displayName}}</text><text class="today-subtitle">今天也从一小步开始</text></view>
+      <view class="spark-checkin {{sparkStatus.checkedInToday ? 'is-lit' : 'is-unlit'}} {{sparkAnimating ? 'is-animating' : ''}}" catchtap="checkInSpark" hover-class="spark-checkin--pressed" aria-label="每日火花签到">
+        <view class="spark-icon-wrap"><view wx:if="{{sparkAnimating}}" class="spark-halo"></view><image class="spark-icon" src="/assets/spark-fire.svg" mode="aspectFit" /></view>
+        <view class="spark-copy"><view class="spark-count">{{sparkStatus.checkedInToday ? sparkStatus.currentStreak : 0}}<text>天</text></view><view class="spark-action">{{sparkStatus.checkedInToday ? '已签到' : '签到'}}</view></view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{status === 'loading'}}" class="paper-card state-card">
     <view class="loading-dot"></view>
     <view class="state-title">正在整理今日行动</view>
   </view>
 
-  <view wx:elif="{{status === 'error'}}" class="card state-card">
+  <view wx:elif="{{status === 'error'}}" class="paper-card state-card">
     <view class="state-mark">!</view>
     <view class="state-title">今日数据读取失败</view>
     <view class="state-description">{{errorMessage}}</view>
@@ -12,37 +29,8 @@
   </view>
 
   <block wx:else>
-    <view class="reference-hero">
-      <view class="reference-profile-row">
-        <image wx:if="{{displayAvatarUrl}}" class="reference-avatar" src="{{displayAvatarUrl}}" mode="aspectFill" />
-        <image wx:elif="{{!displayAvatarText}}" class="reference-avatar" src="/assets/coach-ui/avatar.svg" mode="aspectFit" />
-        <view wx:else class="reference-avatar reference-avatar--text">{{displayAvatarText}}</view>
-
-        <view class="reference-greeting">
-          <view class="today-greeting">早上好，{{displayName}}</view>
-          <view class="today-subtitle">{{todayMoodCopy}}</view>
-        </view>
-
-        <view class="spark-checkin {{sparkStatus.checkedInToday ? 'is-lit' : 'is-unlit'}} {{sparkAnimating ? 'is-animating' : ''}}" catchtap="checkInSpark" hover-class="spark-checkin--pressed" aria-label="每日火花签到">
-          <view class="spark-icon-wrap">
-            <view wx:if="{{sparkAnimating}}" class="spark-halo"></view>
-            <image class="spark-icon" src="/assets/spark-fire-generated.png" mode="aspectFit" />
-          </view>
-          <view class="spark-copy">
-            <view class="spark-count">{{sparkStatus.checkedInToday ? sparkStatus.currentStreak : 0}}<text>天</text></view>
-            <view class="spark-action">{{sparkStatus.checkedInToday ? '已签到' : '签到'}}</view>
-          </view>
-        </view>
-      </view>
-
-      <view class="week-card reference-calendar-card">
-        <view class="week-head">
-          <view class="week-title">{{weekTitle}} <text>{{weekdayShort}}</text></view>
-          <view class="week-switch" catchtap="openCalendar" aria-label="展开完整日历">
-            <text>完整日历</text>
-            <view class="week-chevron"></view>
-          </view>
-        </view>
+    <view class="paper-card week-card">
+      <view class="week-head"><view class="week-title">{{selectedMonthDay}}</view><view class="week-switch" catchtap="openCalendar" aria-label="展开完整日历"><text>完整日历</text><text class="week-chevron">›</text></view></view>
       <view class="week-grid">
         <view
           wx:for="{{weekDays}}"
@@ -51,14 +39,13 @@
           data-date="{{item.date}}"
           bindtap="selectWeekDate"
         >
-          <view class="week-label">{{item.label}}</view>
-          <view class="week-number">{{item.day}}</view>
+          <view class="week-label">周{{item.label}}</view>
+          <view class="week-number">{{item.day}}</view><view wx:if="{{item.isSelected}}" class="week-selected-dot"></view>
         </view>
-      </view>
       </view>
     </view>
 
-    <view wx:if="{{!goal}}" class="card empty-card">
+    <view wx:if="{{!goal}}" class="paper-card empty-card">
       <view class="empty-mark">目标</view>
       <view class="state-title">先创建一个长期目标</view>
       <view class="state-description">之后每天都可以自由添加行动，不需要等待 AI 生成计划。</view>
@@ -68,15 +55,15 @@
     <block wx:else>
       <view class="stats-card" bindtap="openTodayDataDetails" hover-class="stats-card--pressed">
         <view class="stats-col">
-          <view class="stats-col-label">已完成</view>
+          <view class="stats-col-label"><t-icon name="check-rectangle" size="36rpx" /><text>已完成</text></view>
           <view class="stats-col-value">{{summary.completedCount}}/{{summary.totalCount}}</view>
         </view>
         <view class="stats-col">
-          <view class="stats-col-label">今日投入</view>
+          <view class="stats-col-label"><t-icon name="time" size="36rpx" /><text>今日投入</text></view>
           <view class="stats-col-value">{{summary.actualMinutes}}<text class="stats-col-unit">min</text></view>
         </view>
         <view class="stats-col stats-col--progress">
-          <view class="stats-col-label">今日进度</view>
+          <view class="stats-col-label"><t-icon name="chart-pie" size="36rpx" /><text>今日进度</text></view>
           <view class="stats-ring-wrap">
             <canvas
               wx:if="{{!calendarVisible && !quickAddVisible && !completionSheetRendered}}"
@@ -90,6 +77,8 @@
       </view>
 
       <view class="reference-coach-entry" bindtap="openDailyCoach" hover-class="reference-card--pressed">
+        <image class="reference-coach-background" src="/assets/today-coach-watercolor-v2.jpg" mode="aspectFill" />
+        <view class="reference-coach-veil"></view>
         <view class="reference-coach-copy">
           <view class="reference-coach-title">
             <view class="reference-coach-mark">✦</view>
@@ -98,14 +87,11 @@
           </view>
           <view class="reference-coach-subtitle">{{dailyNudge}}</view>
         </view>
-        <view class="reference-coach-glow reference-coach-glow--top"></view>
-        <view class="reference-coach-glow reference-coach-glow--bottom"></view>
-        <image class="reference-coach-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFit" />
       </view>
 
-      <view class="task-section reference-task-panel">
+      <view class="task-section">
         <view class="task-section-head">
-          <view class="task-section-title">今日行动列表</view>
+          <view class="task-section-title">今日行动</view>
           <view class="task-section-add" catchtap="addTask"><text>＋</text> 添加任务</view>
         </view>
 
@@ -118,7 +104,7 @@
             wx:for="{{visibleTasks}}"
             wx:key="id"
             wx:for-item="task"
-            class="today-task-row glass-action-item {{task.status === 'completed' ? 'is-done' : ''}}"
+            class="today-task-row {{task.status === 'completed' ? 'is-done' : ''}}"
             data-id="{{task.id}}"
             bindlongpress="openTask"
           >
@@ -131,7 +117,7 @@
               <view class="task-title-line"><view class="task-title">{{task.displayTitle}}</view></view>
               <view class="task-meta"><text>预计 {{task.estimatedMinutes}} 分钟</text><text class="task-meta-dot">·</text><text class="task-goal-name">{{goal.title}}</text></view>
             </view>
-            <view class="task-tail-check glass-check {{task.status === 'completed' ? 'is-done' : ''}}" data-id="{{task.id}}" catchtap="toggleTaskDone">
+            <view class="task-tail-check {{task.status === 'completed' ? 'is-done' : ''}}" data-id="{{task.id}}" catchtap="toggleTaskDone">
               <t-icon wx:if="{{task.status === 'completed'}}" name="check" />
             </view>
           </view>

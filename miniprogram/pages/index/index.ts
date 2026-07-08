@@ -33,6 +33,21 @@ interface WeekDayView { label: string; date: string; day: string; isToday: boole
 interface CalendarDayView extends WeekDayView { hasAction: boolean; isCompleted: boolean; }
 interface CalendarView { title: string; days: CalendarDayView[]; }
 
+function getTodayLayout(): { menuTop: number; menuHeight: number } {
+  try {
+    const windowInfo = wx.getWindowInfo();
+    const menu = wx.getMenuButtonBoundingClientRect();
+    return { menuTop: Math.max(windowInfo.statusBarHeight || 0, menu.top || 0), menuHeight: menu.height || 32 };
+  } catch (_) {
+    return { menuTop: 28, menuHeight: 32 };
+  }
+}
+
+function monthDayLabel(value: string): string {
+  const date = new Date(`${value}T00:00:00`);
+  return `${date.getMonth() + 1}月${date.getDate()}日`;
+}
+
 function dateCopy(value: string): { weekday: string } {
   const date = new Date(`${value}T00:00:00`);
   return { weekday: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"][date.getDay()] };
@@ -165,6 +180,7 @@ function toViewTask(task: ActionTask, today: string): ViewTask {
 
 Page(withAppTheme({
   data: {
+    ...getTodayLayout(),
     appTheme: getCurrentThemeId() as string,
     status: "loading",
     errorMessage: "",
@@ -198,6 +214,7 @@ Page(withAppTheme({
     todayDate: "",
     weekOffset: 0,
     weekTitle: "今天",
+    selectedMonthDay: "",
     weekDays: [] as WeekDayView[],
     calendarVisible: false,
     calendarMonth: "",
@@ -309,6 +326,7 @@ Page(withAppTheme({
         weekday: copy.weekday,
         weekdayShort: copy.weekday.replace("星期", "周"),
         weekTitle: week.weekTitle,
+        selectedMonthDay: monthDayLabel(selectedDate),
         weekDays: week.weekDays,
         calendarMonth,
         calendarTitle: calendar.title,
@@ -360,7 +378,7 @@ Page(withAppTheme({
 
         // 轨道
         context.beginPath();
-        context.strokeStyle = "#D8F0E3";
+        context.strokeStyle = "#E9D9AD";
         context.lineWidth = lineWidth;
         context.arc(centerX, centerY, radius, 0, Math.PI * 2);
         context.stroke();
@@ -368,7 +386,7 @@ Page(withAppTheme({
         // 进度弧
         if (ratio > 0) {
           context.beginPath();
-          context.strokeStyle = "#0B6B45";
+          context.strokeStyle = "#31584B";
           context.lineWidth = lineWidth;
           context.arc(centerX, centerY, radius, start, start + Math.PI * 2 * ratio);
           context.stroke();
