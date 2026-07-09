@@ -29,6 +29,19 @@ import { getTodayBusinessDate } from "../../utils/date";
 
 type PageStatus = "loading" | "empty" | "ready" | "error";
 
+function getTeamLayout(): { menuTop: number; menuHeight: number } {
+  try {
+    const windowInfo = wx.getWindowInfo();
+    const menu = wx.getMenuButtonBoundingClientRect();
+    return {
+      menuTop: Math.max(windowInfo.statusBarHeight || 0, menu.top || 0),
+      menuHeight: menu.height || 32,
+    };
+  } catch (_) {
+    return { menuTop: 28, menuHeight: 32 };
+  }
+}
+
 interface MemberView extends TeamMember {
   displayName: string;
   avatarText: string;
@@ -59,6 +72,7 @@ interface TeamStatsView {
   todayActions: number;
   targetActions: number;
   todayActionsRate: number;
+  totalGrowthMinutes: number;
 }
 
 interface CommonActionView {
@@ -77,7 +91,43 @@ interface MemberStatusItem {
   avatarText: string;
   statusClass: "completed" | "doing" | "pending";
   statusText: string;
+  statusLabel: string;
+  actionSummary: string;
+  encourageText: string;
+  canEncourage: boolean;
   isSelf: boolean;
+}
+
+interface HeroAvatarSlot {
+  id: string;
+  avatar: string;
+  avatarText: string;
+  tone: "photo" | "mountain" | "robot" | "initial";
+}
+
+interface TeamActionNode {
+  id: string;
+  name: string;
+  avatar: string;
+  avatarText: string;
+  statusClass: "completed" | "doing" | "pending";
+  statusLabel: string;
+}
+
+function normalizeTeamDisplayName(team: Team | null): string {
+  const name = (team?.name || TEAM_NAME).trim();
+  if (!name || /^自律同行\s+[A-Z0-9]{4,6}\s*队$/.test(name)) return TEAM_NAME;
+  return name;
+}
+
+function displayRoomCode(roomCode?: string): string {
+  const raw = (roomCode || "").trim().toUpperCase();
+  if (!raw) return "2846";
+  let seed = 0;
+  for (let index = 0; index < raw.length; index += 1) {
+    seed = (seed * 33 + raw.charCodeAt(index)) % 10000;
+  }
+  return String(seed || 2846).padStart(4, "0");
 }
 
 interface MemberStatusSummary {
@@ -114,18 +164,18 @@ interface TeamSettingsDraft {
 }
 
 const TEAM_LEVEL = "Lv.3";
-const TEAM_MOOD = "团结奋进";
-const TEAM_NAME = "自律同行 TQLR 队";
+const TEAM_MOOD = "稳定同行";
+const TEAM_NAME = "进步小队";
 
 /* —— 今日共同行动相关（mock，方便后续接真实接口） —— */
-const COMMON_ACTION_DESC = "每人完成 3 个待办，保持连续打卡";
+const COMMON_ACTION_DESC = "每人完成 3 个行动，保持连续打卡";
 const COMMON_ACTION_TARGET = 3;
 
 /* —— 今日小队战况相关（mock） —— */
-const TEAM_TODAY_ACTIONS_MOCK = 38;
+const TEAM_TODAY_ACTIONS_MOCK = 8;
 const TEAM_TARGET_ACTIONS_MOCK = 50;
-const TODAY_COMPLETION_RATE_MOCK = 62;
-const COMPLETED_MEMBERS_MOCK = 13;
+const TODAY_COMPLETION_RATE_MOCK = 67;
+const COMPLETED_MEMBERS_MOCK = 3;
 
 const MEMBER_STATUS_MAX = 8;
 const ACTIVITY_MAX = 3;
@@ -269,13 +319,20 @@ function toMemberView(member: TeamMember, team: Team | null): MemberView {
 }
 
 /* ============ 今日小队战况 ============ */
-function buildTeamStats(team: Team, dailyStats: TeamDailyStats | null): TeamStatsView {
-  const totalMembers = team.memberCount;
-  const completedMembers = dailyStats?.completedMembers ?? COMPLETED_MEMBERS_MOCK;
-  const todayCompletionRate = dailyStats?.completionRate ?? TODAY_COMPLETION_RATE_MOCK;
-  const todayActions = TEAM_TODAY_ACTIONS_MOCK;
-  const targetActions = TEAM_TARGET_ACTIONS_MOCK;
+function buildTeamStats(team: Team, dailyStats: TeamDailyStats | null, members: MemberView[]): TeamStatsView {
+  const totalMembers = team.memberCount || members.length;
+  const completedMembers = dailyStats?.completedMembers
+    ?? members.filter((member) => member.todayStatus === "completed").length;
+  const todayCompletionRate = dailyStats?.completionRate
+    ?? (totalMembers > 0 ? Math.round((completedMembers / totalMembers) * 100) : 0);
+  const todayActions = members.reduce((sum, member) => {
+    const details = Array.isArray(member.todayActionDetails) ? member.todayActionDetails : [];
+    return sum + details.length;
+  }, 0);
+  const targetActions = Math.max(totalMembers * COMMON_ACTION_TARGET, todayActions, 1);
   const todayActionsRate = Math.min(100, Math.round((todayActions / targetActions) * 100));
+  const totalGrowthMinutes = dailyStats?.totalGrowthMinutes
+    ?? members.reduce((sum, member) => sum + (member.growthMinutes || 0), 0);
 
   return {
     todayCompletionRate,
@@ -284,7 +341,73 @@ function buildTeamStats(team: Team, dailyStats: TeamDailyStats | null): TeamStat
     todayActions,
     targetActions,
     todayActionsRate,
+    totalGrowthMinutes,
   };
+}
+
+function statusClassOf(status: MemberTodayStatus): MemberStatusItem["statusClass"] {
+  if (status === "completed") return "completed";
+  if (status === "partial") return "doing";
+  return "pending";
+}
+
+function statusLabelOf(statusClass: MemberStatusItem["statusClass"]): string {
+  if (statusClass === "completed") return "已完成";
+  if (statusClass === "doing") return "进行中";
+  return "未开始";
+}
+
+function actionSummaryOf(member: MemberView): string {
+  const details = member.todayActionDetails || [];
+  const completed = details.find((detail) => detail.status === "completed");
+  const current = details.find((detail) => detail.status !== "completed");
+  if (member.todayStatus === "completed") {
+    return `完成：${completed?.title || member.todayActionTitle || member.actionText}`;
+  }
+  if (member.todayStatus === "partial") {
+    return `进行中：${current?.title || member.todayActionTitle || member.actionText}`;
+  }
+  if (member.todayStatus === "missed") {
+    return "今天休息：保留节奏，不做比较";
+  }
+  return `进行中：${current?.title || member.todayActionTitle || member.actionText}`;
+}
+
+function buildHeroAvatarSlots(members: MemberView[]): HeroAvatarSlot[] {
+  const slots = members.slice(0, 4).map((member): HeroAvatarSlot => ({
+    id: member.id,
+    avatar: member.avatar || "",
+    avatarText: member.avatarText,
+    tone: member.avatar ? "photo" : "initial",
+  }));
+  const fallbacks: HeroAvatarSlot[] = [
+    { id: "hero_mountain", avatar: "/assets/progress-mountain-path-v2.jpg", avatarText: "山", tone: "mountain" },
+    { id: "hero_robot", avatar: "/assets/today-coach-watercolor-v2.jpg", avatarText: "AI", tone: "robot" },
+    { id: "hero_leaf", avatar: "", avatarText: "叶", tone: "initial" },
+    { id: "hero_star", avatar: "", avatarText: "星", tone: "initial" },
+  ];
+  return [...slots, ...fallbacks].slice(0, 4);
+}
+
+function buildTeamActionNodes(members: MemberView[]): TeamActionNode[] {
+  const nodes = members.slice(0, 4).map((member) => {
+    const statusClass = statusClassOf(member.todayStatus);
+    return {
+      id: member.id,
+      name: member.displayName,
+      avatar: member.avatar || "",
+      avatarText: member.avatarText,
+      statusClass,
+      statusLabel: statusLabelOf(statusClass),
+    };
+  });
+  const fallbacks: TeamActionNode[] = [
+    { id: "node_1", name: "伙伴", avatar: "", avatarText: "叶", statusClass: "pending", statusLabel: "未开始" },
+    { id: "node_2", name: "伙伴", avatar: "", avatarText: "叶", statusClass: "pending", statusLabel: "未开始" },
+    { id: "node_3", name: "伙伴", avatar: "", avatarText: "叶", statusClass: "pending", statusLabel: "未开始" },
+    { id: "node_4", name: "伙伴", avatar: "", avatarText: "叶", statusClass: "pending", statusLabel: "未开始" },
+  ];
+  return [...nodes, ...fallbacks].slice(0, 4);
 }
 
 /* ============ 今日共同行动 ============ */
@@ -302,8 +425,10 @@ function buildCommonAction(members: MemberView[]): CommonActionView {
     }
   }
 
-  const teamCompleted = TEAM_TODAY_ACTIONS_MOCK;
-  const teamTarget = TEAM_TARGET_ACTIONS_MOCK;
+  const teamCompleted = members.reduce((sum, member) => (
+    sum + (member.todayActionDetails || []).filter((detail) => detail.status === "completed").length
+  ), 0);
+  const teamTarget = Math.max(COMMON_ACTION_TARGET * members.length, teamCompleted, 1);
   const myDone = myTarget > 0 && myCompleted >= myTarget;
 
   return {
@@ -349,6 +474,7 @@ function buildMemberStatusList(members: MemberView[]): MemberStatusItem[] {
       : statusClass === "doing"
         ? `进行中 ${completedCount}/${targetCount}`
         : `未开始 0/${targetCount}`;
+    const statusLabel = statusLabelOf(statusClass);
 
     return {
       id: member.id,
@@ -357,6 +483,10 @@ function buildMemberStatusList(members: MemberView[]): MemberStatusItem[] {
       avatarText: member.avatarText,
       statusClass,
       statusText,
+      statusLabel,
+      actionSummary: actionSummaryOf(member),
+      encourageText: member.isSelf ? "查看详情" : (member.encouragedByMeToday ? "已鼓励" : "送一句鼓励"),
+      canEncourage: member.canEncourage,
       isSelf: member.isSelf,
     };
   });
@@ -424,6 +554,7 @@ function buildActivityList(members: MemberView[]): ActivityItem[] {
 
 Page(withAppTheme({
   data: {
+    ...getTeamLayout(),
     appTheme: getCurrentThemeId() as string,
     status: "loading" as PageStatus,
     errorMessage: "",
@@ -431,9 +562,12 @@ Page(withAppTheme({
     members: [] as MemberView[],
     dailyStats: null as TeamDailyStats | null,
     displayTeamName: TEAM_NAME,
+    displayRoomCode: "2846",
     teamLevel: TEAM_LEVEL,
     teamMood: TEAM_MOOD,
     avatarMembers: [] as MemberView[],
+    heroAvatarSlots: [] as HeroAvatarSlot[],
+    teamActionNodes: [] as TeamActionNode[],
     extraAvatarCount: 0,
     /* —— 执行看板新数据 —— */
     teamStats: {
@@ -443,6 +577,7 @@ Page(withAppTheme({
       todayActions: 0,
       targetActions: 0,
       todayActionsRate: 0,
+      totalGrowthMinutes: 0,
     } as TeamStatsView,
     commonAction: {
       desc: COMMON_ACTION_DESC,
@@ -487,6 +622,7 @@ Page(withAppTheme({
   },
 
   onShow() {
+    (this as any).getTabBar?.()?.syncSelected?.();
     this.setData({ appTheme: getCurrentThemeId() });
     this.load();
   },
@@ -538,12 +674,15 @@ Page(withAppTheme({
       team,
       members: memberViews,
       dailyStats,
-      displayTeamName: team?.name || TEAM_NAME,
+      displayTeamName: normalizeTeamDisplayName(team),
+      displayRoomCode: displayRoomCode(team?.roomCode),
       teamAvatar: team?.avatar || "",
       teamAvatarText: (team?.name || TEAM_NAME).slice(0, 1),
       avatarMembers,
+      heroAvatarSlots: buildHeroAvatarSlots(memberViews),
+      teamActionNodes: buildTeamActionNodes(memberViews),
       extraAvatarCount: Math.max(0, memberViews.length - avatarMembers.length),
-      teamStats: team ? buildTeamStats(team, dailyStats) : this.data.teamStats,
+      teamStats: team ? buildTeamStats(team, dailyStats, memberViews) : this.data.teamStats,
       commonAction: buildCommonAction(memberViews),
       memberStatusList,
       memberStatusSummary: buildMemberStatusSummary(memberViews),

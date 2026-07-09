@@ -1,204 +1,173 @@
-<view class="page team-page" data-theme="{{appTheme}}">
-  <view class="team-header">
-    <image class="team-header-bg" src="/assets/team-header-bg.jpg" mode="aspectFill" />
-    <view class="page-title-row">
-      <view class="page-title">小队</view>
-      <view class="page-subtitle">一起完成今天的行动</view>
+<view class="team-page" data-theme="{{appTheme}}">
+  <image class="team-bg" src="/assets/team-header-bg.jpg" mode="aspectFill" />
+  <view class="team-bg-mask"></view>
+
+  <view class="team-nav" style="padding-top: {{menuTop}}px; height: {{menuHeight}}px;">
+    <view class="team-nav-title">小队</view>
+  </view>
+
+  <view wx:if="{{status === 'loading'}}" class="team-content team-content--state">
+    <view class="paper-card state-card">
+      <view class="state-mark">TEAM</view>
+      <view class="state-title">正在整理小队信息</view>
+      <view class="state-copy">稍等一下，马上回来。</view>
     </view>
   </view>
 
-  <view wx:if="{{status === 'loading'}}" class="team-card state-card">
-    <view class="state-icon">...</view>
-    <view class="state-title">正在整理小队信息</view>
-    <view class="state-copy">稍等一下，马上回来。</view>
-  </view>
-
-  <view wx:elif="{{status === 'error'}}" class="team-card state-card">
-    <view class="state-icon">!</view>
-    <view class="state-title">小队加载失败</view>
-    <view class="state-copy">{{errorMessage}}</view>
-    <t-button class="solid-button state-button" bindtap="retry">重新加载</t-button>
-  </view>
-
-  <view wx:elif="{{status === 'empty'}}" class="team-card empty-card">
-    <view class="empty-mark">队</view>
-    <view class="empty-title">还没有加入小队</view>
-    <view class="empty-copy">支持 5-50 人轻量同行。一起自律，各自成长。</view>
-    <view class="empty-actions">
-      <t-button class="solid-button" loading="{{creating}}" disabled="{{creating}}" bindtap="createLocalTeam">
-        {{creating ? '正在创建' : '创建小队'}}
-      </t-button>
-      <t-button class="outline-button" bindtap="openJoinPopup">房间号加入</t-button>
+  <view wx:elif="{{status === 'error'}}" class="team-content team-content--state">
+    <view class="paper-card state-card">
+      <view class="state-mark">!</view>
+      <view class="state-title">小队加载失败</view>
+      <view class="state-copy">{{errorMessage}}</view>
+      <t-button class="solid-button state-button" bindtap="retry">重新加载</t-button>
     </view>
   </view>
 
-  <block wx:else>
-    <!-- 1. 小队状态卡（紧凑身份卡） -->
-    <view class="team-card team-status-card">
-      <view class="team-title-row">
-        <view class="team-identity-row">
-          <view class="team-hero-avatar">
-            <image wx:if="{{teamAvatar}}" src="{{teamAvatar}}" mode="aspectFill" />
-            <text wx:else>{{teamAvatarText}}</text>
+  <view wx:elif="{{status === 'empty'}}" class="team-content team-content--state">
+    <view class="paper-card state-card empty-card">
+      <view class="state-mark">同行</view>
+      <view class="state-title">还没有加入小队</view>
+      <view class="state-copy">适合 5-50 人轻量同行。一起自律，各自成长。</view>
+      <view class="empty-actions">
+        <t-button class="solid-button" loading="{{creating}}" disabled="{{creating}}" bindtap="createLocalTeam">
+          {{creating ? '正在创建' : '创建小队'}}
+        </t-button>
+        <t-button class="outline-button" bindtap="openJoinPopup">房间号加入</t-button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="team-content">
+    <view class="team-hero paper-card">
+      <view class="hero-left">
+        <view class="hero-title">{{displayTeamName}}</view>
+        <view class="hero-slogan">一起自律，各自成长</view>
+        <view class="hero-capacity">成员 {{team.memberCount}}/{{team.maxMembers}}</view>
+        <view class="hero-actions">
+          <view class="hero-btn hero-btn--invite" catchtap="inviteFriends">
+            <image class="hero-btn-svg" src="/assets/team/icon-invite.svg" mode="aspectFit" />
+            <text>邀请好友</text>
           </view>
-          <view class="team-info-block">
-            <view class="team-name-row">
-              <view class="team-name">{{displayTeamName}}</view>
-            </view>
-            <view class="team-tags">
-              <view class="level-tag">{{teamLevel}}</view>
-              <view class="mood-tag">{{teamMood}}</view>
-            </view>
+          <view class="hero-btn hero-btn--copy" catchtap="copyRoomCode">
+            <image class="hero-btn-svg" src="/assets/team/icon-copy.svg" mode="aspectFit" />
+            <text>复制房间号</text>
           </view>
         </view>
-        <view class="team-member-preview" catchtap="openAllMembers">
+      </view>
+
+      <view class="hero-right">
+        <view class="avatar-cluster">
           <view
-            wx:for="{{avatarMembers}}"
+            wx:for="{{heroAvatarSlots}}"
             wx:key="id"
-            class="preview-avatar"
+            class="cluster-avatar cluster-avatar--{{item.tone}} cluster-avatar--pos{{index}}"
           >
-            <t-avatar wx:if="{{item.avatar}}" image="{{item.avatar}}" size="80rpx" />
-            <t-avatar wx:else size="80rpx">{{item.avatarText}}</t-avatar>
+            <image wx:if="{{item.avatar}}" class="avatar-img" src="{{item.avatar}}" mode="aspectFill" />
+            <text wx:else>{{item.avatarText}}</text>
           </view>
-          <view wx:if="{{extraAvatarCount > 0}}" class="preview-more">+{{extraAvatarCount}}</view>
         </view>
+        <view class="room-chip" catchtap="openTeamInfo">房间 {{displayRoomCode}} ›</view>
+      </view>
+    </view>
+
+    <view class="joint-card paper-card">
+      <view class="joint-head">
+        <view class="joint-title">今日共同行动</view>
+        <view class="joint-done"><text class="joint-done-number">{{teamStats.completedMembers}}</text>人已完成今日行动</view>
       </view>
 
-      <view class="team-sub-info">
-        <text>{{team.memberCount}} / {{team.maxMembers}} 成员</text>
-        <text class="dot">·</text>
-        <text>今日 {{teamStats.completedMembers}} 人已完成</text>
-      </view>
-
-      <view class="team-slogan-row">一起自律，各自成长</view>
-
-      <view class="team-action-buttons">
+      <view class="node-track">
         <view
-          class="team-action-btn team-action-btn--primary"
-          catchtap="inviteFriends"
-          hover-class="team-action-btn--pressed"
-          hover-stay-time="120"
+          wx:for="{{teamActionNodes}}"
+          wx:key="id"
+          class="action-node action-node--{{item.statusClass}}"
         >
-          <text class="team-action-btn__icon">＋</text>
-          <text class="team-action-btn__label">邀请好友</text>
-        </view>
-        <view
-          class="team-action-btn team-action-btn--secondary"
-          catchtap="openTeamSettings"
-          hover-class="team-action-btn--pressed"
-          hover-stay-time="120"
-        >
-          <text class="team-action-btn__icon">⚙</text>
-          <text class="team-action-btn__label">小队设置</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 2. 今日小队战况（核心数据模块） -->
-    <view class="team-card team-dashboard-card">
-      <view class="dashboard-title-row">
-        <view class="card-title">今日小队战况</view>
-        <view class="dashboard-detail-link" catchtap="noop">查看详情 ›</view>
-      </view>
-
-      <view class="team-stat-grid">
-        <view class="stat-item">
-          <view class="stat-value">{{teamStats.todayCompletionRate}}<text class="stat-unit">%</text></view>
-          <view class="stat-label">今日完成率</view>
-        </view>
-        <view class="stat-item stat-item--divider">
-          <view class="stat-value">{{teamStats.completedMembers}}<text class="stat-slash">/{{teamStats.totalMembers}}</text></view>
-          <view class="stat-label">已完成成员</view>
-        </view>
-        <view class="stat-item stat-item--divider">
-          <view class="stat-value">{{teamStats.todayActions}}<text class="stat-unit">项</text></view>
-          <view class="stat-label">今日行动数</view>
+          <view class="node-avatar">
+            <image wx:if="{{item.avatar}}" class="avatar-img" src="{{item.avatar}}" mode="aspectFill" />
+            <image wx:else class="node-leaf-svg" src="/assets/team/leaf-node.svg" mode="aspectFit" />
+            <view wx:if="{{item.statusClass === 'completed'}}" class="node-check">✓</view>
+          </view>
+          <view class="node-name">{{item.name}}</view>
+          <view class="node-status">{{item.statusLabel}}</view>
         </view>
       </view>
 
-      <view class="team-progress-bar">
-        <view class="progress-track">
-          <view class="progress-fill" style="width: {{teamStats.todayActionsRate}}%;"></view>
-        </view>
-        <view class="progress-meta-row">
-          <text class="progress-goal-text">今日目标：全队完成 {{teamStats.targetActions}} 项行动</text>
-          <text class="progress-current">{{teamStats.todayActions}} / {{teamStats.targetActions}}</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 3. 今日共同行动（关键行动模块） -->
-    <view class="team-card team-common-action">
-      <view class="card-title">今日共同行动</view>
-      <view class="common-action-desc">{{commonAction.desc}}</view>
-
-      <view class="team-common-progress">
-        <view class="common-progress-item">
-          <view class="common-progress-label">我的进度</view>
-          <view class="common-progress-value">
-            <text class="cpv-current {{commonAction.myDone ? 'cpv-current--done' : ''}}">{{commonAction.myCompleted}}</text>
-            <text class="cpv-slash"> / {{commonAction.myTarget}}</text>
+      <view class="joint-stats">
+        <view class="joint-stat joint-stat--first">
+          <image class="joint-stat-svg" src="/assets/team/icon-members.svg" mode="aspectFit" />
+          <view>
+            <view class="joint-stat-label">成员</view>
+            <view class="joint-stat-value">{{teamStats.totalMembers}}<text class="joint-stat-unit">人</text></view>
           </view>
         </view>
-        <view class="common-progress-divider"></view>
-        <view class="common-progress-item">
-          <view class="common-progress-label">全队进度</view>
-          <view class="common-progress-value">
-            <text class="cpv-current">{{commonAction.teamCompleted}}</text>
-            <text class="cpv-slash"> / {{commonAction.teamTarget}}</text>
+        <view class="joint-stat">
+          <view class="joint-stat-leaf"></view>
+          <view>
+            <view class="joint-stat-label">行动</view>
+            <view class="joint-stat-value">{{teamStats.todayActions}}<text class="joint-stat-unit">次</text></view>
+          </view>
+        </view>
+        <view class="joint-stat">
+          <image class="joint-stat-svg" src="/assets/team/icon-clock.svg" mode="aspectFit" />
+          <view>
+            <view class="joint-stat-label">投入</view>
+            <view class="joint-stat-value">{{teamStats.totalGrowthMinutes}}<text class="joint-stat-unit">min</text></view>
           </view>
         </view>
       </view>
     </view>
 
-    <!-- 4. 成员状态 -->
-    <view class="team-card team-member-status">
-      <view class="dashboard-title-row">
-        <view class="card-title">成员状态</view>
-        <view class="member-status-summary">
-          <text class="ms-completed">已完成 {{memberStatusSummary.completed}}</text>
-          <text class="ms-doing">进行中 {{memberStatusSummary.doing}}</text>
-          <text class="ms-pending">未开始 {{memberStatusSummary.pending}}</text>
+    <view class="member-section">
+      <view class="member-section-head">
+        <view class="member-section-title">小队成员</view>
+        <view class="encourage-all-btn" catchtap="openAllMembers">
+          <view class="leaf-small"></view>
+          <text>送一句鼓励</text>
         </view>
       </view>
 
-      <view class="team-member-list">
+      <view class="member-list">
         <view
           wx:for="{{memberStatusList}}"
           wx:key="id"
-          class="member-status-item"
+          class="member-card"
           data-id="{{item.id}}"
           bindtap="openMemberDetail"
         >
           <view class="member-avatar member-avatar--{{item.statusClass}}">
-            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+            <image wx:if="{{item.avatar}}" class="avatar-img" src="{{item.avatar}}" mode="aspectFill" />
             <text wx:else>{{item.avatarText}}</text>
-            <view wx:if="{{item.statusClass === 'completed'}}" class="avatar-check">✓</view>
-            <view wx:elif="{{item.statusClass === 'doing'}}" class="avatar-dot"></view>
           </view>
-          <view class="member-status-info">
-            <view class="member-name">{{item.name}}</view>
-            <view class="member-progress-text">{{item.statusText}}</view>
+          <view class="member-main">
+            <view class="member-line">
+              <text class="member-name">{{item.name}}</text>
+              <text class="member-chip member-chip--{{item.statusClass}}">{{item.statusLabel}}</text>
+            </view>
+            <view class="member-action">{{item.actionSummary}}</view>
+          </view>
+          <view
+            class="member-encourage {{item.canEncourage ? '' : 'member-encourage--disabled'}}"
+            data-id="{{item.id}}"
+            catchtap="encourageMember"
+          >
+            <image class="member-encourage-icon" src="/assets/team/icon-chat.svg" mode="aspectFit" />
+            <text>{{item.encourageText}}</text>
+            <text class="member-arrow">›</text>
           </view>
         </view>
       </view>
-
-      <view wx:if="{{memberStatusExtra > 0}}" class="member-list-more" catchtap="openAllMembers">
-        查看全部 {{team.memberCount}} 位成员 ›
-      </view>
     </view>
 
-    <!-- 5. 小队动态（行动动态） -->
-    <view class="team-card team-activity-card">
-      <view class="dashboard-title-row">
-        <view class="card-title">行动动态</view>
+    <view class="secondary-card paper-card">
+      <view class="secondary-head">
+        <view class="secondary-title">行动动态</view>
+        <view class="secondary-link" catchtap="openAllActivities">查看全部</view>
       </view>
-
-      <view wx:if="{{activityList.length === 0}}" class="activity-empty">今天还没有队友动态。</view>
+      <view wx:if="{{activityList.length === 0}}" class="activity-empty">今天还没有成员动态。</view>
       <view wx:else>
-        <view wx:for="{{activityList}}" wx:key="id" class="activity-item" data-id="{{item.memberId}}" bindtap="openMemberDetail">
+        <view wx:for="{{activityList}}" wx:key="id" class="activity-row" data-id="{{item.memberId}}" bindtap="openMemberDetail">
           <view class="activity-avatar">
-            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+            <image wx:if="{{item.avatar}}" class="avatar-img" src="{{item.avatar}}" mode="aspectFill" />
             <text wx:else>{{item.avatarText}}</text>
           </view>
           <view class="activity-main">
@@ -207,22 +176,9 @@
           </view>
           <view class="activity-time">{{item.time}}</view>
         </view>
-        <view class="activity-more" catchtap="openAllActivities" hover-class="activity-more--pressed" hover-stay-time="100">查看全部动态 ›</view>
       </view>
     </view>
-
-    <!-- 6. 本周荣誉（轻量横向徽章） -->
-    <view class="team-card team-honor-card">
-      <view class="card-title">本周荣誉</view>
-      <scroll-view scroll-x class="honor-scroll" enhanced show-scrollbar="{{false}}">
-        <view wx:for="{{honorList}}" wx:key="id" class="honor-badge-card">
-          <view class="honor-icon">{{item.icon}}</view>
-          <view class="honor-title">{{item.title}}</view>
-          <view class="honor-desc">{{item.desc}}</view>
-        </view>
-      </scroll-view>
-    </view>
-  </block>
+  </view>
 
   <view wx:if="{{joinPopupVisible}}" class="team-popup-layer">
     <view class="team-popup-mask" catchtap="closeJoinPopup"></view>
@@ -230,13 +186,7 @@
       <view class="popup-handle"></view>
       <view class="popup-title">输入房间号加入</view>
       <view class="popup-copy">当前为本地演示版本，真实跨设备加入需要后续接入云端小队数据。</view>
-      <t-input
-        class="room-input"
-        maxlength="6"
-        value="{{roomCodeInput}}"
-        placeholder="例如 TQLR01"
-        bindchange="inputRoomCode"
-      />
+      <t-input class="room-input" maxlength="6" value="{{roomCodeInput}}" placeholder="例如 TQLR01" bindchange="inputRoomCode" />
       <view class="popup-actions">
         <t-button class="outline-button" bindtap="closeJoinPopup">取消</t-button>
         <t-button class="solid-button" loading="{{joining}}" disabled="{{joining}}" bindtap="submitJoinRoom">加入</t-button>
@@ -250,18 +200,9 @@
       <view class="popup-handle"></view>
       <view class="popup-title">{{displayTeamName}}</view>
       <view class="team-detail-list">
-        <view>
-          <text>房间号</text>
-          <text>{{team.roomCode}}</text>
-        </view>
-        <view>
-          <text>成员</text>
-          <text>{{team.memberCount}} / {{team.maxMembers}}</text>
-        </view>
-        <view>
-          <text>定位</text>
-          <text>一起自律，各自成长</text>
-        </view>
+        <view class="team-detail-row"><text class="team-detail-label">房间号</text><text class="team-detail-value">{{team.roomCode}}</text></view>
+        <view class="team-detail-row"><text class="team-detail-label">成员</text><text class="team-detail-value">{{team.memberCount}} / {{team.maxMembers}}</text></view>
+        <view class="team-detail-row"><text class="team-detail-label">定位</text><text class="team-detail-value">一起自律，各自成长</text></view>
       </view>
       <t-button class="solid-button popup-full-button" bindtap="closeTeamInfo">知道了</t-button>
     </view>
@@ -275,9 +216,7 @@
           <view class="settings-eyebrow">TEAM SETTINGS</view>
           <view class="settings-title">小队设置</view>
         </view>
-        <view class="settings-close" catchtap="closeTeamSettings" aria-label="关闭小队设置">
-          <t-icon name="close" />
-        </view>
+        <view class="settings-close" catchtap="closeTeamSettings">×</view>
       </view>
 
       <scroll-view scroll-y class="settings-scroll" enhanced show-scrollbar="{{false}}">
@@ -288,29 +227,16 @@
         <view class="settings-section {{!settingsCanEditTeam ? 'settings-section--readonly' : ''}}">
           <view class="settings-section-title">小队资料</view>
           <view class="team-profile-setting">
-            <t-button
-              class="team-avatar-picker"
-              open-type="chooseAvatar"
-              bindchooseavatar="chooseTeamAvatar"
-              disabled="{{!settingsCanEditTeam}}"
-            >
-              <image wx:if="{{settingsDraft.avatar}}" src="{{settingsDraft.avatar}}" mode="aspectFill" />
+            <t-button class="team-avatar-picker" open-type="chooseAvatar" bindchooseavatar="chooseTeamAvatar" disabled="{{!settingsCanEditTeam}}">
+              <image wx:if="{{settingsDraft.avatar}}" class="avatar-img" src="{{settingsDraft.avatar}}" mode="aspectFill" />
               <text wx:else>{{teamAvatarText}}</text>
               <view wx:if="{{settingsCanEditTeam}}" class="avatar-edit-mark">换</view>
             </t-button>
             <view class="team-name-field">
               <view class="setting-label">小队名称</view>
-              <t-input
-                class="settings-input"
-                maxlength="20"
-                value="{{settingsDraft.name}}"
-                placeholder="输入 2-20 个字符"
-                disabled="{{!settingsCanEditTeam}}"
-                bindchange="inputTeamName"
-              />
+              <t-input class="settings-input" maxlength="20" value="{{settingsDraft.name}}" placeholder="输入 2-20 个字符" disabled="{{!settingsCanEditTeam}}" bindchange="inputTeamName" />
             </view>
           </view>
-
           <view class="room-code-card">
             <view>
               <view class="setting-label">小队房间号</view>
@@ -318,7 +244,6 @@
             </view>
             <t-button class="copy-code-button" bindtap="copyRoomCode">复制</t-button>
           </view>
-          <view class="setting-help">房间号创建时随机生成，为保证邀请链接稳定，暂不支持修改。</view>
         </view>
 
         <view class="settings-section {{!settingsCanEditTeam ? 'settings-section--readonly' : ''}}">
@@ -326,45 +251,30 @@
           <view class="setting-block">
             <view class="setting-label">房间状态</view>
             <view class="setting-segments">
-              <view
-                class="setting-segment {{settingsDraft.visibility === 'public' ? 'setting-segment--active' : ''}}"
-                data-value="public"
-                bindtap="selectRoomVisibility"
-              >公开房间</view>
-              <view
-                class="setting-segment {{settingsDraft.visibility === 'private' ? 'setting-segment--active' : ''}}"
-                data-value="private"
-                bindtap="selectRoomVisibility"
-              >私密房间</view>
+              <view class="setting-segment {{settingsDraft.visibility === 'public' ? 'setting-segment--active' : ''}}" data-value="public" bindtap="selectRoomVisibility">公开房间</view>
+              <view class="setting-segment {{settingsDraft.visibility === 'private' ? 'setting-segment--active' : ''}}" data-value="private" bindtap="selectRoomVisibility">私密房间</view>
             </view>
             <view class="setting-help">{{settingsDraft.visibility === 'public' ? '其他人可以发现并申请加入。' : '只有获得房间号的伙伴可以加入。'}}</view>
           </view>
-
           <view class="setting-toggle-row" bindtap="toggleAnonymousParticipation">
-            <view class="setting-toggle-copy">
+            <view>
               <view class="setting-label">允许匿名参与</view>
               <view class="setting-help">成员可隐藏昵称与行动明细，减少展示压力。</view>
             </view>
-            <view class="custom-switch {{settingsDraft.allowAnonymous ? 'custom-switch--on' : ''}}">
-              <view class="custom-switch-dot"></view>
-            </view>
+            <view class="custom-switch {{settingsDraft.allowAnonymous ? 'custom-switch--on' : ''}}"><view class="custom-switch-dot"></view></view>
           </view>
-
-          <view class="setting-block setting-block--last">
-            <view class="setting-label">行动详情可见范围</view>
-            <view class="detail-visibility-list">
-              <view
-                wx:for="{{actionDetailOptions}}"
-                wx:key="value"
-                class="detail-visibility-option {{settingsDraft.actionDetailVisibility === item.value ? 'detail-visibility-option--active' : ''}}"
-                data-value="{{item.value}}"
-                bindtap="selectActionDetailVisibility"
-              >
-                <view class="option-radio"><view></view></view>
-                <view>
-                  <view class="option-title">{{item.label}}</view>
-                  <view class="option-desc">{{item.desc}}</view>
-                </view>
+          <view class="detail-visibility-list">
+            <view
+              wx:for="{{actionDetailOptions}}"
+              wx:key="value"
+              class="detail-visibility-option {{settingsDraft.actionDetailVisibility === item.value ? 'detail-visibility-option--active' : ''}}"
+              data-value="{{item.value}}"
+              bindtap="selectActionDetailVisibility"
+            >
+              <view class="option-radio"><view class="option-radio-dot"></view></view>
+              <view>
+                <view class="option-title">{{item.label}}</view>
+                <view class="option-desc">{{item.desc}}</view>
               </view>
             </view>
           </view>
@@ -381,15 +291,12 @@
               bindtap="selectSelfDisplayMode"
             >{{item.label}}</view>
           </view>
-
-          <view class="setting-toggle-row personal-detail-toggle" bindtap="toggleDraftTaskDetailVisible">
-            <view class="setting-toggle-copy">
+          <view class="setting-toggle-row" bindtap="toggleDraftTaskDetailVisible">
+            <view>
               <view class="setting-label">展示我的行动详情</view>
               <view class="setting-help">仅在小队可见范围允许时生效。</view>
             </view>
-            <view class="custom-switch {{settingsDraft.taskDetailVisible ? 'custom-switch--on' : ''}} {{settingsDraft.displayMode === 'anonymous' || settingsDraft.actionDetailVisibility === 'hidden' ? 'custom-switch--disabled' : ''}}">
-              <view class="custom-switch-dot"></view>
-            </view>
+            <view class="custom-switch {{settingsDraft.taskDetailVisible ? 'custom-switch--on' : ''}} {{settingsDraft.displayMode === 'anonymous' || settingsDraft.actionDetailVisibility === 'hidden' ? 'custom-switch--disabled' : ''}}"><view class="custom-switch-dot"></view></view>
           </view>
         </view>
       </scroll-view>
@@ -407,14 +314,14 @@
       <view class="popup-handle"></view>
       <view wx:if="{{selectedMember}}" class="member-detail-head">
         <view class="member-detail-avatar">
-          <image wx:if="{{selectedMember.avatar}}" src="{{selectedMember.avatar}}" mode="aspectFill" />
+          <image wx:if="{{selectedMember.avatar}}" class="avatar-img" src="{{selectedMember.avatar}}" mode="aspectFill" />
           <text wx:else>{{selectedMember.avatarText}}</text>
         </view>
         <view class="member-detail-main">
           <view class="popup-title">{{selectedMember.displayName}}</view>
           <view class="member-detail-tags">
-            <t-tag class="soft-tag" theme="primary" variant="light">{{selectedMember.privacyText}}</t-tag>
-            <t-tag class="soft-tag" theme="warning" variant="light">{{selectedMember.statusText}}</t-tag>
+            <view class="soft-tag">{{selectedMember.privacyText}}</view>
+            <view class="soft-tag soft-tag--gold">{{selectedMember.statusText}}</view>
           </view>
         </view>
       </view>

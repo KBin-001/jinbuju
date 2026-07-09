@@ -1,4 +1,5 @@
 {
-  "navigationBarTitleText": "小队",
+  "navigationBarTitleText": "",
+  "navigationStyle": "custom",
   "usingComponents": {}
 }

@@ -71,12 +71,15 @@ interface TeamOverview {
   maxMembers: number;
   roomCode: string;
   createdAt: string;
+  completedMembers: number;
+  activeMembers: number;
+  pendingMembers: number;
 }
 
 const FILTER_TABS: FilterTab[] = [
   { key: "all", label: "全部成员" },
-  { key: "active", label: "活跃成员" },
-  { key: "weekly", label: "本周排行" },
+  { key: "active", label: "今日有行动" },
+  { key: "weekly", label: "投入较多" },
   { key: "admin", label: "管理员" },
 ];
 
@@ -223,7 +226,7 @@ function applyFilter(members: MemberView[], filter: FilterKey, keyword: string):
     default:
       break;
   }
-  // 任何筛选结果都按本周专注时长从高到低排序，确保排行榜顺序准确
+  // 投入较多的成员优先展示，只作为浏览辅助，不做竞争排名。
   return sortByFocus(list);
 }
 
@@ -387,6 +390,9 @@ Page(withAppTheme({
     const filtered = applyFilter(views, this.data.activeFilter, this.data.searchKeyword);
     const firstNonSelf = members.find((item) => !item.isSelf);
     const firstNonSelfId = firstNonSelf ? firstNonSelf.id : null;
+    const completedMembers = views.filter((item) => item.status === "checked").length;
+    const activeMembers = views.filter((item) => item.status === "checked" || item.status === "active").length;
+    const pendingMembers = Math.max(0, views.length - activeMembers);
     const teamOverview: TeamOverview = {
       name: team.name,
       avatar: team.avatar || "",
@@ -395,6 +401,9 @@ Page(withAppTheme({
       maxMembers: team.maxMembers,
       roomCode: team.roomCode,
       createdAt: team.createdAt,
+      completedMembers,
+      activeMembers,
+      pendingMembers,
     };
     const patch: Record<string, unknown> = {
       team: teamOverview,

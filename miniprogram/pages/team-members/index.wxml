@@ -1,34 +1,26 @@
 <view class="members-page" data-theme="{{appTheme}}">
-  <view
-    class="nav-bar"
-    style="padding-top: {{statusBarHeight}}px;"
-  >
-    <view
-      class="nav-content"
-      style="height: {{navBarHeight}}px; padding-left: {{navRightPad}}px; padding-right: {{navRightPad}}px;"
-    >
+  <image class="members-bg" src="/assets/team-header-bg.jpg" mode="aspectFill" />
+  <view class="members-bg-mask"></view>
+
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content" style="height: {{navBarHeight}}px; padding-right: {{navRightPad}}px;">
       <view class="nav-back" bindtap="goBack" aria-label="返回">
         <text class="nav-back-arrow">‹</text>
       </view>
       <view class="nav-titles">
-        <text class="nav-title">全部成员</text>
-        <text class="nav-subtitle">查看成员状态与本周表现</text>
+        <text class="nav-title">小队成员</text>
+        <text class="nav-subtitle">一起自律，各自成长</text>
       </view>
     </view>
   </view>
 
   <view class="members-body" style="padding-top: {{navTotalHeight}}px;">
     <block wx:if="{{team}}">
-      <view class="overview-card">
+      <view class="overview-card paper-card">
         <view class="overview-main">
-          <view class="overview-label">
-            小队成员
-            <text class="overview-count">{{team.memberCount}}</text>
-            <text class="overview-sep">/</text>
-            <text class="overview-max">{{team.maxMembers}}</text>
-          </view>
+          <view class="overview-eyebrow">MEMBERS</view>
           <view class="overview-name">{{team.name}}</view>
-          <view class="overview-slogan">成员越活跃，小队成长越快</view>
+          <view class="overview-slogan">成员 {{team.memberCount}}/{{team.maxMembers}} · 房间 {{team.roomCode}}</view>
         </view>
         <view class="overview-badge">
           <image wx:if="{{team.avatar}}" class="overview-badge-image" src="{{team.avatar}}" mode="aspectFill" />
@@ -36,123 +28,88 @@
         </view>
       </view>
 
-      <view class="search-row">
-        <view class="search-box">
-          <text class="search-icon">⌕</text>
-          <t-input
-            class="search-input"
-            value="{{searchKeyword}}"
-            placeholder="搜索成员昵称"
-            placeholder-class="search-placeholder"
-            confirm-type="search"
-            bindchange="onSearchInput"
-          />
-          <view wx:if="{{searchKeyword}}" class="search-clear" catchtap="onSearchClear">×</view>
+      <view class="summary-card paper-card">
+        <view class="summary-cell">
+          <view class="summary-label">已完成</view>
+          <view class="summary-value">{{team.completedMembers}}<text>人</text></view>
+        </view>
+        <view class="summary-divider"></view>
+        <view class="summary-cell">
+          <view class="summary-label">进行中</view>
+          <view class="summary-value">{{team.activeMembers}}<text>人</text></view>
+        </view>
+        <view class="summary-divider"></view>
+        <view class="summary-cell">
+          <view class="summary-label">待开始</view>
+          <view class="summary-value">{{team.pendingMembers}}<text>人</text></view>
         </view>
       </view>
 
-      <view class="filter-tabs">
-        <view
-          wx:for="{{filterTabs}}"
-          wx:key="key"
-          class="filter-tab {{activeFilter === item.key ? 'is-active' : ''}}"
-          data-key="{{item.key}}"
-          bindtap="setFilter"
-        >{{item.label}}</view>
+      <view class="search-box">
+        <view class="search-icon"></view>
+        <t-input
+          class="search-input"
+          value="{{searchKeyword}}"
+          placeholder="搜索成员昵称"
+          placeholder-class="search-placeholder"
+          confirm-type="search"
+          bindchange="onSearchInput"
+        />
+        <view wx:if="{{searchKeyword}}" class="search-clear" catchtap="onSearchClear">×</view>
       </view>
 
-      <view wx:if="{{top3.length > 0 && activeFilter !== 'weekly'}}" class="top3-card">
-        <view class="top3-header">
-          <view class="top3-title">🏆 本周活跃榜 Top 3</view>
-          <view class="top3-action" bindtap="viewAllRanking">查看全部排行 ›</view>
+      <scroll-view scroll-x class="filter-tabs" enhanced show-scrollbar="{{false}}">
+        <view class="filter-tabs-inner">
+          <view
+            wx:for="{{filterTabs}}"
+            wx:key="key"
+            class="filter-tab {{activeFilter === item.key ? 'is-active' : ''}}"
+            data-key="{{item.key}}"
+            bindtap="setFilter"
+          >{{item.label}}</view>
         </view>
-        <view class="top3-podium">
-          <view wx:if="{{top3[1]}}" class="podium-item podium-2" data-id="{{top3[1].id}}" bindtap="goMemberDetail">
-            <view class="podium-rank medal-silver">2</view>
-            <view class="podium-avatar avatar-grad {{top3[1].avatarClass}}">
-              <text wx:if="{{!top3[1].avatar}}">{{top3[1].avatarText}}</text>
-              <image wx:else src="{{top3[1].avatar}}" mode="aspectFill" />
-            </view>
-            <view class="podium-name">{{top3[1].nickname}}</view>
-            <view class="podium-minutes">{{top3[1].weeklyFocusMinutes}}分钟</view>
-          </view>
-          <view wx:if="{{top3[0]}}" class="podium-item podium-1" data-id="{{top3[0].id}}" bindtap="goMemberDetail">
-            <view class="podium-rank medal-gold">1</view>
-            <view class="podium-avatar podium-avatar-large avatar-grad {{top3[0].avatarClass}}">
-              <text wx:if="{{!top3[0].avatar}}">{{top3[0].avatarText}}</text>
-              <image wx:else src="{{top3[0].avatar}}" mode="aspectFill" />
-            </view>
-            <view class="podium-name podium-name-large">{{top3[0].nickname}}</view>
-            <view class="podium-minutes podium-minutes-large">{{top3[0].weeklyFocusMinutes}}分钟</view>
-          </view>
-          <view wx:if="{{top3[2]}}" class="podium-item podium-3" data-id="{{top3[2].id}}" bindtap="goMemberDetail">
-            <view class="podium-rank medal-bronze">3</view>
-            <view class="podium-avatar avatar-grad {{top3[2].avatarClass}}">
-              <text wx:if="{{!top3[2].avatar}}">{{top3[2].avatarText}}</text>
-              <image wx:else src="{{top3[2].avatar}}" mode="aspectFill" />
-            </view>
-            <view class="podium-name">{{top3[2].nickname}}</view>
-            <view class="podium-minutes">{{top3[2].weeklyFocusMinutes}}分钟</view>
-          </view>
-        </view>
-      </view>
+      </scroll-view>
 
-      <view wx:if="{{filteredMembers.length > 0}}" class="member-list-card">
-        <view class="member-list-header">
-          <text class="col-member">成员</text>
-          <text class="col-focus">本周专注</text>
-          <text class="col-streak">连续打卡</text>
-          <text class="col-status">状态</text>
-        </view>
+      <view wx:if="{{filteredMembers.length > 0}}" class="member-list">
         <view
           wx:for="{{filteredMembers}}"
           wx:key="id"
-          class="member-row"
+          class="member-row paper-card"
           data-id="{{item.id}}"
           bindtap="goMemberDetail"
         >
-          <view class="member-info">
-            <view class="member-rank">{{index + 1}}</view>
-            <view class="member-avatar avatar-grad {{item.avatarClass}}">
-              <text wx:if="{{!item.avatar}}">{{item.avatarText}}</text>
-              <image wx:else src="{{item.avatar}}" mode="aspectFill" />
+          <view class="member-avatar avatar-grad {{item.avatarClass}}">
+            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+            <text wx:else>{{item.avatarText}}</text>
+          </view>
+          <view class="member-main">
+            <view class="member-name-row">
+              <text class="member-name">{{item.nickname}}</text>
+              <text class="role-tag role-{{item.role}}">{{item.roleText}}</text>
+              <text class="status-tag status-{{item.status}}">{{item.statusText}}</text>
             </view>
-            <view class="member-name-wrap">
-              <view class="member-name">{{item.nickname}}</view>
-              <view class="role-tag role-{{item.role}}">{{item.roleText}}</view>
-            </view>
+            <view class="member-sub">本周投入 {{item.weeklyFocusMinutes}} 分钟 · 连续 {{item.streakDays}} 天</view>
           </view>
-          <view class="member-focus">
-            <text class="focus-num">{{item.weeklyFocusMinutes}}</text>
-            <text class="focus-unit">分</text>
-          </view>
-          <view class="member-streak">
-            <text class="streak-num">{{item.streakDays}}</text>
-            <text class="streak-unit">天</text>
-          </view>
-          <view class="member-status-wrap">
-            <view class="status-tag status-{{item.status}}">{{item.statusText}}</view>
-            <view class="member-arrow">›</view>
-          </view>
+          <view class="member-arrow">›</view>
         </view>
       </view>
 
-      <view wx:elif="{{!searchKeyword && activeFilter === 'all'}}" class="empty-state">
-        <view class="empty-icon">👥</view>
+      <view wx:elif="{{!searchKeyword && activeFilter === 'all'}}" class="empty-state paper-card">
+        <view class="empty-icon">队</view>
         <view class="empty-title">暂无成员</view>
-        <view class="empty-copy">邀请好友加入小队，一起开始成长</view>
+        <view class="empty-copy">邀请好友加入小队，一起开始成长。</view>
       </view>
-      <view wx:else class="empty-state">
-        <view class="empty-icon">⌕</view>
-        <view class="empty-title">未找到匹配成员</view>
-        <view class="empty-copy">换个关键词或筛选条件试试</view>
+      <view wx:else class="empty-state paper-card">
+        <view class="empty-icon">查</view>
+        <view class="empty-title">没有匹配成员</view>
+        <view class="empty-copy">换个关键词或筛选条件再试。</view>
       </view>
     </block>
 
-    <view wx:else class="empty-state empty-state-large">
-      <view class="empty-icon">👥</view>
-      <view class="empty-title">暂无成员</view>
-      <view class="empty-copy">邀请好友加入小队，一起开始成长</view>
+    <view wx:else class="empty-state empty-state-large paper-card">
+      <view class="empty-icon">队</view>
+      <view class="empty-title">还没有加入小队</view>
+      <view class="empty-copy">创建或加入小队后，这里会展示成员状态。</view>
     </view>
 
     <view class="bottom-safe-area"></view>
@@ -168,8 +125,8 @@
       <scroll-view class="detail-scroll" scroll-y enhanced show-scrollbar="{{false}}">
         <view class="detail-base">
           <view class="detail-avatar avatar-grad {{selectedDetail.avatarClass}}">
-            <text wx:if="{{!selectedDetail.avatar}}">{{selectedDetail.avatarText}}</text>
-            <image wx:else src="{{selectedDetail.avatar}}" mode="aspectFill" />
+            <image wx:if="{{selectedDetail.avatar}}" src="{{selectedDetail.avatar}}" mode="aspectFill" />
+            <text wx:else>{{selectedDetail.avatarText}}</text>
           </view>
           <view class="detail-base-main">
             <view class="detail-name-row">
@@ -182,38 +139,29 @@
           </view>
         </view>
 
-        <view class="detail-stats">
+        <view class="detail-stats paper-card">
           <view class="stat-cell">
-            <view class="stat-num-row">
-              <text class="stat-num">{{selectedDetail.weeklyFocusMinutes}}</text>
-              <text class="stat-unit">分</text>
-            </view>
-            <text class="stat-label">本周专注</text>
+            <view class="stat-num-row"><text class="stat-num">{{selectedDetail.weeklyFocusMinutes}}</text><text class="stat-unit">分</text></view>
+            <text class="stat-label">本周投入</text>
           </view>
           <view class="stat-divider"></view>
           <view class="stat-cell">
-            <view class="stat-num-row">
-              <text class="stat-num">{{selectedDetail.streakDays}}</text>
-              <text class="stat-unit">天</text>
-            </view>
-            <text class="stat-label">连续打卡</text>
+            <view class="stat-num-row"><text class="stat-num">{{selectedDetail.streakDays}}</text><text class="stat-unit">天</text></view>
+            <text class="stat-label">连续行动</text>
           </view>
           <view class="stat-divider"></view>
           <view class="stat-cell">
-            <view class="stat-num-row">
-              <text class="stat-num">{{selectedDetail.maxStreakDays}}</text>
-              <text class="stat-unit">天</text>
-            </view>
+            <view class="stat-num-row"><text class="stat-num">{{selectedDetail.maxStreakDays}}</text><text class="stat-unit">天</text></view>
             <text class="stat-label">最长连续</text>
           </view>
         </view>
 
         <view class="detail-section">
           <view class="section-head">
-            <text class="section-title">本周专注趋势</text>
-            <text class="section-action" catchtap="viewAllRecords">查看全部记录 ›</text>
+            <text class="section-title">本周投入趋势</text>
+            <text class="section-action" catchtap="viewAllRecords">查看记录</text>
           </view>
-          <view class="trend-chart">
+          <view class="trend-chart paper-card">
             <view wx:for="{{selectedDetail.weeklyTrend}}" wx:key="dateLabel" class="trend-bar-wrap">
               <view class="trend-bar-track">
                 <view class="trend-bar {{item.isToday ? 'is-today' : ''}}" style="height: {{item.heightPercent}}%;"></view>
@@ -225,10 +173,10 @@
 
         <view class="detail-section">
           <view class="section-head">
-            <text class="section-title">本周完成行动</text>
+            <text class="section-title">最近行动</text>
           </view>
           <view class="action-list">
-            <view wx:for="{{selectedDetail.recentActions}}" wx:key="id" class="action-item">
+            <view wx:for="{{selectedDetail.recentActions}}" wx:key="id" class="action-item paper-card">
               <view class="action-dot"></view>
               <view class="action-main">
                 <text class="action-title">{{item.title}}</text>

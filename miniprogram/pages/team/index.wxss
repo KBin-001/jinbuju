@@ -1,632 +1,651 @@
 .team-page {
-  --team-primary: #3F8F72;
-  --team-primary-deep: #24584A;
-  --team-primary-light: #7CC6A0;
-  --team-primary-soft: #E6F4EC;
-  --team-text: #244C43;
-  --team-secondary: #6F827B;
-  --team-muted: #9AA8A3;
-  --team-border: #E2EEE8;
-  --team-soft: #EFF8F3;
-  --team-sun: #F4C95D;
-  --team-sun-soft: #FFF4D8;
-  --team-bg: #F6FAF7;
-  --team-shadow: 0 8rpx 28rpx rgba(36, 88, 74, 0.08);
+  --paper: #F7F1E6;
+  --card: rgba(255, 252, 245, 0.94);
+  --ink: #244D42;
+  --ink-deep: #163A32;
+  --muted: #746F68;
+  --muted-light: #9A948B;
+  --gold: #B88731;
+  --gold-soft: #F4E3BC;
+  --green: #2B604F;
+  --green-soft: #E7F0E6;
+  --line: rgba(206, 196, 176, 0.62);
+  --shadow: 0 18rpx 48rpx rgba(58, 48, 32, 0.075);
+  position: relative;
   min-height: 100vh;
-  padding: 32rpx 32rpx calc(156rpx + env(safe-area-inset-bottom));
-  background: var(--team-bg);
-}
-
-.page-title-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  min-height: 72rpx;
-  margin-bottom: 22rpx;
-}
-
-.page-title {
-  color: var(--team-text);
-  font-size: 40rpx;
-  font-weight: 700;
-  line-height: 48rpx;
-}
-
-.page-subtitle {
-  color: var(--team-secondary);
-  font-size: 24rpx;
-  line-height: 34rpx;
-}
-
-.team-card {
-  width: 100%;
-  box-sizing: border-box;
-  margin-top: 24rpx;
-  padding: 28rpx;
-  border: 1rpx solid rgba(226, 238, 232, 0.92);
-  border-radius: 28rpx;
-  background: #ffffff;
-  box-shadow: var(--team-shadow);
-}
-
-.team-card:first-of-type {
-  margin-top: 0;
-}
-
-.card-title {
-  color: var(--team-text);
-  font-size: 30rpx;
-  font-weight: 700;
-  line-height: 40rpx;
-}
-
-/* ============ 1. 小队状态卡（紧凑身份卡） ============ */
-.team-status-card {
-  padding: 26rpx 28rpx 24rpx;
-}
-
-.team-title-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-}
-
-.team-identity-row {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  flex: 1;
-  gap: 18rpx;
-}
-
-.team-hero-avatar {
   overflow: hidden;
+  box-sizing: border-box;
+  padding-bottom: calc(150rpx + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 21% 8%, rgba(226, 207, 165, 0.30), transparent 20%),
+    linear-gradient(180deg, #FBF7EF 0%, #F7F1E6 46%, #F5EEE2 100%);
+  color: var(--ink);
+}
+
+.team-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 470rpx;
+  opacity: 0.60;
+  pointer-events: none;
+}
+
+.team-bg-mask {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 600rpx;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 24% 12%, rgba(217, 191, 132, 0.28) 0 38rpx, transparent 84rpx),
+    linear-gradient(180deg, rgba(251, 247, 239, 0.18) 0%, rgba(251, 247, 239, 0.12) 42%, #F7F1E6 96%);
+}
+
+.team-nav {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: none;
-  width: 80rpx;
-  height: 80rpx;
-  border: 3rpx solid rgba(53, 104, 89, 0.12);
-  border-radius: 24rpx;
-  background: var(--team-primary-soft);
-  color: var(--team-primary);
-  font-size: 30rpx;
-  font-weight: 800;
+  box-sizing: content-box;
+  padding-left: 32rpx;
+  padding-right: 32rpx;
 }
 
-.team-hero-avatar image {
-  display: block;
+.team-nav-title {
+  color: var(--ink);
+  font-family: "Songti SC", "STSong", serif;
+  font-size: 42rpx;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 6rpx;
+}
+
+.team-content {
+  position: relative;
+  z-index: 1;
+  padding: 88rpx 38rpx 0;
+}
+
+.team-content--state {
+  padding-top: 170rpx;
+}
+
+.paper-card {
+  box-sizing: border-box;
   width: 100%;
-  height: 100%;
+  border: 1rpx solid var(--line);
+  border-radius: 30rpx;
+  background: var(--card);
+  box-shadow: var(--shadow);
 }
 
-.team-info-block {
-  min-width: 0;
-  flex: 1;
+.team-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 244rpx;
+  min-height: 286rpx;
+  padding: 46rpx 32rpx 30rpx 40rpx;
 }
 
-.team-name-row {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
+.team-hero::after {
+  content: "";
+  position: absolute;
+  right: -54rpx;
+  bottom: -56rpx;
+  width: 340rpx;
+  height: 220rpx;
+  opacity: 0.30;
+  background:
+    radial-gradient(circle at 56% 46%, rgba(43, 96, 79, 0.16), transparent 31%),
+    linear-gradient(135deg, transparent 0%, rgba(43, 96, 79, 0.08) 48%, rgba(43, 96, 79, 0.16) 100%);
 }
 
-.team-name {
-  min-width: 0;
-  flex: 1;
+.hero-left,
+.hero-right {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-title {
+  color: var(--ink);
+  font-family: "Songti SC", "STSong", serif;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--team-text);
-  font-size: 34rpx;
+  font-size: 46rpx;
   font-weight: 700;
-  line-height: 42rpx;
+  line-height: 60rpx;
+  letter-spacing: 2rpx;
 }
 
-.my-team-tag,
-.level-tag,
-.mood-tag,
-.soft-tag,
-.pill-button {
+.hero-slogan {
+  margin-top: 12rpx;
+  color: var(--muted);
+  font-size: 28rpx;
+  line-height: 38rpx;
+  letter-spacing: 2rpx;
+}
+
+.hero-capacity {
+  display: inline-flex;
+  align-items: center;
+  height: 42rpx;
+  margin-top: 20rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  background: rgba(231, 240, 230, 0.74);
+  color: var(--green);
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  margin-top: 40rpx;
+}
+
+.hero-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8rpx;
+  height: 58rpx;
+  min-width: 142rpx;
+  padding: 0 20rpx;
+  border-radius: 999rpx;
   box-sizing: border-box;
-  height: 40rpx;
-  padding: 0 18rpx;
-  border-radius: 20rpx;
-  font-size: 22rpx;
+  font-size: 24rpx;
   font-weight: 600;
   white-space: nowrap;
 }
 
-.my-team-tag {
+.hero-btn--invite {
+  border: 1rpx solid rgba(184, 135, 49, 0.72);
+  background: rgba(255, 252, 245, 0.66);
+  color: var(--gold);
+}
+
+.hero-btn--copy {
+  border: 1rpx solid rgba(196, 188, 172, 0.76);
+  background: rgba(255, 252, 245, 0.54);
+  color: var(--muted);
+}
+
+.hero-btn-svg {
   flex: none;
-  background: var(--team-primary-soft);
-  color: var(--team-primary);
+  width: 30rpx;
+  height: 30rpx;
 }
 
-.team-tags {
+.hero-right {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-  margin-top: 14rpx;
-}
-
-.level-tag {
-  background: var(--team-sun-soft);
-  color: #8A6B1F;
-}
-
-.mood-tag,
-.soft-tag {
-  background: var(--team-primary-soft);
-  color: var(--team-primary);
-}
-
-.team-member-preview {
-  flex: none;
-  display: flex;
+  flex-direction: column;
   align-items: center;
-  min-height: 56rpx;
-  padding-top: 6rpx;
 }
 
-.preview-avatar,
-.preview-more {
+.avatar-cluster {
+  position: relative;
+  width: 222rpx;
+  height: 198rpx;
+}
+
+.cluster-avatar {
+  position: absolute;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: none;
-  width: 52rpx;
-  height: 52rpx;
-  margin-right: -10rpx;
-  border: 3rpx solid #ffffff;
+  width: 108rpx;
+  height: 108rpx;
+  border: 5rpx solid rgba(255, 252, 245, 0.96);
   border-radius: 50%;
-  background: var(--team-primary-soft);
-  color: var(--team-primary);
-  font-weight: 700;
-  font-size: 22rpx;
+  background: #F1EBDD;
+  color: var(--green);
+  font-size: 30rpx;
+  font-weight: 800;
+  box-shadow: 0 8rpx 20rpx rgba(58, 48, 32, 0.12);
 }
 
-.preview-avatar image {
+.cluster-avatar--pos0 { top: 0; left: 8rpx; }
+.cluster-avatar--pos1 { top: 8rpx; right: 0; }
+.cluster-avatar--pos2 { left: 24rpx; bottom: 0; }
+.cluster-avatar--pos3 { right: 14rpx; bottom: 0; }
+
+.avatar-img {
+  display: block;
   width: 100%;
   height: 100%;
-  display: block;
+  border-radius: inherit;
 }
 
-.preview-more {
-  margin-right: 0;
-  margin-left: 4rpx;
-  background: var(--team-soft);
-  color: var(--team-muted);
-  font-size: 20rpx;
+.cluster-avatar--mountain {
+  background: linear-gradient(145deg, #EEF1E8 0%, #C9D8CE 48%, #809B8D 100%);
 }
 
-.team-sub-info {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8rpx;
-  margin-top: 20rpx;
-  color: var(--team-secondary);
-  font-size: 24rpx;
-  line-height: 34rpx;
+.cluster-avatar--robot {
+  background: linear-gradient(145deg, #F1EBDD 0%, #D5DED1 46%, #7C9386 100%);
 }
 
-.team-sub-info .dot {
-  color: var(--team-muted);
-}
-
-.team-slogan-row {
-  margin-top: 6rpx;
-  color: var(--team-secondary);
-  font-size: 24rpx;
-  line-height: 34rpx;
-}
-
-.team-action-buttons {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20rpx;
-  margin-top: 28rpx;
-}
-
-.team-action-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10rpx;
-  height: 80rpx;
-  border-radius: 40rpx;
-  font-size: 28rpx;
+.room-chip {
+  margin-top: 2rpx;
+  min-width: 184rpx;
+  height: 54rpx;
+  padding: 0 20rpx;
+  border-radius: 999rpx;
+  background: rgba(246, 232, 204, 0.82);
+  color: var(--gold);
+  font-family: "Songti SC", "STSong", serif;
+  font-size: 26rpx;
   font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: 0.5rpx;
-  box-sizing: border-box;
-  transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
+  line-height: 54rpx;
+  text-align: center;
 }
 
-.team-action-btn--primary {
-  background: var(--team-primary);
-  border: 1rpx solid var(--team-primary);
-  color: #FFFFFF;
-  box-shadow: 0 6rpx 16rpx rgba(53, 104, 89, 0.22);
+.joint-card {
+  margin-top: 30rpx;
+  padding: 38rpx 34rpx 34rpx;
+  border-radius: 32rpx;
 }
 
-.team-action-btn--secondary {
-  background: #FFFFFF;
-  border: 1rpx solid var(--team-border);
-  color: var(--team-primary);
-  box-shadow: 0 2rpx 8rpx rgba(36, 88, 74, 0.04);
-}
-
-.team-action-btn__icon {
-  font-size: 30rpx;
-  line-height: 1;
-  font-weight: 600;
-}
-
-.team-action-btn__label {
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.team-action-btn--pressed {
-  opacity: 0.85;
-  transform: scale(0.98);
-  box-shadow: 0 2rpx 6rpx rgba(36, 88, 74, 0.10);
-}
-
-.team-action-btn--secondary.team-action-btn--pressed {
-  background: var(--team-bg-soft);
-}
-
-.pill-button::after {
-  border: 0;
-}
-
-/* ============ 2. 今日小队战况 ============ */
-.dashboard-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
-}
-
-.dashboard-detail-link {
-  flex: none;
-  color: var(--team-secondary);
-  font-size: 24rpx;
-  line-height: 34rpx;
-}
-
-.team-stat-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12rpx;
-  margin-top: 22rpx;
-}
-
-.stat-item {
-  min-width: 0;
-  padding: 4rpx 0;
-}
-
-.stat-item--divider {
-  border-left: 1rpx solid var(--team-border);
-  padding-left: 12rpx;
-}
-
-.stat-value {
+.joint-head {
   display: flex;
   align-items: baseline;
-  gap: 2rpx;
-  color: var(--team-text);
-  font-size: 48rpx;
-  font-weight: 800;
-  line-height: 56rpx;
-}
-
-.stat-unit {
-  font-size: 24rpx;
-  font-weight: 700;
-}
-
-.stat-slash {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: var(--team-muted);
-}
-
-.stat-label {
-  margin-top: 4rpx;
-  color: var(--team-secondary);
-  font-size: 24rpx;
-  line-height: 34rpx;
-}
-
-.team-progress-bar {
-  margin-top: 24rpx;
-}
-
-.progress-track {
-  width: 100%;
-  height: 16rpx;
-  overflow: hidden;
-  border-radius: 8rpx;
-  background: #E2EEE8;
-}
-
-.progress-fill {
-  height: 100%;
-  border-radius: 8rpx;
-  background: linear-gradient(90deg, #7CC6A0 0%, #3F8F72 100%);
-}
-
-.progress-meta-row {
-  display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 16rpx;
-  margin-top: 14rpx;
+  gap: 18rpx;
 }
 
-.progress-goal-text {
-  min-width: 0;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--team-secondary);
-  font-size: 24rpx;
-  line-height: 34rpx;
-}
-
-.progress-current {
-  flex: none;
-  color: var(--team-text);
-  font-size: 24rpx;
+.joint-title,
+.member-section-title,
+.secondary-title,
+.popup-title,
+.settings-title,
+.state-title {
+  color: var(--ink);
+  font-family: "Songti SC", "STSong", serif;
   font-weight: 700;
-  line-height: 34rpx;
 }
 
-/* ============ 3. 今日共同行动 ============ */
+.joint-title,
+.member-section-title {
+  font-size: 38rpx;
+  line-height: 48rpx;
+  letter-spacing: 2rpx;
+}
 
-.common-action-desc {
-  margin-top: 12rpx;
-  color: var(--team-secondary);
-  font-size: 26rpx;
+.joint-done {
+  flex: none;
+  color: var(--muted);
+  font-size: 24rpx;
   line-height: 36rpx;
 }
 
-.team-common-progress {
-  display: flex;
-  align-items: stretch;
-  gap: 16rpx;
-  margin-top: 22rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 22rpx;
-  background: var(--team-soft);
-}
-
-.common-progress-item {
-  min-width: 0;
-  flex: 1;
-}
-
-.common-progress-label {
-  color: var(--team-secondary);
-  font-size: 24rpx;
-  line-height: 34rpx;
-}
-
-.common-progress-value {
-  margin-top: 6rpx;
-  color: var(--team-text);
-  font-size: 40rpx;
-  font-weight: 800;
-  line-height: 48rpx;
-}
-
-.cpv-current {
-  color: var(--team-primary);
-}
-
-.cpv-current--done {
-  color: var(--team-text);
-}
-
-.cpv-slash {
-  font-size: 28rpx;
+.joint-done-number {
+  margin-right: 8rpx;
+  color: var(--gold);
+  font-family: "Songti SC", "STSong", serif;
+  font-size: 38rpx;
   font-weight: 700;
-  color: var(--team-muted);
 }
 
-.common-progress-divider {
-  flex: none;
-  width: 1rpx;
-  background: var(--team-border);
-}
-
-/* ============ 4. 成员状态 ============ */
-.member-status-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-  font-size: 22rpx;
-  line-height: 32rpx;
-}
-
-.ms-completed {
-  color: var(--team-primary);
-  font-weight: 600;
-}
-
-.ms-doing {
-  color: #C99A2E;
-  font-weight: 600;
-}
-
-.ms-pending {
-  color: var(--team-muted);
-  font-weight: 600;
-}
-
-.team-member-list {
+.node-track {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 24rpx 12rpx;
-  margin-top: 22rpx;
+  margin-top: 42rpx;
 }
 
-.member-status-item {
+.node-track::before {
+  content: "";
+  position: absolute;
+  left: 48rpx;
+  right: 48rpx;
+  top: 41rpx;
+  height: 8rpx;
+  border-radius: 999rpx;
+  background: #CED3C4;
+}
+
+.action-node {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   min-width: 0;
 }
 
-.member-avatar {
+.node-avatar {
   position: relative;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 86rpx;
+  height: 86rpx;
+  border: 2rpx solid rgba(43, 96, 79, 0.35);
+  border-radius: 50%;
+  background: #EEF3E8;
+}
+
+.node-avatar .avatar-img {
+  border: 4rpx solid rgba(255, 252, 245, 0.92);
+}
+
+.node-leaf-svg {
+  width: 86rpx;
+  height: 86rpx;
+}
+
+.action-node--pending .node-leaf-svg {
+  opacity: 0.62;
+  filter: grayscale(1);
+}
+
+.action-node--doing .node-leaf-svg {
+  opacity: 0.88;
+}
+
+.node-check {
+  position: absolute;
+  right: -3rpx;
+  bottom: -4rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28rpx;
+  height: 28rpx;
+  border: 3rpx solid #FFFDF5;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #FFFDF5;
+  font-size: 18rpx;
+  font-weight: 800;
+}
+
+.node-name {
+  max-width: 112rpx;
+  margin-top: 14rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+  font-size: 26rpx;
+  font-weight: 700;
+  line-height: 34rpx;
+}
+
+.node-status {
+  margin-top: 2rpx;
+  color: var(--muted);
+  font-size: 23rpx;
+  line-height: 32rpx;
+}
+
+.joint-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 40rpx;
+  padding: 24rpx 0;
+  border: 1rpx solid rgba(206, 196, 176, 0.55);
+  border-radius: 24rpx;
+  background: rgba(255, 252, 245, 0.60);
+}
+
+.joint-stat {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10rpx;
+  min-width: 0;
+  padding: 0 12rpx;
+  border-left: 1rpx solid rgba(206, 196, 176, 0.52);
+}
+
+.joint-stat--first {
+  border-left: 0;
+}
+
+.joint-stat-svg {
+  flex: none;
+  width: 32rpx;
+  height: 32rpx;
+  margin-top: 2rpx;
+  opacity: 0.82;
+}
+
+.joint-stat-leaf,
+.leaf-small {
+  flex: none;
+  width: 26rpx;
+  height: 32rpx;
+  margin-top: 3rpx;
+  border-radius: 80% 0 80% 0;
+  background: var(--green);
+  transform: rotate(45deg);
+}
+
+.joint-stat-label {
+  color: var(--muted);
+  font-size: 24rpx;
+  line-height: 32rpx;
+}
+
+.joint-stat-value {
+  margin-top: 10rpx;
+  color: var(--ink);
+  font-family: "Songti SC", "STSong", serif;
+  font-size: 48rpx;
+  font-weight: 700;
+  line-height: 56rpx;
+}
+
+.joint-stat-unit {
+  margin-left: 6rpx;
+  color: var(--muted);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  font-size: 22rpx;
+  font-weight: 400;
+}
+
+.member-section {
+  margin-top: 42rpx;
+}
+
+.member-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.encourage-all-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  height: 56rpx;
+  padding: 0 22rpx;
+  border: 1rpx solid rgba(184, 135, 49, 0.62);
+  border-radius: 999rpx;
+  background: rgba(255, 252, 245, 0.66);
+  color: var(--gold);
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.leaf-small {
+  width: 22rpx;
+  height: 28rpx;
+  margin-top: 0;
+}
+
+.member-list {
+  margin-top: 18rpx;
+}
+
+.member-card {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 108rpx;
+  margin-top: 16rpx;
+  padding: 16rpx 20rpx;
+  border: 1rpx solid rgba(206, 196, 176, 0.52);
+  border-radius: 24rpx;
+  background: rgba(255, 252, 245, 0.92);
+  box-shadow: 0 8rpx 22rpx rgba(58, 48, 32, 0.04);
+}
+
+.member-avatar,
+.activity-avatar,
+.member-detail-avatar {
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 88rpx;
-  height: 88rpx;
+  flex: none;
+  width: 68rpx;
+  height: 68rpx;
   border-radius: 50%;
-  background: var(--team-primary-soft);
-  color: var(--team-primary);
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 27rpx;
   font-weight: 700;
-  font-size: 30rpx;
 }
 
-.member-avatar image {
-  width: 100%;
-  height: 100%;
-  display: block;
+.member-main {
+  min-width: 0;
+  flex: 1;
+  margin-left: 18rpx;
 }
 
-.member-avatar--doing {
-  background: var(--team-sun-soft);
-  color: #8A6B1F;
-}
-
-.member-avatar--pending {
-  background: #F0F2EF;
-  color: var(--team-muted);
-  opacity: 0.62;
-}
-
-.avatar-check {
-  position: absolute;
-  right: -4rpx;
-  bottom: -4rpx;
-  width: 36rpx;
-  height: 36rpx;
+.member-line {
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: 3rpx solid #ffffff;
-  background: var(--team-primary);
-  color: #ffffff;
-  font-size: 20rpx;
-  font-weight: 800;
-}
-
-.avatar-dot {
-  position: absolute;
-  right: 2rpx;
-  bottom: 2rpx;
-  width: 24rpx;
-  height: 24rpx;
-  border-radius: 50%;
-  border: 3rpx solid #ffffff;
-  background: var(--team-sun);
-}
-
-.member-status-info {
-  margin-top: 12rpx;
-  text-align: center;
-  width: 100%;
+  gap: 12rpx;
 }
 
 .member-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--team-text);
-  font-size: 24rpx;
+  color: var(--ink);
+  font-size: 29rpx;
   font-weight: 700;
+  line-height: 38rpx;
+}
+
+.member-chip {
+  flex: none;
+  height: 36rpx;
+  padding: 0 15rpx;
+  border-radius: 999rpx;
+  background: #EEE8D9;
+  color: var(--muted);
+  font-size: 20rpx;
+  line-height: 36rpx;
+}
+
+.member-chip--completed {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.member-chip--doing {
+  background: var(--gold-soft);
+  color: #8C641B;
+}
+
+.member-action {
+  margin-top: 6rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 24rpx;
   line-height: 32rpx;
 }
 
-.member-progress-text {
-  margin-top: 4rpx;
-  color: var(--team-secondary);
-  font-size: 20rpx;
-  line-height: 28rpx;
+.member-encourage {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-left: 12rpx;
+  color: var(--muted);
+  font-size: 23rpx;
+  line-height: 32rpx;
 }
 
-.member-list-more {
-  margin-top: 22rpx;
-  padding-top: 20rpx;
-  border-top: 1rpx solid var(--team-border);
-  text-align: center;
-  color: var(--team-secondary);
+.member-encourage--disabled {
+  opacity: 0.72;
+}
+
+.member-encourage-icon {
+  width: 34rpx;
+  height: 34rpx;
+}
+
+.member-arrow {
+  color: #AFA694;
+  font-size: 30rpx;
+}
+
+.secondary-card {
+  margin-top: 26rpx;
+  padding: 26rpx;
+  opacity: 0.94;
+}
+
+.secondary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.secondary-title {
+  font-size: 30rpx;
+  line-height: 40rpx;
+}
+
+.secondary-link {
+  color: var(--gold);
+  font-size: 24rpx;
+}
+
+.activity-empty,
+.state-copy,
+.popup-copy,
+.setting-help,
+.option-desc,
+.detail-empty,
+.task-detail-meta {
+  color: var(--muted);
   font-size: 24rpx;
   line-height: 34rpx;
 }
 
-/* ============ 5. 行动动态 ============ */
-.team-activity-card {
-  padding-bottom: 18rpx;
-}
-
-.activity-empty {
-  margin-top: 18rpx;
-  color: var(--team-secondary);
-  font-size: 24rpx;
-  line-height: 34rpx;
-}
-
-.activity-item {
+.activity-row {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  min-height: 70rpx;
-  padding: 16rpx 0;
+  padding: 18rpx 0;
 }
 
-.activity-item + .activity-item {
-  border-top: 1rpx solid var(--team-border);
+.activity-row + .activity-row {
+  border-top: 1rpx solid rgba(206, 196, 176, 0.45);
 }
 
 .activity-avatar {
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 48rpx;
-  height: 48rpx;
-  border-radius: 50%;
-  background: var(--team-primary-soft);
-  color: var(--team-primary);
-  font-weight: 700;
-  font-size: 22rpx;
-}
-
-.activity-avatar image {
-  width: 100%;
-  height: 100%;
-  display: block;
+  width: 50rpx;
+  height: 50rpx;
+  font-size: 21rpx;
 }
 
 .activity-main {
@@ -638,242 +657,142 @@
 }
 
 .activity-name {
-  color: var(--team-text);
-  font-size: 26rpx;
+  color: var(--ink);
+  font-size: 25rpx;
   font-weight: 700;
 }
 
-.activity-action {
-  color: var(--team-secondary);
-  font-size: 26rpx;
-}
-
+.activity-action,
 .activity-time {
-  flex: none;
-  color: var(--team-muted);
-  font-size: 22rpx;
-}
-
-.activity-more {
-  margin-top: 10rpx;
-  padding-top: 16rpx;
-  border-top: 1rpx solid var(--team-border);
-  text-align: center;
-  color: var(--team-secondary);
+  color: var(--muted);
   font-size: 24rpx;
-  line-height: 34rpx;
-  transition: background 0.18s ease;
 }
 
-.activity-more--pressed {
-  background: rgba(124, 198, 160, 0.08);
-}
-
-/* ============ 6. 本周荣誉（横向徽章） ============ */
-.team-honor-card {
-  padding-bottom: 24rpx;
-}
-
-.honor-scroll {
-  width: 100%;
-  margin-top: 18rpx;
-  white-space: nowrap;
-}
-
-.honor-badge-card {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  width: 200rpx;
-  margin-right: 16rpx;
-  padding: 22rpx 16rpx;
-  box-sizing: border-box;
-  border-radius: 22rpx;
-  background: var(--team-soft);
-  vertical-align: top;
-  white-space: normal;
-}
-
-.honor-badge-card:last-child {
-  margin-right: 0;
-}
-
-.honor-icon {
-  width: 64rpx;
-  height: 64rpx;
+.solid-button,
+.outline-button,
+.settings-cancel-button,
+.settings-save-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background: var(--team-sun);
-  color: #ffffff;
-  font-size: 32rpx;
-  font-weight: 800;
-}
-
-.honor-title {
-  margin-top: 14rpx;
-  color: var(--team-text);
+  box-sizing: border-box;
+  height: 74rpx;
+  margin: 0;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
   font-size: 26rpx;
   font-weight: 700;
-  line-height: 34rpx;
-  text-align: center;
 }
 
-.honor-desc {
-  margin-top: 6rpx;
-  color: var(--team-secondary);
-  font-size: 20rpx;
-  line-height: 28rpx;
-  text-align: center;
+.solid-button,
+.settings-save-button {
+  border: 1rpx solid var(--green);
+  background: var(--green);
+  color: #FFFDF5;
+  box-shadow: 0 12rpx 24rpx rgba(43, 96, 79, 0.18);
 }
 
-/* ============ 按钮 / 状态卡 ============ */
 .outline-button,
-.solid-button {
-  min-width: 0;
-  height: 72rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0 24rpx;
-  border-radius: 36rpx;
-  font-size: 26rpx;
-  font-weight: 600;
-  line-height: 1.2;
+.settings-cancel-button {
+  border: 1rpx solid rgba(184, 135, 49, 0.40);
+  background: #FFFDF5;
+  color: var(--gold);
 }
 
-.outline-button {
-  border: 1rpx solid #E2EEE8;
-  background: #ffffff;
-  color: var(--team-primary);
-}
-
-.solid-button {
-  background: var(--team-primary);
-  color: #ffffff;
-  box-shadow: 0 10rpx 24rpx rgba(63, 143, 114, 0.22);
-}
-
-button::after {
+.solid-button::after,
+.outline-button::after,
+.team-avatar-picker::after,
+.copy-code-button::after,
+.settings-cancel-button::after,
+.settings-save-button::after {
   border: 0;
 }
 
-button[disabled] {
-  opacity: 0.58;
-}
-
-.state-card,
-.empty-card {
-  min-height: 420rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.state-card {
+  min-height: 520rpx;
+  padding: 56rpx 38rpx;
   text-align: center;
 }
 
-.state-icon,
-.empty-mark {
-  width: 88rpx;
-  height: 88rpx;
-  display: flex;
+.state-mark {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 28rpx;
-  background: var(--team-primary-soft);
-  color: var(--team-primary);
-  font-size: 32rpx;
+  min-width: 92rpx;
+  height: 92rpx;
+  padding: 0 18rpx;
+  border-radius: 30rpx;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 25rpx;
   font-weight: 800;
 }
 
-.state-title,
-.empty-title {
-  margin-top: 24rpx;
-  color: var(--team-text);
-  font-size: 34rpx;
-  font-weight: 700;
-  line-height: 42rpx;
+.state-title {
+  margin-top: 26rpx;
+  font-size: 36rpx;
+  line-height: 46rpx;
 }
 
-.state-copy,
-.empty-copy,
-.popup-copy,
-.detail-empty,
-.task-detail-meta {
-  color: var(--team-secondary);
-  font-size: 24rpx;
-  line-height: 34rpx;
-}
-
-.state-copy,
-.empty-copy {
+.state-copy {
   max-width: 520rpx;
-  margin-top: 14rpx;
+  margin: 14rpx auto 0;
 }
 
 .state-button {
   min-width: 220rpx;
-  margin-top: 30rpx;
+  margin: 34rpx auto 0;
 }
 
 .empty-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18rpx;
-  width: 100%;
-  margin-top: 32rpx;
+  margin-top: 34rpx;
 }
 
-/* ============ 弹窗 ============ */
-.team-popup-layer {
+.team-popup-layer,
+.team-settings-layer {
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 40;
+  inset: 0;
+  z-index: 50;
   display: flex;
   align-items: flex-end;
 }
 
-.team-popup-mask {
+.team-popup-mask,
+.team-settings-mask {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  background: rgba(36, 76, 67, 0.32);
+  inset: 0;
+  background: rgba(32, 58, 50, 0.28);
+  backdrop-filter: blur(8rpx);
 }
 
 .team-popup {
   position: relative;
+  box-sizing: border-box;
   width: calc(100vw - 48rpx);
   max-height: calc(100vh - 180rpx);
   overflow-y: auto;
-  box-sizing: border-box;
   margin: 0 auto 24rpx;
-  padding: 28rpx 28rpx calc(28rpx + env(safe-area-inset-bottom));
-  border-radius: 32rpx;
-  background: #ffffff;
-  box-shadow: 0 -18rpx 48rpx rgba(36, 88, 74, 0.16);
+  padding: 28rpx 28rpx calc(30rpx + env(safe-area-inset-bottom));
+  border: 1rpx solid var(--line);
+  border-radius: 34rpx;
+  background: #FFFDF5;
+  box-shadow: 0 -18rpx 48rpx rgba(58, 48, 32, 0.16);
 }
 
 .popup-handle {
-  width: 78rpx;
+  width: 76rpx;
   height: 8rpx;
   margin: 0 auto 26rpx;
   border-radius: 999rpx;
-  background: #E2EEE8;
+  background: #DED4C0;
 }
 
 .popup-title {
-  color: var(--team-text);
   font-size: 34rpx;
-  font-weight: 700;
-  line-height: 42rpx;
+  line-height: 44rpx;
 }
 
 .popup-copy {
@@ -881,20 +800,22 @@ button[disabled] {
 }
 
 .room-input {
+  box-sizing: border-box;
   width: 100%;
-  height: 90rpx;
-  margin-top: 26rpx;
-  padding: 0 26rpx;
-  border: 1rpx solid var(--team-border);
+  min-height: 88rpx;
+  margin-top: 24rpx;
+  padding: 0 24rpx;
+  border: 1rpx solid var(--line);
   border-radius: 24rpx;
-  background: #F8FBF9;
-  color: var(--team-text);
-  font-size: 32rpx;
+  background: rgba(247, 241, 230, 0.72);
+  color: var(--ink);
+  font-size: 30rpx;
   font-weight: 700;
   letter-spacing: 4rpx;
 }
 
-.popup-actions {
+.popup-actions,
+.settings-footer {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18rpx;
@@ -907,62 +828,47 @@ button[disabled] {
 }
 
 .team-detail-list {
-  margin-top: 24rpx;
-  border-top: 1rpx solid var(--team-border);
+  margin-top: 22rpx;
+  border-top: 1rpx solid var(--line);
 }
 
-.team-detail-list > view {
+.team-detail-row {
   display: flex;
   justify-content: space-between;
-  gap: 24rpx;
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid var(--team-border);
-  color: var(--team-secondary);
-  font-size: 26rpx;
-  line-height: 36rpx;
+  gap: 20rpx;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid var(--line);
+  color: var(--muted);
+  font-size: 25rpx;
+  line-height: 35rpx;
 }
 
-.team-detail-list > view text:last-child {
-  color: var(--team-text);
-  font-weight: 600;
+.team-detail-value {
+  color: var(--ink);
+  font-weight: 700;
   text-align: right;
 }
 
-.member-detail-popup {
-  padding-top: 24rpx;
-}
-
-/* ============ 小队设置悬浮容器 ============ */
 .team-settings-layer {
-  position: fixed;
-  inset: 0;
   z-index: 60;
-  display: flex;
   align-items: center;
   justify-content: center;
   padding: 48rpx 24rpx;
   box-sizing: border-box;
 }
 
-.team-settings-mask {
-  position: absolute;
-  inset: 0;
-  background: rgba(31, 70, 58, 0.42);
-  backdrop-filter: blur(8rpx);
-}
-
 .team-settings-dialog {
   position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   width: 100%;
   max-width: 686rpx;
   max-height: calc(100vh - 96rpx);
-  border: 1rpx solid rgba(215, 228, 222, 0.96);
-  border-radius: 36rpx;
-  background: #F5F7F2;
-  box-shadow: 0 28rpx 80rpx rgba(31, 70, 58, 0.24);
+  border: 1rpx solid var(--line);
+  border-radius: 34rpx;
+  background: #F7F1E6;
+  box-shadow: 0 28rpx 80rpx rgba(32, 58, 50, 0.22);
 }
 
 .settings-header {
@@ -970,13 +876,13 @@ button[disabled] {
   align-items: center;
   justify-content: space-between;
   flex: none;
-  padding: 30rpx 30rpx 24rpx;
-  border-bottom: 1rpx solid var(--team-border);
-  background: #FFFFFF;
+  padding: 30rpx;
+  border-bottom: 1rpx solid var(--line);
+  background: #FFFDF5;
 }
 
 .settings-eyebrow {
-  color: var(--team-primary);
+  color: var(--gold);
   font-size: 20rpx;
   font-weight: 700;
   line-height: 28rpx;
@@ -985,37 +891,21 @@ button[disabled] {
 
 .settings-title {
   margin-top: 4rpx;
-  color: var(--team-text);
   font-size: 34rpx;
-  font-weight: 700;
-  line-height: 42rpx;
+  line-height: 44rpx;
 }
 
 .settings-close {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-sizing: border-box;
-  flex: none;
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 999rpx;
-  background: var(--team-soft);
-  color: var(--team-secondary);
-  font-size: 30rpx;
+  width: 58rpx;
+  height: 58rpx;
+  border-radius: 50%;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 36rpx;
   line-height: 1;
-}
-
-.team-avatar-picker::after,
-.copy-code-button::after,
-.settings-cancel-button::after,
-.settings-save-button::after {
-  border: 0;
-}
-
-.settings-close:active {
-  background: var(--team-primary-soft);
-  color: var(--team-primary);
 }
 
 .settings-scroll {
@@ -1027,9 +917,9 @@ button[disabled] {
 .settings-readonly-tip {
   margin: 24rpx 24rpx 0;
   padding: 20rpx 22rpx;
-  border-radius: 20rpx;
-  background: #FFF2CD;
-  color: #745B20;
+  border-radius: 22rpx;
+  background: rgba(244, 227, 188, 0.5);
+  color: #8C641B;
   font-size: 24rpx;
   line-height: 34rpx;
 }
@@ -1037,21 +927,21 @@ button[disabled] {
 .settings-section {
   margin: 24rpx;
   padding: 26rpx;
-  border: 1rpx solid var(--team-border);
+  border: 1rpx solid var(--line);
   border-radius: 28rpx;
-  background: #FFFFFF;
-  box-shadow: 0 10rpx 28rpx rgba(31, 70, 58, 0.06);
+  background: #FFFDF5;
 }
 
 .settings-section--readonly .team-profile-setting,
 .settings-section--readonly .setting-block,
-.settings-section--readonly .setting-toggle-row {
+.settings-section--readonly .setting-toggle-row,
+.settings-section--readonly .detail-visibility-list {
   opacity: 0.58;
 }
 
 .settings-section-title {
-  margin-bottom: 22rpx;
-  color: var(--team-text);
+  margin-bottom: 20rpx;
+  color: var(--ink);
   font-size: 30rpx;
   font-weight: 700;
   line-height: 40rpx;
@@ -1070,44 +960,14 @@ button[disabled] {
   align-items: center;
   justify-content: center;
   flex: none;
-  width: 112rpx;
-  height: 112rpx;
-  margin: 0;
-  padding: 0;
-  border: 3rpx solid #D7E4DE;
-  border-radius: 32rpx;
-  background: var(--team-primary-soft);
-  color: var(--team-primary);
-  font-size: 38rpx;
+  width: 108rpx;
+  height: 108rpx;
+  border: 1rpx solid rgba(43, 96, 79, 0.18);
+  border-radius: 30rpx;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 34rpx;
   font-weight: 800;
-}
-
-.team-avatar-picker image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 29rpx;
-}
-
-.team-avatar-picker[disabled] {
-  opacity: 1;
-}
-
-.avatar-edit-mark {
-  position: absolute;
-  right: -8rpx;
-  bottom: -8rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 42rpx;
-  height: 42rpx;
-  border: 3rpx solid #FFFFFF;
-  border-radius: 50%;
-  background: var(--team-primary);
-  color: #FFFFFF;
-  font-size: 18rpx;
-  font-weight: 700;
 }
 
 .team-name-field {
@@ -1115,184 +975,158 @@ button[disabled] {
   flex: 1;
 }
 
-.setting-label {
-  color: var(--team-text);
+.setting-label,
+.option-title,
+.detail-section-title,
+.task-detail-title {
+  color: var(--ink);
   font-size: 26rpx;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 36rpx;
 }
 
 .settings-input {
-  width: 100%;
-  height: 76rpx;
   margin-top: 10rpx;
-  padding: 0 20rpx;
-  box-sizing: border-box;
-  border: 1rpx solid var(--team-border);
-  border-radius: 20rpx;
-  background: #F8FBF9;
-  color: var(--team-text);
-  font-size: 26rpx;
+  min-height: 76rpx;
+  border: 1rpx solid var(--line);
+  border-radius: 22rpx;
+  background: rgba(247, 241, 230, 0.72);
 }
 
-.room-code-card {
+.avatar-edit-mark {
+  position: absolute;
+  right: -6rpx;
+  bottom: -6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40rpx;
+  height: 40rpx;
+  border: 3rpx solid #FFFDF5;
+  border-radius: 50%;
+  background: var(--green);
+  color: #FFFDF5;
+  font-size: 18rpx;
+}
+
+.room-code-card,
+.setting-toggle-row,
+.detail-visibility-option,
+.task-detail-item,
+.detail-private-card {
+  box-sizing: border-box;
+  margin-top: 18rpx;
+  padding: 20rpx;
+  border: 1rpx solid var(--line);
+  border-radius: 22rpx;
+  background: rgba(247, 241, 230, 0.48);
+}
+
+.room-code-card,
+.setting-toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20rpx;
-  margin-top: 24rpx;
-  padding: 20rpx 22rpx;
-  border-radius: 22rpx;
-  background: var(--team-soft);
+  gap: 18rpx;
 }
 
 .room-code-value {
   margin-top: 4rpx;
-  color: var(--team-primary-deep);
+  color: var(--gold);
   font-size: 30rpx;
   font-weight: 800;
-  line-height: 40rpx;
-  letter-spacing: 4rpx;
+  letter-spacing: 2rpx;
 }
 
 .copy-code-button {
-  flex: none;
-  min-width: 108rpx;
-  height: 56rpx;
+  height: 58rpx;
   margin: 0;
-  padding: 0 24rpx;
-  border-radius: 28rpx;
-  background: #FFFFFF;
-  color: var(--team-primary);
+  padding: 0 22rpx;
+  border-radius: 999rpx;
+  background: #FFFDF5;
+  color: var(--gold);
   font-size: 24rpx;
-  font-weight: 600;
-  line-height: 56rpx;
-}
-
-.setting-help,
-.option-desc {
-  color: var(--team-secondary);
-  font-size: 22rpx;
-  line-height: 32rpx;
-}
-
-.setting-help {
-  margin-top: 10rpx;
 }
 
 .setting-block {
-  padding-bottom: 26rpx;
-  border-bottom: 1rpx solid var(--team-border);
-}
-
-.setting-block--last {
-  padding-bottom: 0;
-  border-bottom: 0;
+  margin-top: 18rpx;
 }
 
 .setting-segments {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
   gap: 8rpx;
-  margin-top: 14rpx;
+  margin-top: 12rpx;
   padding: 8rpx;
   border-radius: 22rpx;
-  background: #EEF3EF;
+  background: rgba(238, 232, 217, 0.82);
 }
 
-.setting-segments--three {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.setting-segments--three .setting-segment {
+  flex: 1;
 }
 
 .setting-segment {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 64rpx;
-  padding: 0 12rpx;
-  border-radius: 16rpx;
-  color: var(--team-secondary);
-  font-size: 24rpx;
-  font-weight: 600;
-  text-align: center;
+  min-height: 58rpx;
+  padding: 0 14rpx;
+  border-radius: 18rpx;
+  color: var(--muted);
+  font-size: 23rpx;
+  font-weight: 700;
 }
 
 .setting-segment--active {
-  background: #FFFFFF;
-  color: var(--team-primary-deep);
-  box-shadow: 0 6rpx 18rpx rgba(31, 70, 58, 0.10);
+  background: #FFFDF5;
+  color: var(--green);
+  box-shadow: 0 6rpx 16rpx rgba(58, 48, 32, 0.07);
 }
 
-.setting-segment--disabled {
-  opacity: 0.4;
-}
-
-.setting-toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 22rpx;
-  padding: 26rpx 0;
-  border-bottom: 1rpx solid var(--team-border);
-}
-
-.setting-toggle-copy {
-  min-width: 0;
-  flex: 1;
+.setting-segment--disabled,
+.custom-switch--disabled {
+  opacity: 0.45;
 }
 
 .custom-switch {
-  position: relative;
   flex: none;
   width: 88rpx;
-  height: 48rpx;
-  border-radius: 24rpx;
-  background: #D8E1DC;
-  transition: background 180ms ease;
+  height: 50rpx;
+  padding: 4rpx;
+  border-radius: 999rpx;
+  background: #DCD4C4;
+  box-sizing: border-box;
 }
 
 .custom-switch-dot {
-  position: absolute;
-  top: 6rpx;
-  left: 6rpx;
-  width: 36rpx;
-  height: 36rpx;
+  width: 42rpx;
+  height: 42rpx;
   border-radius: 50%;
-  background: #FFFFFF;
-  box-shadow: 0 4rpx 10rpx rgba(31, 70, 58, 0.18);
-  transition: transform 180ms ease;
+  background: #FFFDF5;
+  transition: transform 0.18s ease;
 }
 
 .custom-switch--on {
-  background: var(--team-primary);
+  background: var(--green);
 }
 
 .custom-switch--on .custom-switch-dot {
-  transform: translateX(40rpx);
-}
-
-.custom-switch--disabled {
-  opacity: 0.42;
+  transform: translateX(38rpx);
 }
 
 .detail-visibility-list {
-  display: grid;
-  gap: 12rpx;
-  margin-top: 14rpx;
+  margin-top: 18rpx;
 }
 
 .detail-visibility-option {
   display: flex;
   align-items: flex-start;
-  gap: 16rpx;
-  padding: 18rpx;
-  border: 1rpx solid var(--team-border);
-  border-radius: 20rpx;
-  background: #FAFCFA;
+  gap: 14rpx;
 }
 
 .detail-visibility-option--active {
-  border-color: rgba(53, 104, 89, 0.46);
-  background: var(--team-primary-soft);
+  border-color: rgba(43, 96, 79, 0.32);
+  background: var(--green-soft);
 }
 
 .option-radio {
@@ -1300,78 +1134,33 @@ button[disabled] {
   align-items: center;
   justify-content: center;
   flex: none;
-  width: 32rpx;
-  height: 32rpx;
-  margin-top: 2rpx;
-  border: 2rpx solid #B8C8C0;
+  width: 30rpx;
+  height: 30rpx;
+  margin-top: 4rpx;
+  border: 2rpx solid #B9B09D;
+  border-radius: 50%;
+}
+
+.option-radio-dot {
+  width: 16rpx;
+  height: 16rpx;
   border-radius: 50%;
 }
 
 .detail-visibility-option--active .option-radio {
-  border-color: var(--team-primary);
+  border-color: var(--green);
 }
 
-.detail-visibility-option--active .option-radio view {
-  width: 18rpx;
-  height: 18rpx;
-  border-radius: 50%;
-  background: var(--team-primary);
-}
-
-.option-title {
-  color: var(--team-text);
-  font-size: 24rpx;
-  font-weight: 600;
-  line-height: 34rpx;
-}
-
-.option-desc {
-  margin-top: 4rpx;
-}
-
-.personal-detail-toggle {
-  margin-top: 12rpx;
-  padding-bottom: 0;
-  border-bottom: 0;
+.detail-visibility-option--active .option-radio-dot {
+  background: var(--green);
 }
 
 .settings-footer {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16rpx;
   flex: none;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom));
-  border-top: 1rpx solid var(--team-border);
-  background: #FFFFFF;
-  overflow: hidden;
-}
-
-.settings-cancel-button,
-.settings-save-button {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  height: 76rpx;
-  box-sizing: border-box;
   margin: 0;
-  border-radius: 38rpx;
-  font-size: 26rpx;
-  font-weight: 700;
-  line-height: 76rpx;
-}
-
-.settings-cancel-button {
-  border: 1rpx solid #D7E4DE;
-  background: #FFFFFF;
-  color: var(--team-primary);
-}
-
-.settings-save-button {
-  background: var(--team-primary);
-  color: #FFFFFF;
-  box-shadow: 0 10rpx 24rpx rgba(53, 104, 89, 0.20);
+  padding: 22rpx 24rpx calc(24rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid var(--line);
+  background: #FFFDF5;
 }
 
 .member-detail-head {
@@ -1381,24 +1170,9 @@ button[disabled] {
 }
 
 .member-detail-avatar {
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 82rpx;
-  height: 82rpx;
-  border-radius: 50%;
-  background: var(--team-primary-soft);
-  color: var(--team-primary);
-  font-weight: 700;
+  width: 92rpx;
+  height: 92rpx;
   font-size: 32rpx;
-}
-
-.member-detail-avatar image {
-  width: 100%;
-  height: 100%;
-  display: block;
 }
 
 .member-detail-main {
@@ -1410,930 +1184,77 @@ button[disabled] {
   display: flex;
   flex-wrap: wrap;
   gap: 10rpx;
-  margin-top: 12rpx;
+  margin-top: 10rpx;
+}
+
+.soft-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 38rpx;
+  padding: 0 16rpx;
+  border-radius: 999rpx;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 21rpx;
+  font-weight: 700;
+}
+
+.soft-tag--gold {
+  background: var(--gold-soft);
+  color: #8C641B;
 }
 
 .task-detail-section,
 .detail-private-card {
-  margin-top: 28rpx;
-}
-
-.detail-section-title {
-  color: var(--team-text);
-  font-size: 28rpx;
-  font-weight: 700;
-  line-height: 38rpx;
+  margin-top: 24rpx;
 }
 
 .task-detail-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14rpx;
-  margin-top: 16rpx;
+  margin-top: 14rpx;
 }
 
-.task-detail-item,
-.detail-empty {
-  padding: 20rpx 22rpx;
-  border: 1rpx solid var(--team-border);
-  border-radius: 22rpx;
-  background: #F8FBF9;
-}
-
-.task-detail-title {
-  color: var(--team-text);
-  font-size: 26rpx;
-  font-weight: 700;
-  line-height: 36rpx;
-}
-
-.task-detail-meta {
-  margin-top: 8rpx;
-}
-
-.detail-private-card {
-  padding: 22rpx;
-  border: 1rpx solid var(--team-border);
-  border-radius: 22rpx;
-  background: #F8FBF9;
-}
-
-@media (max-width: 340px) {
-  .team-page {
-    padding-right: 24rpx;
-    padding-left: 24rpx;
+@media (max-width: 350px) {
+  .team-content {
+    padding-left: 26rpx;
+    padding-right: 26rpx;
   }
 
-  .team-action-buttons,
-  .empty-actions,
-  .popup-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16rpx;
+  .team-hero {
+    grid-template-columns: 1fr;
+    padding: 40rpx 32rpx 32rpx;
   }
 
-  .team-action-btn {
-    height: 72rpx;
-    border-radius: 36rpx;
-    font-size: 24rpx;
-    gap: 6rpx;
+  .hero-right {
+    margin-top: 24rpx;
   }
 
-  .team-action-btn__icon {
-    font-size: 26rpx;
+  .hero-actions {
+    margin-top: 28rpx;
   }
 
-  .team-member-list {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .joint-head,
+  .member-section-head {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .activity-time {
-    display: none;
+  .joint-stats {
+    grid-template-columns: 1fr;
+    padding: 0 24rpx;
   }
-}
 
-/* =========================================================
- * 墨绿成长主题 覆写（team-page）
- * 切换至墨绿主题后，整页 UI 统一呈现深绿质感。
- * ========================================================= */
-.team-page[data-theme="inkGreen"] {
-  --team-primary: #356859;
-  --team-primary-deep: #1F5B4A;
-  --team-primary-light: #7FAA91;
-  --team-primary-soft: #EAF5EF;
-  --team-text: #233B34;
-  --team-secondary: #71827A;
-  --team-muted: #9AA9A4;
-  --team-border: #E6EEE9;
-  --team-soft: #F0F5F1;
-  --team-sun: #F4C95D;
-  --team-sun-soft: #FFF2CD;
-  --team-bg: #F5F7F2;
-  --team-shadow: 0 12rpx 32rpx rgba(31, 91, 74, 0.10);
-  background: #F5F7F2;
-  color: #233B34;
-}
-
-.team-page[data-theme="inkGreen"] .page-title {
-  color: #233B34;
-}
-
-.team-page[data-theme="inkGreen"] .team-card {
-  border-color: rgba(31, 91, 74, 0.10);
-  background: #FFFFFF;
-  box-shadow: var(--team-shadow);
-}
-
-/* 小队状态卡使用深绿 Hero 背景与其他页 Hero 保持一致。 */
-.team-page[data-theme="inkGreen"] .team-status-card {
-  border-color: transparent;
-  background:
-    radial-gradient(circle at 88% 18%, rgba(248, 210, 106, 0.16), transparent 30%),
-    radial-gradient(circle at 94% 88%, rgba(255, 255, 255, 0.10), transparent 34%),
-    linear-gradient(135deg, #1F5B4A 0%, #356859 62%, #4C806E 100%);
-  box-shadow: 0 16rpx 36rpx rgba(31, 91, 74, 0.18);
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .team-name,
-.team-page[data-theme="inkGreen"] .team-status-card .team-slogan-row,
-.team-page[data-theme="inkGreen"] .team-status-card .team-sub-info {
-  color: #FFFFFF;
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .team-sub-info .dot {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .my-team-tag,
-.team-page[data-theme="inkGreen"] .team-status-card .mood-tag {
-  background: rgba(255, 255, 255, 0.16);
-  color: #FFFFFF;
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .level-tag {
-  background: #F8D26A;
-  color: #5E4A16;
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .preview-avatar,
-.team-page[data-theme="inkGreen"] .team-status-card .preview-more {
-  border-color: rgba(255, 255, 255, 0.82);
-  background: rgba(255, 255, 255, 0.90);
-  color: #356859;
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .team-action-btn--secondary {
-  border-color: rgba(255, 255, 255, 0.34);
-  background: rgba(255, 255, 255, 0.12);
-  color: #FFFFFF;
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .team-action-btn--primary {
-  background: #FFFFFF;
-  border-color: #FFFFFF;
-  color: #1F5B4A;
-  box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.10);
-}
-
-/* 战况 / 共同行动 / 成员 / 动态 / 荣誉 卡片保持白底 */
-.team-page[data-theme="inkGreen"] .team-dashboard-card,
-.team-page[data-theme="inkGreen"] .team-common-action,
-.team-page[data-theme="inkGreen"] .team-member-status,
-.team-page[data-theme="inkGreen"] .team-activity-card,
-.team-page[data-theme="inkGreen"] .team-honor-card,
-.team-page[data-theme="inkGreen"] .state-card,
-.team-page[data-theme="inkGreen"] .empty-card {
-  border-color: rgba(31, 91, 74, 0.10);
-  background: #FFFFFF;
-}
-
-.team-page[data-theme="inkGreen"] .progress-track {
-  background: #D7E4DE;
-}
-
-.team-page[data-theme="inkGreen"] .progress-fill {
-  background: linear-gradient(90deg, #7FAA91 0%, #356859 100%);
-  box-shadow: 0 2rpx 8rpx rgba(53, 104, 89, 0.18);
-}
-
-.team-page[data-theme="inkGreen"] .stat-value,
-.team-page[data-theme="inkGreen"] .common-progress-value,
-.team-page[data-theme="inkGreen"] .progress-current,
-.team-page[data-theme="inkGreen"] .activity-name,
-.team-page[data-theme="inkGreen"] .member-name,
-.team-page[data-theme="inkGreen"] .honor-title {
-  color: #1F5B4A;
-}
-
-.team-page[data-theme="inkGreen"] .cpv-current {
-  color: #356859;
-}
-
-.team-page[data-theme="inkGreen"] .cpv-current--done {
-  color: #1F5B4A;
-}
-
-.team-page[data-theme="inkGreen"] .ms-completed {
-  color: #356859;
-}
-
-.team-page[data-theme="inkGreen"] .my-team-tag,
-.team-page[data-theme="inkGreen"] .mood-tag,
-.team-page[data-theme="inkGreen"] .soft-tag,
-.team-page[data-theme="inkGreen"] .activity-avatar,
-.team-page[data-theme="inkGreen"] .member-detail-avatar {
-  background: #EAF5EF;
-  color: #356859;
-}
-
-.team-page[data-theme="inkGreen"] .team-common-progress,
-.team-page[data-theme="inkGreen"] .honor-badge-card {
-  background: #F0F5F1;
-}
-
-.team-page[data-theme="inkGreen"] .member-avatar {
-  background: #EAF5EF;
-  color: #356859;
-}
-
-.team-page[data-theme="inkGreen"] .member-avatar--doing {
-  background: #FFF2CD;
-  color: #8A6B1F;
-}
-
-.team-page[data-theme="inkGreen"] .member-avatar--pending {
-  background: #ECEFEA;
-  color: #9AA9A4;
-}
-
-.team-page[data-theme="inkGreen"] .avatar-check {
-  background: #356859;
-}
-
-.team-page[data-theme="inkGreen"] .solid-button {
-  background: #356859;
-  color: #FFFFFF;
-  box-shadow: 0 10rpx 24rpx rgba(53, 104, 89, 0.22);
-}
-
-.team-page[data-theme="inkGreen"] .outline-button {
-  border-color: #D7E4DE;
-  background: #FFFFFF;
-  color: #356859;
-}
-
-.team-page[data-theme="inkGreen"] .pill-button {
-  border-color: #D7E4DE;
-  background: #FFFFFF;
-  color: #356859;
-}
-
-.team-page[data-theme="inkGreen"] .solid-button[disabled] {
-  background: #C9D8D1;
-  box-shadow: none;
-}
-
-.team-page[data-theme="inkGreen"] .honor-icon {
-  background: #F8D26A;
-  color: #5E4A16;
-}
-
-.team-page[data-theme="inkGreen"] .team-popup-mask {
-  background: rgba(31, 91, 74, 0.38);
-  backdrop-filter: blur(6rpx);
-}
-
-.team-page[data-theme="inkGreen"] .team-popup {
-  border-color: rgba(31, 91, 74, 0.10);
-  background: #F5F7F2;
-  box-shadow: 0 -18rpx 48rpx rgba(31, 91, 74, 0.20);
-}
-
-.team-page[data-theme="inkGreen"] .popup-handle {
-  background: #C9D8D1;
-}
-
-.team-page[data-theme="inkGreen"] .room-input,
-.team-page[data-theme="inkGreen"] .task-detail-item,
-.team-page[data-theme="inkGreen"] .detail-private-card {
-  border-color: #D7E4DE;
-  background: #FFFFFF;
-}
-
-/* =========================================================
- * V3 轻盈暖白最终覆盖：与今日页统一
- * ========================================================= */
-.team-page[data-theme="inkGreen"] {
-  --team-primary: #356859;
-  --team-primary-deep: #1F5B4A;
-  --team-primary-light: #7FAA91;
-  --team-primary-soft: #EAF3EA;
-  --team-text: #1F2D28;
-  --team-secondary: #71827A;
-  --team-muted: #9AA8A3;
-  --team-border: #E5EAE3;
-  --team-soft: #EEF2EB;
-  --team-sun: #F4C95D;
-  --team-sun-soft: #FFF1C7;
-  --team-bg: #F7F8F3;
-  --team-shadow: 0 14rpx 34rpx rgba(47, 107, 87, 0.075);
-  background:
-    radial-gradient(circle at 12% 4%, rgba(221, 235, 221, 0.78), transparent 30%),
-    radial-gradient(circle at 94% 18%, rgba(244, 201, 93, 0.12), transparent 28%),
-    linear-gradient(180deg, #FCFCF8 0%, #F7F8F3 46%, #F5F7F2 100%);
-  color: #1F2D28;
-}
-
-.team-page[data-theme="inkGreen"] .page-title,
-.team-page[data-theme="inkGreen"] .card-title,
-.team-page[data-theme="inkGreen"] .dashboard-title,
-.team-page[data-theme="inkGreen"] .common-title,
-.team-page[data-theme="inkGreen"] .member-section-title,
-.team-page[data-theme="inkGreen"] .activity-title,
-.team-page[data-theme="inkGreen"] .team-name,
-.team-page[data-theme="inkGreen"] .activity-name,
-.team-page[data-theme="inkGreen"] .member-name,
-.team-page[data-theme="inkGreen"] .honor-title,
-.team-page[data-theme="inkGreen"] .state-title,
-.team-page[data-theme="inkGreen"] .empty-title,
-.team-page[data-theme="inkGreen"] .popup-title,
-.team-page[data-theme="inkGreen"] .settings-title,
-.team-page[data-theme="inkGreen"] .settings-section-title {
-  color: #1F2D28;
-}
-
-.team-page[data-theme="inkGreen"] .page-subtitle,
-.team-page[data-theme="inkGreen"] .team-slogan-row,
-.team-page[data-theme="inkGreen"] .team-sub-info,
-.team-page[data-theme="inkGreen"] .stat-label,
-.team-page[data-theme="inkGreen"] .member-copy,
-.team-page[data-theme="inkGreen"] .activity-copy,
-.team-page[data-theme="inkGreen"] .state-copy,
-.team-page[data-theme="inkGreen"] .empty-copy {
-  color: #71827A;
-}
-
-.team-page[data-theme="inkGreen"] .team-card,
-.team-page[data-theme="inkGreen"] .team-dashboard-card,
-.team-page[data-theme="inkGreen"] .team-common-action,
-.team-page[data-theme="inkGreen"] .team-member-status,
-.team-page[data-theme="inkGreen"] .team-activity-card,
-.team-page[data-theme="inkGreen"] .team-honor-card,
-.team-page[data-theme="inkGreen"] .state-card,
-.team-page[data-theme="inkGreen"] .empty-card {
-  border-color: rgba(229, 234, 227, 0.94);
-  background: rgba(255, 255, 252, 0.88);
-  box-shadow: var(--team-shadow);
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card {
-  border-color: #DDEBDD;
-  background:
-    radial-gradient(circle at 88% 18%, rgba(244, 201, 93, 0.12), transparent 30%),
-    radial-gradient(circle at 92% 86%, rgba(255, 255, 255, 0.72), transparent 34%),
-    linear-gradient(140deg, #E4F0E6 0%, #EAF3EA 66%, #F7FAF5 100%);
-  box-shadow: 0 16rpx 38rpx rgba(31, 45, 40, 0.07);
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .team-name {
-  color: #1F2D28;
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .team-slogan-row,
-.team-page[data-theme="inkGreen"] .team-status-card .team-sub-info {
-  color: #71827A;
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .team-sub-info .dot {
-  color: #9AA8A3;
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .my-team-tag,
-.team-page[data-theme="inkGreen"] .team-status-card .mood-tag,
-.team-page[data-theme="inkGreen"] .my-team-tag,
-.team-page[data-theme="inkGreen"] .mood-tag,
-.team-page[data-theme="inkGreen"] .soft-tag {
-  border-color: rgba(53, 104, 89, 0.10);
-  background: rgba(255, 255, 255, 0.76);
-  color: #356859;
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .level-tag {
-  background: #FFF1C7;
-  color: #8A6B1F;
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .preview-avatar,
-.team-page[data-theme="inkGreen"] .team-status-card .preview-more {
-  border-color: #FFFFFF;
-  background: rgba(255, 255, 255, 0.90);
-  color: #356859;
-  box-shadow: 0 4rpx 12rpx rgba(47, 107, 87, 0.08);
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .team-action-btn--secondary,
-.team-page[data-theme="inkGreen"] .outline-button,
-.team-page[data-theme="inkGreen"] .pill-button {
-  border-color: #CFE2D2;
-  background: rgba(255, 255, 255, 0.82);
-  color: #356859;
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .team-action-btn--primary,
-.team-page[data-theme="inkGreen"] .solid-button {
-  border-color: #356859;
-  background: #356859;
-  color: #FFFFFF;
-  box-shadow: 0 10rpx 24rpx rgba(53, 104, 89, 0.18);
-}
-
-.team-page[data-theme="inkGreen"] .progress-track {
-  background: #DDEBDD;
-}
-
-.team-page[data-theme="inkGreen"] .progress-fill {
-  background: linear-gradient(90deg, #7FAA91 0%, #356859 100%);
-  box-shadow: 0 2rpx 8rpx rgba(53, 104, 89, 0.14);
-}
-
-.team-page[data-theme="inkGreen"] .stat-value,
-.team-page[data-theme="inkGreen"] .common-progress-value,
-.team-page[data-theme="inkGreen"] .progress-current,
-.team-page[data-theme="inkGreen"] .cpv-current,
-.team-page[data-theme="inkGreen"] .cpv-current--done,
-.team-page[data-theme="inkGreen"] .ms-completed {
-  color: #356859;
-}
-
-.team-page[data-theme="inkGreen"] .team-common-progress,
-.team-page[data-theme="inkGreen"] .honor-badge-card {
-  border-color: #E5EAE3;
-  background: #F3F8F3;
-}
-
-.team-page[data-theme="inkGreen"] .member-avatar,
-.team-page[data-theme="inkGreen"] .activity-avatar,
-.team-page[data-theme="inkGreen"] .member-detail-avatar {
-  background: #EAF3EA;
-  color: #356859;
-}
-
-.team-page[data-theme="inkGreen"] .member-avatar--doing {
-  background: #FFF1C7;
-  color: #8A6B1F;
-}
-
-.team-page[data-theme="inkGreen"] .member-avatar--pending {
-  background: #EEF2EB;
-  color: #9AA8A3;
-}
-
-.team-page[data-theme="inkGreen"] .avatar-check {
-  background: #356859;
-  color: #FFFFFF;
-}
-
-.team-page[data-theme="inkGreen"] .honor-icon {
-  background: #FFF1C7;
-  color: #A37D1B;
-}
-
-.team-page[data-theme="inkGreen"] .solid-button[disabled] {
-  background: #C9D8D1;
-  color: #FFFFFF;
-  box-shadow: none;
-}
-
-.team-page[data-theme="inkGreen"] .team-popup-mask {
-  background: rgba(31, 45, 40, 0.26);
-  backdrop-filter: blur(8rpx);
-}
-
-.team-page[data-theme="inkGreen"] .team-popup,
-.team-page[data-theme="inkGreen"] .settings-panel {
-  border-color: rgba(229, 234, 227, 0.94);
-  background: #F7F8F3;
-  box-shadow: 0 -18rpx 48rpx rgba(31, 45, 40, 0.16);
-}
-
-.team-page[data-theme="inkGreen"] .popup-handle {
-  background: #C9D8D1;
-}
-
-.team-page[data-theme="inkGreen"] .room-input,
-.team-page[data-theme="inkGreen"] .task-detail-item,
-.team-page[data-theme="inkGreen"] .detail-private-card,
-.team-page[data-theme="inkGreen"] .settings-section,
-.team-page[data-theme="inkGreen"] .room-code-card,
-.team-page[data-theme="inkGreen"] .detail-visibility-option,
-.team-page[data-theme="inkGreen"] .setting-segment {
-  border-color: #E5EAE3;
-  background: rgba(255, 255, 252, 0.90);
-}
-
-.team-page[data-theme="inkGreen"] .detail-visibility-option--active,
-.team-page[data-theme="inkGreen"] .setting-segment--active {
-  border-color: #BFD8C8;
-  background: #EAF3EA;
-  color: #356859;
-}
-
-/* =========================================================
- * V4 浅色奶油 · 小队协作氛围最终覆盖
- * 顶部插画背景 + 浅奶油底 + 雾绿卡片 + 金色点缀
- * 不改业务结构，仅做视觉统一升级
- * ========================================================= */
-
-/* --- CSS 变量统一 --- */
-.team-page[data-theme="inkGreen"] {
-  --team-primary: #2F765E;
-  --team-primary-deep: #294F43;
-  --team-primary-light: #5EB28B;
-  --team-primary-soft: #EAF3EC;
-  --team-text: #20322D;
-  --team-secondary: #7D8C86;
-  --team-muted: #93A099;
-  --team-border: #E7ECE5;
-  --team-soft: #F0F6EF;
-  --team-sun: #F2B94B;
-  --team-sun-soft: #FFE8A8;
-  --team-bg: #F6F3EA;
-  --team-shadow: 0 20rpx 52rpx rgba(48, 71, 60, 0.09);
-  background: #F6F3EA;
-  color: #20322D;
-}
-
-/* --- 顶部背景插画（短 Banner：氛围弱化，信息卡为主视觉） --- */
-.team-header {
-  position: relative;
-  overflow: hidden;
-  margin: -32rpx -32rpx 0;
-  height: 220rpx;
-}
-
-.team-header-bg {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.88;
-}
-
-/* 底部柔和过渡：让插画波浪底部融入页面奶油白背景，不抢视觉 */
-.team-header::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 96rpx;
-  background: linear-gradient(to bottom, rgba(246, 243, 234, 0) 0%, rgba(246, 243, 234, 0.55) 55%, #F6F3EA 100%);
-  z-index: 1;
-  pointer-events: none;
-}
-
-.team-page[data-theme="inkGreen"] .team-header .page-title-row {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  height: 100%;
-  min-height: 0;
-  margin: 0;
-  padding: 56rpx 48rpx 0;
-}
-
-.team-page[data-theme="inkGreen"] .team-header .page-title {
-  color: #20322D;
-  font-size: 48rpx;
-  font-weight: 900;
-  line-height: 1.1;
-  letter-spacing: -1rpx;
-}
-
-.team-page[data-theme="inkGreen"] .team-header .page-subtitle {
-  margin-top: 8rpx;
-  color: #7D8C86;
-  font-size: 26rpx;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-/* --- 第一张卡片上移叠加在背景下沿，成为首屏主视觉 --- */
-.team-page[data-theme="inkGreen"] .team-card:first-of-type {
-  margin-top: -28rpx;
-  position: relative;
-  z-index: 3;
-}
-
-/* --- 卡片统一 --- */
-.team-page[data-theme="inkGreen"] .team-card {
-  border: 1rpx solid rgba(231, 236, 229, 0.88);
-  border-radius: 32rpx;
-  background: #FFFDF7;
-  box-shadow: 0 20rpx 52rpx rgba(48, 71, 60, 0.08);
-}
-
-/* --- 小队状态卡：浅色奶油（非深绿） --- */
-.team-page[data-theme="inkGreen"] .team-status-card {
-  border-color: rgba(255, 255, 255, 0.76);
-  background: rgba(255, 253, 247, 0.97);
-  box-shadow: 0 24rpx 58rpx rgba(48, 71, 60, 0.10);
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .team-name {
-  color: #20322D;
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .team-slogan-row,
-.team-page[data-theme="inkGreen"] .team-status-card .team-sub-info {
-  color: #7D8C86;
-}
-
-.team-page[data-theme="inkGreen"] .team-status-card .team-sub-info .dot {
-  color: #93A099;
-}
-
-/* --- 队伍头像 --- */
-.team-page[data-theme="inkGreen"] .team-hero-avatar {
-  background: #F0F8F1;
-  border: 1rpx solid #D8E8DC;
-  color: #2F765E;
-  border-radius: 30rpx;
-}
-
-/* --- 标签胶囊 --- */
-.team-page[data-theme="inkGreen"] .level-tag {
-  background: #FFE8A8;
-  color: #8D6510;
-  border-radius: 16rpx;
-  height: 44rpx;
-}
-
-.team-page[data-theme="inkGreen"] .mood-tag,
-.team-page[data-theme="inkGreen"] .soft-tag,
-.team-page[data-theme="inkGreen"] .my-team-tag {
-  background: #EDF7EF;
-  border: 1rpx solid #DCEBDF;
-  color: #2F765E;
-  border-radius: 16rpx;
-  height: 44rpx;
-}
-
-/* --- 预览头像气泡 --- */
-.team-page[data-theme="inkGreen"] .preview-avatar,
-.team-page[data-theme="inkGreen"] .preview-more {
-  background: #FFFFFF;
-  color: #2F765E;
-  border: 3rpx solid #FFFFFF;
-  box-shadow: 0 6rpx 14rpx rgba(45, 70, 55, 0.10);
-}
-
-/* --- 按钮 --- */
-.team-page[data-theme="inkGreen"] .team-action-btn--primary {
-  background: linear-gradient(135deg, #49A180 0%, #2F765E 100%);
-  border: 1rpx solid transparent;
-  color: #FFFFFF;
-  box-shadow: 0 16rpx 32rpx rgba(47, 118, 94, 0.22);
-}
-
-.team-page[data-theme="inkGreen"] .team-action-btn--secondary {
-  background: rgba(255, 255, 255, 0.88);
-  border: 1rpx solid #D8E6DB;
-  color: #2F765E;
-  box-shadow: 0 4rpx 12rpx rgba(48, 71, 60, 0.05);
-}
-
-/* --- 战况数字 --- */
-.team-page[data-theme="inkGreen"] .stat-value,
-.team-page[data-theme="inkGreen"] .common-progress-value,
-.team-page[data-theme="inkGreen"] .cpv-current,
-.team-page[data-theme="inkGreen"] .cpv-current--done,
-.team-page[data-theme="inkGreen"] .progress-current,
-.team-page[data-theme="inkGreen"] .ms-completed {
-  color: #2F765E;
-}
-
-/* --- 进度条 --- */
-.team-page[data-theme="inkGreen"] .progress-track {
-  background: #E3EBE1;
-  border-radius: 999rpx;
-}
-
-.team-page[data-theme="inkGreen"] .progress-fill {
-  background: linear-gradient(90deg, #5EB28B 0%, #2F765E 100%);
-  border-radius: 999rpx;
-  box-shadow: 0 2rpx 8rpx rgba(47, 118, 94, 0.18);
-}
-
-/* --- 共同行动容器 --- */
-.team-page[data-theme="inkGreen"] .team-common-progress {
-  background: #F0F6EF;
-  border-radius: 28rpx;
-}
-
-.team-page[data-theme="inkGreen"] .common-progress-divider {
-  background: #DDE8DE;
-}
-
-/* --- 成员头像气泡 --- */
-.team-page[data-theme="inkGreen"] .member-avatar {
-  background: #E8F2E9;
-  color: #2F765E;
-}
-
-.team-page[data-theme="inkGreen"] .member-avatar--doing {
-  background: #FFE8A8;
-  color: #8D6510;
-}
-
-.team-page[data-theme="inkGreen"] .member-avatar--pending {
-  background: #EEF2EB;
-  color: #93A099;
-}
-
-.team-page[data-theme="inkGreen"] .avatar-check {
-  background: #2F765E;
-  border: 3rpx solid #FFFFFF;
-}
-
-.team-page[data-theme="inkGreen"] .avatar-dot {
-  background: #F2B94B;
-  border: 3rpx solid #FFFFFF;
-}
-
-/* --- 状态文字 --- */
-.team-page[data-theme="inkGreen"] .ms-doing {
-  color: #D79A1E;
-}
-
-.team-page[data-theme="inkGreen"] .ms-pending {
-  color: #93A099;
-}
-
-/* --- 荣誉 --- */
-.team-page[data-theme="inkGreen"] .honor-icon {
-  background: #FFE8A8;
-  color: #8D6510;
-}
-
-.team-page[data-theme="inkGreen"] .honor-badge-card {
-  background: #F0F6EF;
-}
-
-/* --- 主按钮 / 次按钮 --- */
-.team-page[data-theme="inkGreen"] .solid-button {
-  background: linear-gradient(135deg, #49A180 0%, #2F765E 100%);
-  color: #FFFFFF;
-  box-shadow: 0 14rpx 28rpx rgba(47, 118, 94, 0.20);
-}
-
-.team-page[data-theme="inkGreen"] .outline-button {
-  border: 1rpx solid #D8E6DB;
-  background: #FFFFFF;
-  color: #2F765E;
-}
-
-/* --- 文字颜色统一 --- */
-.team-page[data-theme="inkGreen"] .page-title,
-.team-page[data-theme="inkGreen"] .card-title,
-.team-page[data-theme="inkGreen"] .team-name,
-.team-page[data-theme="inkGreen"] .member-name,
-.team-page[data-theme="inkGreen"] .activity-name,
-.team-page[data-theme="inkGreen"] .honor-title,
-.team-page[data-theme="inkGreen"] .popup-title,
-.team-page[data-theme="inkGreen"] .settings-title,
-.team-page[data-theme="inkGreen"] .settings-section-title,
-.team-page[data-theme="inkGreen"] .state-title,
-.team-page[data-theme="inkGreen"] .empty-title {
-  color: #20322D;
-}
-
-.team-page[data-theme="inkGreen"] .page-subtitle,
-.team-page[data-theme="inkGreen"] .team-slogan-row,
-.team-page[data-theme="inkGreen"] .team-sub-info,
-.team-page[data-theme="inkGreen"] .stat-label,
-.team-page[data-theme="inkGreen"] .common-progress-label,
-.team-page[data-theme="inkGreen"] .common-action-desc,
-.team-page[data-theme="inkGreen"] .member-progress-text,
-.team-page[data-theme="inkGreen"] .activity-action,
-.team-page[data-theme="inkGreen"] .activity-time,
-.team-page[data-theme="inkGreen"] .honor-desc,
-.team-page[data-theme="inkGreen"] .dashboard-detail-link,
-.team-page[data-theme="inkGreen"] .member-list-more,
-.team-page[data-theme="inkGreen"] .activity-more,
-.team-page[data-theme="inkGreen"] .activity-empty,
-.team-page[data-theme="inkGreen"] .state-copy,
-.team-page[data-theme="inkGreen"] .empty-copy,
-.team-page[data-theme="inkGreen"] .popup-copy {
-  color: #7D8C86;
-}
-
-/* --- 弹窗 --- */
-.team-page[data-theme="inkGreen"] .team-popup-mask {
-  background: rgba(32, 50, 45, 0.28);
-  backdrop-filter: blur(8rpx);
-}
-
-.team-page[data-theme="inkGreen"] .team-popup {
-  background: #FFFDF7;
-  box-shadow: 0 -18rpx 48rpx rgba(48, 71, 60, 0.16);
-}
-
-.team-page[data-theme="inkGreen"] .popup-handle {
-  background: #E7ECE5;
-}
-
-/* --- 活动头像 / 成员详情头像 --- */
-.team-page[data-theme="inkGreen"] .activity-avatar,
-.team-page[data-theme="inkGreen"] .member-detail-avatar {
-  background: #EAF3EC;
-  color: #2F765E;
-}
-
-/* --- 设置面板 --- */
-.team-page[data-theme="inkGreen"] .team-settings-mask {
-  background: rgba(32, 50, 45, 0.34);
-  backdrop-filter: blur(8rpx);
-}
-
-.team-page[data-theme="inkGreen"] .team-settings-dialog {
-  background: #F6F3EA;
-  border-color: rgba(231, 236, 229, 0.94);
-}
-
-.team-page[data-theme="inkGreen"] .settings-header {
-  background: #FFFDF7;
-  border-bottom-color: #E7ECE5;
-}
-
-.team-page[data-theme="inkGreen"] .settings-section,
-.team-page[data-theme="inkGreen"] .room-code-card,
-.team-page[data-theme="inkGreen"] .detail-visibility-option,
-.team-page[data-theme="inkGreen"] .task-detail-item,
-.team-page[data-theme="inkGreen"] .detail-private-card,
-.team-page[data-theme="inkGreen"] .room-input {
-  border-color: #E7ECE5;
-  background: #FFFDF7;
-}
-
-.team-page[data-theme="inkGreen"] .setting-segments {
-  background: #EEF2EB;
-}
-
-.team-page[data-theme="inkGreen"] .setting-segment--active {
-  background: #FFFFFF;
-  color: #2F765E;
-  box-shadow: 0 4rpx 14rpx rgba(48, 71, 60, 0.08);
-}
-
-.team-page[data-theme="inkGreen"] .custom-switch--on {
-  background: #2F765E;
-}
-
-.team-page[data-theme="inkGreen"] .detail-visibility-option--active {
-  border-color: #BFD8C8;
-  background: #EAF3EC;
-}
-
-.team-page[data-theme="inkGreen"] .detail-visibility-option--active .option-radio {
-  border-color: #2F765E;
-}
-
-.team-page[data-theme="inkGreen"] .detail-visibility-option--active .option-radio view {
-  background: #2F765E;
-}
-
-.team-page[data-theme="inkGreen"] .settings-save-button {
-  background: linear-gradient(135deg, #49A180 0%, #2F765E 100%);
-  box-shadow: 0 12rpx 24rpx rgba(47, 118, 94, 0.20);
-}
-
-.team-page[data-theme="inkGreen"] .settings-cancel-button {
-  border-color: #D8E6DB;
-  background: #FFFFFF;
-  color: #2F765E;
-}
-
-.team-page[data-theme="inkGreen"] .team-avatar-picker {
-  background: #F0F8F1;
-  border-color: #D8E8DC;
-  color: #2F765E;
-}
-
-.team-page[data-theme="inkGreen"] .avatar-edit-mark {
-  background: #2F765E;
-}
-
-.team-page[data-theme="inkGreen"] .copy-code-button {
-  background: #FFFFFF;
-  color: #2F765E;
-}
-
-.team-page[data-theme="inkGreen"] .room-code-value {
-  color: #294F43;
-}
-
-.team-page[data-theme="inkGreen"] .settings-readonly-tip {
-  background: #FFF4D8;
-  color: #8D6510;
-}
-
-.team-page[data-theme="inkGreen"] .settings-close {
-  background: #F0F6EF;
-  color: #7D8C86;
-}
-
-.team-page[data-theme="inkGreen"] .settings-close:active {
-  background: #EAF3EC;
-  color: #2F765E;
-}
-
-.team-page[data-theme="inkGreen"] .solid-button[disabled] {
-  background: #C9D8D1;
-  box-shadow: none;
+  .joint-stat {
+    justify-content: flex-start;
+    border-left: 0;
+    border-top: 1rpx solid rgba(206, 196, 176, 0.52);
+    padding: 22rpx 0;
+  }
+
+  .joint-stat--first {
+    border-top: 0;
+  }
+
+  .member-encourage {
+    max-width: 154rpx;
+  }
 }
