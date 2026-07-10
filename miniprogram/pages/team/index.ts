@@ -64,37 +64,27 @@ interface ActivitySnapshot {
   todayStatus: MemberTodayStatus;
 }
 
-/* ============ 新增视图数据结构（执行看板） ============ */
 interface TeamStatsView {
   todayCompletionRate: number;
   completedMembers: number;
   totalMembers: number;
-  todayActions: number;
-  targetActions: number;
-  todayActionsRate: number;
   totalGrowthMinutes: number;
 }
 
-interface CommonActionView {
-  desc: string;
-  myCompleted: number;
-  myTarget: number;
-  myDone: boolean;
-  teamCompleted: number;
-  teamTarget: number;
-}
-
-interface MemberStatusItem {
+interface CompanionRow {
   id: string;
   name: string;
   avatar: string;
   avatarText: string;
   statusClass: "completed" | "doing" | "pending";
-  statusText: string;
   statusLabel: string;
   actionSummary: string;
-  encourageText: string;
+  growthMinutes: number;
+  progressPercent: number;
+  progressText: string;
+  progressKnown: boolean;
   canEncourage: boolean;
+  canOpenDetail: boolean;
   isSelf: boolean;
 }
 
@@ -102,16 +92,7 @@ interface HeroAvatarSlot {
   id: string;
   avatar: string;
   avatarText: string;
-  tone: "photo" | "mountain" | "robot" | "initial";
-}
-
-interface TeamActionNode {
-  id: string;
-  name: string;
-  avatar: string;
-  avatarText: string;
-  statusClass: "completed" | "doing" | "pending";
-  statusLabel: string;
+  isEmpty: boolean;
 }
 
 function normalizeTeamDisplayName(team: Team | null): string {
@@ -130,12 +111,6 @@ function displayRoomCode(roomCode?: string): string {
   return String(seed || 2846).padStart(4, "0");
 }
 
-interface MemberStatusSummary {
-  completed: number;
-  doing: number;
-  pending: number;
-}
-
 interface ActivityItem {
   id: string;
   memberId: string;
@@ -146,11 +121,10 @@ interface ActivityItem {
   time: string;
 }
 
-interface HonorItem {
-  id: string;
-  title: string;
-  desc: string;
-  icon: string;
+interface SelfActionPrompt {
+  text: string;
+  buttonText: string;
+  allDone: boolean;
 }
 
 interface TeamSettingsDraft {
@@ -163,22 +137,9 @@ interface TeamSettingsDraft {
   taskDetailVisible: boolean;
 }
 
-const TEAM_LEVEL = "Lv.3";
-const TEAM_MOOD = "稳定同行";
 const TEAM_NAME = "进步小队";
-
-/* —— 今日共同行动相关（mock，方便后续接真实接口） —— */
-const COMMON_ACTION_DESC = "每人完成 3 个行动，保持连续打卡";
-const COMMON_ACTION_TARGET = 3;
-
-/* —— 今日小队战况相关（mock） —— */
-const TEAM_TODAY_ACTIONS_MOCK = 8;
-const TEAM_TARGET_ACTIONS_MOCK = 50;
-const TODAY_COMPLETION_RATE_MOCK = 67;
-const COMPLETED_MEMBERS_MOCK = 3;
-
-const MEMBER_STATUS_MAX = 8;
-const ACTIVITY_MAX = 3;
+const COMPANION_PREVIEW_MAX = 4;
+const ACTIVITY_MAX = 2;
 
 function persistTeamAvatar(tempFilePath: string, currentAvatar: string): Promise<string> {
   if (!tempFilePath || tempFilePath === currentAvatar) return Promise.resolve(tempFilePath);
@@ -209,14 +170,6 @@ const ACTION_DETAIL_OPTIONS: Array<{ value: TeamActionDetailVisibility; label: s
   { value: "admins_only", label: "仅管理员", desc: "只有创建者可查看已开放的行动详情" },
   { value: "hidden", label: "全部隐藏", desc: "所有成员只展示行动状态摘要" },
 ];
-
-const HONOR_LIST: HonorItem[] = [
-  { id: "honor_teamwork", title: "团结之星", desc: "连续 3 周达成目标", icon: "★" },
-  { id: "honor_full", title: "全勤小队", desc: "本周 7 天都有成员完成行动", icon: "✓" },
-  { id: "honor_sprint", title: "冲刺达人", desc: "今日行动数突破 50 项", icon: "↑" },
-];
-
-const ACTIVITY_FALLBACK_NAMES = ["阿岚", "林", "沲", "思"];
 
 function taskStatusToMemberStatus(status: ActionTask["status"]): MemberTodayStatus {
   if (status === "completed") return "completed";
@@ -318,19 +271,12 @@ function toMemberView(member: TeamMember, team: Team | null): MemberView {
   };
 }
 
-/* ============ 今日小队战况 ============ */
 function buildTeamStats(team: Team, dailyStats: TeamDailyStats | null, members: MemberView[]): TeamStatsView {
   const totalMembers = team.memberCount || members.length;
   const completedMembers = dailyStats?.completedMembers
     ?? members.filter((member) => member.todayStatus === "completed").length;
   const todayCompletionRate = dailyStats?.completionRate
     ?? (totalMembers > 0 ? Math.round((completedMembers / totalMembers) * 100) : 0);
-  const todayActions = members.reduce((sum, member) => {
-    const details = Array.isArray(member.todayActionDetails) ? member.todayActionDetails : [];
-    return sum + details.length;
-  }, 0);
-  const targetActions = Math.max(totalMembers * COMMON_ACTION_TARGET, todayActions, 1);
-  const todayActionsRate = Math.min(100, Math.round((todayActions / targetActions) * 100));
   const totalGrowthMinutes = dailyStats?.totalGrowthMinutes
     ?? members.reduce((sum, member) => sum + (member.growthMinutes || 0), 0);
 
@@ -338,39 +284,42 @@ function buildTeamStats(team: Team, dailyStats: TeamDailyStats | null, members: 
     todayCompletionRate,
     completedMembers,
     totalMembers,
-    todayActions,
-    targetActions,
-    todayActionsRate,
     totalGrowthMinutes,
   };
 }
 
-function statusClassOf(status: MemberTodayStatus): MemberStatusItem["statusClass"] {
+function statusClassOf(status: MemberTodayStatus): CompanionRow["statusClass"] {
   if (status === "completed") return "completed";
   if (status === "partial") return "doing";
   return "pending";
 }
 
-function statusLabelOf(statusClass: MemberStatusItem["statusClass"]): string {
+function statusLabelOf(statusClass: CompanionRow["statusClass"]): string {
   if (statusClass === "completed") return "已完成";
   if (statusClass === "doing") return "进行中";
   return "未开始";
 }
 
-function actionSummaryOf(member: MemberView): string {
+function companionActionSummary(member: MemberView): string {
+  if (!member.isSelf && !member.taskDetailVisible) {
+    if (member.todayStatus === "completed") return "今天的行动已经完成";
+    if (member.todayStatus === "partial") return "正在稳步推进今天的行动";
+    if (member.todayStatus === "missed") return "今天选择休息一下";
+    return member.actionText || "今天还未开始行动";
+  }
   const details = member.todayActionDetails || [];
   const completed = details.find((detail) => detail.status === "completed");
   const current = details.find((detail) => detail.status !== "completed");
   if (member.todayStatus === "completed") {
-    return `完成：${completed?.title || member.todayActionTitle || member.actionText}`;
+    return completed?.title || member.todayActionTitle || "完成了今天的行动";
   }
   if (member.todayStatus === "partial") {
-    return `进行中：${current?.title || member.todayActionTitle || member.actionText}`;
+    return current?.title || member.todayActionTitle || "正在推进今天的行动";
   }
   if (member.todayStatus === "missed") {
-    return "今天休息：保留节奏，不做比较";
+    return "今天选择休息一下";
   }
-  return `进行中：${current?.title || member.todayActionTitle || member.actionText}`;
+  return current?.title || member.todayActionTitle || member.actionText || "今天还未开始行动";
 }
 
 function buildHeroAvatarSlots(members: MemberView[]): HeroAvatarSlot[] {
@@ -378,20 +327,28 @@ function buildHeroAvatarSlots(members: MemberView[]): HeroAvatarSlot[] {
     id: member.id,
     avatar: member.avatar || "",
     avatarText: member.avatarText,
-    tone: member.avatar ? "photo" : "initial",
+    isEmpty: false,
   }));
-  const fallbacks: HeroAvatarSlot[] = [
-    { id: "hero_mountain", avatar: "/assets/progress-mountain-path-v2.jpg", avatarText: "山", tone: "mountain" },
-    { id: "hero_robot", avatar: "/assets/today-coach-watercolor-v2.jpg", avatarText: "AI", tone: "robot" },
-    { id: "hero_leaf", avatar: "", avatarText: "叶", tone: "initial" },
-    { id: "hero_star", avatar: "", avatarText: "星", tone: "initial" },
-  ];
-  return [...slots, ...fallbacks].slice(0, 4);
+  while (slots.length < 4) {
+    const number = slots.length + 1;
+    slots.push({ id: `empty_${number}`, avatar: "", avatarText: "+", isEmpty: true });
+  }
+  return slots;
 }
 
-function buildTeamActionNodes(members: MemberView[]): TeamActionNode[] {
-  const nodes = members.slice(0, 4).map((member) => {
+function buildCompanionRows(members: MemberView[]): CompanionRow[] {
+  return members.slice(0, COMPANION_PREVIEW_MAX).map((member) => {
     const statusClass = statusClassOf(member.todayStatus);
+    const detailsCanBeShown = member.isSelf || member.taskDetailVisible;
+    const details = detailsCanBeShown ? (member.todayActionDetails || []) : [];
+    const completedCount = details.filter((detail) => detail.status === "completed").length;
+    const progressKnown = details.length > 0 || member.todayStatus !== "partial";
+    const progressPercent = details.length > 0
+      ? Math.round((completedCount / details.length) * 100)
+      : member.todayStatus === "completed"
+        ? 100
+        : 0;
+
     return {
       id: member.id,
       name: member.displayName,
@@ -399,157 +356,66 @@ function buildTeamActionNodes(members: MemberView[]): TeamActionNode[] {
       avatarText: member.avatarText,
       statusClass,
       statusLabel: statusLabelOf(statusClass),
-    };
-  });
-  const fallbacks: TeamActionNode[] = [
-    { id: "node_1", name: "伙伴", avatar: "", avatarText: "叶", statusClass: "pending", statusLabel: "未开始" },
-    { id: "node_2", name: "伙伴", avatar: "", avatarText: "叶", statusClass: "pending", statusLabel: "未开始" },
-    { id: "node_3", name: "伙伴", avatar: "", avatarText: "叶", statusClass: "pending", statusLabel: "未开始" },
-    { id: "node_4", name: "伙伴", avatar: "", avatarText: "叶", statusClass: "pending", statusLabel: "未开始" },
-  ];
-  return [...nodes, ...fallbacks].slice(0, 4);
-}
-
-/* ============ 今日共同行动 ============ */
-function buildCommonAction(members: MemberView[]): CommonActionView {
-  const self = members.find((member) => member.isSelf);
-
-  let myCompleted = 0;
-  let myTarget = COMMON_ACTION_TARGET;
-
-  if (self) {
-    const details = self.todayActionDetails || [];
-    if (details.length > 0) {
-      myTarget = details.length;
-      myCompleted = details.filter((detail) => detail.status === "completed").length;
-    }
-  }
-
-  const teamCompleted = members.reduce((sum, member) => (
-    sum + (member.todayActionDetails || []).filter((detail) => detail.status === "completed").length
-  ), 0);
-  const teamTarget = Math.max(COMMON_ACTION_TARGET * members.length, teamCompleted, 1);
-  const myDone = myTarget > 0 && myCompleted >= myTarget;
-
-  return {
-    desc: COMMON_ACTION_DESC,
-    myCompleted,
-    myTarget,
-    myDone,
-    teamCompleted,
-    teamTarget,
-  };
-}
-
-/* ============ 成员状态 ============ */
-function buildMemberStatusList(members: MemberView[]): MemberStatusItem[] {
-  return members.slice(0, MEMBER_STATUS_MAX).map((member) => {
-    let statusClass: MemberStatusItem["statusClass"] = "pending";
-    let completedCount = 0;
-    let targetCount = COMMON_ACTION_TARGET;
-
-    const details = member.todayActionDetails || [];
-    if (member.isSelf && details.length > 0) {
-      targetCount = details.length;
-      completedCount = details.filter((detail) => detail.status === "completed").length;
-    }
-
-    if (member.todayStatus === "completed") {
-      statusClass = "completed";
-      completedCount = member.isSelf ? completedCount : COMMON_ACTION_TARGET;
-    } else if (member.todayStatus === "partial") {
-      statusClass = "doing";
-      if (!member.isSelf) {
-        completedCount = details.length > 0
-          ? details.filter((detail) => detail.status === "completed").length
-          : 2;
-      }
-    } else {
-      statusClass = "pending";
-      completedCount = 0;
-    }
-
-    const statusText = statusClass === "completed"
-      ? `已完成 ${completedCount}/${targetCount}`
-      : statusClass === "doing"
-        ? `进行中 ${completedCount}/${targetCount}`
-        : `未开始 0/${targetCount}`;
-    const statusLabel = statusLabelOf(statusClass);
-
-    return {
-      id: member.id,
-      name: member.displayName,
-      avatar: member.avatar || "",
-      avatarText: member.avatarText,
-      statusClass,
-      statusText,
-      statusLabel,
-      actionSummary: actionSummaryOf(member),
-      encourageText: member.isSelf ? "查看详情" : (member.encouragedByMeToday ? "已鼓励" : "送一句鼓励"),
+      actionSummary: companionActionSummary(member),
+      growthMinutes: Math.max(0, member.growthMinutes || 0),
+      progressPercent,
+      progressText: progressKnown ? `${progressPercent}%` : "进行中",
+      progressKnown,
       canEncourage: member.canEncourage,
+      canOpenDetail: member.canOpenDetail,
       isSelf: member.isSelf,
     };
   });
 }
 
-function buildMemberStatusSummary(members: MemberView[]): MemberStatusSummary {
-  const summary: MemberStatusSummary = { completed: 0, doing: 0, pending: 0 };
-  members.forEach((member) => {
-    if (member.todayStatus === "completed") {
-      summary.completed += 1;
-    } else if (member.todayStatus === "partial") {
-      summary.doing += 1;
-    } else {
-      summary.pending += 1;
-    }
-  });
-  return summary;
+function getTeamDays(team: Team | null): number {
+  if (!team?.createdAt) return 1;
+  const created = new Date(team.createdAt);
+  if (Number.isNaN(created.getTime())) return 1;
+  const start = new Date(created.getFullYear(), created.getMonth(), created.getDate()).getTime();
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return Math.max(1, Math.floor((today - start) / (24 * 60 * 60 * 1000)) + 1);
 }
 
-/* ============ 行动动态 ============ */
-function buildActivityList(members: MemberView[]): ActivityItem[] {
-  const ordered = [...members].sort((a, b) => {
-    const rank: Record<MemberTodayStatus, number> = {
-      completed: 1,
-      partial: 2,
-      not_started: 3,
-      missed: 4,
-    };
-    return rank[a.todayStatus] - rank[b.todayStatus];
-  });
-
-  const visible = ordered.filter((member) => !member.isSelf).slice(0, ACTIVITY_MAX);
-
-  if (visible.length === 0) {
-    return [];
+function buildSelfActionPrompt(members: MemberView[]): SelfActionPrompt {
+  const self = members.find((member) => member.isSelf);
+  if (!self) return { text: "回到今日页，继续自己的节奏", buttonText: "去今日行动", allDone: false };
+  const details = self.todayActionDetails || [];
+  if (details.length === 0) {
+    return { text: "今天还没有行动，先添加一小步", buttonText: "去添加行动", allDone: false };
   }
+  const remaining = details.filter((detail) => detail.status !== "completed" && detail.status !== "missed").length;
+  if (remaining === 0) {
+    return { text: "今天的行动已完成，保持轻松节奏", buttonText: "查看今日", allDone: true };
+  }
+  return { text: `今天还有 ${remaining} 项行动可以继续`, buttonText: "去今日行动", allDone: false };
+}
 
-  return visible.map((member, index) => {
-    const fallbackName = ACTIVITY_FALLBACK_NAMES[index] || member.displayName;
-    const name = member.displayMode === "anonymous" ? fallbackName : member.displayName;
+function formatMemberUpdateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "刚刚";
+  const now = new Date();
+  if (date.toDateString() === now.toDateString()) {
+    return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  }
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
 
-    let actionText = "加入了小队";
-    if (member.todayStatus === "completed") {
-      actionText = "完成了今日目标";
-    } else if (member.todayStatus === "partial") {
-      actionText = "完成了部分行动";
-    } else if (member.todayStatus === "not_started") {
-      actionText = "开始了今日行动";
-    }
-
-    const timeOptions = ["1 小时前", "2 小时前", "昨天", "昨天"];
-    const time = timeOptions[index] || `${index + 1} 小时前`;
-
-    return {
+function buildActivityList(members: MemberView[]): ActivityItem[] {
+  return members
+    .filter((member) => member.todayStatus === "completed" || member.todayStatus === "partial")
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .slice(0, ACTIVITY_MAX)
+    .map((member) => ({
       id: `activity_${member.id}`,
       memberId: member.id,
-      name,
+      name: member.displayName,
       avatar: member.avatar || "",
-      avatarText: name.slice(0, 1),
-      actionText,
-      time,
-    };
-  });
+      avatarText: member.avatarText,
+      actionText: member.todayStatus === "completed" ? "完成了今日行动" : "推进了部分行动",
+      time: formatMemberUpdateTime(member.updatedAt),
+    }));
 }
 
 Page(withAppTheme({
@@ -563,35 +429,22 @@ Page(withAppTheme({
     dailyStats: null as TeamDailyStats | null,
     displayTeamName: TEAM_NAME,
     displayRoomCode: "2846",
-    teamLevel: TEAM_LEVEL,
-    teamMood: TEAM_MOOD,
-    avatarMembers: [] as MemberView[],
+    teamDays: 1,
     heroAvatarSlots: [] as HeroAvatarSlot[],
-    teamActionNodes: [] as TeamActionNode[],
-    extraAvatarCount: 0,
-    /* —— 执行看板新数据 —— */
     teamStats: {
       todayCompletionRate: 0,
       completedMembers: 0,
       totalMembers: 0,
-      todayActions: 0,
-      targetActions: 0,
-      todayActionsRate: 0,
       totalGrowthMinutes: 0,
     } as TeamStatsView,
-    commonAction: {
-      desc: COMMON_ACTION_DESC,
-      myCompleted: 0,
-      myTarget: COMMON_ACTION_TARGET,
-      myDone: false,
-      teamCompleted: TEAM_TODAY_ACTIONS_MOCK,
-      teamTarget: TEAM_TARGET_ACTIONS_MOCK,
-    } as CommonActionView,
-    memberStatusList: [] as MemberStatusItem[],
-    memberStatusSummary: { completed: 0, doing: 0, pending: 0 } as MemberStatusSummary,
-    memberStatusExtra: 0,
+    companionRows: [] as CompanionRow[],
+    companionExtra: 0,
+    selfActionPrompt: {
+      text: "回到今日页，继续自己的节奏",
+      buttonText: "去今日行动",
+      allDone: false,
+    } as SelfActionPrompt,
     activityList: [] as ActivityItem[],
-    honorList: HONOR_LIST,
     /* —— 弹窗与状态 —— */
     roomCodeInput: "",
     joinPopupVisible: false,
@@ -666,8 +519,7 @@ Page(withAppTheme({
 
   applyTeamData(team: Team | null, members: TeamMember[], dailyStats: TeamDailyStats | null) {
     const memberViews = members.map((member) => toMemberView(member, team));
-    const avatarMembers = memberViews.slice(0, 5);
-    const memberStatusList = buildMemberStatusList(memberViews);
+    const companionRows = buildCompanionRows(memberViews);
 
     this.setData({
       status: team ? "ready" : "empty",
@@ -676,19 +528,15 @@ Page(withAppTheme({
       dailyStats,
       displayTeamName: normalizeTeamDisplayName(team),
       displayRoomCode: displayRoomCode(team?.roomCode),
+      teamDays: getTeamDays(team),
       teamAvatar: team?.avatar || "",
       teamAvatarText: (team?.name || TEAM_NAME).slice(0, 1),
-      avatarMembers,
       heroAvatarSlots: buildHeroAvatarSlots(memberViews),
-      teamActionNodes: buildTeamActionNodes(memberViews),
-      extraAvatarCount: Math.max(0, memberViews.length - avatarMembers.length),
       teamStats: team ? buildTeamStats(team, dailyStats, memberViews) : this.data.teamStats,
-      commonAction: buildCommonAction(memberViews),
-      memberStatusList,
-      memberStatusSummary: buildMemberStatusSummary(memberViews),
-      memberStatusExtra: Math.max(0, memberViews.length - MEMBER_STATUS_MAX),
+      companionRows,
+      companionExtra: Math.max(0, memberViews.length - COMPANION_PREVIEW_MAX),
+      selfActionPrompt: buildSelfActionPrompt(memberViews),
       activityList: buildActivityList(memberViews),
-      honorList: HONOR_LIST,
       errorMessage: "",
       creating: false,
       joining: false,
@@ -978,6 +826,10 @@ Page(withAppTheme({
 
   openAllActivities() {
     wx.navigateTo({ url: "/pages/team-activity/index" });
+  },
+
+  goToday() {
+    wx.switchTab({ url: "/pages/index/index" });
   },
 
   openMemberDetail(event: { currentTarget: { dataset: { id?: string } } }) {
