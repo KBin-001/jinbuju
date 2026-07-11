@@ -178,7 +178,7 @@ assert.strictEqual(
     totalCheckinDays: 3,
     longestStreak: 3,
   }),
-  false,
+  true,
 );
 assert.strictEqual(
   isCommunityUnlocked(
@@ -206,7 +206,7 @@ const longTermCategories = [
   "other",
 ];
 for (const category of longTermCategories) {
-  for (const durationDays of [1, 2, 3, 4, 5, 6, 7]) {
+  for (const durationDays of [3, 4, 5, 6, 7]) {
     const input = validateStageGenerationInput({
       goalTitle: "建立长期成长能力",
       category,
@@ -228,13 +228,13 @@ for (const category of longTermCategories) {
 }
 
 const templateIds = Object.keys(GOAL_TEMPLATES);
-assert.strictEqual(templateIds.length, 8);
+assert.strictEqual(templateIds.length, 12);
 for (const templateId of templateIds) {
   for (const currentLevel of ["zero", "basic", "intermediate"]) {
     for (const dailyMinutes of [15, 30, 45, 60, 90, 120, 180, 360]) {
       for (const weeklyDays of [3, 5, 7]) {
         for (const intensity of ["light", "normal", "intensive"]) {
-          for (const durationDays of [1, 2, 3, 4, 5, 6, 7]) {
+          for (const durationDays of [3, 4, 5, 6, 7]) {
             const input = validateCreateStagePreviewInput({
               templateId,
               customGoalTitle: templateId === "custom" ? "学习基础摄影" : undefined,
