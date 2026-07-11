@@ -1,0 +1,35 @@
+<view class="invite-page">
+  <view class="invite-hero">
+    <image class="invite-hero__image" src="/assets/team-header-watercolor-v2.jpg" mode="aspectFill" />
+    <view class="invite-hero__veil"></view>
+    <view class="invite-kicker">一起行动，各自成长</view>
+    <view class="invite-title">{{teamName}}</view>
+    <view class="invite-members">
+      <view class="invite-avatar" wx:for="{{avatars}}" wx:key="id">
+        <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+        <text wx:elif="{{item.extraText}}">{{item.extraText}}</text>
+        <image wx:else src="/images/avatar.png" mode="aspectFill" />
+      </view>
+      <text>{{memberCount}}/20人</text>
+    </view>
+  </view>
+
+  <view class="invite-content">
+    <view class="room-card">
+      <image class="room-card__image" src="/assets/team-header-watercolor-v2.jpg" mode="aspectFill" />
+      <view class="room-card__veil"></view>
+      <text class="room-card__label">小队房间号</text>
+      <text class="room-card__code">{{roomCode}}</text>
+      <view class="room-card__copy" bindtap="copyRoomCode">复制房间号</view>
+    </view>
+
+    <button class="share-button" open-type="share">发送给微信好友</button>
+    <view class="secondary-button" bindtap="copyGroupText">复制群邀请文案</view>
+    <view class="reserve-card">
+      <view class="reserve-title">更多邀请方式</view>
+      <view class="reserve-row"><text>二维码邀请</text><text class="reserve-chip">即将支持</text></view>
+      <view class="reserve-row"><text>生成邀请海报</text><text class="reserve-chip">即将支持</text></view>
+    </view>
+    <view class="invite-note">加入后仅展示你主动公开的小队资料与行动状态。</view>
+  </view>
+</view>

@@ -72,6 +72,7 @@
   width: 100%;
   padding: 92rpx 28rpx 0;
 }
+.team-service-notice { margin: 0 0 18rpx; padding: 16rpx 20rpx; border: 1rpx solid rgba(190, 145, 70, 0.24); border-radius: 18rpx; background: rgba(255, 249, 233, 0.92); color: #7a6642; font-size: 22rpx; line-height: 32rpx; }
 
 .team-content--state {
   padding-top: 150rpx;
@@ -202,7 +203,7 @@
   justify-content: center;
   box-sizing: border-box;
   width: 190rpx;
-  height: 54rpx;
+  min-height: 88rpx;
   padding: 0 17rpx;
   border: 1rpx solid rgba(183, 174, 157, 0.62);
   border-radius: 28rpx;
@@ -510,4 +511,64 @@
 .settings-footer-button--danger {
   color: #b54a43;
   background: rgba(181, 74, 67, 0.08);
+}
+
+/* Team Mode: 房间号与邀请层级 */
+.hero-avatar--extra {
+  width: 62rpx;
+  background: #e7eee8;
+  color: #245b4d;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  font-size: 20rpx;
+}
+
+.room-landscape {
+  position: relative;
+  height: 150rpx;
+  margin: 0 24rpx 20rpx;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 0 26rpx;
+  border: 1rpx solid rgba(174, 142, 88, 0.30);
+  border-radius: 22rpx;
+  background: #f4efe4;
+}
+.room-landscape--pressed { opacity: .82; }
+.room-landscape__image,
+.room-landscape__veil { position: absolute; inset: 0; width: 100%; height: 100%; }
+.room-landscape__image { opacity: .48; }
+.room-landscape__veil { background: linear-gradient(90deg, rgba(255,252,246,.96), rgba(255,252,246,.72) 64%, rgba(255,252,246,.40)); }
+.room-landscape__copy { position: relative; z-index: 2; display: flex; flex: 1; flex-direction: column; }
+.room-landscape__label { color: #7c817d; font-size: 21rpx; }
+.room-landscape__code { margin-top: 8rpx; color: #245b4d; font-family: Georgia, "Times New Roman", serif; font-size: 42rpx; font-weight: 700; letter-spacing: 8rpx; }
+.room-landscape__action { position: relative; z-index: 2; min-width: 104rpx; min-height: 88rpx; display: flex; align-items: center; justify-content: center; gap: 8rpx; border-radius: 44rpx; background: rgba(255,252,246,.88); color: #8c672a; font-size: 23rpx; }
+.room-landscape__action image { width: 25rpx; height: 25rpx; }
+
+.team-settings-dialog { height: auto; min-height: 390rpx; }
+.settings-simple { padding: 30rpx 34rpx 22rpx; }
+.settings-simple .settings-input { margin-top: 14rpx; }
+.settings-count { margin-top: 10rpx; color: #918a80; font-size: 20rpx; text-align: right; }
+.owner-setting-row { min-height: 82rpx; display: flex; align-items: center; justify-content: space-between; gap: 18rpx; border-top: 1rpx solid rgba(103,94,77,.12); color: #34443e; font-size: 24rpx; }
+.owner-setting-row > view { display: flex; flex-direction: column; }
+.owner-setting-help { margin-top: 5rpx; color: #8b8f8b; font-size: 20rpx; }
+.owner-setting-row--danger { color: #a65049; }
+.settings-footer-button.is-disabled { opacity: .45; pointer-events: none; }
+
+.team-info-dialog { max-height: 76vh; }
+.team-info-scroll { max-height: 720rpx; padding: 22rpx 34rpx; box-sizing: border-box; }
+.team-info-name { color: #245b4d; font-family: "Songti SC", STSong, serif; font-size: 38rpx; font-weight: 700; }
+.team-info-slogan { margin-top: 8rpx; margin-bottom: 18rpx; color: #7c817d; font-size: 23rpx; line-height: 34rpx; }
+.team-info-row { min-height: 76rpx; display: flex; align-items: center; justify-content: space-between; gap: 28rpx; border-top: 1rpx solid rgba(103,94,77,.12); font-size: 23rpx; }
+.team-info-row > text:first-child { color: #7c817d; }
+.team-info-row > text:last-child { max-width: 390rpx; color: #34443e; text-align: right; }
+
+.self-detail-actions { margin: 22rpx 0; border-top: 1rpx solid rgba(103,94,77,.14); }
+.self-detail-action { min-height: 76rpx; display: flex; align-items: center; justify-content: center; color: #245b4d; font-size: 24rpx; }
+.self-detail-action--danger { color: #a65049; border-top: 1rpx solid rgba(103,94,77,.10); }
+
+@media (max-width: 350px) {
+  .hero-main { display: block; }
+  .hero-controls { margin-top: 20rpx; padding-left: 0; flex-direction: row; align-items: center; }
+  .hero-control { flex: 1; width: auto; min-height: 68rpx; }
 }

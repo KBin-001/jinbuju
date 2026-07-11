@@ -1,4 +1,4 @@
-import { canManageTeam, getMyTeam, sendEncouragement } from "../../services/team";
+import { canManageTeam, dissolveTeam, getCachedTeam, getMyTeam, removeTeamMember, sendEncouragement, transferTeamOwner } from "../../services/team";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import {
   EncouragementType,
@@ -283,6 +283,11 @@ Page(withAppTheme({
     searchKeyword: "",
     detailVisible: false,
     selectedDetail: null as MemberDetailView | null,
+    status: "loading" as "loading" | "ready" | "empty" | "error",
+    errorMessage: "",
+    showCacheNotice: false,
+    canManage: false,
+    managingMember: false,
   },
 
   onLoad() {
@@ -301,7 +306,6 @@ Page(withAppTheme({
       navTotalHeight: statusBarHeight + navBarHeight,
       navRightPad,
     });
-    this.loadMembers();
   },
 
   onShow() {
@@ -310,7 +314,21 @@ Page(withAppTheme({
   },
 
   async loadMembers() {
-    const { team, members } = await getMyTeam({ pageSize: 50 });
+    if (!this.data.rawTeam) this.setData({ status: "loading", errorMessage: "", showCacheNotice: false });
+    try {
+      const { team, members, runtime } = await getMyTeam({ pageSize: 20 });
+      this.applyMembers(team, members, Boolean(runtime?.stale || runtime?.mode === "legacy"));
+    } catch (error) {
+      const cached = getCachedTeam();
+      if (cached.team) {
+        this.applyMembers(cached.team, cached.members, true);
+        return;
+      }
+      this.setData({ status: "error", errorMessage: error instanceof Error ? error.message : "成员列表加载失败" });
+    }
+  },
+
+  applyMembers(team: Team | null, members: TeamMember[], showCacheNotice: boolean) {
     if (!team) {
       this.setData({
         team: null,
@@ -320,6 +338,9 @@ Page(withAppTheme({
         filteredMembers: [],
         detailVisible: false,
         selectedDetail: null,
+        status: "empty",
+        showCacheNotice,
+        canManage: false,
       });
       return;
     }
@@ -332,7 +353,7 @@ Page(withAppTheme({
       avatar: team.avatar || "",
       avatarText: (team.name || "队").slice(0, 1),
       memberCount: team.memberCount,
-      maxMembers: team.maxMembers,
+      maxMembers: 20,
       roomCode: team.roomCode,
       completedMembers,
       doingMembers,
@@ -344,6 +365,10 @@ Page(withAppTheme({
       allMembers: views,
       rawMembers: members,
       filteredMembers: applyFilter(views, this.data.activeFilter, this.data.searchKeyword),
+      status: "ready",
+      errorMessage: "",
+      showCacheNotice,
+      canManage: canManageTeam(team),
     };
     if (this.data.detailVisible && this.data.selectedDetail) {
       const current = members.find((member) => member.id === this.data.selectedDetail!.id);
@@ -351,6 +376,8 @@ Page(withAppTheme({
     }
     this.setData(patch);
   },
+
+  retry() { this.loadMembers(); },
 
   goBack() {
     const pages = getCurrentPages();
@@ -423,6 +450,91 @@ Page(withAppTheme({
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "鼓励失败", icon: "none" });
     }
+  },
+
+  removeSelectedMember() {
+    const detail = this.data.selectedDetail;
+    if (!this.data.canManage || !detail || detail.isSelf || detail.isOwner || this.data.managingMember) return;
+    wx.showModal({
+      title: "移出小队？",
+      content: `移出“${detail.name}”后，对方需要重新使用房间号加入。`,
+      confirmText: "确认移出",
+      confirmColor: "#A65049",
+      success: async ({ confirm }) => {
+        if (!confirm) return;
+        this.setData({ managingMember: true });
+        try {
+          await removeTeamMember(detail.id);
+          this.setData({ detailVisible: false, selectedDetail: null, managingMember: false });
+          await this.loadMembers();
+          wx.showToast({ title: "成员已移出", icon: "success" });
+        } catch (error) {
+          this.setData({ managingMember: false });
+          wx.showToast({ title: error instanceof Error ? error.message : "移出失败", icon: "none" });
+        }
+      },
+    });
+  },
+
+  transferToSelectedMember() {
+    const detail = this.data.selectedDetail;
+    if (!this.data.canManage || !detail || detail.isSelf || detail.isOwner || this.data.managingMember) return;
+    wx.showModal({
+      title: "转让队长？",
+      content: `转让给“${detail.name}”后，你将成为普通成员。`,
+      confirmText: "确认转让",
+      success: async ({ confirm }) => {
+        if (!confirm) return;
+        this.setData({ managingMember: true });
+        try {
+          await transferTeamOwner(detail.id);
+          this.setData({ detailVisible: false, selectedDetail: null, managingMember: false });
+          await this.loadMembers();
+          wx.showToast({ title: "队长已转让", icon: "success" });
+        } catch (error) {
+          this.setData({ managingMember: false });
+          wx.showToast({ title: error instanceof Error ? error.message : "转让失败", icon: "none" });
+        }
+      },
+    });
+  },
+
+  dissolveCurrentTeam() {
+    const detail = this.data.selectedDetail;
+    if (!this.data.canManage || !detail?.isSelf || !detail.isOwner || this.data.managingMember) return;
+    wx.showModal({
+      title: "解散小队？",
+      content: "解散后所有成员都将退出，个人行动记录不会删除。此操作不可撤销。",
+      confirmText: "确认解散",
+      confirmColor: "#A65049",
+      success: async ({ confirm }) => {
+        if (!confirm) return;
+        this.setData({ managingMember: true });
+        try {
+          await dissolveTeam();
+          wx.showToast({ title: "小队已解散", icon: "none" });
+          setTimeout(() => wx.switchTab({ url: "/pages/team/index" }), 300);
+        } catch (error) {
+          this.setData({ managingMember: false });
+          wx.showToast({ title: error instanceof Error ? error.message : "解散失败", icon: "none" });
+        }
+      },
+    });
+  },
+
+  ownerExitGuidance() {
+    if (!this.data.canManage) return;
+    wx.showActionSheet({
+      itemList: ["先转让队长", "解散小队"],
+      success: ({ tapIndex }) => {
+        if (tapIndex === 0) {
+          this.setData({ detailVisible: false, selectedDetail: null });
+          wx.showToast({ title: "请选择一名成员并转让队长", icon: "none" });
+          return;
+        }
+        if (tapIndex === 1) this.dissolveCurrentTeam();
+      },
+    });
   },
 
   noop() {},

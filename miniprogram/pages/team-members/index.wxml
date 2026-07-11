@@ -15,7 +15,19 @@
   </view>
 
   <view class="members-body" style="padding-top: {{navTotalHeight}}px;">
-    <block wx:if="{{team}}">
+    <view wx:if="{{showCacheNotice}}" class="cache-notice">网络暂不可用，正在展示最近一次成员数据。</view>
+    <view wx:if="{{status === 'loading'}}" class="page-state paper-card">
+      <t-loading size="44rpx" color="#245B4D" />
+      <view class="empty-title">正在加载成员</view>
+      <view class="empty-copy">稍等一下，马上回来。</view>
+    </view>
+    <view wx:elif="{{status === 'error'}}" class="page-state paper-card">
+      <view class="empty-seal">!</view>
+      <view class="empty-title">成员列表暂时无法加载</view>
+      <view class="empty-copy">{{errorMessage}}</view>
+      <view class="empty-action" bindtap="retry">重新加载</view>
+    </view>
+    <block wx:elif="{{status === 'ready' && team}}">
       <view class="members-hero paper-card">
         <view class="hero-top">
           <view class="hero-copy">
@@ -199,6 +211,15 @@
 
         <view class="detail-scroll-pad"></view>
       </scroll-view>
+
+      <view wx:if="{{canManage && selectedDetail && !selectedDetail.isSelf && !selectedDetail.isOwner}}" class="management-actions">
+        <view class="management-action" bindtap="transferToSelectedMember">转让队长</view>
+        <view class="management-action management-action--danger" bindtap="removeSelectedMember">移出小队</view>
+      </view>
+      <view wx:if="{{canManage && selectedDetail && selectedDetail.isSelf && selectedDetail.isOwner}}" class="management-actions">
+        <view class="management-action" bindtap="ownerExitGuidance">退出小队</view>
+        <view class="management-action management-action--danger" bindtap="dissolveCurrentTeam">解散小队</view>
+      </view>
 
       <view class="detail-footer">
         <view class="detail-footer-secondary" catchtap="closeDetail">关闭</view>

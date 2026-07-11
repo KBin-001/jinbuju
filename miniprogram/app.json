@@ -13,6 +13,7 @@
     "pages/checkin/index",
     "pages/plan/index",
     "pages/team/index",
+    "pages/team-invite/index",
     "pages/team-members/index",
     "pages/team-activity/index",
     "pages/profile/index",

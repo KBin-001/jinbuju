@@ -4,6 +4,8 @@ export type TeamJoinMode = "direct" | "approval";
 export type TeamMemberRole = "owner" | "member";
 export type TeamActionDetailVisibility = "all_members" | "admins_only" | "hidden";
 export type TeamDisplayMode = "public" | "nicknameOnly" | "anonymous";
+export type TeamAnonymityMode = "public" | "anonymous";
+export type TeamRuntimeMode = "live" | "legacy" | "cache";
 export type MemberTodayStatus = "not_started" | "completed" | "partial" | "missed";
 export type EncouragementType =
   | "keep_going"
@@ -32,6 +34,10 @@ export interface Team {
   description?: string;
   status: TeamStatus;
   updatedAt?: string;
+  schemaVersion?: number;
+  anonymityMode?: TeamAnonymityMode;
+  allowMemberInvite?: boolean;
+  canInvite?: boolean;
 }
 
 export interface TeamMember {
@@ -52,10 +58,13 @@ export interface TeamMember {
   growthMinutes: number;
   completionRate?: number;
   completedAt?: string;
+  lastEffectiveActionAt?: string;
+  rank?: number;
   encouragementCount: number;
   encouragedByMeToday: boolean;
   isSelf: boolean;
   updatedAt: string;
+  joinedAt?: string;
 }
 
 export interface TeamMemberActionDetail {
@@ -84,6 +93,49 @@ export interface TeamPageData {
   team: Team | null;
   members: TeamMember[];
   dailyStats: TeamDailyStats | null;
+  runtime?: TeamPageRuntime;
+}
+
+export interface TeamRuntimeInfo {
+  contractVersion: number;
+  schemaVersion: number;
+  buildId: string;
+  supportedActions: string[];
+  maxMembers: number;
+}
+
+export interface TeamPageRuntime {
+  mode: TeamRuntimeMode;
+  stale: boolean;
+  cachedAt?: string;
+  message?: string;
+  info?: TeamRuntimeInfo;
+  capabilities: {
+    canMutate: boolean;
+    canInvite: boolean;
+    canManage: boolean;
+    canReadActivity: boolean;
+  };
+}
+
+export interface TeamCacheEnvelope {
+  schemaVersion: 3;
+  accountUserId: string;
+  cachedAt: string;
+  teamVersion: number;
+  data: TeamPageData;
+}
+
+export interface TeamMemberDaily {
+  teamId: string;
+  userId: string;
+  businessDate: string;
+  actualMinutes: number;
+  completedCount: number;
+  partialCount: number;
+  lastEffectiveActionAt?: string;
+  sourceVersion: string;
+  updatedAt: string;
 }
 
 export interface LocalTeamStore {
@@ -105,6 +157,14 @@ export interface CreateTeamInput {
 
 export interface JoinRoomInput extends CreateTeamInput {
   roomCode: string;
+  inviterMemberId?: string;
+}
+
+export interface TeamInviteInfo {
+  teamId: string;
+  roomCode: string;
+  inviterMemberId: string;
+  canInvite: boolean;
 }
 
 export interface UpdateSelfActivityInput {
@@ -118,12 +178,14 @@ export interface UpdateSelfActivityInput {
 
 export interface UpdateTeamSettingsInput {
   name: string;
+  anonymityMode?: TeamAnonymityMode;
+  allowMemberInvite?: boolean;
   announcement?: string;
   avatar?: string;
-  visibility: TeamVisibility;
+  visibility?: TeamVisibility;
   joinMode?: TeamJoinMode;
-  allowAnonymous: boolean;
-  actionDetailVisibility: TeamActionDetailVisibility;
+  allowAnonymous?: boolean;
+  actionDetailVisibility?: TeamActionDetailVisibility;
 }
 
 export interface TeamPageOptions {
