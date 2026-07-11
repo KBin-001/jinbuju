@@ -138,7 +138,7 @@ const OWNED_COLLECTIONS = [
   "goals", "plans", "tasks", "checkins", "stage_reviews", "stage_previews", "plan_generation_requests",
   "stage_generation_requests", "goal_analysis_drafts", "stage_preview_versions", "progress_ai_snapshots",
   "manual_goals", "manual_tasks", "manual_checkins", "manual_archived_goals", "achievement_unlocks",
-  "spark_checkins", "coach_action_proposals", "team_members", "team_events", "team_join_requests",
+  "spark_checkins", "coach_action_proposals", "team_members", "team_user_memberships", "team_member_daily", "team_events", "team_join_requests",
 ];
 
 async function leaveTeamBeforeAccountDeletion(userId) {
@@ -163,6 +163,13 @@ async function leaveTeamBeforeAccountDeletion(userId) {
     await transaction.collection("team_members").doc(membership._id).update({
       data: { status: "left", leftAt: db.serverDate(), updatedAt: db.serverDate() },
     });
+    const lockRef = transaction.collection("team_user_memberships").doc(stableId("team_user_membership", userId));
+    const lock = await lockRef.get().catch(() => null);
+    if (lock && lock.data) {
+      await lockRef.update({
+        data: { status: "left", updatedAt: db.serverDate() },
+      });
+    }
   });
 }
 

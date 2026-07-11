@@ -6,7 +6,15 @@ const ENCOURAGEMENT_TYPES = [
   "continue_tomorrow",
   "stay_together",
 ];
-const MAX_TEAM_MEMBERS = 50;
+const MAX_TEAM_MEMBERS = 20;
+const TEAM_CONTRACT_VERSION = 2;
+const TEAM_SCHEMA_VERSION = 2;
+const TEAM_BUILD_ID = "team-cloud-2026-07-12.2";
+const TEAM_SUPPORTED_ACTIONS = [
+  "getTeamRuntimeInfo", "getTeamInviteInfo", "getMyTeam", "getTeamPage", "createTeam", "joinTeam", "joinTeamByRoomCode",
+  "getTeamActivityFeed", "updateTeamSettings", "updateTeamMemberPrivacy", "reviewTeamJoinRequest",
+  "removeTeamMember", "leaveTeam", "transferTeamOwner", "dissolveTeam", "sendEncouragement", "syncTeamActivity",
+];
 const ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 const TEAM_ROLES = ["owner", "member"];
 
@@ -27,12 +35,12 @@ function isValidEncouragementType(value) {
 }
 
 function compareRank(left, right) {
-  const progress = Number(right.completionRate || 0) - Number(left.completionRate || 0);
-  if (progress) return progress;
   const minutes = Number(right.growthMinutes || 0) - Number(left.growthMinutes || 0);
   if (minutes) return minutes;
-  const leftCompleted = left.completedAt ? Date.parse(left.completedAt) : Number.MAX_SAFE_INTEGER;
-  const rightCompleted = right.completedAt ? Date.parse(right.completedAt) : Number.MAX_SAFE_INTEGER;
+  const leftReachedAt = left.lastEffectiveActionAt || left.completedAt;
+  const rightReachedAt = right.lastEffectiveActionAt || right.completedAt;
+  const leftCompleted = leftReachedAt ? Date.parse(leftReachedAt) : Number.MAX_SAFE_INTEGER;
+  const rightCompleted = rightReachedAt ? Date.parse(rightReachedAt) : Number.MAX_SAFE_INTEGER;
   if (leftCompleted !== rightCompleted) return leftCompleted - rightCompleted;
   return String(left.id).localeCompare(String(right.id));
 }
@@ -45,6 +53,10 @@ function normalizeRoomCode(value) {
 module.exports = {
   ENCOURAGEMENT_TYPES,
   MAX_TEAM_MEMBERS,
+  TEAM_BUILD_ID,
+  TEAM_CONTRACT_VERSION,
+  TEAM_SCHEMA_VERSION,
+  TEAM_SUPPORTED_ACTIONS,
   ROOM_CODE_PATTERN,
   TEAM_ROLES,
   compareRank,

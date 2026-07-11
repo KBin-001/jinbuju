@@ -37,6 +37,8 @@ const {
   getMyTeam,
   getTeamPage,
   getTeamActivityFeed,
+  getTeamInviteInfo,
+  getTeamRuntimeInfo,
   joinTeam,
   joinTeamByRoomCode,
   leaveTeam,
@@ -132,6 +134,19 @@ function failure(error) {
     "NOT_TEAM_MEMBER",
     "ALREADY_IN_TEAM",
     "TEAM_FULL",
+    "TEAM_PERMISSION_DENIED",
+    "TEAM_MIGRATION_REQUIRED",
+    "MEMBERSHIP_CONFLICT",
+    "INVALID_TEAM_NAME",
+    "INVALID_ANNOUNCEMENT",
+    "INVALID_JOIN_MODE",
+    "INVALID_ROOM_CODE",
+    "ROOM_NOT_FOUND",
+    "ROOM_CODE_UNAVAILABLE",
+    "ROOM_CODE_CONFLICT",
+    "ANONYMOUS_NOT_ALLOWED",
+    "INVALID_ANONYMITY_MODE",
+    "TEAM_INVITE_FORBIDDEN",
     "CANNOT_ENCOURAGE_SELF",
     "MEMBER_NOT_FOUND",
     "ENCOURAGEMENT_ALREADY_SENT",
@@ -226,6 +241,19 @@ function failure(error) {
     NOT_TEAM_MEMBER: error.message,
     ALREADY_IN_TEAM: error.message,
     TEAM_FULL: error.message,
+    TEAM_PERMISSION_DENIED: error.message,
+    TEAM_MIGRATION_REQUIRED: error.message,
+    MEMBERSHIP_CONFLICT: error.message,
+    INVALID_TEAM_NAME: error.message,
+    INVALID_ANNOUNCEMENT: error.message,
+    INVALID_JOIN_MODE: error.message,
+    INVALID_ROOM_CODE: error.message,
+    ROOM_NOT_FOUND: error.message,
+    ROOM_CODE_UNAVAILABLE: error.message,
+    ROOM_CODE_CONFLICT: "房间号生成冲突，请重试。",
+    ANONYMOUS_NOT_ALLOWED: error.message,
+    INVALID_ANONYMITY_MODE: error.message,
+    TEAM_INVITE_FORBIDDEN: error.message,
     CANNOT_ENCOURAGE_SELF: error.message,
     MEMBER_NOT_FOUND: error.message,
     ENCOURAGEMENT_ALREADY_SENT: error.message,
@@ -477,6 +505,10 @@ exports.main = async (event) => {
       console.info("generatePlan success", { action, requestId, durationMs: Date.now() - requestStartedAt });
       return success({ version: COACH_RUNTIME_VERSION });
     }
+    if (action === "getTeamRuntimeInfo") {
+      console.info("generatePlan success", { action, requestId, durationMs: Date.now() - requestStartedAt });
+      return success(getTeamRuntimeInfo());
+    }
 
     await ensureCollections();
 
@@ -551,6 +583,9 @@ exports.main = async (event) => {
     }
     if (event.action === "getTeamPage") {
       return success(await getTeamPage(context.OPENID, event));
+    }
+    if (event.action === "getTeamInviteInfo") {
+      return success(await getTeamInviteInfo(context.OPENID));
     }
     if (event.action === "createTeam") {
       return success(await createTeam(context.OPENID, event));
