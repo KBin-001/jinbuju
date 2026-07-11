@@ -111,10 +111,10 @@ Page(withAppTheme({
     this.loadMore();
   },
 
-  refresh() {
+  async refresh() {
     this.setData({ loading: true, page: 1, hasMore: true, isEmpty: false, noTeam: false });
     try {
-      const result = getTeamActivityFeed({ page: 1, pageSize: PAGE_SIZE });
+      const result = await getTeamActivityFeed({ page: 1, pageSize: PAGE_SIZE });
       const views = rebuildViews(result.list);
       this.setData({
         activities: views,
@@ -130,12 +130,12 @@ Page(withAppTheme({
     }
   },
 
-  loadMore() {
+  async loadMore() {
     if (this.data.loading || this.data.loadingMore || !this.data.hasMore) return;
     this.setData({ loadingMore: true });
     try {
       const nextPage = this.data.page + 1;
-      const result = getTeamActivityFeed({ page: nextPage, pageSize: PAGE_SIZE });
+      const result = await getTeamActivityFeed({ page: nextPage, pageSize: PAGE_SIZE });
       const merged = this.data.activities.concat(rebuildViews(result.list));
       this.setData({
         activities: merged,

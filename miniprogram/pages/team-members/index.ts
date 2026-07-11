@@ -137,6 +137,10 @@ function canShowDetails(team: Team, member: TeamMember): boolean {
 }
 
 function buildProgress(member: TeamMember, detailVisible: boolean): ProgressView {
+  if (typeof member.completionRate === "number") {
+    const percent = Math.max(0, Math.min(100, Math.round(member.completionRate)));
+    return { known: true, percent, text: `${percent}%`, completed: 0, total: 0 };
+  }
   const details = detailVisible && Array.isArray(member.todayActionDetails)
     ? member.todayActionDetails
     : [];
@@ -305,8 +309,8 @@ Page(withAppTheme({
     if (this.data.navTotalHeight > 0) this.loadMembers();
   },
 
-  loadMembers() {
-    const { team, members } = getMyTeam();
+  async loadMembers() {
+    const { team, members } = await getMyTeam({ pageSize: 50 });
     if (!team) {
       this.setData({
         team: null,
@@ -411,10 +415,10 @@ Page(withAppTheme({
     });
   },
 
-  submitEncouragement(memberId: string, type: EncouragementType) {
+  async submitEncouragement(memberId: string, type: EncouragementType) {
     try {
-      sendEncouragement({ memberId, type });
-      this.loadMembers();
+      await sendEncouragement({ memberId, type });
+      await this.loadMembers();
       wx.showToast({ title: "已送出鼓励", icon: "none" });
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "鼓励失败", icon: "none" });

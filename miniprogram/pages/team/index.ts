@@ -4,8 +4,11 @@ import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import {
   canManageTeam,
   createTeam,
+  dissolveTeam,
+  getTeamActivityFeed,
   getMyTeam,
   joinRoom,
+  leaveTeam,
   sendEncouragement,
   updateSelfActivity,
   updateSelfDisplayMode,
@@ -21,6 +24,7 @@ import {
   TeamActionDetailVisibility,
   TeamDailyStats,
   TeamDisplayMode,
+  TeamJoinMode,
   TeamMember,
   TeamMemberActionDetail,
   TeamVisibility,
@@ -73,6 +77,7 @@ interface TeamStatsView {
 
 interface CompanionRow {
   id: string;
+  rank: number;
   name: string;
   avatar: string;
   avatarText: string;
@@ -103,12 +108,7 @@ function normalizeTeamDisplayName(team: Team | null): string {
 
 function displayRoomCode(roomCode?: string): string {
   const raw = (roomCode || "").trim().toUpperCase();
-  if (!raw) return "2846";
-  let seed = 0;
-  for (let index = 0; index < raw.length; index += 1) {
-    seed = (seed * 33 + raw.charCodeAt(index)) % 10000;
-  }
-  return String(seed || 2846).padStart(4, "0");
+  return raw || "------";
 }
 
 interface ActivityItem {
@@ -129,8 +129,10 @@ interface SelfActionPrompt {
 
 interface TeamSettingsDraft {
   name: string;
+  announcement: string;
   avatar: string;
   visibility: TeamVisibility;
+  joinMode: TeamJoinMode;
   allowAnonymous: boolean;
   actionDetailVisibility: TeamActionDetailVisibility;
   displayMode: TeamDisplayMode;
@@ -337,13 +339,15 @@ function buildHeroAvatarSlots(members: MemberView[]): HeroAvatarSlot[] {
 }
 
 function buildCompanionRows(members: MemberView[]): CompanionRow[] {
-  return members.slice(0, COMPANION_PREVIEW_MAX).map((member) => {
+  return members.map((member, index) => {
     const statusClass = statusClassOf(member.todayStatus);
     const detailsCanBeShown = member.isSelf || member.taskDetailVisible;
     const details = detailsCanBeShown ? (member.todayActionDetails || []) : [];
     const completedCount = details.filter((detail) => detail.status === "completed").length;
     const progressKnown = details.length > 0 || member.todayStatus !== "partial";
-    const progressPercent = details.length > 0
+    const progressPercent = typeof member.completionRate === "number"
+      ? member.completionRate
+      : details.length > 0
       ? Math.round((completedCount / details.length) * 100)
       : member.todayStatus === "completed"
         ? 100
@@ -351,6 +355,7 @@ function buildCompanionRows(members: MemberView[]): CompanionRow[] {
 
     return {
       id: member.id,
+      rank: index + 1,
       name: member.displayName,
       avatar: member.avatar || "",
       avatarText: member.avatarText,
@@ -458,8 +463,10 @@ Page(withAppTheme({
     actionDetailOptions: ACTION_DETAIL_OPTIONS,
     settingsDraft: {
       name: "",
+      announcement: "",
       avatar: "",
       visibility: "private",
+      joinMode: "direct",
       allowAnonymous: true,
       actionDetailVisibility: "all_members",
       displayMode: "nicknameOnly",
@@ -492,11 +499,12 @@ Page(withAppTheme({
     };
   },
 
-  load() {
+  async load() {
     try {
-      const current = getMyTeam();
-      const synced = current.team ? this.syncCurrentActivity() || current : current;
+      const current = await getMyTeam({ pageSize: 50 });
+      const synced = current.team ? await this.syncCurrentActivity() : current;
       this.applyTeamData(synced.team, synced.members, synced.dailyStats);
+      if (synced.team) await this.loadActivityPreview();
     } catch (error) {
       this.setData({
         status: "error",
@@ -505,7 +513,26 @@ Page(withAppTheme({
     }
   },
 
-  syncCurrentActivity() {
+  async loadActivityPreview() {
+    try {
+      const feed = await getTeamActivityFeed({ page: 1, pageSize: ACTIVITY_MAX });
+      this.setData({
+        activityList: feed.list.map((item) => ({
+          id: item.id,
+          memberId: item.memberId,
+          name: item.name,
+          avatar: item.avatar,
+          avatarText: item.avatarText,
+          actionText: item.actionText,
+          time: item.timeText,
+        })),
+      });
+    } catch (_) {
+      // 榜单仍可用时不因动态预览失败阻断整个小队页。
+    }
+  },
+
+  async syncCurrentActivity() {
     const snapshot = buildActivitySnapshot();
     return updateSelfActivity({
       goalTitle: snapshot.goal?.title || "",
@@ -549,12 +576,12 @@ Page(withAppTheme({
     this.load();
   },
 
-  createLocalTeam() {
+  async createLocalTeam() {
     if (this.data.creating) return;
     this.setData({ creating: true });
     try {
       const snapshot = buildActivitySnapshot();
-      const data = createTeam({
+      const data = await createTeam({
         goalTitle: snapshot.goal?.title || "",
         todayActionTitle: snapshot.todayActionTitle,
         todayActionDetails: snapshot.todayActionDetails,
@@ -584,13 +611,13 @@ Page(withAppTheme({
     this.setData({ roomCodeInput: value });
   },
 
-  submitJoinRoom() {
+  async submitJoinRoom() {
     if (this.data.joining) return;
     this.setData({ joining: true });
     try {
       const roomCode = validateRoomCode(this.data.roomCodeInput);
       const snapshot = buildActivitySnapshot();
-      const data = joinRoom({
+      const data = await joinRoom({
         roomCode,
         goalTitle: snapshot.goal?.title || "",
         todayActionTitle: snapshot.todayActionTitle,
@@ -601,11 +628,7 @@ Page(withAppTheme({
       });
       this.applyTeamData(data.team, data.members, data.dailyStats);
       this.setData({ joinPopupVisible: false, roomCodeInput: "" });
-      wx.showModal({
-        title: "已加入本地演示小队",
-        content: "当前只保存到本机。真实跨设备加入需要后续接入云端小队数据。",
-        showCancel: false,
-      });
+      wx.showToast({ title: "已加入小队", icon: "success" });
     } catch (error) {
       this.setData({ joining: false });
       wx.showToast({ title: error instanceof Error ? error.message : "加入失败", icon: "none" });
@@ -634,7 +657,7 @@ Page(withAppTheme({
     if (!roomCode) return;
     wx.showModal({
       title: "邀请好友",
-      content: `把房间号 ${roomCode} 发给朋友。当前版本为本地演示，真实加入需要云端小队能力。`,
+      content: `把房间号 ${roomCode} 发给朋友，对方可在小队页输入房间号加入。`,
       confirmText: "复制房间号",
       success: (result) => {
         if (result.confirm) this.copyRoomCode();
@@ -652,8 +675,10 @@ Page(withAppTheme({
       settingsCanEditTeam: canManageTeam(team),
       settingsDraft: {
         name: team.name,
+        announcement: team.announcement || team.description || "",
         avatar: team.avatar || "",
         visibility: team.visibility,
+        joinMode: team.joinMode || "direct",
         allowAnonymous,
         actionDetailVisibility: team.actionDetailVisibility,
         displayMode: !allowAnonymous && self.displayMode === "anonymous" ? "nicknameOnly" : self.displayMode,
@@ -670,6 +695,17 @@ Page(withAppTheme({
   inputTeamName(event: { detail: { value?: string } }) {
     if (!this.data.settingsCanEditTeam) return;
     this.setData({ "settingsDraft.name": String(event.detail.value || "").slice(0, 20) });
+  },
+
+  inputTeamAnnouncement(event: { detail: { value?: string } }) {
+    if (!this.data.settingsCanEditTeam) return;
+    this.setData({ "settingsDraft.announcement": String(event.detail.value || "").slice(0, 80) });
+  },
+
+  selectJoinMode(event: { currentTarget: { dataset: { value?: TeamJoinMode } } }) {
+    if (!this.data.settingsCanEditTeam) return;
+    const value = event.currentTarget.dataset.value;
+    if (value === "direct" || value === "approval") this.setData({ "settingsDraft.joinMode": value });
   },
 
   chooseTeamAvatar(event: { detail: { avatarUrl?: string } }) {
@@ -740,17 +776,19 @@ Page(withAppTheme({
         ? await persistTeamAvatar(draft.avatar, this.data.team.avatar || "")
         : this.data.team.avatar || "";
       if (this.data.settingsCanEditTeam) {
-        updateTeamSettings({
+        await updateTeamSettings({
           name: draft.name,
+          announcement: draft.announcement,
           avatar,
           visibility: draft.visibility,
+          joinMode: draft.joinMode,
           allowAnonymous: draft.allowAnonymous,
           actionDetailVisibility: draft.actionDetailVisibility,
         });
       }
-      updateSelfDisplayMode(draft.displayMode);
-      updateSelfTaskDetailVisible(draft.displayMode === "anonymous" ? false : draft.taskDetailVisible);
-      const data = this.syncCurrentActivity();
+      await updateSelfDisplayMode(draft.displayMode);
+      await updateSelfTaskDetailVisible(draft.displayMode === "anonymous" ? false : draft.taskDetailVisible);
+      const data = await this.syncCurrentActivity();
       this.applyTeamData(data.team, data.members, data.dailyStats);
       this.setData({ settingsVisible: false, savingSettings: false });
       wx.showToast({ title: "小队设置已保存", icon: "success" });
@@ -760,7 +798,31 @@ Page(withAppTheme({
     }
   },
 
-  markSelfCompleted() {
+  confirmLeaveOrDissolve() {
+    if (this.data.savingSettings) return;
+    const isOwner = this.data.settingsCanEditTeam;
+    wx.showModal({
+      title: isOwner ? "解散小队" : "退出小队",
+      content: isOwner ? "解散后所有成员都将退出，历史行动不会被删除。此操作不可撤销。" : "退出后将不再参与小队榜单，个人行动记录不会受影响。",
+      confirmText: isOwner ? "确认解散" : "确认退出",
+      confirmColor: "#B54A43",
+      success: async ({ confirm }) => {
+        if (!confirm) return;
+        this.setData({ savingSettings: true });
+        try {
+          if (isOwner) await dissolveTeam(); else await leaveTeam();
+          this.setData({ settingsVisible: false, savingSettings: false });
+          this.applyTeamData(null, [], null);
+          wx.showToast({ title: isOwner ? "小队已解散" : "已退出小队", icon: "none" });
+        } catch (error) {
+          this.setData({ savingSettings: false });
+          wx.showToast({ title: error instanceof Error ? error.message : "操作失败", icon: "none" });
+        }
+      },
+    });
+  },
+
+  async markSelfCompleted() {
     if (this.data.markingComplete) return;
     const snapshot = buildActivitySnapshot();
     if (!snapshot.goal || snapshot.tasks.length === 0) {
@@ -774,7 +836,7 @@ Page(withAppTheme({
         .filter((task) => task.status !== "completed" && task.status !== "rescheduled")
         .forEach((task) => updateTaskStatus(task.id, "completed", task.actualMinutes || task.estimatedMinutes));
       const nextSnapshot = buildActivitySnapshot();
-      const data = updateSelfActivity({
+      const data = await updateSelfActivity({
         goalTitle: nextSnapshot.goal?.title || "",
         todayActionTitle: nextSnapshot.todayActionTitle,
         todayActionDetails: nextSnapshot.todayActionDetails,
@@ -804,13 +866,13 @@ Page(withAppTheme({
     });
   },
 
-  submitEncouragement(memberId: string, type: EncouragementType) {
+  async submitEncouragement(memberId: string, type: EncouragementType) {
     if (this.data.encouragingMemberId) return;
     const prevScrollTop = this.data.currentScrollTop;
     this.setData({ encouragingMemberId: memberId });
     try {
-      sendEncouragement({ memberId, type });
-      const data = getMyTeam();
+      await sendEncouragement({ memberId, type });
+      const data = await getMyTeam({ pageSize: 50 });
       this.applyTeamData(data.team, data.members, data.dailyStats);
       wx.showToast({ title: "已送出鼓励", icon: "none" });
       wx.nextTick(() => wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 }));
@@ -832,12 +894,12 @@ Page(withAppTheme({
     wx.switchTab({ url: "/pages/index/index" });
   },
 
-  openMemberDetail(event: { currentTarget: { dataset: { id?: string } } }) {
+  async openMemberDetail(event: { currentTarget: { dataset: { id?: string } } }) {
     const memberId = String(event.currentTarget.dataset.id || "");
     let member = this.data.members.find((item) => item.id === memberId);
     if (!member) return;
     if (member.isSelf) {
-      const data = this.syncCurrentActivity();
+      const data = await this.syncCurrentActivity();
       const memberViews = data.members.map((item) => toMemberView(item, data.team));
       this.applyTeamData(data.team, data.members, data.dailyStats);
       member = memberViews.find((item) => item.id === memberId) || member;

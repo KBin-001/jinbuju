@@ -87,9 +87,10 @@
           data-id="{{item.id}}"
           bindtap="openMemberDetail"
         >
+          <view class="member-rank">{{index + 1}}</view>
           <view class="member-avatar avatar-grad {{item.avatarClass}}">
             <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
-            <text wx:else>{{item.avatarText}}</text>
+            <image wx:else src="/images/avatar.png" mode="aspectFill" />
           </view>
 
           <view class="member-main">
@@ -145,7 +146,7 @@
         <view class="detail-profile">
           <view class="detail-avatar avatar-grad {{selectedDetail.avatarClass}}">
             <image wx:if="{{selectedDetail.avatar}}" src="{{selectedDetail.avatar}}" mode="aspectFill" />
-            <text wx:else>{{selectedDetail.avatarText}}</text>
+            <image wx:else src="/images/avatar.png" mode="aspectFill" />
           </view>
           <view class="detail-profile-main">
             <view class="detail-name-row">

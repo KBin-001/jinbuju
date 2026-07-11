@@ -57,7 +57,7 @@
             <view class="timeline-dot"></view>
             <view class="activity-avatar avatar-grad {{item.avatarClass}}">
               <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
-              <text wx:else>{{item.avatarText}}</text>
+              <image wx:else src="/images/avatar.png" mode="aspectFill" />
             </view>
             <view class="activity-main">
               <view class="activity-line1">
@@ -101,7 +101,7 @@
       <view class="detail-head">
         <view class="detail-avatar avatar-grad {{selectedDetail.avatarClass}}">
           <image wx:if="{{selectedDetail.avatar}}" src="{{selectedDetail.avatar}}" mode="aspectFill" />
-          <text wx:else>{{selectedDetail.avatarText}}</text>
+          <image wx:else src="/images/avatar.png" mode="aspectFill" />
         </view>
         <view class="detail-head-main">
           <view class="detail-name-row">

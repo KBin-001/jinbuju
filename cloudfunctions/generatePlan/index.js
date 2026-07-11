@@ -31,7 +31,23 @@ const {
   resumePlan,
   updatePlanTime,
 } = require("./plan-management");
-const { getMyTeam, joinTeam, sendEncouragement, syncTeamActivity } = require("./team");
+const {
+  createTeam,
+  dissolveTeam,
+  getMyTeam,
+  getTeamPage,
+  getTeamActivityFeed,
+  joinTeam,
+  joinTeamByRoomCode,
+  leaveTeam,
+  removeTeamMember,
+  reviewTeamJoinRequest,
+  sendEncouragement,
+  syncTeamActivity,
+  transferTeamOwner,
+  updateTeamMemberPrivacy,
+  updateTeamSettings,
+} = require("./team");
 const {
   deleteUserData,
   getCommunityEntry,
@@ -119,6 +135,9 @@ function failure(error) {
     "CANNOT_ENCOURAGE_SELF",
     "MEMBER_NOT_FOUND",
     "ENCOURAGEMENT_ALREADY_SENT",
+    "OWNER_TRANSFER_REQUIRED",
+    "REQUEST_NOT_FOUND",
+    "INVALID_TARGET",
     "USER_NOT_FOUND",
     "COMMUNITY_LOCKED",
     "COMMUNITY_CONFIG_NOT_FOUND",
@@ -210,6 +229,9 @@ function failure(error) {
     CANNOT_ENCOURAGE_SELF: error.message,
     MEMBER_NOT_FOUND: error.message,
     ENCOURAGEMENT_ALREADY_SENT: error.message,
+    OWNER_TRANSFER_REQUIRED: error.message,
+    REQUEST_NOT_FOUND: error.message,
+    INVALID_TARGET: error.message,
     USER_NOT_FOUND: "用户信息不存在，请重新进入小程序。",
     COMMUNITY_LOCKED: error.message,
     COMMUNITY_CONFIG_NOT_FOUND: error.message,
@@ -527,8 +549,41 @@ exports.main = async (event) => {
     if (event.action === "getMyTeam") {
       return success(await getMyTeam(context.OPENID));
     }
+    if (event.action === "getTeamPage") {
+      return success(await getTeamPage(context.OPENID, event));
+    }
+    if (event.action === "createTeam") {
+      return success(await createTeam(context.OPENID, event));
+    }
     if (event.action === "joinTeam") {
       return success(await joinTeam(context.OPENID, event));
+    }
+    if (event.action === "joinTeamByRoomCode") {
+      return success(await joinTeamByRoomCode(context.OPENID, event));
+    }
+    if (event.action === "getTeamActivityFeed") {
+      return success(await getTeamActivityFeed(context.OPENID, event));
+    }
+    if (event.action === "updateTeamSettings") {
+      return success(await updateTeamSettings(context.OPENID, event));
+    }
+    if (event.action === "updateTeamMemberPrivacy") {
+      return success(await updateTeamMemberPrivacy(context.OPENID, event));
+    }
+    if (event.action === "reviewTeamJoinRequest") {
+      return success(await reviewTeamJoinRequest(context.OPENID, event));
+    }
+    if (event.action === "removeTeamMember") {
+      return success(await removeTeamMember(context.OPENID, event));
+    }
+    if (event.action === "leaveTeam") {
+      return success(await leaveTeam(context.OPENID));
+    }
+    if (event.action === "transferTeamOwner") {
+      return success(await transferTeamOwner(context.OPENID, event));
+    }
+    if (event.action === "dissolveTeam") {
+      return success(await dissolveTeam(context.OPENID));
     }
     if (event.action === "sendEncouragement") {
       return success(await sendEncouragement(context.OPENID, event));

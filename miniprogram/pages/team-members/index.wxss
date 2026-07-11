@@ -694,3 +694,11 @@
   .member-action { max-width: 305rpx; }
   .detail-scroll { padding-right: 25rpx; padding-left: 25rpx; }
 }
+.member-rank {
+  width: 40rpx;
+  flex: 0 0 40rpx;
+  color: #c89b4a;
+  font-size: 24rpx;
+  font-weight: 700;
+  text-align: center;
+}

@@ -40,7 +40,7 @@
       <view class="hero-main">
         <view class="hero-copy">
           <view class="hero-title">{{displayTeamName}}</view>
-          <view class="hero-slogan">一起自律，各自成长</view>
+          <view class="hero-slogan">{{team.announcement || team.description || '一起行动，各自成长'}}</view>
           <view class="hero-days">同行第 <text>{{teamDays}}</text> 天</view>
 
           <view class="hero-members">
@@ -51,7 +51,8 @@
                 class="hero-avatar {{item.isEmpty ? 'hero-avatar--empty' : ''}}"
               >
                 <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
-                <text wx:else>{{item.avatarText}}</text>
+                <text wx:elif="{{item.isEmpty}}">+</text>
+                <image wx:else src="/images/avatar.png" mode="aspectFill" />
               </view>
             </view>
             <view class="hero-member-count">{{team.memberCount}}/{{team.maxMembers}}人</view>
@@ -94,7 +95,7 @@
 
     <view class="companion-card paper-card">
       <view class="section-head">
-        <view class="section-title">今日同行</view>
+        <view class="section-title">今日行动榜</view>
         <view class="section-link" bindtap="openAllMembers">查看全部 <image src="/assets/team/icon-arrow.svg" mode="aspectFit" /></view>
       </view>
 
@@ -106,6 +107,7 @@
           data-id="{{item.id}}"
           bindtap="openMemberDetail"
         >
+          <view class="companion-rank">{{item.rank}}</view>
           <view class="companion-marker">
             <image src="/assets/team/leaf-node.svg" mode="aspectFit" />
             <view wx:if="{{item.statusClass === 'completed'}}" class="companion-marker-check">✓</view>
@@ -113,7 +115,7 @@
 
           <view class="companion-avatar">
             <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
-            <text wx:else>{{item.avatarText}}</text>
+            <image wx:else src="/images/avatar.png" mode="aspectFill" />
           </view>
 
           <view class="companion-main">
@@ -164,7 +166,7 @@
           <view class="activity-line"><view class="activity-dot"></view></view>
           <view class="activity-avatar">
             <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
-            <text wx:else>{{item.avatarText}}</text>
+            <image wx:else src="/images/avatar.png" mode="aspectFill" />
           </view>
           <view class="activity-copy"><text>{{item.name}}</text>{{item.actionText}}</view>
           <view class="activity-time">{{item.time}}</view>
@@ -215,6 +217,7 @@
             <view class="team-name-field">
               <view class="setting-label">小队名称</view>
               <t-input class="settings-input" maxlength="20" value="{{settingsDraft.name}}" placeholder="输入 2–20 个字符" disabled="{{!settingsCanEditTeam}}" bindchange="inputTeamName" />
+              <t-input class="settings-input" maxlength="80" value="{{settingsDraft.announcement}}" placeholder="写一句小队公告" disabled="{{!settingsCanEditTeam}}" bindchange="inputTeamAnnouncement" />
             </view>
           </view>
           <view class="room-code-card">
@@ -230,6 +233,13 @@
             <view class="setting-segments">
               <view class="setting-segment {{settingsDraft.visibility === 'public' ? 'setting-segment--active' : ''}}" data-value="public" bindtap="selectRoomVisibility">公开房间</view>
               <view class="setting-segment {{settingsDraft.visibility === 'private' ? 'setting-segment--active' : ''}}" data-value="private" bindtap="selectRoomVisibility">私密房间</view>
+            </view>
+          </view>
+          <view class="setting-block">
+            <view class="setting-label">加入方式</view>
+            <view class="setting-segments">
+              <view class="setting-segment {{settingsDraft.joinMode === 'direct' ? 'setting-segment--active' : ''}}" data-value="direct" bindtap="selectJoinMode">直接加入</view>
+              <view class="setting-segment {{settingsDraft.joinMode === 'approval' ? 'setting-segment--active' : ''}}" data-value="approval" bindtap="selectJoinMode">需要审核</view>
             </view>
           </view>
           <view class="setting-toggle-row" bindtap="toggleAnonymousParticipation">
@@ -257,6 +267,7 @@
       </scroll-view>
 
       <view class="settings-footer">
+        <view class="settings-footer-button settings-footer-button--danger" bindtap="confirmLeaveOrDissolve">{{settingsCanEditTeam ? '解散小队' : '退出小队'}}</view>
         <view class="settings-footer-button settings-footer-button--ghost" bindtap="closeTeamSettings">取消</view>
         <view class="settings-footer-button settings-footer-button--solid" bindtap="saveTeamSettings">{{savingSettings ? '保存中' : '保存设置'}}</view>
       </view>
@@ -270,7 +281,7 @@
       <view wx:if="{{selectedMember}}" class="member-detail-head">
         <view class="member-detail-avatar">
           <image wx:if="{{selectedMember.avatar}}" class="avatar-img" src="{{selectedMember.avatar}}" mode="aspectFill" />
-          <text wx:else>{{selectedMember.avatarText}}</text>
+          <image wx:else src="/images/avatar.png" mode="aspectFill" />
         </view>
         <view class="member-detail-main">
           <view class="popup-title">{{selectedMember.displayName}}</view>

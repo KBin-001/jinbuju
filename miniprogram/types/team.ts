@@ -1,5 +1,7 @@
 export type TeamStatus = "active" | "closed";
 export type TeamVisibility = "public" | "private";
+export type TeamJoinMode = "direct" | "approval";
+export type TeamMemberRole = "owner" | "member";
 export type TeamActionDetailVisibility = "all_members" | "admins_only" | "hidden";
 export type TeamDisplayMode = "public" | "nicknameOnly" | "anonymous";
 export type MemberTodayStatus = "not_started" | "completed" | "partial" | "missed";
@@ -15,6 +17,10 @@ export interface Team {
   avatar?: string;
   roomCode: string;
   ownerId: string;
+  ownerMemberId?: string;
+  announcement?: string;
+  joinMode?: TeamJoinMode;
+  version?: number;
   visibility: TeamVisibility;
   allowAnonymous: boolean;
   actionDetailVisibility: TeamActionDetailVisibility;
@@ -25,12 +31,14 @@ export interface Team {
   phaseEndDate: string;
   description?: string;
   status: TeamStatus;
+  updatedAt?: string;
 }
 
 export interface TeamMember {
   id: string;
   userId: string;
   teamId: string;
+  role?: TeamMemberRole;
   displayMode: TeamDisplayMode;
   nickname: string;
   anonymousName?: string;
@@ -42,6 +50,8 @@ export interface TeamMember {
   todayStatus: MemberTodayStatus;
   estimatedMinutes: number;
   growthMinutes: number;
+  completionRate?: number;
+  completedAt?: string;
   encouragementCount: number;
   encouragedByMeToday: boolean;
   isSelf: boolean;
@@ -108,10 +118,31 @@ export interface UpdateSelfActivityInput {
 
 export interface UpdateTeamSettingsInput {
   name: string;
+  announcement?: string;
   avatar?: string;
   visibility: TeamVisibility;
+  joinMode?: TeamJoinMode;
   allowAnonymous: boolean;
   actionDetailVisibility: TeamActionDetailVisibility;
+}
+
+export interface TeamPageOptions {
+  page?: number;
+  pageSize?: number;
+}
+
+export interface TeamMemberPageResult extends TeamPageData {
+  page: number;
+  pageSize: number;
+  total: number;
+  hasMore: boolean;
+}
+
+export interface TeamMutationResult {
+  teamId?: string;
+  joined?: boolean;
+  pending?: boolean;
+  dissolved?: boolean;
 }
 
 export interface SendEncouragementInput {

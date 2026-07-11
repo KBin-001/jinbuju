@@ -498,3 +498,16 @@
   .companion-action { max-width: 300rpx; }
   .self-prompt-button { min-width: 132rpx; padding: 0 12rpx; }
 }
+.companion-rank {
+  width: 42rpx;
+  flex: 0 0 42rpx;
+  color: var(--team-gold, #c89b4a);
+  font-size: 24rpx;
+  font-weight: 700;
+  text-align: center;
+}
+
+.settings-footer-button--danger {
+  color: #b54a43;
+  background: rgba(181, 74, 67, 0.08);
+}
