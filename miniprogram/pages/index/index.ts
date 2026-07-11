@@ -274,11 +274,16 @@ Page(withAppTheme({
     }
   },
   onShow() {
+    (this as any).getTabBar?.()?.syncSelected?.();
     this.setData({ appTheme: getCurrentThemeId() });
+    // 先立即加载本地数据，让页面马上显示内容
+    this.load();
+    // 再后台同步云端数据，完成后刷新一次
     syncManualData().catch(() => undefined).then(() => this.load());
   },
   load() {
-    this.setData({ status: "loading", errorMessage: "" });
+    // 已有数据时不闪 loading，保持旧内容可见，后台静默刷新
+    if (this.data.status !== "ready") this.setData({ status: "loading", errorMessage: "" });
     try {
       const today = getTodayBusinessDate(); const selectedDate = this.data.selectedDate || today; const goal = getActiveGoal(); const copy = dateCopy(selectedDate); const userProfile = getLocalUserProfile(); const displayName = userProfile?.nickname || "行动伙伴"; const timeGreeting = getTimeGreeting();
       const displayAvatarUrl = userProfile?.avatarUrl || "";

@@ -23,7 +23,9 @@ Component({
     switchTab(event: { currentTarget: { dataset: { index?: number } } }) {
       const index = Number(event.currentTarget.dataset.index);
       const item = ITEMS[index];
-      if (!item || index === this.data.selected) return;
+      if (!item) return;
+      // 始终更新高亮并切换，即使 selected 已等于 index，
+      // 因为 tab-bar 的 selected 可能与实际页面不同步。
       this.setData({ selected: index });
       wx.switchTab({ url: item.path });
     },

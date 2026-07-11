@@ -1002,6 +1002,7 @@ Page(withAppTheme({
   },
 
   onShow() {
+    (this as any).getTabBar?.()?.syncSelected?.();
     if (this.chartCanvasTimer) clearTimeout(this.chartCanvasTimer);
     this.setData({ appTheme: getCurrentThemeId(), chartCanvasVisible: false });
     this.load();
@@ -1020,7 +1021,7 @@ Page(withAppTheme({
   },
 
   load() {
-    this.setData({ status: "loading", errorMessage: "" });
+    if (this.data.status !== "ready") this.setData({ status: "loading", errorMessage: "" });
     try {
       const today = getTodayBusinessDate();
       const goal = getActiveGoal();

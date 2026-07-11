@@ -196,6 +196,7 @@ Page({
   },
 
   onShow() {
+    (this as any).getTabBar?.()?.syncSelected?.();
     this.applyThemeFromStorage();
     if (this.data.status !== "ready") this.setData({ status: "loading", errorMessage: "" });
     bootstrapAccount().then(() => this.loadProfile()).catch((error) => {
