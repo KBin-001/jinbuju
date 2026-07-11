@@ -32,6 +32,7 @@ export interface Team {
   phaseStartDate: string;
   phaseEndDate: string;
   description?: string;
+  slogan?: string;
   status: TeamStatus;
   updatedAt?: string;
   schemaVersion?: number;
@@ -186,6 +187,7 @@ export interface UpdateTeamSettingsInput {
   joinMode?: TeamJoinMode;
   allowAnonymous?: boolean;
   actionDetailVisibility?: TeamActionDetailVisibility;
+  slogan?: string;
 }
 
 export interface TeamPageOptions {

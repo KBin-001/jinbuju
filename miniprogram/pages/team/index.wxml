@@ -41,7 +41,7 @@
       <view class="hero-main">
         <view class="hero-copy">
           <view class="hero-title">{{displayTeamName}}</view>
-          <view class="hero-slogan">{{team.announcement || team.description || '一起行动，各自成长'}}</view>
+          <view class="hero-slogan">{{team.slogan || team.announcement || team.description || '一起行动，各自成长'}}</view>
           <view class="hero-days">同行第 <text>{{teamDays}}</text> 天</view>
 
           <view class="hero-members">
@@ -217,6 +217,9 @@
         <view class="setting-label">小队名称</view>
         <t-input class="settings-input" maxlength="20" value="{{settingsDraft.name}}" placeholder="输入 2–20 个字符" disabled="{{!settingsCanEditTeam}}" bindchange="inputTeamName" />
         <view class="settings-count">{{settingsDraft.name.length}} / 20</view>
+        <view class="setting-label settings-slogan-label">小队宣传语</view>
+        <t-textarea class="settings-input settings-slogan-input" maxlength="30" value="{{settingsDraft.slogan}}" placeholder="例如：每天进步一点点，一起走得更远" disabled="{{!settingsCanEditTeam}}" bindchange="inputTeamSlogan" />
+        <view class="settings-count">{{settingsDraft.slogan.length}} / 30</view>
         <view class="owner-setting-row" bindtap="openMemberManagement"><text>成员管理</text><text>›</text></view>
         <view class="owner-setting-row"><view><text>匿名模式</text><text class="owner-setting-help">成员将{{team.anonymityMode === 'anonymous' ? '匿名展示' : '按资料权限展示'}}</text></view><t-switch value="{{team.anonymityMode === 'anonymous'}}" bindchange="toggleTeamAnonymousMode" /></view>
         <view class="owner-setting-row owner-setting-row--danger" bindtap="confirmLeaveOrDissolve"><text>解散小队</text><text>›</text></view>
@@ -224,7 +227,7 @@
 
       <view class="settings-footer">
         <view class="settings-footer-button settings-footer-button--ghost" bindtap="closeTeamSettings">取消</view>
-        <view class="settings-footer-button settings-footer-button--solid {{!settingsCanEditTeam ? 'is-disabled' : ''}}" bindtap="saveTeamSettings">{{savingSettings ? '保存中' : '保存名称'}}</view>
+        <view class="settings-footer-button settings-footer-button--solid {{!settingsCanEditTeam ? 'is-disabled' : ''}}" bindtap="saveTeamSettings">{{savingSettings ? '保存中' : '保存设置'}}</view>
       </view>
     </view>
   </view>
@@ -235,7 +238,7 @@
       <view class="settings-header"><view class="settings-title">小队信息</view><view class="settings-close" catchtap="closeTeamInfo">×</view></view>
       <scroll-view scroll-y class="team-info-scroll">
         <view class="team-info-name">{{team.name}}</view>
-        <view class="team-info-slogan">{{team.announcement || team.description || '一起行动，各自成长'}}</view>
+        <view class="team-info-slogan">{{team.slogan || team.announcement || team.description || '一起行动，各自成长'}}</view>
         <view class="team-info-row"><text>队长</text><text>{{teamOwnerName}}</text></view>
         <view class="team-info-row"><text>我的加入时间</text><text>{{teamJoinedDate}}</text></view>
         <view class="team-info-row"><text>小队人数</text><text>{{team.memberCount}}/20人</text></view>

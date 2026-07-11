@@ -134,7 +134,8 @@ interface SelfActionPrompt {
 }
 
 interface TeamSettingsDraft {
-  name: string;
+name: string;
+slogan: string;
 }
 
 const TEAM_NAME = "进步小队";
@@ -445,9 +446,10 @@ Page(withAppTheme({
     savingSettings: false,
     teamAvatar: "",
     teamAvatarText: "队",
-    settingsDraft: {
-      name: "",
-    } as TeamSettingsDraft,
+settingsDraft: {
+name: "",
+slogan: "",
+} as TeamSettingsDraft,
     memberDetailVisible: false,
     selectedMember: null as MemberView | null,
     creating: false,
@@ -742,11 +744,11 @@ Page(withAppTheme({
     const team = this.data.team;
     const self = this.data.members.find((member) => member.isSelf);
     if (!team || !self) return;
-    this.setData({
-      settingsVisible: true,
-      settingsCanEditTeam: canManageTeam(team),
-      settingsDraft: { name: team.name } as TeamSettingsDraft,
-    });
+this.setData({
+settingsVisible: true,
+settingsCanEditTeam: canManageTeam(team),
+settingsDraft: { name: team.name, slogan: team.slogan || "" } as TeamSettingsDraft,
+});
   },
 
   closeTeamSettings() {
@@ -759,6 +761,11 @@ Page(withAppTheme({
     this.setData({ "settingsDraft.name": String(event.detail.value || "").slice(0, 20) });
   },
 
+  inputTeamSlogan(event: { detail: { value?: string } }) {
+    if (!this.data.settingsCanEditTeam) return;
+    this.setData({ "settingsDraft.slogan": String(event.detail.value || "").slice(0, 30) });
+  },
+
   async saveTeamSettings() {
     if (this.data.savingSettings || !this.data.team) return;
     const draft = this.data.settingsDraft;
@@ -767,15 +774,16 @@ Page(withAppTheme({
       wx.showToast({ title: "小队名称至少 2 个字符", icon: "none" });
       return;
     }
+    const slogan = (draft.slogan || "").trim().replace(/\s+/g, " ").slice(0, 30);
     this.setData({ savingSettings: true });
     try {
       if (this.data.settingsCanEditTeam) {
-        await updateTeamSettings({ name });
+        await updateTeamSettings({ name, slogan });
       }
       const data = await getMyTeam({ pageSize: 20 });
       this.applyTeamData(data.team, data.members, data.dailyStats);
       this.setData({ settingsVisible: false, savingSettings: false });
-      wx.showToast({ title: "小队名称已保存", icon: "success" });
+      wx.showToast({ title: "小队设置已保存", icon: "success" });
     } catch (error) {
       this.setData({ savingSettings: false });
       wx.showToast({ title: error instanceof Error ? error.message : "设置保存失败", icon: "none" });

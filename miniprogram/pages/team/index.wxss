@@ -549,6 +549,8 @@
 .settings-simple { padding: 30rpx 34rpx 22rpx; }
 .settings-simple .settings-input { margin-top: 14rpx; }
 .settings-count { margin-top: 10rpx; color: #918a80; font-size: 20rpx; text-align: right; }
+.settings-slogan-label { margin-top: 26rpx; }
+.settings-slogan-input { display: block; margin-top: 14rpx; min-height: 72rpx; --td-textarea-bg-color: #f4f1e9; --td-textarea-border-radius: 16rpx; }
 .owner-setting-row { min-height: 82rpx; display: flex; align-items: center; justify-content: space-between; gap: 18rpx; border-top: 1rpx solid rgba(103,94,77,.12); color: #34443e; font-size: 24rpx; }
 .owner-setting-row > view { display: flex; flex-direction: column; }
 .owner-setting-help { margin-top: 5rpx; color: #8b8f8b; font-size: 20rpx; }
