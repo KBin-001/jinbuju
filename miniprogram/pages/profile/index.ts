@@ -2,7 +2,6 @@ import { endGoal, getActiveGoal, getActiveGoals, setCurrentGoal } from "../../se
 import { getProgressSummary } from "../../services/manualStats";
 import { bindAccountPhone, bootstrapAccount, getAccountRuntime, updateCloudProfile, uploadProfileAvatar } from "../../services/account";
 import { CloudAccount } from "../../types/account";
-import { prepareProgressCoach } from "../../services/progressCoach";
 import {
   getCurrentTheme,
   getCurrentThemeId,
@@ -23,6 +22,7 @@ import { AchievementProgress } from "../../types/achievement";
 
 /** 前端主题换肤宏定义：与全局 FEATURE_FLAGS.ENABLE_THEME_SWITCHING 对齐 */
 const THEME_SWITCHING_ENABLED = FEATURE_FLAGS.ENABLE_THEME_SWITCHING;
+type ProfilePageStatus = "loading" | "ready" | "error";
 
 function getProfileLayout(): { topInset: number; menuTop: number; menuHeight: number } {
   try {
@@ -168,10 +168,11 @@ Page({
     accountLoading: true,
     phoneBinding: false,
     accountSheetVisible: false,
-    displayName: "阿岚",
+    status: "loading" as ProfilePageStatus,
+    errorMessage: "",
+    displayName: "行动伙伴",
     displayAvatarUrl: "",
-    displayAvatarText: "岚",
-    levelLabel: "Lv.2 自律新星",
+    displayAvatarText: "",
     joinedDays: 1,
     stats: {
       streakDays: 0,
@@ -196,11 +197,24 @@ Page({
 
   onShow() {
     this.applyThemeFromStorage();
+    if (this.data.status !== "ready") this.setData({ status: "loading", errorMessage: "" });
     bootstrapAccount().then(() => this.loadProfile()).catch((error) => {
-      this.setData({ accountLoading: false });
-      wx.showToast({ title: error instanceof Error ? error.message : "账号加载失败", icon: "none" });
+      this.setData({
+        accountLoading: false,
+        status: "error",
+        errorMessage: error instanceof Error ? error.message : "账号加载失败，请检查网络后重试。",
+      });
     });
-    setTimeout(() => prepareProgressCoach("overall").catch(() => undefined), 0);
+  },
+
+  retry() {
+    this.setData({ status: "loading", errorMessage: "" });
+    bootstrapAccount(true).then(() => this.loadProfile()).catch((error) => {
+      this.setData({
+        status: "error",
+        errorMessage: error instanceof Error ? error.message : "账号加载失败，请检查网络后重试。",
+      });
+    });
   },
 
   /** 从本地 storage 读取当前主题并应用到根节点 */
@@ -233,9 +247,11 @@ Page({
         userProfile,
         cloudAccount: accountState?.account || null,
         accountLoading: false,
-        displayName: userProfile?.nickname || "阿岚",
+        status: "ready",
+        errorMessage: "",
+        displayName: userProfile?.nickname || "行动伙伴",
         displayAvatarUrl: userProfile?.avatarUrl || "",
-        displayAvatarText: userProfile?.nickname ? userProfile.nickname.slice(0, 1) : "岚",
+        displayAvatarText: "",
         stats,
         weeklySummary: buildWeeklySummary(),
         currentGoal: goals.find((goal) => goal.isCurrent) || goals[0] || null,
@@ -243,18 +259,21 @@ Page({
         joinedDays: daysSince(joinedAt),
       });
     } catch (error) {
-      wx.showToast({ title: error instanceof Error ? error.message : "个人数据读取失败", icon: "none" });
+      this.setData({
+        status: "error",
+        errorMessage: error instanceof Error ? error.message : "个人数据读取失败，请稍后重试。",
+      });
     }
   },
 
   openProfileEditor() {
     const userProfile = this.data.userProfile;
-    const nickname = userProfile?.nickname || this.data.displayName;
+      const nickname = userProfile?.nickname || this.data.displayName || "行动伙伴";
     this.setData({
       profileEditorVisible: true,
       profileDraftNickname: nickname,
       profileDraftAvatarUrl: userProfile?.avatarUrl || "",
-      profileDraftAvatarText: nickname ? nickname.slice(0, 1) : "岚",
+      profileDraftAvatarText: nickname ? nickname.slice(0, 1) : "行",
       profileDraftSource: userProfile?.profileSource || "custom",
       profileDraftUseInTeam: userProfile?.useProfileInTeam !== false,
     });
@@ -273,6 +292,14 @@ Page({
   },
 
   noop() {},
+
+  useDefaultAvatar() {
+    this.setData({ displayAvatarUrl: "" });
+  },
+
+  useDefaultDraftAvatar() {
+    this.setData({ profileDraftAvatarUrl: "" });
+  },
 
   async onChooseAvatar(event: { detail: { avatarUrl?: string } }) {
     const avatarUrl = String(event.detail.avatarUrl || "");
@@ -322,7 +349,7 @@ Page({
         avatarUrl = await uploadProfileAvatar(avatarUrl);
       }
       const userProfile = await updateCloudProfile({
-        nickname: this.data.profileDraftNickname || "阿岚",
+        nickname: this.data.profileDraftNickname || "行动伙伴",
         avatarUrl,
         profileSource: this.data.profileDraftSource,
         useProfileInTeam: this.data.profileDraftUseInTeam,
@@ -442,6 +469,22 @@ Page({
     }
     if (key === "badges") {
       wx.navigateTo({ url: "/pages/achievements/index" });
+      return;
+    }
+    if (key === "goals") {
+      wx.navigateTo({ url: "/pages/goal-manage/index" });
+      return;
+    }
+    if (key === "privacy") {
+      wx.navigateTo({ url: "/pages/legal/privacy/index" });
+      return;
+    }
+    if (key === "terms") {
+      wx.navigateTo({ url: "/pages/legal/terms/index" });
+      return;
+    }
+    if (key === "about") {
+      wx.navigateTo({ url: "/pages/about/index" });
       return;
     }
     if (key === "ai") {

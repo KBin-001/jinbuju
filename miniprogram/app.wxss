@@ -1,38 +1,36 @@
 @import "./styles/theme.wxss";
 
 page {
-  /* ============= 基础色板（mint 主题，app.wxss 兜底） =============
-   * 默认值与 theme.wxss 的 mint 主题保持一致。
-   * 当 page[data-theme="inkGreen"] 生效时，会被 theme.wxss 中更高
-   * 特异性的选择器整体覆盖，从而实现全量主题切换。
+  /* ============= 现代东方山水色板（全局兜底） =============
+   * 与 theme.wxss 的统一品牌令牌保持一致。
    * ---------------------------------------------------------- */
 
   /* 主色系（与 theme.wxss 对齐） */
-  --color-primary: #356859;
-  --color-primary-deep: #1F5B4A;
-  --color-primary-soft: #EAF5EF;
-  --color-primary-light: #7DBB69;
-  --color-growth: #68BE8F;
-  --color-accent: #68BE8F;
-  --color-sun: #F4C95D;
+  --color-primary: #245B4D;
+  --color-primary-deep: #183F35;
+  --color-primary-soft: #E8F0EB;
+  --color-primary-light: #7F9D91;
+  --color-growth: #557D6E;
+  --color-accent: #C89B4A;
+  --color-sun: #C89B4A;
   --color-coral: #D98A76;
   --color-blue: #6FA8DC;
   --color-purple: #9E96C8;
 
   /* 文字 */
-  --color-text: #233B34;
-  --color-text-main: #233B34;
-  --color-text-secondary: #71827A;
+  --color-text: #24312D;
+  --color-text-main: #24312D;
+  --color-text-secondary: #7C817D;
   --color-text-light: #9AA8A3;
   --color-text-muted: #9AA8A3;
 
   /* 背景 */
-  --color-background: #F5F7F2;
-  --color-background-warm: #FFF8E6;
-  --color-surface: #FFFFFF;
+  --color-background: #F7F3EA;
+  --color-background-warm: #F7EBCF;
+  --color-surface: #FFFCF6;
 
   /* 边框 */
-  --color-border: #E6EEE9;
+  --color-border: rgba(103, 94, 77, 0.16);
 
   --radius-card: 28rpx;
   --radius-card-small: 24rpx;
@@ -52,8 +50,8 @@ page {
   --color-danger-light: #FBF1ED;
 
   /* 阴影 */
-  --shadow-card: 0 16rpx 40rpx rgba(31, 70, 58, 0.08);
-  --shadow-float: 0 18rpx 44rpx rgba(31, 70, 58, 0.12);
+  --shadow-card: 0 10rpx 28rpx rgba(49, 57, 50, 0.07);
+  --shadow-float: 0 16rpx 40rpx rgba(36, 70, 59, 0.12);
   --shadow-button: 0 10rpx 24rpx rgba(63, 143, 114, 0.22);
   --shadow-button-primary: 0 12rpx 28rpx rgba(31, 77, 66, 0.18);
 
@@ -69,26 +67,26 @@ page {
   --gradient-accent-coral: linear-gradient(145deg, #FFF9F6, #F5DDD7);
 
   /* TDesign / Ant 组件兼容变量（映射到新色） */
-  --td-brand-color: #356859;
-  --td-brand-color-active: #1F5B4A;
-  --td-brand-color-disabled: #B8CEC4;
-  --td-brand-color-light: #EAF5EF;
-  --td-bg-color-page: #F5F7F2;
-  --td-bg-color-container: #FFFFFF;
-  --td-text-color-primary: #233B34;
-  --td-text-color-secondary: #71827A;
-  --td-component-border: #E6EEE9;
+  --td-brand-color: #245B4D;
+  --td-brand-color-active: #183F35;
+  --td-brand-color-disabled: #B9C7C0;
+  --td-brand-color-light: #E8F0EB;
+  --td-bg-color-page: #F7F3EA;
+  --td-bg-color-container: #FFFCF6;
+  --td-text-color-primary: #24312D;
+  --td-text-color-secondary: #7C817D;
+  --td-component-border: rgba(103, 94, 77, 0.16);
   --td-radius-default: 24rpx;
   --td-radius-large: 28rpx;
-  --td-button-primary-bg-color: #356859;
-  --td-button-primary-active-bg-color: #1F5B4A;
+  --td-button-primary-bg-color: #245B4D;
+  --td-button-primary-active-bg-color: #183F35;
   --td-button-primary-color: #FFFFFF;
-  --td-button-default-color: #356859;
-  --td-button-default-border-color: #D7E4DE;
-  --td-input-bg-color: #FFFFFF;
-  --td-input-border-color: #E6EEE9;
-  --td-progress-track-color: #E8EFEA;
-  --td-progress-inner-bg-color: #7DBB69;
+  --td-button-default-color: #245B4D;
+  --td-button-default-border-color: rgba(36, 91, 77, 0.22);
+  --td-input-bg-color: #FFFCF6;
+  --td-input-border-color: rgba(103, 94, 77, 0.16);
+  --td-progress-track-color: #E5E9E4;
+  --td-progress-inner-bg-color: #245B4D;
 
   --button-primary-background-color: #356859;
   --button-primary-border-color: #356859;
@@ -499,16 +497,16 @@ button[disabled] {
 
 /* Unified TDesign surface. Page-specific themes may change decoration, not the core palette. */
 [data-theme] {
-  --color-primary: #356859;
-  --color-primary-deep: #1F5B4A;
-  --color-primary-soft: #EAF5EF;
-  --color-background: #F5F7F2;
-  --color-background-warm: #FFF8E6;
-  --color-surface: #FFFFFF;
-  --color-text: #233B34;
-  --color-text-main: #233B34;
-  --color-text-secondary: #71827A;
-  --color-border: #E6EEE9;
+  --color-primary: #245B4D;
+  --color-primary-deep: #183F35;
+  --color-primary-soft: #E8F0EB;
+  --color-background: #F7F3EA;
+  --color-background-warm: #F7EBCF;
+  --color-surface: #FFFCF6;
+  --color-text: #24312D;
+  --color-text-main: #24312D;
+  --color-text-secondary: #7C817D;
+  --color-border: rgba(103, 94, 77, 0.16);
 }
 
 t-button,
@@ -526,16 +524,16 @@ t-button.confirm-button,
 t-button.next-button,
 t-button.add-task-button {
   --td-button-border-radius: 44rpx;
-  --td-button-primary-bg-color: #356859;
-  --td-button-primary-active-bg-color: #1F5B4A;
+  --td-button-primary-bg-color: #245B4D;
+  --td-button-primary-active-bg-color: #183F35;
 }
 
 t-input,
 t-textarea {
-  --td-input-bg-color: #FFFFFF;
-  --td-textarea-background-color: #FFFFFF;
-  --td-input-border-color: #E6EEE9;
-  --td-textarea-border-color: #E6EEE9;
+  --td-input-bg-color: #FFFCF6;
+  --td-textarea-background-color: #FFFCF6;
+  --td-input-border-color: rgba(103, 94, 77, 0.16);
+  --td-textarea-border-color: rgba(103, 94, 77, 0.16);
 }
 
 t-popup {

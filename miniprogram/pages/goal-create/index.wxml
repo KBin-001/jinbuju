@@ -1,8 +1,8 @@
 <view class="page goal-page" data-theme="{{appTheme}}">
   <view class="growth-hero goal-hero">
-    <view class="hero-kicker">LONG-TERM GOAL</view>
-    <view class="hero-title">创建长期目标</view>
-    <view class="hero-copy">先定一个方向，再把每天真正想做的行动加进来。</view>
+    <image class="goal-hero__mountain" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" />
+    <view class="goal-hero__veil"></view>
+    <view class="goal-hero__content"><view class="hero-kicker">长期方向</view><view class="hero-title">创建长期目标</view><view class="hero-copy">先定一个方向，再把每天真正想做的行动加进来。</view></view>
   </view>
 
   <view wx:if="{{activeGoalCount > 0}}" class="manual-note">
@@ -33,7 +33,7 @@
     <view class="note-mark">+</view>
     <view>
       <view class="note-title">目标创建后直接开始行动</view>
-      <view class="helper">本版本不会生成 AI 计划，你可以自由添加每日待办。</view>
+      <view class="helper">先从真实可完成的一步开始，AI 教练会根据后续行动记录提供建议。</view>
     </view>
   </view>
 

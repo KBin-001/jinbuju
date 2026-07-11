@@ -5,13 +5,12 @@
     <view class="today-nav" style="padding-top: {{menuTop}}px; height: {{menuHeight}}px;"><text>今日</text></view>
 
     <view wx:if="{{status === 'ready'}}" class="today-profile-row">
-      <image wx:if="{{displayAvatarUrl}}" class="today-avatar" src="{{displayAvatarUrl}}" mode="aspectFill" />
-      <image wx:elif="{{!displayAvatarText}}" class="today-avatar" src="/assets/coach-ui/avatar.svg" mode="aspectFit" />
-      <view wx:else class="today-avatar today-avatar--text">{{displayAvatarText}}</view>
+      <image wx:if="{{displayAvatarUrl}}" class="today-avatar" src="{{displayAvatarUrl}}" mode="aspectFill" binderror="useDefaultAvatar" />
+      <image wx:else class="today-avatar" src="/assets/coach-ui/avatar.svg" mode="aspectFit" />
       <view class="today-greeting-copy"><text class="today-greeting">早上好，{{displayName}}</text><text class="today-subtitle">今天也从一小步开始</text></view>
-      <view class="spark-checkin {{sparkStatus.checkedInToday ? 'is-lit' : 'is-unlit'}} {{sparkAnimating ? 'is-animating' : ''}}" catchtap="checkInSpark" hover-class="spark-checkin--pressed" aria-label="每日火花签到">
-        <view class="spark-icon-wrap"><view wx:if="{{sparkAnimating}}" class="spark-halo"></view><image class="spark-icon" src="/assets/spark-fire.svg" mode="aspectFit" /></view>
-        <view class="spark-copy"><view class="spark-count">{{sparkStatus.checkedInToday ? sparkStatus.currentStreak : 0}}<text>天</text></view><view class="spark-action">{{sparkStatus.checkedInToday ? '已签到' : '签到'}}</view></view>
+      <view class="action-streak" aria-label="连续行动天数">
+        <view class="action-streak__value">{{currentStreakDays}}<text>天</text></view>
+        <view class="action-streak__label">连续行动</view>
       </view>
     </view>
   </view>
@@ -82,10 +81,12 @@
         <view class="reference-coach-copy">
           <view class="reference-coach-title">
             <view class="reference-coach-mark">✦</view>
-            <text>AI 教练</text>
+            <text>{{coachStatus === 'ready' ? 'AI 教练' : '行动建议'}}</text>
+            <text class="reference-coach-source">{{coachStatus === 'loading' ? '正在读取记录' : (coachStatus === 'ready' ? '已读取真实记录' : (coachStatus === 'error' ? 'AI 暂不可用' : '本地规则'))}}</text>
             <text class="reference-coach-arrow">›</text>
           </view>
-          <view class="reference-coach-subtitle">{{dailyNudge}}</view>
+          <view class="reference-coach-subtitle">{{coachStatus === 'loading' ? '正在根据今天的真实行动准备建议…' : (coachStatus === 'ready' ? coachSummary : dailyNudge)}}</view>
+          <view wx:if="{{coachStatus === 'ready' && coachNextStep}}" class="reference-coach-next">下一步 · {{coachNextStep}}</view>
         </view>
       </view>
 
@@ -106,7 +107,7 @@
             wx:for-item="task"
             class="today-task-row {{task.status === 'completed' ? 'is-done' : ''}}"
             data-id="{{task.id}}"
-            bindlongpress="openTask"
+            bindtap="openTask"
           >
             <view class="reference-task-icon reference-task-icon--{{task.actionIconType}}">
               <image wx:if="{{task.actionIconType === 'book'}}" src="/assets/coach-ui/icon-book.svg" mode="aspectFit" />
@@ -115,9 +116,10 @@
             </view>
             <view class="task-copy">
               <view class="task-title-line"><view class="task-title">{{task.displayTitle}}</view></view>
-              <view class="task-meta"><text>预计 {{task.estimatedMinutes}} 分钟</text><text class="task-meta-dot">·</text><text class="task-goal-name">{{goal.title}}</text></view>
+              <view class="task-meta"><text>预计 {{task.estimatedMinutes}} 分钟</text><text wx:if="{{task.actualMinutes}}" class="task-meta-actual">实际 {{task.actualMinutes}} 分钟</text></view>
+              <view class="task-status-line"><text class="task-status task-status--{{task.statusTone}}">{{task.statusLabel}}</text><text class="task-more" data-id="{{task.id}}" catchtap="openTask">更多操作</text></view>
             </view>
-            <view class="task-tail-check {{task.status === 'completed' ? 'is-done' : ''}}" data-id="{{task.id}}" catchtap="toggleTaskDone">
+            <view class="task-tail-check {{task.status === 'completed' ? 'is-done' : ''}} {{!task.canComplete ? 'is-disabled' : ''}}" data-id="{{task.id}}" catchtap="toggleTaskDone">
               <t-icon wx:if="{{task.status === 'completed'}}" name="check" />
             </view>
           </view>

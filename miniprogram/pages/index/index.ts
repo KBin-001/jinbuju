@@ -2,11 +2,10 @@ import { getActiveGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTaskStatus } from "../../services/manualTask";
 import { getLocalUserProfile } from "../../services/profile";
+import { analyzeProgress, prepareProgressCoach } from "../../services/progressCoach";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { syncManualData } from "../../services/manualSync";
-import { checkInSpark, getSparkStatus } from "../../services/spark";
 import { ActionIssueReason, ActionTask, ActionTaskStatus, Goal, TodaySummary } from "../../types/manual";
-import { SparkStatus } from "../../types/spark";
 import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
 import { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask } from "../../utils/taskStatus";
@@ -25,7 +24,7 @@ const DURATION_OPTIONS = [
 ];
 const DEFAULT_QUICK_ADD_MINUTE_INDEX = DURATION_OPTIONS.findIndex((option) => option.value === 30);
 const EXAMPLE_ACTION_TITLES = ["背单词 30 个", "阅读 30 分钟", "听力练习 20 分钟", "真题复盘 1 套"];
-interface ViewTask extends ActionTask { displayTitle: string; statusLabel: string; statusTone: string; rescheduled: boolean; dateLabel: string; partialHint: boolean; actionSubtext: string; actionIconType: "book" | "audio" | "note"; }
+interface ViewTask extends ActionTask { displayTitle: string; statusLabel: string; statusTone: string; rescheduled: boolean; dateLabel: string; partialHint: boolean; actionSubtext: string; actionIconType: "book" | "audio" | "note"; canComplete: boolean; }
 interface ViewTaskGroup { key: "today" | "continue"; title: string; tasks: ViewTask[]; }
 interface TodayMood { title: string; copy: string; tone: "empty" | "low" | "half" | "done"; mark: string; }
 interface ProgressSegment { active: boolean; }
@@ -162,8 +161,8 @@ function taskIconType(task: ActionTask): ViewTask["actionIconType"] {
   if (/背|单词|词汇|记忆/.test(copy)) return "book";
   return "note";
 }
-function toViewTask(task: ActionTask, today: string): ViewTask {
-  const displayStatus = getActionTaskDisplayStatus(task, today);
+function toViewTask(task: ActionTask, selectedDate: string, businessToday = getTodayBusinessDate()): ViewTask {
+  const displayStatus = getActionTaskDisplayStatus(task, selectedDate);
   const displayTitle = displayTaskTitle(task);
   return {
     ...task,
@@ -171,10 +170,11 @@ function toViewTask(task: ActionTask, today: string): ViewTask {
     statusLabel: displayStatus.text,
     statusTone: displayStatus.tone,
     rescheduled: isCarryOverTask(task),
-    dateLabel: task.currentDate === today ? "今天" : formatDisplayDate(task.currentDate),
+    dateLabel: task.currentDate === selectedDate ? "今天" : formatDisplayDate(task.currentDate),
     partialHint: displayStatus.badge === "待继续",
     actionSubtext: task.description || `学习 ${task.estimatedMinutes} 分钟`,
     actionIconType: taskIconType(task),
+    canComplete: task.currentDate <= businessToday && task.status !== "rescheduled",
   };
 }
 
@@ -184,9 +184,8 @@ Page(withAppTheme({
     appTheme: getCurrentThemeId() as string,
     status: "loading",
     errorMessage: "",
-    displayName: "阿岚",
+    displayName: "行动伙伴",
     displayAvatarUrl: "",
-    displayAvatarText: "岚",
     goal: null as Goal | null,
     tasks: [] as ViewTask[],
     taskGroups: [] as ViewTaskGroup[],
@@ -205,8 +204,10 @@ Page(withAppTheme({
     todayMoodCopy: "先放一件小事上来，别让今天空过去。",
     todayMoodTone: "empty",
     todayMoodMark: "启",
-    sparkStatus: { checkedInToday: false, currentStreak: 0, totalCheckins: 0 } as SparkStatus,
-    sparkAnimating: false,
+    currentStreakDays: 0,
+    coachStatus: "idle" as "idle" | "loading" | "ready" | "error",
+    coachSummary: "",
+    coachNextStep: "",
     dailyNudge: "先添加一件 15～30 分钟能完成的小事，让今天轻轻开个头。",
     weekday: "",
     weekdayShort: "",
@@ -246,7 +247,7 @@ Page(withAppTheme({
   profileHandler: null as null | (() => void),
   focusGoalHandler: null as null | (() => void),
   completionSheetTimer: null as ReturnType<typeof setTimeout> | null,
-  sparkAnimationTimer: null as ReturnType<typeof setTimeout> | null,
+  coachRequestKey: "",
   onPageScroll(event: { scrollTop: number }) {
     this.setData({ currentScrollTop: event.scrollTop });
   },
@@ -260,10 +261,6 @@ Page(withAppTheme({
     if (this.completionSheetTimer) {
       clearTimeout(this.completionSheetTimer);
       this.completionSheetTimer = null;
-    }
-    if (this.sparkAnimationTimer) {
-      clearTimeout(this.sparkAnimationTimer);
-      this.sparkAnimationTimer = null;
     }
     if (this.profileHandler) {
       off("profile:update", this.profileHandler);
@@ -281,13 +278,12 @@ Page(withAppTheme({
   load() {
     this.setData({ status: "loading", errorMessage: "" });
     try {
-      const today = getTodayBusinessDate(); const selectedDate = this.data.selectedDate || today; const goal = getActiveGoal(); const copy = dateCopy(selectedDate); const userProfile = getLocalUserProfile(); const displayName = userProfile?.nickname || "阿岚";
+      const today = getTodayBusinessDate(); const selectedDate = this.data.selectedDate || today; const goal = getActiveGoal(); const copy = dateCopy(selectedDate); const userProfile = getLocalUserProfile(); const displayName = userProfile?.nickname || "行动伙伴";
       const displayAvatarUrl = userProfile?.avatarUrl || "";
-      const displayAvatarText = displayName.slice(0, 1) || "岚";
       const goalTasks = goal ? getTasksByGoal(goal.id) : [];
       const sourceTasks = goal ? getTodayPageTasks(goal.id, selectedDate, today) : [];
       const selectedTasks = sourceTasks.filter((task) => task.currentDate === selectedDate);
-      const taskGroups = groupTodayTasks(sourceTasks, selectedDate).map((group) => ({ ...group, tasks: group.tasks.map((task) => toViewTask(task, selectedDate)) }));
+      const taskGroups = groupTodayTasks(sourceTasks, selectedDate).map((group) => ({ ...group, tasks: group.tasks.map((task) => toViewTask(task, selectedDate, today)) }));
       const tasks = taskGroups.reduce<ViewTask[]>((all, group) => all.concat(group.tasks), []);
       const summary = calculateTodaySummary(selectedTasks);
       const progress = goal ? getProgressSummary(goal.id, selectedDate) : null;
@@ -296,12 +292,10 @@ Page(withAppTheme({
       const week = buildWeekDays(today, selectedDate, this.data.weekOffset);
       const calendarMonth = this.data.calendarMonth || monthStart(selectedDate);
       const calendar = buildCalendar(today, selectedDate, calendarMonth, goalTasks);
-      const sparkStatus = getSparkStatus(today);
       this.setData({
         status: "ready",
         displayName,
         displayAvatarUrl,
-        displayAvatarText,
         goal,
         selectedDate,
         todayDate: today,
@@ -321,7 +315,7 @@ Page(withAppTheme({
         todayMoodCopy: mood.copy,
         todayMoodTone: mood.tone,
         todayMoodMark: mood.mark,
-        sparkStatus,
+        currentStreakDays: progress?.currentStreakDays || 0,
         dailyNudge: dailyNudge(tasks, selectedDate, today),
         weekday: copy.weekday,
         weekdayShort: copy.weekday.replace("星期", "周"),
@@ -332,24 +326,36 @@ Page(withAppTheme({
         calendarTitle: calendar.title,
         calendarDays: calendar.days,
         navigating: false,
-      }, () => this.drawSummaryRing());
+      }, () => {
+        this.drawSummaryRing();
+        this.prepareTodayCoach();
+      });
     } catch (error) { this.setData({ status: "error", errorMessage: error instanceof Error ? error.message : "本地数据读取失败" }); }
   },
-  checkInSpark() {
-    const today = getTodayBusinessDate();
-    const current = getSparkStatus(today);
-    if (current.checkedInToday) {
-      wx.showToast({ title: `今日已签到 · 连续 ${current.currentStreak} 天`, icon: "none" });
+  useDefaultAvatar() { this.setData({ displayAvatarUrl: "" }); },
+  prepareTodayCoach() {
+    const goal = this.data.goal;
+    if (!goal?.id) {
+      this.coachRequestKey = "";
+      this.setData({ coachStatus: "idle", coachSummary: "", coachNextStep: "" });
       return;
     }
-    const sparkStatus = checkInSpark(today);
-    if (this.sparkAnimationTimer) clearTimeout(this.sparkAnimationTimer);
-    this.setData({ sparkStatus, sparkAnimating: true });
-    this.sparkAnimationTimer = setTimeout(() => {
-      this.setData({ sparkAnimating: false });
-      this.sparkAnimationTimer = null;
-    }, 900);
-    wx.showToast({ title: `火花已点亮 · 连续 ${sparkStatus.currentStreak} 天`, icon: "none" });
+    const analysisDate = this.data.selectedDate || getTodayBusinessDate();
+    const requestKey = `day:${goal.id}:${analysisDate}`;
+    this.coachRequestKey = requestKey;
+    this.setData({ coachStatus: "loading", coachSummary: "", coachNextStep: "" });
+    prepareProgressCoach("day", goal.id, false, analysisDate)
+      .then(() => analyzeProgress(goal.id, "day", analysisDate))
+      .then((analysis) => {
+        if (this.coachRequestKey !== requestKey) return;
+        this.setData({
+          coachStatus: "ready",
+          coachSummary: analysis.summary,
+          coachNextStep: analysis.nextSuggestions[0] || "继续完成眼前这一小步。",
+        });
+      }, () => {
+        if (this.coachRequestKey === requestKey) this.setData({ coachStatus: "error", coachSummary: "", coachNextStep: "" });
+      });
   },
   drawSummaryRing() {
     wx.nextTick(() => {
@@ -554,7 +560,7 @@ Page(withAppTheme({
       todayMoodCopy: mood.copy,
       todayMoodTone: mood.tone,
       todayMoodMark: mood.mark,
-      sparkStatus: getSparkStatus(today),
+      currentStreakDays: progress?.currentStreakDays || 0,
       dailyNudge: dailyNudge(tasks, selectedDate, today),
     });
     wx.nextTick(() => wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 }));
@@ -604,21 +610,20 @@ Page(withAppTheme({
     const id = String(event.currentTarget.dataset.id || "");
     const task = this.data.tasks.find((item) => item.id === id);
     if (!task || task.status === "rescheduled") return;
+    if (!task.canComplete) {
+      wx.showToast({ title: "未来行动到当天后再记录完成", icon: "none" });
+      return;
+    }
+    if (task.status !== "completed") {
+      this.askActual(task, "completed");
+      return;
+    }
     const prevScrollTop = this.data.currentScrollTop;
     try {
       const today = getTodayBusinessDate();
-      // 取消完成时：如果之前有 issueReason（曾标记为完成一部分），回退到 partially_completed
-      // 否则回退到 pending（待开始）
-      const nextStatus: ActionTaskStatus = task.status === "completed"
-        ? (task.issueReason ? "partially_completed" : "pending")
-        : "completed";
-      const nextActual = nextStatus === "completed" ? task.actualMinutes || task.estimatedMinutes : task.actualMinutes;
-      const updatedTask = toViewTask(updateTaskStatus(task.id, nextStatus, nextActual), this.data.selectedDate || today);
+      const nextStatus: ActionTaskStatus = task.issueReason ? "partially_completed" : "pending";
+      const updatedTask = toViewTask(updateTaskStatus(task.id, nextStatus, task.actualMinutes), this.data.selectedDate || today);
       this.applyTaskPatch(updatedTask, prevScrollTop);
-      if (nextStatus === "completed") {
-        wx.vibrateShort({ type: "light" });
-        if (task.currentDate === today && this.data.selectedDate === today) this.openCompletionSheet();
-      }
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
     }
@@ -627,18 +632,10 @@ Page(withAppTheme({
     const id = String(event.currentTarget.dataset.id || "");
     const task = this.data.tasks.find((item) => item.id === id);
     if (!task || task.status === "completed") return;
-    const prevScrollTop = this.data.currentScrollTop;
-    try {
-      const today = getTodayBusinessDate();
-      const updatedTask = toViewTask(updateTaskStatus(task.id, "completed", task.actualMinutes || task.estimatedMinutes), this.data.selectedDate || today);
-      this.applyTaskPatch(updatedTask, prevScrollTop);
-      wx.showToast({ title: "行动已完成", icon: "success" });
-    } catch (error) {
-      wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
-    }
+    this.askActual(task, "completed");
   },
   askActual(task: ViewTask, status: "completed" | "partially_completed", reason?: ActionIssueReason) {
-    wx.showModal({ title: status === "completed" ? "记录实际投入" : "完成一部分", editable: true, placeholderText: String(task.actualMinutes || task.estimatedMinutes), content: String(task.actualMinutes || task.estimatedMinutes), confirmText: "保存", success: (result) => { if (!result.confirm) return; const minutes = Number(result.content || task.estimatedMinutes); try { updateTaskStatus(task.id, status, minutes, reason); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" }); } } });
+    wx.showModal({ title: status === "completed" ? "记录实际投入" : "完成一部分", editable: true, placeholderText: "请输入实际投入分钟数", content: task.actualMinutes ? String(task.actualMinutes) : "", confirmText: "保存", success: (result) => { if (!result.confirm) return; const minutes = Number(String(result.content || "").trim()); if (!Number.isInteger(minutes) || minutes < 1 || minutes > 480) { wx.showToast({ title: "请输入 1～480 的整数分钟", icon: "none" }); return; } try { updateTaskStatus(task.id, status, minutes, reason); this.load(); if (status === "completed") { wx.vibrateShort({ type: "light" }); if (task.currentDate === getTodayBusinessDate() && this.data.selectedDate === getTodayBusinessDate()) this.openCompletionSheet(); } } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" }); } } });
   },
   chooseReason(task: ViewTask, status: "partially_completed" | "skipped") { wx.showActionSheet({ itemList: REASONS.map((item) => item.label), success: ({ tapIndex }) => { const reason = REASONS[tapIndex]?.value; if (!reason) return; if (status === "partially_completed") this.askActual(task, status, reason); else { try { updateTaskStatus(task.id, status, task.actualMinutes, reason); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" }); } } } }); },
   reschedule(task: ViewTask) { try { rescheduleTask(task.id); wx.showToast({ title: "已顺延到明天", icon: "success" }); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "顺延失败", icon: "none" }); } },

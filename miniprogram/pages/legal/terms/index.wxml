@@ -1,27 +1,27 @@
 <view class="page legal-page" data-theme="{{appTheme}}">
   <view class="legal-title">进步局用户协议</view>
   <view class="legal-notice">
-    TODO：上线前补充正式用户协议内容。当前为 V1 产品说明稿，仍需由专业法律顾问审核并补充运营主体、联系方式、生效日期及争议解决条款。
+    发布说明：运营主体、联系方式、生效日期和争议解决条款尚未写入仓库，正式发布前需要由运营方补充并完成专业法律审核。
   </view>
 
   <view class="legal-section">
     <view class="legal-heading">服务说明</view>
     <view class="legal-copy">
-      进步局提供长期目标拆解、行动阶段、每日行动记录、打卡统计、轻量小队与社群入口。AI 生成内容仅作为行动建议，不构成考试结果、职业录用或其他专业承诺。
+      进步局提供目标管理、每日行动、时间记录、成长趋势、小队同行和 AI 教练。AI 内容仅作为行动与复盘建议，不构成考试结果、职业录用、医疗、法律或投资等专业承诺。
     </view>
   </view>
 
   <view class="legal-section">
     <view class="legal-heading">使用规则</view>
     <view class="legal-copy">
-      你应如实使用自己的账户，不得尝试访问他人数据、绕过权限验证、批量滥用 AI 服务或通过本产品发布违法、不安全内容。
+      你应合理使用自己的账户，不得尝试访问他人数据、绕过权限验证、操纵小队榜单、批量滥用 AI 服务或发布违法、不安全内容。
     </view>
   </view>
 
   <view class="legal-section">
     <view class="legal-heading">服务变更</view>
     <view class="legal-copy">
-      V1 功能仍在持续完善，部分入口可能因云服务、配置或合规要求暂时不可用。我们会尽量保留已有行动记录并提供清晰提示。
+      部分能力可能因云服务、网络、版本更新或合规要求暂时不可用。服务发生变化时，应尽量保留已有行动记录并提供清晰提示。
     </view>
   </view>
 

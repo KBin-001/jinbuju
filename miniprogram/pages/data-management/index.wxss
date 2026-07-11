@@ -1,170 +1,19 @@
-.data-page {
-  padding-top: 40rpx;
-}
-
-.section-title {
-  font-size: 30rpx;
-  font-weight: 650;
-}
-
-.scope-list {
-  margin-top: 20rpx;
-  color: var(--color-text-secondary);
-  line-height: 2;
-}
-
-.scope-list view::before {
-  margin-right: 12rpx;
-  color: var(--color-primary);
-  content: "·";
-}
-
-.warning-card {
-  margin-top: 24rpx;
-  padding: 26rpx;
-  border-radius: 24rpx;
-  border: 1rpx solid rgba(180, 92, 85, 0.2);
-  background: var(--color-danger-light);
-  color: #8f3e37;
-  line-height: 1.65;
-}
-
-.local-card {
-  margin-top: 24rpx;
-  border: 1rpx solid rgba(230, 120, 97, 0.16);
-  border-radius: 28rpx;
-  background: #ffffff;
-  box-shadow: 0 10rpx 28rpx rgba(113, 73, 68, 0.06);
-}
-
-.local-copy {
-  margin-top: 12rpx;
-  color: var(--color-text-secondary);
-  font-size: 25rpx;
-  line-height: 1.55;
-}
-
-.local-danger-button {
-  width: 100%;
-  min-height: 82rpx;
-  margin-top: 24rpx;
-  border: 1rpx solid rgba(180, 76, 67, 0.22);
-  border-radius: 999rpx;
-  background: #fff7f4;
-  color: #b44c43;
-  font-size: 28rpx;
-  font-weight: 650;
-}
-
-.local-danger-button::after {
-  border: 0;
-}
-
-.mock-button {
-  width: 100%;
-  min-height: 82rpx;
-  margin-top: 24rpx;
-  border: 1rpx solid rgba(63, 143, 114, 0.22);
-  border-radius: 999rpx;
-  background: #E6F4EC;
-  color: #3F8F72;
-  font-size: 28rpx;
-  font-weight: 650;
-}
-
-.mock-button::after {
-  border: 0;
-}
-
-.danger-outline-button,
-.danger-button {
-  width: 100%;
-  margin-top: 32rpx;
-  padding: 25rpx;
-  border-radius: 999rpx;
-  font-weight: 650;
-}
-
-.danger-outline-button {
-  border: 1rpx solid #b44c43;
-  color: #b44c43;
-}
-
-.confirmation-card {
-  margin-top: 32rpx;
-}
-
-.confirmation-copy {
-  margin-top: 12rpx;
-  color: var(--color-text-secondary);
-}
-
-.confirmation-input {
-  height: 92rpx;
-  margin-top: 24rpx;
-  padding: 0 24rpx;
-  border: 1rpx solid var(--color-border);
-  border-radius: 20rpx;
-  background: #f9faf7;
-}
-
-.confirmation-input:focus {
-  border-color: var(--color-danger);
-  background: #ffffff;
-}
-
-.danger-button {
-  background: linear-gradient(135deg, #b45c55, #91453f);
-  color: #ffffff;
-  box-shadow: 0 12rpx 28rpx rgba(145, 69, 63, 0.16);
-}
-
-.danger-button[disabled] {
-  opacity: 0.45;
-}
-
-.error-copy {
-  margin-top: 14rpx;
-  color: #b44c43;
-  font-size: 24rpx;
-}
-.data-hero { padding:38rpx; background:linear-gradient(145deg,#493735,#714944); }
-.data-hero .page-eyebrow { color:#f0c795; }
-.data-hero .page-title { color:#fff; }
-.data-hero .page-subtitle { color:rgba(255,255,255,.68); }
-.scope-card { border:0; border-radius:34rpx; background:linear-gradient(145deg,#fff,#f5ddd7); }
-.scope-list view { position:relative; padding-left:32rpx; }
-.scope-list view::before { position:absolute; top:15rpx; left:2rpx; width:12rpx; height:12rpx; border-radius:50%; background:#e67861; content:""; }
-.warning-card { border:1rpx solid rgba(230,120,97,.2); border-radius:28rpx; background:#fff7f4; }
-.confirmation-card { border:2rpx solid rgba(230,120,97,.24); border-radius:34rpx; box-shadow:0 16rpx 40rpx rgba(113,73,68,.1); }
-
-/* =========================================================
- * 墨绿成长主题 覆写（data-page）
- * 数据管理页中 .mock-button 写死薄荷绿，切换至墨绿后
- * 需用墨绿变量重新着色。.data-hero/.scope-card 为本页特有
- * 的暖色风险标识，独立于主题，不动。
- * ========================================================= */
-.data-page[data-theme="inkGreen"] .mock-button {
-  border: 1rpx solid rgba(31, 111, 85, 0.22);
-  background: #E3F2EA;
-  color: #1F6F55;
-}
-
-.data-page[data-theme="inkGreen"] .local-danger-button {
-  border: 1rpx solid rgba(180, 76, 67, 0.22);
-  background: #FBF1ED;
-  color: #B44C43;
-}
-
-.data-page[data-theme="inkGreen"] .local-card {
-  background: #FFFFFF;
-  box-shadow: 0 10rpx 28rpx rgba(20, 82, 63, 0.08);
-}
-
-.data-page[data-theme="inkGreen"] .confirmation-input {
-  background: #F4F8F5;
-}
-
-.data-page[data-theme="inkGreen"] .confirmation-input:focus {
-  background: #FFFFFF;
-}
+page { background: #F7F3EA; }
+.data-page { padding-top: 32rpx; color: #24312D; }
+.data-hero { padding: 34rpx; border: 1rpx solid rgba(121,111,91,.13); border-radius: 30rpx; background: linear-gradient(145deg, #FFFCF6, #F5EBDD); box-shadow: 0 8rpx 24rpx rgba(75,62,40,.06); }
+.data-hero .page-eyebrow { color: #9A712E; }
+.data-hero .page-title { color: #245B4D; }
+.data-hero .page-subtitle { color: #7C817D; }
+.section-title { color: #24312D; font-size: 30rpx; font-weight: 700; }
+.scope-card, .confirmation-card { margin-top: 22rpx; border: 1rpx solid rgba(121,111,91,.13); border-radius: 28rpx; background: #FFFCF6; box-shadow: 0 8rpx 24rpx rgba(75,62,40,.05); }
+.scope-list { margin-top: 18rpx; color: #6F7772; font-size: 25rpx; line-height: 1.9; }
+.scope-list view { position: relative; padding-left: 28rpx; }
+.scope-list view::before { position: absolute; top: 17rpx; left: 2rpx; width: 10rpx; height: 10rpx; border-radius: 50%; background: #7F9D91; content: ""; }
+.warning-card { margin-top: 20rpx; padding: 24rpx 26rpx; border: 1rpx solid rgba(181,91,79,.2); border-radius: 24rpx; background: #FBEEEA; color: #8B4B43; font-size: 24rpx; line-height: 1.65; }
+.danger-outline-button, .danger-button { width: 100%; min-height: 84rpx; margin-top: 28rpx; padding: 0 28rpx; border-radius: 42rpx; font-size: 27rpx; font-weight: 650; }
+.danger-outline-button { border: 1rpx solid #A75B51; background: #FFFCF6; color: #A75B51; }
+.confirmation-copy { margin-top: 12rpx; color: #7C817D; font-size: 24rpx; line-height: 36rpx; }
+.confirmation-input { min-height: 88rpx; margin-top: 22rpx; padding: 0 22rpx; border: 1rpx solid rgba(121,111,91,.18); border-radius: 22rpx; background: #FAF7F0; }
+.danger-button { background: #9B554D; color: #FFFFFF; box-shadow: 0 10rpx 24rpx rgba(122,67,60,.14); }
+.danger-button[disabled] { opacity: .45; }
+.error-copy { margin-top: 14rpx; color: #A75B51; font-size: 24rpx; }

@@ -76,6 +76,7 @@ page { background: #f8f5ec; }
 .conclusion-title text { margin-left: 10rpx; color: #b58c43; font-size: 27rpx; }
 .conclusion-period { margin-top: 7rpx; color: #a47c38; font-size: 18rpx; letter-spacing: 1rpx; }
 .conclusion-copy { max-height: 72rpx; margin-top: 13rpx; overflow: hidden; color: #656963; font-size: 22rpx; line-height: 36rpx; }
+.conclusion-next { margin-top: 14rpx; color: #245b4d; font-size: 24rpx; font-weight: 600; line-height: 1.55; }
 .conclusion-action { display: inline-flex; align-items: center; margin-top: 13rpx; color: #8e692d; font-size: 20rpx; font-weight: 600; }
 .conclusion-action text { margin-left: 7rpx; font-size: 27rpx; }
 
@@ -83,6 +84,7 @@ page { background: #f8f5ec; }
 .card-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16rpx; }
 .trend-kicker { color: #aa8442; font-size: 16rpx; font-weight: 600; letter-spacing: 3rpx; }
 .card-title { margin-top: 5rpx; color: #234b40; font-family: STSong, SimSun, serif; font-size: 34rpx; line-height: 44rpx; letter-spacing: 2rpx; }
+.trend-period { margin-top: 5rpx; color: #7c817d; font-size: 16rpx; line-height: 24rpx; letter-spacing: 0; }
 .trend-range-tabs { display: flex; box-sizing: border-box; height: 52rpx; padding: 4rpx; border: 1rpx solid rgba(150,142,123,.2); border-radius: 28rpx; background: rgba(241,238,228,.82); }
 .trend-range-tab { display: flex; align-items: center; justify-content: center; width: 54rpx; height: 42rpx; border-radius: 23rpx; color: #838780; font-size: 19rpx; }
 .trend-range-tab.is-active { color: #fffdf8; background: #31584b; box-shadow: 0 5rpx 12rpx rgba(49,88,75,.18); }

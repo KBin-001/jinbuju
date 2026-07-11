@@ -1,12 +1,12 @@
-page { background: #f8f5ec; }
+page { background: #f7f3ea; }
 
 .profile-page {
-  --ivory: #f8f5ec;
-  --paper: #fffdf8;
-  --ink: #234b40;
-  --muted: #7d7970;
+  --ivory: #f7f3ea;
+  --paper: #fffcf6;
+  --ink: #24312d;
+  --muted: #7c817d;
   --line: rgba(121, 111, 91, 0.16);
-  --gold: #b58c43;
+  --gold: #c89b4a;
   position: relative;
   min-height: 100vh;
   overflow-x: hidden;
@@ -26,7 +26,7 @@ page { background: #f8f5ec; }
 .profile-identity { position: absolute; z-index: 2; left: 68rpx; right: 54rpx; bottom: 34rpx; display: flex; align-items: center; gap: 34rpx; }
 .profile-avatar { position: relative; width: 148rpx; height: 148rpx; flex: none; overflow: hidden; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #edf0e9; box-shadow: 0 6rpx 18rpx rgba(47,72,61,.08); }
 .profile-avatar__image { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.profile-avatar__text { color: #31584b; font-family: "Songti SC", STSong, SimSun, serif; font-size: 56rpx; font-weight: 700; }
+.profile-avatar__image--default { padding: 26rpx; background: rgba(255,252,246,.88); }
 .profile-identity__copy { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
 .profile-user-name { max-width: 360rpx; overflow: hidden; color: #1f4d40; font-family: "Songti SC", STSong, SimSun, serif; font-size: 45rpx; line-height: 54rpx; font-weight: 700; letter-spacing: 2rpx; text-overflow: ellipsis; white-space: nowrap; }
 .profile-cloud-line, .profile-edit-line { margin-top: 11rpx; display: flex; align-items: center; gap: 11rpx; color: #85867f; font-size: 24rpx; line-height: 32rpx; }
@@ -35,9 +35,9 @@ page { background: #f8f5ec; }
 .profile-edit-mark { font-size: 28rpx; transform: rotate(-12deg); }
 .is-pressed { opacity: .65; }
 
-.profile-content { position: relative; z-index: 3; padding: 0 46rpx calc(130rpx + env(safe-area-inset-bottom)); }
+.profile-content { position: relative; z-index: 3; padding: 0 32rpx calc(130rpx + env(safe-area-inset-bottom)); }
 .paper-card { position: relative; box-sizing: border-box; overflow: hidden; margin-bottom: 18rpx; border: 1rpx solid rgba(129,114,86,.13); border-radius: 28rpx; background: rgba(255,253,248,.94); box-shadow: 0 8rpx 24rpx rgba(75,62,40,.07); }
-.paper-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .28; background-image: radial-gradient(rgba(92,75,47,.09) .6rpx, transparent .7rpx); background-size: 6rpx 6rpx; }
+.paper-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; box-shadow: inset 0 1rpx 0 rgba(255,255,255,.72); }
 .section-title { position: relative; z-index: 2; display: block; color: var(--ink); font-family: "Songti SC", STSong, SimSun, serif; font-size: 29rpx; line-height: 40rpx; font-weight: 700; letter-spacing: 2rpx; }
 
 .journey-card { height: 266rpx; padding: 40rpx 42rpx; display: flex; align-items: center; justify-content: space-between; }
@@ -62,7 +62,22 @@ page { background: #f8f5ec; }
 .weekly-number { color: #234b40; font-family: Georgia, "Songti SC", serif; font-size: 43rpx; line-height: 58rpx; }
 .weekly-unit { margin-left: 6rpx; color: #77746d; font-family: "Songti SC", STSong, serif; font-size: 19rpx; }
 
-.goal-card { height: 216rpx; }
+.profile-state-card { min-height: 330rpx; padding: 56rpx 36rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.profile-state-title { position: relative; z-index: 2; margin-top: 24rpx; color: var(--ink); font-size: 31rpx; font-weight: 700; }
+.profile-state-copy { position: relative; z-index: 2; max-width: 520rpx; margin-top: 12rpx; color: var(--muted); font-size: 24rpx; line-height: 36rpx; }
+.profile-state-mark { position: relative; z-index: 2; width: 72rpx; height: 72rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #f5e9d4; color: #9b6b31; font-size: 36rpx; font-weight: 700; }
+.profile-retry-button { position: relative; z-index: 2; min-width: 220rpx; height: 76rpx; margin-top: 26rpx; border-radius: 38rpx; background: #245b4d; color: #fff; font-size: 25rpx; line-height: 76rpx; }
+
+.growth-overview-card { padding: 24rpx 34rpx 28rpx; }
+.growth-overview-head { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; }
+.growth-overview-note { color: var(--muted); font-size: 21rpx; }
+.growth-overview-grid { position: relative; z-index: 2; margin-top: 22rpx; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.growth-overview-item { min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.growth-overview-item + .growth-overview-item { border-left: 1rpx solid var(--line); }
+.growth-overview-value { max-width: 100%; overflow: hidden; color: #245b4d; font-size: 42rpx; line-height: 52rpx; font-weight: 760; text-overflow: ellipsis; white-space: nowrap; }
+.growth-overview-unit { margin-top: 4rpx; color: var(--muted); font-size: 21rpx; }
+
+.goal-card { height: 274rpx; }
 .goal-card__background { position: absolute; top: 0; right: 0; width: 100%; height: 100%; display: block; }
 .goal-card__veil { position: absolute; inset: 0; background: linear-gradient(90deg, #fffdf8 0%, #fffdf8 37%, rgba(255,253,248,.92) 49%, rgba(255,253,248,.18) 76%, rgba(255,253,248,0) 100%); }
 .goal-card__content, .goal-empty { position: relative; z-index: 2; height: 100%; padding: 24rpx 38rpx; box-sizing: border-box; }
@@ -71,6 +86,9 @@ page { background: #f8f5ec; }
 .goal-track__fill { height: 100%; border-radius: inherit; background: #31584b; }
 .goal-percent { margin-top: 12rpx; color: var(--gold); font-family: Georgia, "Songti SC", serif; font-size: 39rpx; line-height: 45rpx; }
 .goal-percent__symbol { margin-left: 2rpx; font-size: 22rpx; }
+.goal-card-actions { margin-top: 12rpx; display: flex; gap: 12rpx; }
+.goal-card-action { min-width: 120rpx; height: 50rpx; padding: 0 18rpx; display: flex; align-items: center; justify-content: center; border-radius: 25rpx; background: #245b4d; color: #fff; font-size: 21rpx; }
+.goal-card-action--ghost { border: 1rpx solid rgba(36,91,77,.2); background: rgba(255,252,246,.86); color: #245b4d; }
 .goal-empty__title { display: block; margin-top: 18rpx; color: #77746d; font-size: 24rpx; }
 .goal-empty__button { width: 142rpx; height: 52rpx; margin-top: 18rpx; display: flex; align-items: center; justify-content: center; border-radius: 26rpx; background: #31584b; color: #fff; font-size: 22rpx; }
 
@@ -86,7 +104,7 @@ page { background: #f8f5ec; }
 .collection-date { width: 100%; overflow: hidden; color: #9a9288; font-family: Georgia, serif; font-size: 16rpx; line-height: 24rpx; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 
 .account-card { padding: 16rpx 34rpx 6rpx; }
-.account-row { position: relative; z-index: 2; height: 52rpx; display: flex; align-items: center; gap: 22rpx; border-bottom: 1rpx solid var(--line); color: #716f69; font-family: "Songti SC", STSong, serif; font-size: 22rpx; }
+.account-row { position: relative; z-index: 2; min-height: 88rpx; display: flex; align-items: center; gap: 22rpx; border-bottom: 1rpx solid var(--line); color: #626a65; font-size: 25rpx; }
 .account-row:last-child { border-bottom: 0; }
 .account-row t-icon { color: #6e7771; }
 .account-arrow { margin-left: auto; color: #9c9991; font-family: -apple-system, sans-serif; font-size: 32rpx; font-weight: 300; }
@@ -105,6 +123,7 @@ page { background: #f8f5ec; }
 .profile-avatar-row { gap: 22rpx; }
 .profile-avatar-preview { width: 112rpx; height: 112rpx; flex: none; overflow: hidden; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #edf1eb; color: #31584b; font-size: 42rpx; font-weight: 700; }
 .profile-avatar-preview image { width: 100%; height: 100%; }
+.profile-avatar-preview .profile-avatar-preview__default { box-sizing: border-box; padding: 20rpx; }
 .avatar-choose-btn { height: 62rpx; padding: 0 26rpx; border: 1rpx solid #d9e4dd; border-radius: 31rpx; background: #fff; color: #31584b; font-size: 23rpx; line-height: 62rpx; }
 .avatar-choose-btn::after { border: 0; }
 .profile-field { margin-top: 26rpx; }

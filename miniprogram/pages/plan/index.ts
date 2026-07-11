@@ -2,7 +2,7 @@ import { FEATURE_FLAGS } from "../../config/features";
 import { getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { getTasksByDate, getTasksByGoal } from "../../services/manualTask";
-import { prepareProgressCoach } from "../../services/progressCoach";
+import { analyzeProgress, prepareProgressCoach } from "../../services/progressCoach";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
@@ -223,7 +223,21 @@ function goalPeriod(goal: Goal | null): string {
 }
 
 function growthConclusionTitle(range: TrendRange): string {
-  return range === "year" ? "AI 教练 · 年度一句话" : range === "month" ? "AI 教练 · 本月一句话" : "AI 教练 · 本周一句话";
+  return range === "year" ? "年度行动总结" : range === "month" ? "本月行动总结" : "本周行动总结";
+}
+
+function trendPeriodLabel(range: TrendRange, today: string): string {
+  const date = new Date(`${today}T00:00:00`);
+  if (range === "year") return `${date.getFullYear()} 年 1 月 1 日—12 月 31 日`;
+  if (range === "month") {
+    const start = new Date(date.getFullYear(), date.getMonth(), 1);
+    const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    return `${formatDate(start).replace(/-/g, ".")}—${formatDate(end).replace(/-/g, ".")}`;
+  }
+  const mondayOffset = (date.getDay() + 6) % 7;
+  const start = addDays(date, -mondayOffset);
+  const end = addDays(start, 6);
+  return `${formatDate(start).replace(/-/g, ".")}—${formatDate(end).replace(/-/g, ".")}`;
 }
 
 function buildTrendRanges(activeKey: TrendRange): TrendRangeOption[] {
@@ -406,35 +420,41 @@ interface MonthBucket {
 
 function buildWeekBuckets(today: string): WeekBucket[] {
   const todayDate = toDate(today);
+  const mondayOffset = (todayDate.getDay() + 6) % 7;
+  const monday = addDays(todayDate, -mondayOffset);
   return Array.from({ length: 7 }).map((_, index) => {
-    const date = formatDate(addDays(todayDate, index - 6));
+    const date = formatDate(addDays(monday, index));
     return {
       key: date,
-      label: index === 6 ? "今天" : formatShortDate(date),
+      label: date === today ? "今天" : ["一", "二", "三", "四", "五", "六", "日"][index],
       start: date,
       end: date,
-      isToday: index === 6,
+      isToday: date === today,
     };
   });
 }
 
 function buildMonthBuckets(today: string): MonthBucket[] {
   const todayDate = toDate(today);
-  const todayDay = todayDate.getDay();
-  const mondayOffset = todayDay === 0 ? -6 : 1 - todayDay;
-  const currentMonday = addDays(todayDate, mondayOffset);
-
+  const monthStartDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
+  const monthEndDate = new Date(todayDate.getFullYear(), todayDate.getMonth() + 1, 0);
+  const startOffset = (monthStartDate.getDay() + 6) % 7;
+  let cursor = addDays(monthStartDate, -startOffset);
   const buckets: MonthBucket[] = [];
-  for (let i = 4; i >= 0; i -= 1) {
-    const start = formatDate(addDays(currentMonday, -7 * i));
-    const end = formatDate(addDays(currentMonday, -7 * i + 6));
+  while (cursor <= monthEndDate) {
+    const rawEnd = addDays(cursor, 6);
+    const clippedStart = cursor < monthStartDate ? monthStartDate : cursor;
+    const clippedEnd = rawEnd > monthEndDate ? monthEndDate : rawEnd;
+    const start = formatDate(clippedStart);
+    const end = formatDate(clippedEnd);
     buckets.push({
       key: `${start}-${end}`,
-      label: formatShortDate(start),
+      label: `${buckets.length + 1}周`,
       rangeLabel: `${formatShortDate(start)}-${formatShortDate(end)}`,
       start,
       end,
     });
+    cursor = addDays(cursor, 7);
   }
   return buckets;
 }
@@ -513,8 +533,11 @@ function buildWeekSummary(
     .map((task) => task.currentDate);
   const streakDays = computeStreakDays(taskDates, today);
 
-  const todayMinutes = perDay[perDay.length - 1]?.minutes || 0;
-  const yesterdayMinutes = perDay[perDay.length - 2]?.minutes || 0;
+  const todayIndex = buckets.findIndex((bucket) => bucket.key === today);
+  const todayMinutes = todayIndex >= 0 ? perDay[todayIndex]?.minutes || 0 : 0;
+  const yesterday = formatDate(addDays(toDate(today), -1));
+  const yesterdayIndex = buckets.findIndex((bucket) => bucket.key === yesterday);
+  const yesterdayMinutes = yesterdayIndex >= 0 ? perDay[yesterdayIndex]?.minutes || 0 : 0;
   const previousStart = formatDate(addDays(toDate(buckets[0].start), -7));
   const previousEnd = formatDate(addDays(toDate(buckets[0].start), -1));
   const compare = compareText(totalMinutes, sumRange(tasks, previousStart, previousEnd).minutes, "较上周");
@@ -578,8 +601,9 @@ function buildMonthSummary(
     .filter((task) => task.status === "completed" || task.status === "partially_completed")
     .map((task) => task.currentDate);
   const streakDays = computeStreakDays(taskDates, today);
-  const previousStart = formatDate(addDays(toDate(buckets[0].start), -35));
-  const previousEnd = formatDate(addDays(toDate(buckets[0].start), -1));
+  const todayDate = toDate(today);
+  const previousStart = formatDate(new Date(todayDate.getFullYear(), todayDate.getMonth() - 1, 1));
+  const previousEnd = formatDate(new Date(todayDate.getFullYear(), todayDate.getMonth(), 0));
   const compare = compareText(totalMinutes, sumRange(tasks, previousStart, previousEnd).minutes, "较上月");
   const maxIndex = perWeek.reduce((best, item, index) => item.minutes > perWeek[best].minutes ? index : best, 0);
   const bestInvestLabel = perWeek[maxIndex]?.minutes > 0 ? buckets[maxIndex].label : "-";
@@ -933,8 +957,12 @@ Page(withAppTheme({
     goalStatusText: "添加行动后开始记录",
     goalProgressPercent: 0,
     overviewStats: [] as OverviewStat[],
-    growthConclusionTitle: "AI 教练 · 本周一句话",
+    growthConclusionTitle: "本周行动总结",
+    coachStatus: "idle" as "idle" | "loading" | "ready" | "error",
+    coachSummary: "",
+    coachNextStep: "",
     trendRange: "week" as TrendRange,
+    trendPeriodLabel: "",
     trendRanges: buildTrendRanges("week"),
     aiCoach: { periodLabel: "本周复盘", message: "先完成一次小行动，让成长记录从今天开始。" } as AiCoachView,
     barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, maxActions: 0, midActions: 0, barWidth: WEEK_BAR_WIDTH, insufficient: false } as BarChartData,
@@ -955,6 +983,7 @@ Page(withAppTheme({
   },
   focusGoalHandler: null as null | (() => void),
   chartCanvasTimer: null as ReturnType<typeof setTimeout> | null,
+  coachRequestKey: "",
 
   onLoad() {
     this.focusGoalHandler = () => this.load();
@@ -1022,6 +1051,7 @@ Page(withAppTheme({
         overviewStats: buildOverview(summary),
         growthConclusionTitle: growthConclusionTitle(this.data.trendRange),
         trendRanges: buildTrendRanges(this.data.trendRange),
+        trendPeriodLabel: trendPeriodLabel(this.data.trendRange, today),
         aiCoach: buildAiCoachView(goal, this.data.trendRange, trendView.trendSummary),
         barChart: trendView.barChart,
         trendSummary: trendView.trendSummary,
@@ -1041,9 +1071,7 @@ Page(withAppTheme({
       }, () => {
         this.drawGoalRing();
         this.drawTrendLine();
-        if (goal?.id && this.data.trendRange !== "year") {
-          prepareProgressCoach(this.data.trendRange, goal.id).catch(() => undefined);
-        }
+        this.prepareCoach();
       });
     } catch (error) {
       this.setData({
@@ -1058,6 +1086,27 @@ Page(withAppTheme({
   },
 
   noop() {},
+
+  prepareCoach() {
+    const goalId = this.data.goal?.id;
+    const range = this.data.trendRange;
+    if (!goalId || range === "year") {
+      this.coachRequestKey = "";
+      this.setData({ coachStatus: "idle", coachSummary: "", coachNextStep: "" });
+      return;
+    }
+    const requestKey = `${range}:${goalId}:${getTodayBusinessDate()}`;
+    this.coachRequestKey = requestKey;
+    this.setData({ coachStatus: "loading", coachSummary: "", coachNextStep: "" });
+    prepareProgressCoach(range, goalId)
+      .then(() => analyzeProgress(goalId, range))
+      .then((analysis) => {
+        if (this.coachRequestKey !== requestKey) return;
+        this.setData({ coachStatus: "ready", coachSummary: analysis.summary, coachNextStep: analysis.nextSuggestions[0] || "继续保持当前节奏。" });
+      }, () => {
+        if (this.coachRequestKey === requestKey) this.setData({ coachStatus: "error", coachSummary: "", coachNextStep: "" });
+      });
+  },
 
   createGoal() {
     wx.navigateTo({ url: "/pages/goal-create/index" });
@@ -1104,6 +1153,7 @@ Page(withAppTheme({
     this.setData({
       trendRange: range,
       trendRanges: buildTrendRanges(range),
+      trendPeriodLabel: trendPeriodLabel(range, today),
       aiCoach: buildAiCoachView(this.data.goal, range, trendView.trendSummary),
       growthConclusionTitle: growthConclusionTitle(range),
       barChart: trendView.barChart,
@@ -1116,9 +1166,7 @@ Page(withAppTheme({
       selectedHeatmapDay: null,
     }, () => {
       this.drawTrendLine();
-      if (this.data.goal?.id && range !== "year") {
-        prepareProgressCoach(range, this.data.goal.id).catch(() => undefined);
-      }
+      this.prepareCoach();
     });
   },
 

@@ -8,16 +8,16 @@
   <view class="card scope-card">
     <view class="section-title">将清除的数据</view>
     <view class="scope-list">
-      <view>用户资料与个人统计</view>
-      <view>目标、行动阶段和每日行动记录</view>
-      <view>每日打卡记录</view>
-      <view>小队成员关系与固定鼓励记录</view>
-      <view>与当前用户直接关联的其他业务数据</view>
+      <view>用户资料、头像与账号绑定信息</view>
+      <view>目标、每日行动、投入时间与成长统计</view>
+      <view>AI 教练分析快照与确认过的操作记录</view>
+      <view>小队成员关系、榜单快照与固定鼓励</view>
+      <view>当前设备上的缓存与未完成草稿</view>
     </view>
   </view>
 
   <view class="warning-card">
-    清除完成后无法恢复。小队中其他成员的数据不会受到影响，系统只会更新相应的小队人数。
+    清除完成后无法恢复。小队中其他成员的数据不会被删除；系统只会移除你的成员关系并更新相应人数。
   </view>
 
   <t-button

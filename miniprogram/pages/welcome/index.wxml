@@ -1,4 +1,6 @@
 <view class="welcome-page" data-theme="{{appTheme}}">
+  <image class="welcome-mountain" src="/assets/today-hero-mountain-v2.jpg" mode="aspectFill" />
+  <view class="welcome-mountain-veil"></view>
   <view wx:if="{{status === 'loading'}}" class="welcome-state">
     <view class="loading-dot"></view>
     <view class="state-title">正在准备进步局</view>

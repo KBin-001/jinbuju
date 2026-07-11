@@ -28,19 +28,10 @@ page { background: #f8f5ec; }
 .today-greeting { overflow: hidden; color: #1f4d40; font-family: "Songti SC", STSong, SimSun, serif; font-size: 36rpx; line-height: 46rpx; font-weight: 700; letter-spacing: 2rpx; text-overflow: ellipsis; white-space: nowrap; }
 .today-subtitle { margin-top: 7rpx; color: #77746d; font-family: "Songti SC", STSong, serif; font-size: 23rpx; line-height: 32rpx; }
 
-.spark-checkin { position: relative; width: 150rpx; min-height: 94rpx; flex: none; padding: 13rpx 16rpx; display: flex; align-items: center; justify-content: center; gap: 9rpx; box-sizing: border-box; border: 1rpx solid rgba(181,140,67,.22); border-radius: 22rpx; background: rgba(255,253,248,.88); box-shadow: 0 8rpx 20rpx rgba(75,58,28,.08); transition: transform .16s, opacity .16s; }
-.spark-checkin--pressed { opacity: .75; transform: scale(.96); }
-.spark-icon-wrap { position: relative; width: 50rpx; height: 60rpx; flex: none; }
-.spark-icon { position: relative; z-index: 2; width: 100%; height: 100%; display: block; filter: sepia(.35) saturate(.75); }
-.spark-halo { position: absolute; z-index: 1; inset: 8rpx 2rpx; border-radius: 50%; background: rgba(211,166,77,.28); filter: blur(10rpx); animation: spark-breathe .8s ease-in-out infinite alternate; }
-.spark-copy { display: flex; flex-direction: column; align-items: flex-start; }
-.spark-count { color: #a77931; font-family: Georgia, "Songti SC", serif; font-size: 35rpx; line-height: 39rpx; }
-.spark-count text { margin-left: 2rpx; font-size: 19rpx; }
-.spark-action { color: #77746d; font-size: 19rpx; line-height: 27rpx; }
-.spark-checkin.is-unlit { filter: grayscale(.48); opacity: .74; }
-.spark-checkin.is-animating { animation: spark-pop .68s ease-out both; }
-@keyframes spark-pop { 0%{transform:scale(.88)} 50%{transform:scale(1.08)} 100%{transform:scale(1)} }
-@keyframes spark-breathe { from{opacity:.45;transform:scale(.85)} to{opacity:1;transform:scale(1.16)} }
+.action-streak { width: 132rpx; min-height: 82rpx; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1rpx solid rgba(200,155,74,.28); border-radius: 22rpx; background: rgba(255,252,246,.88); }
+.action-streak__value { color: #8d682d; font-family: Georgia, serif; font-size: 32rpx; line-height: 38rpx; }
+.action-streak__value text { margin-left: 3rpx; font-family: sans-serif; font-size: 18rpx; }
+.action-streak__label { margin-top: 2rpx; color: #7c817d; font-size: 18rpx; }
 
 .paper-card, .week-card, .stats-card, .reference-coach-entry, .today-task-row, .state-card, .empty-card { position: relative; overflow: hidden; box-sizing: border-box; border: 1rpx solid rgba(129,114,86,.14); border-radius: 28rpx; background: rgba(255,253,248,.95); box-shadow: 0 8rpx 24rpx rgba(75,62,40,.065); }
 .paper-card::before, .week-card::before, .stats-card::before, .reference-coach-entry::before, .today-task-row::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .22; background-image: radial-gradient(rgba(92,75,47,.09) .6rpx, transparent .7rpx); background-size: 6rpx 6rpx; }
@@ -77,16 +68,18 @@ page { background: #f8f5ec; }
 .reference-coach-veil { position: absolute; inset: 0; background: linear-gradient(90deg,#fffdf8 0%,#fffdf8 43%,rgba(255,253,248,.9) 55%,rgba(255,253,248,.08) 100%); }
 .reference-coach-copy { position: relative; z-index: 2; width: 64%; height: 100%; padding: 35rpx 36rpx; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; }
 .reference-coach-title { display: flex; align-items: center; color: #1f4d40; font-family: "Songti SC", STSong, serif; font-size: 37rpx; line-height: 46rpx; font-weight: 700; letter-spacing: 2rpx; }
+.reference-coach-source { margin-left: 12rpx; padding: 3rpx 10rpx; border-radius: 999rpx; color: #7c817d; background: rgba(255,252,246,.72); font-family: sans-serif; font-size: 16rpx; font-weight: 500; letter-spacing: 0; }
 .reference-coach-mark { order: 2; margin-left: 10rpx; color: #c1974c; font-size: 29rpx; }
 .reference-coach-arrow { display: none; }
 .reference-coach-subtitle { margin-top: 13rpx; display: -webkit-box; overflow: hidden; color: #77746d; font-family: "Songti SC", STSong, serif; font-size: 21rpx; line-height: 31rpx; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.reference-coach-next { margin-top: 12rpx; color: #245b4d; font-size: 24rpx; font-weight: 600; line-height: 1.55; }
 
 .task-section { margin-top: 28rpx; }
 .task-section-head { min-height: 64rpx; display: flex; align-items: center; justify-content: space-between; }
 .task-section-title { color: #1f4d40; font-family: "Songti SC", STSong, SimSun, serif; font-size: 37rpx; line-height: 48rpx; font-weight: 700; letter-spacing: 3rpx; }
 .task-section-add { height: 54rpx; padding: 0 23rpx; display: flex; align-items: center; gap: 5rpx; border: 1rpx solid #bd9145; border-radius: 28rpx; color: #a77931; font-family: "Songti SC", STSong, serif; font-size: 21rpx; }
 .today-action-list { margin-top: 14rpx; }
-.today-task-row { min-height: 112rpx; margin-bottom: 14rpx; padding: 18rpx 22rpx; display: flex; align-items: center; gap: 18rpx; }
+.today-task-row { min-height: 134rpx; margin-bottom: 14rpx; padding: 18rpx 22rpx; display: flex; align-items: center; gap: 18rpx; }
 .today-task-row.is-done { border-color: rgba(91,120,101,.22); background: rgba(241,245,237,.95); }
 .reference-task-icon { position: relative; z-index: 2; width: 58rpx; height: 58rpx; flex: none; display: flex; align-items: center; justify-content: center; }
 .reference-task-icon image { width: 48rpx; height: 48rpx; filter: grayscale(.65) sepia(.15) hue-rotate(85deg) saturate(.75); opacity: .78; }
@@ -95,8 +88,16 @@ page { background: #f8f5ec; }
 .task-meta { margin-top: 6rpx; overflow: hidden; color: #7e7b74; font-size: 19rpx; line-height: 28rpx; text-overflow: ellipsis; white-space: nowrap; }
 .task-meta-dot { margin: 0 8rpx; }
 .task-goal-name { color: #77746d; }
+.task-meta-actual { margin-left: 12rpx; color: #245b4d; }
+.task-status-line { margin-top: 8rpx; display: flex; align-items: center; gap: 14rpx; }
+.task-status { padding: 2rpx 10rpx; border-radius: 999rpx; color: #52645d; background: #edf1ed; font-size: 17rpx; line-height: 28rpx; }
+.task-status--success { color: #245b4d; background: #e8f0eb; }
+.task-status--warning { color: #8d682d; background: #f7ebcf; }
+.task-status--danger { color: #9b5549; background: #fbf1ed; }
+.task-more { color: #8d682d; font-size: 18rpx; text-decoration: underline; text-underline-offset: 4rpx; }
 .task-tail-check { position: relative; z-index: 2; width: 52rpx; height: 52rpx; flex: none; display: flex; align-items: center; justify-content: center; border: 2rpx solid #777b76; border-radius: 50%; color: #fff; }
 .task-tail-check.is-done { border-color: #31584b; background: #31584b; box-shadow: 0 6rpx 13rpx rgba(49,88,75,.17); }
+.task-tail-check.is-disabled { border-style: dashed; opacity: .38; }
 .task-tail-check .t-icon { font-size: 28rpx; }
 .action-list-toggle { padding: 15rpx 0 7rpx; color: #8f793f; font-size: 21rpx; text-align: center; }
 .action-empty-inline { padding: 42rpx 28rpx; border: 1rpx dashed rgba(49,88,75,.2); border-radius: 25rpx; background: rgba(255,253,248,.72); color: #31584b; text-align: center; }
@@ -197,7 +198,7 @@ page { background: #f8f5ec; }
   .today-avatar { width: 112rpx; height: 112rpx; }
   .today-greeting-copy { margin-left: 18rpx; }
   .today-greeting { font-size: 31rpx; }
-  .spark-checkin { width: 134rpx; }
+  .action-streak { width: 118rpx; }
   .week-card { padding-right: 20rpx; padding-left: 20rpx; }
   .stats-col-label { gap: 4rpx; font-size: 18rpx; }
   .stats-col-value { font-size: 46rpx; }

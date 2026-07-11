@@ -16,8 +16,8 @@ const OPTIONS: Array<{ value: GoalCategory; label: string; title: string }> = [
 Page(withAppTheme({
   data: {
     options: OPTIONS,
-    category: "cet" as GoalCategory,
-    title: OPTIONS[0].title,
+    category: "custom" as GoalCategory,
+    title: "",
     description: "",
     submitting: false,
     activeGoalCount: 0,

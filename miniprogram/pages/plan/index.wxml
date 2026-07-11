@@ -54,10 +54,11 @@
       <image class="conclusion-background" src="/assets/today-coach-watercolor-v2.jpg" mode="aspectFill" />
       <view class="conclusion-veil"></view>
       <view class="conclusion-content">
-        <view class="conclusion-title">AI 教练<text>✦</text></view>
-        <view class="conclusion-period">{{growthConclusionTitle}}</view>
-        <view class="conclusion-copy">{{aiCoach.message}}</view>
-        <view class="conclusion-action" catchtap="openAiCoach">和教练聊聊 <text>›</text></view>
+        <view class="conclusion-title">{{coachStatus === 'ready' ? 'AI 教练' : '行动总结'}}<text>✦</text></view>
+        <view class="conclusion-period">{{coachStatus === 'loading' ? '正在读取真实行动记录' : (coachStatus === 'ready' ? 'AI 已读取真实行动记录' : (coachStatus === 'error' ? 'AI 暂不可用 · 本地规则建议' : '基于本地行动记录'))}}</view>
+        <view class="conclusion-copy">{{coachStatus === 'loading' ? '数据准备完成后，你可以向教练继续追问。' : (coachStatus === 'ready' ? coachSummary : aiCoach.message)}}</view>
+        <view wx:if="{{coachStatus === 'ready' && coachNextStep}}" class="conclusion-next">下一步 · {{coachNextStep}}</view>
+        <view wx:if="{{trendRange !== 'year'}}" class="conclusion-action" catchtap="openAiCoach">{{coachStatus === 'error' ? '打开并重试' : '和教练聊聊'}} <text>›</text></view>
       </view>
     </view>
 
@@ -66,6 +67,7 @@
         <view>
           <view class="trend-kicker">GROWTH RECORD</view>
           <view class="card-title">{{trendRange === 'week' ? '本周趋势' : (trendRange === 'month' ? '本月趋势' : '年度记录')}}</view>
+          <view class="trend-period">统计范围 {{trendPeriodLabel}}</view>
         </view>
         <view class="trend-range-tabs">
           <view wx:for="{{trendRanges}}" wx:key="key" class="trend-range-tab {{item.active ? 'is-active' : ''}}" data-key="{{item.key}}" bindtap="switchTrendRange">{{item.label}}</view>
@@ -102,6 +104,8 @@
       </block>
 
       <block wx:else>
+        <view wx:if="{{yearSummary.insufficient}}" class="trend-insufficient">{{yearSummary.summaryText}}</view>
+        <block wx:else>
         <view class="year-top-stats">
           <view class="year-stat-item"><view class="year-stat-value">{{yearSummary.checkinDays}}<text class="value-unit">天</text></view><view class="year-stat-label">行动天数</view></view>
           <view class="year-stat-item"><view class="year-stat-value">{{yearSummary.totalMinutes}}<text class="value-unit">分钟</text></view><view class="year-stat-label">累计投入</view></view>
@@ -136,6 +140,7 @@
           </view>
         </view>
         <view class="trend-footer"><view class="trend-footer-copy"><text class="trend-footer-icon">↗</text><text>年度累计投入 </text><text class="trend-footer-strong">{{yearSummary.totalMinutes}}</text><text> 分钟，行动 </text><text class="trend-footer-strong">{{yearSummary.checkinDays}}</text><text> 天。</text></view><view class="trend-history" catchtap="openHistoryReview">历史 ›</view></view>
+        </block>
       </block>
     </view>
 
