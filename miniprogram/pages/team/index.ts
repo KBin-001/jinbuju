@@ -29,7 +29,7 @@ import {
   TeamMemberActionDetail,
   TeamVisibility,
 } from "../../types/team";
-import { getTodayBusinessDate } from "../../utils/date";
+import { differenceInBusinessDays, getTodayBusinessDate } from "../../utils/date";
 
 type PageStatus = "loading" | "empty" | "ready" | "error";
 
@@ -377,10 +377,11 @@ function getTeamDays(team: Team | null): number {
   if (!team?.createdAt) return 1;
   const created = new Date(team.createdAt);
   if (Number.isNaN(created.getTime())) return 1;
-  const start = new Date(created.getFullYear(), created.getMonth(), created.getDate()).getTime();
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  return Math.max(1, Math.floor((today - start) / (24 * 60 * 60 * 1000)) + 1);
+  const start = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, "0")}-${String(created.getDate()).padStart(2, "0")}`;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return 1;
+  const today = getTodayBusinessDate();
+  const diff = differenceInBusinessDays(start, today);
+  return Math.max(1, diff + 1);
 }
 
 function buildSelfActionPrompt(members: MemberView[]): SelfActionPrompt {

@@ -1,6 +1,7 @@
 import { endGoal, getActiveGoal, getActiveGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { withAppTheme } from "../../services/theme";
+import { differenceInBusinessDays, getTodayBusinessDate } from "../../utils/date";
 import { Goal, ProgressSummary } from "../../types/manual";
 
 interface GoalManageCardView {
@@ -14,10 +15,11 @@ interface GoalManageCardView {
 
 function daysSince(value?: string): number {
   if (!value) return 1;
-  const start = new Date(`${value.slice(0, 10)}T00:00:00`).getTime();
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  return Number.isFinite(start) ? Math.max(1, Math.floor((today - start) / 86400000) + 1) : 1;
+  const start = value.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return 1;
+  const today = getTodayBusinessDate();
+  const diff = differenceInBusinessDays(start, today);
+  return Math.max(1, diff + 1);
 }
 
 function progressPercent(summary: ProgressSummary): number {

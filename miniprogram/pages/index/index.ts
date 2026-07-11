@@ -6,7 +6,7 @@ import { analyzeProgress, prepareProgressCoach } from "../../services/progressCo
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { syncManualData } from "../../services/manualSync";
 import { ActionIssueReason, ActionTask, ActionTaskStatus, Goal, TodaySummary } from "../../types/manual";
-import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
+import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate, getTimeGreeting } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
 import { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask } from "../../utils/taskStatus";
 
@@ -200,6 +200,8 @@ Page(withAppTheme({
     hiddenActionCount: 0,
     heroDayLabel: "DAY 1",
     heroFocusTitle: "今日行动",
+    greetingText: "早上好",
+    greetingSubtitle: "今天也从一小步开始",
     todayMoodTitle: "今天还没开局",
     todayMoodCopy: "先放一件小事上来，别让今天空过去。",
     todayMoodTone: "empty",
@@ -278,7 +280,7 @@ Page(withAppTheme({
   load() {
     this.setData({ status: "loading", errorMessage: "" });
     try {
-      const today = getTodayBusinessDate(); const selectedDate = this.data.selectedDate || today; const goal = getActiveGoal(); const copy = dateCopy(selectedDate); const userProfile = getLocalUserProfile(); const displayName = userProfile?.nickname || "行动伙伴";
+      const today = getTodayBusinessDate(); const selectedDate = this.data.selectedDate || today; const goal = getActiveGoal(); const copy = dateCopy(selectedDate); const userProfile = getLocalUserProfile(); const displayName = userProfile?.nickname || "行动伙伴"; const timeGreeting = getTimeGreeting();
       const displayAvatarUrl = userProfile?.avatarUrl || "";
       const goalTasks = goal ? getTasksByGoal(goal.id) : [];
       const sourceTasks = goal ? getTodayPageTasks(goal.id, selectedDate, today) : [];
@@ -296,6 +298,8 @@ Page(withAppTheme({
         status: "ready",
         displayName,
         displayAvatarUrl,
+        greetingText: timeGreeting.greeting,
+        greetingSubtitle: timeGreeting.subtitle,
         goal,
         selectedDate,
         todayDate: today,

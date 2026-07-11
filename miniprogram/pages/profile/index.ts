@@ -17,7 +17,7 @@ import { Goal, ProgressSummary } from "../../types/manual";
 import { UserDisplayProfile, UserProfileSource } from "../../types/profile";
 import { getAchievementCollection } from "../../services/achievement";
 import { readManualStore } from "../../services/manualStore";
-import { getTodayBusinessDate } from "../../utils/date";
+import { differenceInBusinessDays, getTodayBusinessDate } from "../../utils/date";
 import { AchievementProgress } from "../../types/achievement";
 
 /** 前端主题换肤宏定义：与全局 FEATURE_FLAGS.ENABLE_THEME_SWITCHING 对齐 */
@@ -72,11 +72,11 @@ function shortDate(value?: string): string {
 
 function daysSince(value?: string): number {
   if (!value) return 1;
-  const start = new Date(`${shortDate(value)}T00:00:00`).getTime();
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  if (!Number.isFinite(start)) return 1;
-  return Math.max(1, Math.floor((today - start) / (24 * 60 * 60 * 1000)) + 1);
+  const start = shortDate(value);
+  if (!start) return 1;
+  const today = getTodayBusinessDate();
+  const diff = differenceInBusinessDays(start, today);
+  return Math.max(1, diff + 1);
 }
 
 function progressPercent(summary: ProgressSummary | null): number {

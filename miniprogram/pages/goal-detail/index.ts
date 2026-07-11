@@ -3,7 +3,7 @@ import { getProgressSummary } from "../../services/manualStats";
 import { getTasksByGoal } from "../../services/manualTask";
 import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
 import { withAppTheme } from "../../services/theme";
-import { addDays, formatDate, formatDisplayDate } from "../../utils/date";
+import { addBusinessDays, differenceInBusinessDays, formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
 import { getActionTaskDisplayStatus } from "../../utils/taskStatus";
 
 interface StatItem {
@@ -24,11 +24,11 @@ function shortDate(value?: string): string {
 
 function daysSince(value?: string): number {
   if (!value) return 1;
-  const start = new Date(`${shortDate(value)}T00:00:00`).getTime();
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  if (!Number.isFinite(start)) return 1;
-  return Math.max(1, Math.floor((today - start) / (24 * 60 * 60 * 1000)) + 1);
+  const start = shortDate(value);
+  if (!start) return 1;
+  const today = getTodayBusinessDate();
+  const diff = differenceInBusinessDays(start, today);
+  return Math.max(1, diff + 1);
 }
 
 function completionRate(summary: ProgressSummary | null): number {
@@ -42,7 +42,7 @@ function estimateFinish(summary: ProgressSummary | null): string {
   if (summary.totalActionDays <= 0 || summary.completedTasks <= 0) return "开始行动后估算";
   const speed = summary.completedTasks / summary.totalActionDays;
   const days = Math.max(1, Math.ceil((summary.totalTasks - summary.completedTasks) / speed));
-  return formatDate(addDays(new Date(), days));
+  return addBusinessDays(getTodayBusinessDate(), days);
 }
 
 function toActionView(task: ActionTask, today: string): ActionView {
@@ -90,7 +90,7 @@ Page(withAppTheme({
         this.setData({ status: "error", errorMessage: "目标不存在或已进入历史目标" });
         return;
       }
-      const today = formatDate(new Date());
+      const today = getTodayBusinessDate();
       const summary = getProgressSummary(goal.id, today);
       const actions = getTasksByGoal(goal.id).map((task) => toActionView(task, today));
       const percent = completionRate(summary);

@@ -7,7 +7,7 @@
     <view wx:if="{{status === 'ready'}}" class="today-profile-row">
       <image wx:if="{{displayAvatarUrl}}" class="today-avatar" src="{{displayAvatarUrl}}" mode="aspectFill" binderror="useDefaultAvatar" />
       <image wx:else class="today-avatar" src="/images/icons/avatar.png" mode="aspectFit" />
-      <view class="today-greeting-copy"><text class="today-greeting">早上好，{{displayName}}</text><text class="today-subtitle">今天也从一小步开始</text></view>
+      <view class="today-greeting-copy"><text class="today-greeting">{{greetingText}}，{{displayName}}</text><text class="today-subtitle">{{greetingSubtitle}}</text></view>
       <view class="action-streak" aria-label="连续行动天数">
         <view class="action-streak__value">{{currentStreakDays}}<text>天</text></view>
         <view class="action-streak__label">连续行动</view>

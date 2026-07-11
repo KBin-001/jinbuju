@@ -1,6 +1,6 @@
 import { getActiveGoal } from "../../services/manualGoal";
 import { createTask, getTask, updateTask } from "../../services/manualTask";
-import { formatDate } from "../../utils/date";
+import { getTodayBusinessDate } from "../../utils/date";
 import { withAppTheme } from "../../services/theme";
 
 Page(withAppTheme({
@@ -10,7 +10,7 @@ Page(withAppTheme({
     title: "",
     description: "",
     estimatedMinutes: 30,
-    currentDate: formatDate(new Date()),
+    currentDate: getTodayBusinessDate(),
     submitting: false,
     loading: true,
     errorMessage: "",

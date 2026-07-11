@@ -71,3 +71,32 @@ export function daysUntil(dateValue: string): number {
 export function formatDisplayDate(dateValue: string): string {
   return dateValue.replace(/-/g, "/");
 }
+
+/** 获取上海时区当前小时数（0-23），用于时段判断。 */
+function getShanghaiHour(now: Date = new Date()): number {
+  const shanghaiDate = new Date(now.getTime() + SHANGHAI_OFFSET_MILLISECONDS);
+  return shanghaiDate.getUTCHours();
+}
+
+export interface TimeGreeting {
+  greeting: string;
+  subtitle: string;
+}
+
+/** 根据当前时间段返回问候语和副标题，使用上海时区保证一致性。 */
+export function getTimeGreeting(now: Date = new Date()): TimeGreeting {
+  const hour = getShanghaiHour(now);
+  if (hour >= 5 && hour < 11) {
+    return { greeting: "早上好", subtitle: "今天也从一小步开始" };
+  }
+  if (hour >= 11 && hour < 13) {
+    return { greeting: "中午好", subtitle: "午间稍作休息，再继续推进" };
+  }
+  if (hour >= 13 && hour < 18) {
+    return { greeting: "下午好", subtitle: "保持节奏，一件一件来" };
+  }
+  if (hour >= 18 && hour < 23) {
+    return { greeting: "晚上好", subtitle: "回顾今天，收住节奏" };
+  }
+  return { greeting: "夜深了", subtitle: "早点休息，明天继续" };
+}
