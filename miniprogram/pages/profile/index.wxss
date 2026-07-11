@@ -49,8 +49,8 @@ page { background: #f8f5ec; }
 .journey-ring { position: relative; z-index: 2; width: 210rpx; height: 210rpx; flex: none; }
 .journey-ring__track, .journey-ring__arc { position: absolute; inset: 12rpx; box-sizing: border-box; border: 13rpx solid rgba(57,88,76,.08); border-radius: 50%; }
 .journey-ring__arc { border-color: transparent; border-top-color: #285749; border-right-color: #285749; border-bottom-color: #75978a; transform: rotate(24deg); }
-.journey-ring__route { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #c09a55; font-family: Georgia, serif; font-size: 76rpx; transform: rotate(-8deg); }
-.journey-ring__sun { position: absolute; top: 67rpx; right: 66rpx; width: 9rpx; height: 9rpx; border: 3rpx solid #c09a55; border-radius: 50%; }
+.journey-ring__route { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.journey-ring__route image { display: block; width: 118rpx; height: 118rpx; transform: translateY(5rpx); }
 .journey-ring__dot { position: absolute; right: 13rpx; bottom: 44rpx; width: 14rpx; height: 14rpx; border: 4rpx solid #fffdf8; border-radius: 50%; background: #c29d58; box-shadow: 0 3rpx 8rpx rgba(100,73,30,.2); }
 
 .weekly-card { min-height: 178rpx; padding: 22rpx 36rpx 24rpx; }

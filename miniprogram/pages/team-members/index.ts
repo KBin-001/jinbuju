@@ -1,66 +1,57 @@
-import { addDays } from "../../utils/date";
-import { getMyTeam, sendEncouragement } from "../../services/team";
+import { canManageTeam, getMyTeam, sendEncouragement } from "../../services/team";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
-import { EncouragementType, TeamMember } from "../../types/team";
+import {
+  EncouragementType,
+  MemberTodayStatus,
+  Team,
+  TeamMember,
+  TeamMemberActionDetail,
+} from "../../types/team";
 
-type MemberRole = "leader" | "admin" | "member";
-type MemberStatus = "checked" | "active" | "normal" | "unchecked";
-type FilterKey = "all" | "active" | "weekly" | "admin";
-
-interface MemberView {
-  id: string;
-  nickname: string;
-  avatar: string;
-  avatarText: string;
-  avatarClass: string;
-  role: MemberRole;
-  roleText: string;
-  weeklyFocusMinutes: number;
-  streakDays: number;
-  status: MemberStatus;
-  statusText: string;
-  isSelf: boolean;
-}
-
-interface TrendDay {
-  dateLabel: string;
-  minutes: number;
-  isToday: boolean;
-  heightPercent: number;
-}
-
-interface RecentAction {
-  id: string;
-  title: string;
-  minutes: number;
-  dateText: string;
-}
-
-interface MemberDetailView {
-  id: string;
-  nickname: string;
-  avatar: string;
-  avatarText: string;
-  avatarClass: string;
-  role: MemberRole;
-  roleText: string;
-  status: MemberStatus;
-  statusText: string;
-  joinedDays: number;
-  statusCopy: string;
-  weeklyFocusMinutes: number;
-  streakDays: number;
-  maxStreakDays: number;
-  weeklyTrend: TrendDay[];
-  recentActions: RecentAction[];
-  isSelf: boolean;
-  canEncourage: boolean;
-  encouragedToday: boolean;
-}
+type MemberState = "completed" | "doing" | "pending";
+type FilterKey = "all" | MemberState;
 
 interface FilterTab {
   key: FilterKey;
   label: string;
+}
+
+interface MemberView {
+  id: string;
+  name: string;
+  avatar: string;
+  avatarText: string;
+  avatarClass: string;
+  state: MemberState;
+  statusText: string;
+  roleText: string;
+  isOwner: boolean;
+  isSelf: boolean;
+  actionSummary: string;
+  actualMinutes: number;
+  progressKnown: boolean;
+  progressPercent: number;
+  progressText: string;
+  canEncourage: boolean;
+  encouragedToday: boolean;
+}
+
+interface DetailActionRow {
+  id: string;
+  title: string;
+  statusText: string;
+  statusClass: MemberState;
+  minutesText: string;
+}
+
+interface MemberDetailView extends MemberView {
+  statusCopy: string;
+  completedActionsText: string;
+  actionTotalText: string;
+  updatedText: string;
+  detailVisible: boolean;
+  privacyMessage: string;
+  actions: DetailActionRow[];
 }
 
 interface TeamOverview {
@@ -70,17 +61,24 @@ interface TeamOverview {
   memberCount: number;
   maxMembers: number;
   roomCode: string;
-  createdAt: string;
   completedMembers: number;
-  activeMembers: number;
+  doingMembers: number;
   pendingMembers: number;
 }
 
+interface ProgressView {
+  known: boolean;
+  percent: number;
+  text: string;
+  completed: number;
+  total: number;
+}
+
 const FILTER_TABS: FilterTab[] = [
-  { key: "all", label: "全部成员" },
-  { key: "active", label: "今日有行动" },
-  { key: "weekly", label: "投入较多" },
-  { key: "admin", label: "管理员" },
+  { key: "all", label: "全部" },
+  { key: "completed", label: "已完成" },
+  { key: "doing", label: "进行中" },
+  { key: "pending", label: "待开始" },
 ];
 
 const ENCOURAGEMENT_OPTIONS: Array<{ type: EncouragementType; label: string }> = [
@@ -90,16 +88,7 @@ const ENCOURAGEMENT_OPTIONS: Array<{ type: EncouragementType; label: string }> =
   { type: "stay_together", label: "一起坚持" },
 ];
 
-const STATUS_COPY: Record<MemberStatus, string> = {
-  checked: "最近坚持很好，继续保持！",
-  active: "状态不错，今天继续加油。",
-  normal: "稍微慢一点也没关系，先迈出一小步。",
-  unchecked: "今天还没开始，先从最简单的一步开始吧。",
-};
-
 const AVATAR_GRADIENTS = ["grad-1", "grad-2", "grad-3", "grad-4", "grad-5", "grad-6"];
-
-const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 
 function hashSeed(value: string): number {
   let hash = 0;
@@ -113,219 +102,163 @@ function pickAvatarClass(seed: string): string {
   return AVATAR_GRADIENTS[hashSeed(seed) % AVATAR_GRADIENTS.length];
 }
 
-function deriveRole(member: TeamMember, firstNonSelfId: string | null): { role: MemberRole; roleText: string } {
-  if (member.isSelf) return { role: "leader", roleText: "队长" };
-  if (firstNonSelfId && member.id === firstNonSelfId) return { role: "admin", roleText: "管理员" };
-  return { role: "member", roleText: "成员" };
+function stateOf(status: MemberTodayStatus): MemberState {
+  if (status === "completed") return "completed";
+  if (status === "partial") return "doing";
+  return "pending";
 }
 
-function deriveWeeklyFocus(member: TeamMember): number {
-  if (member.isSelf) return Math.min(200, Math.max(member.growthMinutes * 4, 60));
-  const seed = hashSeed(member.userId || member.id);
-  const statusBase =
-    member.todayStatus === "completed"
-      ? 120
-      : member.todayStatus === "partial"
-        ? 90
-        : member.todayStatus === "not_started"
-          ? 45
-          : 25;
-  return statusBase + (seed % 40);
+function statusTextOf(status: MemberTodayStatus): string {
+  if (status === "completed") return "已完成";
+  if (status === "partial") return "进行中";
+  if (status === "missed") return "今天休息";
+  return "待开始";
 }
 
-function deriveStreakDays(member: TeamMember): number {
-  const seed = hashSeed(member.userId || member.id);
-  switch (member.todayStatus) {
-    case "completed":
-      return 3 + (seed % 4);
-    case "partial":
-      return 2 + (seed % 2);
-    case "not_started":
-      return seed % 2;
-    case "missed":
-    default:
-      return 0;
+function actionStatusText(detail: TeamMemberActionDetail): string {
+  if (detail.status === "completed") return "已完成";
+  if (detail.status === "partial") return "完成一部分";
+  if (detail.status === "missed") return "今天休息";
+  return "待开始";
+}
+
+function displayNameOf(member: TeamMember): string {
+  return member.displayMode === "anonymous"
+    ? (member.anonymousName || "行动伙伴")
+    : (member.nickname || "行动伙伴");
+}
+
+function canShowDetails(team: Team, member: TeamMember): boolean {
+  if (member.isSelf) return true;
+  if (member.displayMode === "anonymous") return false;
+  const audienceAllowed = team.actionDetailVisibility === "all_members"
+    || (team.actionDetailVisibility === "admins_only" && canManageTeam(team));
+  return audienceAllowed && member.taskDetailVisible;
+}
+
+function buildProgress(member: TeamMember, detailVisible: boolean): ProgressView {
+  const details = detailVisible && Array.isArray(member.todayActionDetails)
+    ? member.todayActionDetails
+    : [];
+  if (details.length > 0) {
+    const completed = details.filter((detail) => detail.status === "completed").length;
+    const percent = Math.round((completed / details.length) * 100);
+    return { known: true, percent, text: `${percent}%`, completed, total: details.length };
   }
-}
-
-function deriveMaxStreakDays(member: TeamMember, currentStreak: number): number {
-  const seed = hashSeed((member.userId || member.id) + "_max");
-  return Math.max(currentStreak, 18 + (seed % 15));
-}
-
-function deriveStatus(member: TeamMember): { status: MemberStatus; statusText: string } {
-  switch (member.todayStatus) {
-    case "completed":
-      return { status: "checked", statusText: "今日已打卡" };
-    case "partial":
-      return { status: "active", statusText: "活跃" };
-    case "missed":
-      return { status: "unchecked", statusText: "未打卡" };
-    case "not_started":
-    default: {
-      const seed = hashSeed(member.userId || member.id);
-      return seed % 2 === 0
-        ? { status: "normal", statusText: "一般" }
-        : { status: "unchecked", statusText: "未打卡" };
-    }
+  if (member.todayStatus === "completed") {
+    return { known: true, percent: 100, text: "100%", completed: 0, total: 0 };
   }
+  if (member.todayStatus === "partial") {
+    return { known: false, percent: 38, text: "进行中", completed: 0, total: 0 };
+  }
+  return { known: true, percent: 0, text: "0%", completed: 0, total: 0 };
 }
 
-function toMemberView(member: TeamMember, firstNonSelfId: string | null): MemberView {
-  const { role, roleText } = deriveRole(member, firstNonSelfId);
-  const { status, statusText } = deriveStatus(member);
-  const anonymous = member.displayMode === "anonymous";
-  const displayName = anonymous ? (member.anonymousName || "行动伙伴") : member.nickname;
+function genericActionSummary(status: MemberTodayStatus): string {
+  if (status === "completed") return "今天的行动已经完成";
+  if (status === "partial") return "正在稳步推进今天的行动";
+  if (status === "missed") return "今天选择休息一下";
+  return "今天还未开始行动";
+}
+
+function actionSummaryOf(member: TeamMember, detailVisible: boolean): string {
+  const details = detailVisible ? (member.todayActionDetails || []) : [];
+  if (details.length === 0) return genericActionSummary(member.todayStatus);
+  const preferred = member.todayStatus === "completed"
+    ? details.find((detail) => detail.status === "completed")
+    : details.find((detail) => detail.status !== "completed");
+  return preferred?.title || member.todayActionTitle || genericActionSummary(member.todayStatus);
+}
+
+function buildMemberView(team: Team, member: TeamMember): MemberView {
+  const name = displayNameOf(member);
+  const detailVisible = canShowDetails(team, member);
+  const progress = buildProgress(member, detailVisible);
+  const isOwner = team.ownerId === member.userId;
   return {
     id: member.id,
-    nickname: displayName,
-    avatar: member.avatar || "",
-    avatarText: displayName.slice(0, 1),
-    avatarClass: pickAvatarClass(member.userId || member.id || displayName),
-    role,
-    roleText,
-    weeklyFocusMinutes: deriveWeeklyFocus(member),
-    streakDays: deriveStreakDays(member),
-    status,
-    statusText,
+    name,
+    avatar: member.displayMode === "anonymous" ? "" : (member.avatar || ""),
+    avatarText: name.slice(0, 1),
+    avatarClass: pickAvatarClass(member.userId || member.id || name),
+    state: stateOf(member.todayStatus),
+    statusText: statusTextOf(member.todayStatus),
+    roleText: isOwner ? "创建者" : (member.isSelf ? "我" : ""),
+    isOwner,
     isSelf: member.isSelf,
+    actionSummary: actionSummaryOf(member, detailVisible),
+    actualMinutes: Math.max(0, member.growthMinutes || 0),
+    progressKnown: progress.known,
+    progressPercent: progress.percent,
+    progressText: progress.text,
+    canEncourage: !member.isSelf && !member.encouragedByMeToday,
+    encouragedToday: member.encouragedByMeToday,
   };
 }
 
-function buildMemberViews(members: TeamMember[]): MemberView[] {
-  const firstNonSelf = members.find((member) => !member.isSelf);
-  const firstNonSelfId = firstNonSelf ? firstNonSelf.id : null;
-  return members.map((member) => toMemberView(member, firstNonSelfId));
-}
-
-/** 按本周专注时长从高到低排序（带稳定 tie-breaker） */
-function sortByFocus(members: MemberView[]): MemberView[] {
-  return members.slice().sort((a, b) => {
-    if (b.weeklyFocusMinutes !== a.weeklyFocusMinutes) {
-      return b.weeklyFocusMinutes - a.weeklyFocusMinutes;
-    }
-    return a.id.localeCompare(b.id);
+function applyFilter(members: MemberView[], filter: FilterKey, keyword: string): MemberView[] {
+  const normalized = keyword.trim().toLocaleLowerCase();
+  return members.filter((member) => {
+    if (normalized && !member.name.toLocaleLowerCase().includes(normalized)) return false;
+    return filter === "all" || member.state === filter;
   });
 }
 
-function applyFilter(members: MemberView[], filter: FilterKey, keyword: string): MemberView[] {
-  const trimmed = keyword.trim();
-  let list = members;
-  if (trimmed) {
-    list = list.filter((member) => member.nickname.toLowerCase().includes(trimmed.toLowerCase()));
+function formatUpdatedTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "刚刚更新";
+  const now = new Date();
+  if (date.toDateString() === now.toDateString()) {
+    return `今天 ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")} 更新`;
   }
-  switch (filter) {
-    case "active":
-      list = list.filter((member) => member.status === "checked" || member.status === "active");
-      break;
-    case "admin":
-      list = list.filter((member) => member.role === "leader" || member.role === "admin");
-      break;
-    case "weekly":
-    case "all":
-    default:
-      break;
+  return `${date.getMonth() + 1}月${date.getDate()}日更新`;
+}
+
+function privacyMessageOf(team: Team, member: TeamMember): string {
+  if (member.displayMode === "anonymous") return "这位伙伴选择匿名参与，行动明细不会公开。";
+  if (team.actionDetailVisibility === "hidden") return "小队已关闭成员行动明细展示。";
+  if (team.actionDetailVisibility === "admins_only" && !canManageTeam(team)) {
+    return "行动明细仅对小队创建者开放。";
   }
-  // 投入较多的成员优先展示，只作为浏览辅助，不做竞争排名。
-  return sortByFocus(list);
+  if (!member.taskDetailVisible) return "这位伙伴暂未开放自己的行动明细。";
+  return "今天还没有可展示的行动明细。";
 }
 
-function computeTop3(members: MemberView[]): MemberView[] {
-  return sortByFocus(members).slice(0, 3);
-}
-
-function computeJoinedDays(createdAt: string): number {
-  const created = new Date(createdAt).getTime();
-  if (Number.isNaN(created)) return 1;
-  const days = Math.floor((Date.now() - created) / DAY_MILLISECONDS);
-  return Math.max(1, days + 1);
-}
-
-function buildWeeklyTrend(member: TeamMember, weeklyFocusMinutes: number): TrendDay[] {
-  const today = new Date();
-  const todayMinutes = member.growthMinutes > 0
-    ? member.growthMinutes
-    : Math.max(15, Math.round(weeklyFocusMinutes * 0.2));
-  const raw: Array<{ dateLabel: string; minutes: number; isToday: boolean }> = [];
-  let remaining = Math.max(0, weeklyFocusMinutes - todayMinutes);
-  for (let offset = 6; offset >= 0; offset -= 1) {
-    const date = addDays(today, -offset);
-    const isToday = offset === 0;
-    if (isToday) {
-      raw.push({ dateLabel: "今天", minutes: todayMinutes, isToday: true });
-    } else {
-      const seed = hashSeed((member.userId || member.id) + date.getTime());
-      const share = Math.round((remaining / (offset)) * (0.55 + (seed % 10) / 12));
-      const minutes = Math.max(0, Math.min(share, remaining));
-      remaining -= minutes;
-      raw.push({ dateLabel: `${date.getMonth() + 1}/${date.getDate()}`, minutes, isToday: false });
-    }
-  }
-  const max = Math.max(todayMinutes, ...raw.map((item) => item.minutes), 1);
-  return raw.map((item) => ({
-    dateLabel: item.dateLabel,
-    minutes: item.minutes,
-    isToday: item.isToday,
-    heightPercent: Math.max(10, Math.round((item.minutes / max) * 100)),
-  }));
-}
-
-function buildRecentActions(member: TeamMember): RecentAction[] {
-  const actions: RecentAction[] = [];
-  const details = Array.isArray(member.todayActionDetails) ? member.todayActionDetails : [];
-  details.slice(0, 2).forEach((detail) => {
-    actions.push({
+function buildDetailActions(member: TeamMember, detailVisible: boolean): DetailActionRow[] {
+  if (!detailVisible) return [];
+  return (member.todayActionDetails || []).map((detail) => {
+    const actual = Math.max(0, detail.actualMinutes || detail.growthMinutes || 0);
+    const planned = Math.max(0, detail.estimatedMinutes || 0);
+    return {
       id: detail.id,
       title: detail.title || "今日行动",
-      minutes: detail.growthMinutes || detail.estimatedMinutes || 0,
-      dateText: "今天",
-    });
+      statusText: actionStatusText(detail),
+      statusClass: stateOf(detail.status),
+      minutesText: actual > 0 ? `实际 ${actual} 分钟` : `预计 ${planned} 分钟`,
+    };
   });
-  const goal = member.goalTitle || "";
-  const historical: Array<{ title: string; minutes: number }> = [
-    { title: goal.indexOf("英语") >= 0 ? "背 30 个单词" : "阅读一章节", minutes: 30 },
-    { title: "写日记", minutes: 15 },
-    { title: "复盘错题", minutes: 25 },
-  ];
-  historical.forEach((item, index) => {
-    const date = addDays(new Date(), -(index + 1));
-    actions.push({
-      id: `hist_${index}`,
-      title: item.title,
-      minutes: item.minutes,
-      dateText: `${date.getMonth() + 1}/${date.getDate()}`,
-    });
-  });
-  return actions.slice(0, 5);
 }
 
-function buildMemberDetail(member: TeamMember, teamCreatedAt: string, firstNonSelfId: string | null): MemberDetailView {
-  const { role, roleText } = deriveRole(member, firstNonSelfId);
-  const { status, statusText } = deriveStatus(member);
-  const anonymous = member.displayMode === "anonymous";
-  const displayName = anonymous ? (member.anonymousName || "行动伙伴") : member.nickname;
-  const streakDays = deriveStreakDays(member);
-  const weeklyFocusMinutes = deriveWeeklyFocus(member);
+function buildMemberDetail(team: Team, member: TeamMember): MemberDetailView {
+  const base = buildMemberView(team, member);
+  const detailVisible = canShowDetails(team, member);
+  const progress = buildProgress(member, detailVisible);
+  const actions = buildDetailActions(member, detailVisible);
   return {
-    id: member.id,
-    nickname: displayName,
-    avatar: member.avatar || "",
-    avatarText: displayName.slice(0, 1),
-    avatarClass: pickAvatarClass(member.userId || member.id || displayName),
-    role,
-    roleText,
-    status,
-    statusText,
-    joinedDays: computeJoinedDays(teamCreatedAt),
-    statusCopy: STATUS_COPY[status],
-    weeklyFocusMinutes,
-    streakDays,
-    maxStreakDays: deriveMaxStreakDays(member, streakDays),
-    weeklyTrend: buildWeeklyTrend(member, weeklyFocusMinutes),
-    recentActions: buildRecentActions(member),
-    isSelf: member.isSelf,
-    canEncourage: !member.isSelf && !member.encouragedByMeToday,
-    encouragedToday: member.encouragedByMeToday,
+    ...base,
+    statusCopy: member.todayStatus === "completed"
+      ? "今天的行动已经收好，保持自己的节奏就很好。"
+      : member.todayStatus === "partial"
+        ? "已经迈出了一步，剩下的可以慢慢继续。"
+        : member.todayStatus === "missed"
+          ? "偶尔休息也没关系，明天再回来。"
+          : "今天还没开始，先做最容易的一小步。",
+    completedActionsText: progress.total > 0 ? `${progress.completed}/${progress.total}` : "—",
+    actionTotalText: progress.total > 0 ? String(progress.total) : "—",
+    updatedText: formatUpdatedTime(member.updatedAt),
+    detailVisible,
+    privacyMessage: privacyMessageOf(team, member),
+    actions,
   };
 }
 
@@ -337,10 +270,10 @@ Page(withAppTheme({
     navTotalHeight: 64,
     navRightPad: 110,
     team: null as TeamOverview | null,
+    rawTeam: null as Team | null,
     allMembers: [] as MemberView[],
     rawMembers: [] as TeamMember[],
     filteredMembers: [] as MemberView[],
-    top3: [] as MemberView[],
     filterTabs: FILTER_TABS,
     activeFilter: "all" as FilterKey,
     searchKeyword: "",
@@ -352,10 +285,10 @@ Page(withAppTheme({
     const windowInfo = wx.getWindowInfo();
     const menuRect = wx.getMenuButtonBoundingClientRect();
     const statusBarHeight = windowInfo.statusBarHeight || 20;
-    const navBarHeight = menuRect && menuRect.height
+    const navBarHeight = menuRect?.height
       ? (menuRect.top - statusBarHeight) * 2 + menuRect.height
       : 44;
-    const navRightPad = menuRect && menuRect.left
+    const navRightPad = menuRect?.left
       ? windowInfo.windowWidth - menuRect.left + 8
       : 110;
     this.setData({
@@ -368,7 +301,6 @@ Page(withAppTheme({
   },
 
   onShow() {
-    // 每次进入页面都同步最新主题（用户在「我的」页切换后回来即生效）
     this.setData({ appTheme: getCurrentThemeId() });
     if (this.data.navTotalHeight > 0) this.loadMembers();
   },
@@ -378,104 +310,103 @@ Page(withAppTheme({
     if (!team) {
       this.setData({
         team: null,
+        rawTeam: null,
         allMembers: [],
         rawMembers: [],
         filteredMembers: [],
-        top3: [],
+        detailVisible: false,
+        selectedDetail: null,
       });
       return;
     }
-    const views = buildMemberViews(members);
-    const top3 = computeTop3(views);
-    const filtered = applyFilter(views, this.data.activeFilter, this.data.searchKeyword);
-    const firstNonSelf = members.find((item) => !item.isSelf);
-    const firstNonSelfId = firstNonSelf ? firstNonSelf.id : null;
-    const completedMembers = views.filter((item) => item.status === "checked").length;
-    const activeMembers = views.filter((item) => item.status === "checked" || item.status === "active").length;
-    const pendingMembers = Math.max(0, views.length - activeMembers);
-    const teamOverview: TeamOverview = {
+    const views = members.map((member) => buildMemberView(team, member));
+    const completedMembers = views.filter((member) => member.state === "completed").length;
+    const doingMembers = views.filter((member) => member.state === "doing").length;
+    const pendingMembers = Math.max(0, views.length - completedMembers - doingMembers);
+    const overview: TeamOverview = {
       name: team.name,
       avatar: team.avatar || "",
       avatarText: (team.name || "队").slice(0, 1),
       memberCount: team.memberCount,
       maxMembers: team.maxMembers,
       roomCode: team.roomCode,
-      createdAt: team.createdAt,
       completedMembers,
-      activeMembers,
+      doingMembers,
       pendingMembers,
     };
     const patch: Record<string, unknown> = {
-      team: teamOverview,
+      team: overview,
+      rawTeam: team,
       allMembers: views,
       rawMembers: members,
-      filteredMembers: filtered,
-      top3,
+      filteredMembers: applyFilter(views, this.data.activeFilter, this.data.searchKeyword),
     };
     if (this.data.detailVisible && this.data.selectedDetail) {
-      const current = members.find((item) => item.id === this.data.selectedDetail!.id);
-      if (current) patch.selectedDetail = buildMemberDetail(current, team.createdAt, firstNonSelfId);
+      const current = members.find((member) => member.id === this.data.selectedDetail!.id);
+      if (current) patch.selectedDetail = buildMemberDetail(team, current);
     }
     this.setData(patch);
   },
 
   goBack() {
     const pages = getCurrentPages();
-    if (pages.length > 1) {
-      wx.navigateBack();
-    } else {
-      wx.switchTab({ url: "/pages/team/index" });
-    }
+    if (pages.length > 1) wx.navigateBack();
+    else wx.switchTab({ url: "/pages/team/index" });
   },
 
-  onSearchInput(event: { detail: { value: string } }) {
+  onSearchInput(event: { detail: { value?: string } }) {
     const keyword = String(event.detail.value || "");
-    const filtered = applyFilter(this.data.allMembers, this.data.activeFilter, keyword);
-    this.setData({ searchKeyword: keyword, filteredMembers: filtered });
+    this.setData({
+      searchKeyword: keyword,
+      filteredMembers: applyFilter(this.data.allMembers, this.data.activeFilter, keyword),
+    });
   },
 
   onSearchClear() {
-    const filtered = applyFilter(this.data.allMembers, this.data.activeFilter, "");
-    this.setData({ searchKeyword: "", filteredMembers: filtered });
+    this.setData({
+      searchKeyword: "",
+      filteredMembers: applyFilter(this.data.allMembers, this.data.activeFilter, ""),
+    });
   },
 
-  setFilter(event: { currentTarget: { dataset: { key?: string } } }) {
-    const key = String(event.currentTarget.dataset.key || "all") as FilterKey;
-    if (key === this.data.activeFilter) return;
-    const filtered = applyFilter(this.data.allMembers, key, this.data.searchKeyword);
-    this.setData({ activeFilter: key, filteredMembers: filtered });
+  setFilter(event: { currentTarget: { dataset: { key?: FilterKey } } }) {
+    const key = event.currentTarget.dataset.key || "all";
+    this.setData({
+      activeFilter: key,
+      filteredMembers: applyFilter(this.data.allMembers, key, this.data.searchKeyword),
+    });
   },
 
-  viewAllRanking() {
-    const key: FilterKey = "weekly";
-    const filtered = applyFilter(this.data.allMembers, key, this.data.searchKeyword);
-    this.setData({ activeFilter: key, filteredMembers: filtered });
-  },
-
-  goMemberDetail(event: { currentTarget: { dataset: { id?: string } } }) {
+  openMemberDetail(event: { currentTarget: { dataset: { id?: string } } }) {
     const memberId = String(event.currentTarget.dataset.id || "");
     const member = this.data.rawMembers.find((item) => item.id === memberId);
-    if (!member || !this.data.team) return;
-    const firstNonSelf = this.data.rawMembers.find((item) => !item.isSelf);
-    const firstNonSelfId = firstNonSelf ? firstNonSelf.id : null;
-    const detail = buildMemberDetail(member, this.data.team.createdAt, firstNonSelfId);
-    this.setData({ selectedDetail: detail, detailVisible: true });
+    if (!member || !this.data.rawTeam) return;
+    this.setData({ selectedDetail: buildMemberDetail(this.data.rawTeam, member), detailVisible: true });
   },
 
   closeDetail() {
     this.setData({ detailVisible: false, selectedDetail: null });
   },
 
-  noop() {},
+  quickEncourage(event: { currentTarget: { dataset: { id?: string } } }) {
+    const memberId = String(event.currentTarget.dataset.id || "");
+    const member = this.data.allMembers.find((item) => item.id === memberId);
+    if (!member?.canEncourage) return;
+    this.openEncouragementSheet(memberId);
+  },
 
   sendEncouragementFromDetail() {
     const detail = this.data.selectedDetail;
-    if (!detail || !detail.canEncourage) return;
+    if (!detail?.canEncourage) return;
+    this.openEncouragementSheet(detail.id);
+  },
+
+  openEncouragementSheet(memberId: string) {
     wx.showActionSheet({
       itemList: ENCOURAGEMENT_OPTIONS.map((item) => item.label),
       success: ({ tapIndex }) => {
         const option = ENCOURAGEMENT_OPTIONS[tapIndex];
-        if (option) this.submitEncouragement(detail.id, option.type);
+        if (option) this.submitEncouragement(memberId, option.type);
       },
     });
   },
@@ -490,7 +421,5 @@ Page(withAppTheme({
     }
   },
 
-  viewAllRecords() {
-    wx.showToast({ title: "完整记录开发中", icon: "none" });
-  },
+  noop() {},
 }));

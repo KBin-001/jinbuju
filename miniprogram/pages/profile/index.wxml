@@ -29,7 +29,7 @@
       <view class="journey-ring" aria-hidden="true">
         <view class="journey-ring__track"></view>
         <view class="journey-ring__arc"></view>
-        <view class="journey-ring__route"><text>⌁</text><view class="journey-ring__sun"></view></view>
+        <view class="journey-ring__route"><image src="/assets/profile/journey-mark.svg" mode="aspectFit" /></view>
         <view class="journey-ring__dot"></view>
       </view>
     </view>
