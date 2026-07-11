@@ -104,7 +104,7 @@ export function getActionTaskDisplayStatus(
     default:
       if (dateStatus === "future") return { text: "未到日期", tone: "muted" };
       if (dateStatus === "past") return { text: "待继续", tone: "warning" };
-      return { text: "待开始", tone: "neutral" };
+      return { text: "待开始", tone: "success" };
   }
 }
 

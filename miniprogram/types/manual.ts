@@ -35,6 +35,17 @@ export interface ActionTask {
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+  /** 软删除标记；保留记录用于跨设备同步删除。 */
+  deletedAt?: string;
+  /** 首次行动任务 id；顺延产生的后继任务共享同一来源。 */
+  originTaskId?: string;
+  rolloverCount?: number;
+  rescheduledAt?: string;
+  rescheduledToTaskId?: string;
+  /** 顺延前的执行状态，用于保留原日期上已经发生的真实投入。 */
+  statusBeforeReschedule?: "pending" | "partially_completed" | "skipped";
+  /** 实际发生行动的业务日期，用于稳定统计。 */
+  activityDate?: string;
 }
 
 export interface DailyCheckin {

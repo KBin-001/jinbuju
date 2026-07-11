@@ -1,4 +1,4 @@
-import { addDays, formatDate, getTodayBusinessDate } from "../utils/date";
+import { addBusinessDays, getTodayBusinessDate, isValidBusinessDate } from "../utils/date";
 import { ActionIssueReason, ActionTask, ActionTaskStatus, TodaySummary } from "../types/manual";
 import { createLocalId, readManualStore, writeManualStore } from "./manualStore";
 
@@ -8,12 +8,7 @@ function validate(input: SaveTaskInput): void {
   const title = input.title.trim();
   if (title.length < 2 || title.length > 40) throw new Error("行动标题请控制在 2～40 个字");
   if ((input.description || "").trim().length > 150) throw new Error("说明最多 150 个字");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.currentDate)) throw new Error("请选择有效日期");
-  // 验证真实日历日期，防止 "2026-02-30" 等无效日期通过正则
-  const parsed = new Date(`${input.currentDate}T00:00:00`);
-  if (Number.isNaN(parsed.getTime())) throw new Error("请选择有效日期");
-  const [y, m, d] = input.currentDate.split("-").map(Number);
-  if (parsed.getFullYear() !== y || parsed.getMonth() + 1 !== m || parsed.getDate() !== d) throw new Error("请选择有效日期");
+  if (!isValidBusinessDate(input.currentDate)) throw new Error("请选择有效日期");
   if (!Number.isInteger(input.estimatedMinutes) || input.estimatedMinutes < 5 || input.estimatedMinutes > 240) throw new Error("预计时间应为 5～240 分钟");
 }
 
@@ -29,20 +24,21 @@ export function createTask(input: SaveTaskInput): ActionTask {
 }
 
 export function getTask(taskId: string): ActionTask | null {
-  return readManualStore().tasks.find((task) => task.id === taskId) || null;
+  return readManualStore().tasks.find((task) => task.id === taskId && !task.deletedAt) || null;
 }
 
 export function getTasksByGoal(goalId: string): ActionTask[] {
   return readManualStore().tasks
-    .filter((task) => task.goalId === goalId && task.status !== "rescheduled")
+    .filter((task) => task.goalId === goalId && task.status !== "rescheduled" && !task.deletedAt)
     .sort((a, b) => b.currentDate.localeCompare(a.currentDate) || b.createdAt.localeCompare(a.createdAt));
 }
 
 export function updateTask(input: SaveTaskInput): ActionTask {
   validate(input);
   const store = readManualStore();
-  const task = store.tasks.find((item) => item.id === input.id && item.goalId === input.goalId);
+  const task = store.tasks.find((item) => item.id === input.id && item.goalId === input.goalId && !item.deletedAt);
   if (!task) throw new Error("行动不存在");
+  if (!store.goals.some((goal) => goal.id === task.goalId && goal.status === "active")) throw new Error("目标已结束，不能修改行动");
   task.title = input.title.trim(); task.description = input.description?.trim() || undefined;
   task.currentDate = input.currentDate; task.estimatedMinutes = input.estimatedMinutes;
   task.updatedAt = new Date().toISOString();
@@ -51,7 +47,7 @@ export function updateTask(input: SaveTaskInput): ActionTask {
 }
 
 export function getTasksByDate(goalId: string, date: string): ActionTask[] {
-  return readManualStore().tasks.filter((task) => task.goalId === goalId && task.currentDate === date && task.status !== "rescheduled").sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+  return readManualStore().tasks.filter((task) => task.goalId === goalId && task.currentDate === date && task.status !== "rescheduled" && !task.deletedAt).sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
 }
 
 /** 今日页只展示今天的行动，以及过去仍需继续的行动；未来行动不进入主列表。 */
@@ -60,6 +56,7 @@ export function getTodayPageTasks(goalId: string, selectedDate: string, realToda
   return readManualStore().tasks
     .filter((task) => {
       if (task.goalId !== goalId) return false;
+      if (task.deletedAt || task.status === "rescheduled") return false;
       if (task.currentDate === selectedDate) return true;
       if (selectedDate === today && task.currentDate < today && (task.status === "pending" || task.status === "partially_completed")) return true;
       return false;
@@ -69,14 +66,23 @@ export function getTodayPageTasks(goalId: string, selectedDate: string, realToda
 
 export function updateTaskStatus(taskId: string, status: ActionTaskStatus, actualMinutes?: number, issueReason?: ActionIssueReason): ActionTask {
   const store = readManualStore();
-  const task = store.tasks.find((item) => item.id === taskId);
+  const task = store.tasks.find((item) => item.id === taskId && !item.deletedAt);
   if (!task) throw new Error("行动不存在");
-  if (actualMinutes !== undefined) {
-    if (!Number.isInteger(actualMinutes)) throw new Error("实际时间请输入整数分钟");
-    if (actualMinutes < 1 || actualMinutes > 480) throw new Error("实际时间应在 1～480 分钟之间");
+  if (!store.goals.some((goal) => goal.id === task.goalId && goal.status === "active")) throw new Error("目标已结束，不能修改行动");
+  const validStatuses: ActionTaskStatus[] = ["pending", "completed", "partially_completed", "skipped", "rescheduled"];
+  if (!validStatuses.includes(status)) throw new Error("行动状态无效");
+  if (status === "rescheduled") throw new Error("请使用顺延操作");
+  const nextActualMinutes = actualMinutes === undefined ? task.actualMinutes : actualMinutes;
+  if (status === "completed" || status === "partially_completed") {
+    if (!Number.isInteger(nextActualMinutes)) throw new Error("实际时间请输入整数分钟");
+    if ((nextActualMinutes as number) < 1 || (nextActualMinutes as number) > 480) throw new Error("实际时间应在 1～480 分钟之间");
   }
   const now = new Date().toISOString();
-  task.status = status; task.actualMinutes = actualMinutes; task.issueReason = issueReason; task.updatedAt = now;
+  task.status = status;
+  task.actualMinutes = status === "completed" || status === "partially_completed" ? nextActualMinutes : undefined;
+  task.issueReason = status === "partially_completed" || status === "skipped" ? issueReason : undefined;
+  task.activityDate = status === "completed" || status === "partially_completed" ? getTodayBusinessDate() : undefined;
+  task.updatedAt = now;
   task.completedAt = status === "completed" ? now : undefined;
   writeManualStore(store);
   return task;
@@ -87,47 +93,82 @@ export function updateTaskCompletionTime(taskId: string, businessDate: string, t
   const [hour, minute] = time.split(":").map(Number);
   if (!Number.isInteger(hour) || hour < 0 || hour > 23 || !Number.isInteger(minute) || minute < 0 || minute > 59) throw new Error("请选择有效的完成时间");
   const store = readManualStore();
-  const task = store.tasks.find((item) => item.id === taskId);
+  const task = store.tasks.find((item) => item.id === taskId && !item.deletedAt);
   if (!task) throw new Error("行动不存在");
   if (task.status !== "completed") throw new Error("只有已完成行动可以修改完成时间");
   if (task.currentDate !== businessDate) throw new Error("完成时间必须属于行动当天");
-  const completedAt = new Date(`${businessDate}T${time}:00`);
+  const completedAt = new Date(`${businessDate}T${time}:00+08:00`);
   if (Number.isNaN(completedAt.getTime())) throw new Error("请选择有效的完成时间");
   if (businessDate === getTodayBusinessDate() && completedAt.getTime() > Date.now()) throw new Error("完成时间不能晚于当前时间");
   task.completedAt = completedAt.toISOString();
+  task.activityDate = businessDate;
   task.updatedAt = new Date().toISOString();
   writeManualStore(store);
   return task;
 }
 
-export function rescheduleTask(taskId: string): ActionTask {
+export function rescheduleTask(taskId: string, businessToday = getTodayBusinessDate()): ActionTask {
   const store = readManualStore();
-  const task = store.tasks.find((item) => item.id === taskId);
+  const task = store.tasks.find((item) => item.id === taskId && !item.deletedAt);
   if (!task) throw new Error("行动不存在");
+  if (task.status === "rescheduled" && task.rescheduledToTaskId) {
+    const existing = store.tasks.find((item) => item.id === task.rescheduledToTaskId && !item.deletedAt);
+    if (existing) return existing;
+  }
   if (task.status === "completed") throw new Error("已完成行动无需顺延");
+  if (task.status === "rescheduled") throw new Error("行动已经顺延");
+  if (!store.goals.some((goal) => goal.id === task.goalId && goal.status === "active")) throw new Error("目标已结束，不能顺延行动");
   // 顺延到明天：基于今天业务日期 +1，确保时区一致。
   // 如果任务已在未来，则从任务当前日期 +1，避免把未来任务往回移。
-  const today = getTodayBusinessDate();
-  const baseDate = task.currentDate > today ? task.currentDate : today;
-  task.currentDate = formatDate(addDays(new Date(`${baseDate}T00:00:00`), 1));
-  task.status = "pending"; task.issueReason = undefined; task.updatedAt = new Date().toISOString();
+  const baseDate = task.currentDate > businessToday ? task.currentDate : businessToday;
+  const nextDate = addBusinessDays(baseDate, 1);
+  const now = new Date().toISOString();
+  const successor: ActionTask = {
+    ...task,
+    id: createLocalId("task"),
+    currentDate: nextDate,
+    status: "pending",
+    actualMinutes: undefined,
+    issueReason: undefined,
+    completedAt: undefined,
+    activityDate: undefined,
+    deletedAt: undefined,
+    originTaskId: task.originTaskId || task.id,
+    rolloverCount: Number(task.rolloverCount || 0) + 1,
+    rescheduledAt: undefined,
+    rescheduledToTaskId: undefined,
+    statusBeforeReschedule: undefined,
+    createdAt: now,
+    updatedAt: now,
+  };
+  task.statusBeforeReschedule = task.status as "pending" | "partially_completed" | "skipped";
+  task.status = "rescheduled";
+  task.rescheduledAt = now;
+  task.rescheduledToTaskId = successor.id;
+  task.updatedAt = now;
+  store.tasks.push(successor);
   writeManualStore(store);
-  return task;
+  return successor;
 }
 
 export function deleteTask(taskId: string): void {
   const store = readManualStore();
-  const next = store.tasks.filter((task) => task.id !== taskId);
-  if (next.length === store.tasks.length) throw new Error("行动不存在");
-  store.tasks = next;
+  const task = store.tasks.find((item) => item.id === taskId && !item.deletedAt);
+  if (!task) throw new Error("行动不存在");
+  const now = new Date().toISOString();
+  task.deletedAt = now;
+  // 兼容仍按 status 过滤的历史统计读取方；deletedAt 仍是同步删除的唯一事实字段。
+  task.status = "rescheduled";
+  task.updatedAt = now;
   writeManualStore(store);
 }
 
 export function calculateTodaySummary(tasks: ActionTask[]): TodaySummary {
-  const summary = tasks.reduce<TodaySummary>((acc, task) => {
+  const eligibleTasks = tasks.filter((task) => !task.deletedAt && task.status !== "rescheduled" && task.status !== "skipped");
+  const summary = eligibleTasks.reduce<TodaySummary>((acc, task) => {
     acc.totalCount += 1;
     acc.estimatedMinutes += task.estimatedMinutes;
-    acc.actualMinutes += task.actualMinutes || 0;
+    if (task.status === "completed" || task.status === "partially_completed") acc.actualMinutes += task.actualMinutes || 0;
     if (task.status === "completed") acc.completedCount += 1;
     else if (task.status === "partially_completed") acc.partialCount += 1;
     return acc;

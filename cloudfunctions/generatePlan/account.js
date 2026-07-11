@@ -17,7 +17,7 @@ const maskPhone = (phone) => String(phone || "").replace(/^(\d{3})\d+(\d{4})$/, 
 function publicProfile(user) {
   const joinedAt = user.createdAt instanceof Date ? user.createdAt.toISOString() : String(user.createdAt || "");
   return {
-    nickname: String(user.nickname || "阿岚"),
+    nickname: String(user.nickname || "行动伙伴"),
     avatarUrl: String(user.avatarUrl || ""),
     profileSource: user.profileSource === "wechat" ? "wechat" : "custom",
     useProfileInTeam: user.useProfileInTeam !== false,
@@ -47,7 +47,7 @@ async function resolveAccount(openid, create = true) {
     const current = await transaction.collection("users").doc(userId).get().catch(() => null);
     if (!current || !current.data) {
       await transaction.collection("users").doc(userId).set({
-        data: { userId, status: "active", nickname: "阿岚", avatarUrl: "", useProfileInTeam: true, createdAt: now, updatedAt: now },
+        data: { userId, status: "active", nickname: "行动伙伴", avatarUrl: "", useProfileInTeam: true, createdAt: now, updatedAt: now },
       });
     } else {
       await transaction.collection("users").doc(userId).update({ data: { userId, status: "active", updatedAt: now } });
@@ -136,19 +136,48 @@ async function importLegacyProfile(openid, event) {
 
 const OWNED_COLLECTIONS = [
   "goals", "plans", "tasks", "checkins", "stage_reviews", "stage_previews", "plan_generation_requests",
+  "stage_generation_requests", "goal_analysis_drafts", "stage_preview_versions", "progress_ai_snapshots",
   "manual_goals", "manual_tasks", "manual_checkins", "manual_archived_goals", "achievement_unlocks",
-  "spark_checkins", "coach_action_proposals", "team_members", "team_activities", "encouragements",
+  "spark_checkins", "coach_action_proposals", "team_members", "team_events", "team_join_requests",
 ];
+
+async function leaveTeamBeforeAccountDeletion(userId) {
+  const membershipResult = await db.collection("team_members").where({ userId, status: "active" }).limit(1).get().catch(() => null);
+  const membership = membershipResult && membershipResult.data && membershipResult.data[0];
+  if (!membership) return;
+  if (membership.role === "owner") {
+    throw accountError("OWNER_TRANSFER_REQUIRED", "请先转让或解散你管理的小队，再注销账号。");
+  }
+  await db.runTransaction(async (transaction) => {
+    const teamResult = await transaction.collection("teams").doc(membership.teamId).get().catch(() => null);
+    const team = teamResult && teamResult.data;
+    if (team && team.status === "active") {
+      await transaction.collection("teams").doc(membership.teamId).update({
+        data: {
+          memberCount: Math.max(0, Number(team.memberCount || 1) - 1),
+          version: db.command.inc(1),
+          updatedAt: db.serverDate(),
+        },
+      });
+    }
+    await transaction.collection("team_members").doc(membership._id).update({
+      data: { status: "left", leftAt: db.serverDate(), updatedAt: db.serverDate() },
+    });
+  });
+}
 
 async function deleteCloudAccount(openid, event) {
   if (String(event && event.confirmation || "") !== "DELETE") throw accountError("CONFIRMATION_REQUIRED", "请输入确认文字后再注销账号。");
   const resolved = await resolveAccount(openid, false);
   if (!resolved) return { deleted: true };
+  await leaveTeamBeforeAccountDeletion(resolved.userId);
   for (const name of OWNED_COLLECTIONS) {
     const collection = db.collection(name);
     await collection.where({ _openid: openid }).remove().catch(() => null);
     await collection.where({ userId: resolved.userId }).remove().catch(() => null);
   }
+  await db.collection("encouragements").where({ senderUserId: resolved.userId }).remove().catch(() => null);
+  await db.collection("encouragements").where({ receiverUserId: resolved.userId }).remove().catch(() => null);
   await db.collection("account_bindings").where({ userId: resolved.userId }).remove().catch(() => null);
   await db.collection("users").doc(resolved.userId).remove().catch(() => null);
   return { deleted: true };

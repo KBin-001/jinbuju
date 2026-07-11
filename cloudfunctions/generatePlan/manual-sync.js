@@ -33,11 +33,42 @@ function validIso(value) {
   return typeof value === "string" && !Number.isNaN(Date.parse(value));
 }
 
+function validBusinessDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return false;
+  const [year, month, day] = String(value).split("-").map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() + 1 === month && parsed.getUTCDate() === day;
+}
+
+function shouldReplace(existing, incoming) {
+  if (!existing) return true;
+  const currentTime = String(existing.updatedAt || "");
+  const incomingTime = String(incoming.updatedAt || "");
+  return incomingTime > currentTime || (incomingTime === currentTime && incoming.deletedAt && !existing.deletedAt);
+}
+
 function cleanRecord(raw, kind) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw createError("MANUAL_SYNC_INVALID", `${kind}数据无效。`);
   const id = String(raw.id || "").trim();
   if (!/^[A-Za-z0-9_-]{3,100}$/.test(id)) throw createError("MANUAL_SYNC_INVALID", `${kind}标识无效。`);
   const updatedAt = validIso(raw.updatedAt) ? raw.updatedAt : validIso(raw.createdAt) ? raw.createdAt : new Date(0).toISOString();
+  if (Date.parse(updatedAt) > Date.now() + 5 * 60 * 1000) throw createError("MANUAL_SYNC_INVALID", `${kind}更新时间无效。`);
+  if (raw.deletedAt && !validIso(raw.deletedAt)) throw createError("MANUAL_SYNC_INVALID", `${kind}删除时间无效。`);
+  if (kind === "目标") {
+    if (typeof raw.title !== "string" || !raw.title.trim() || !["active", "completed", "ended", "archived"].includes(raw.status)) {
+      throw createError("MANUAL_SYNC_INVALID", "目标数据无效。");
+    }
+  }
+  if (kind === "行动") {
+    if (typeof raw.goalId !== "string" || !raw.goalId || typeof raw.title !== "string" || !raw.title.trim()) throw createError("MANUAL_SYNC_INVALID", "行动数据无效。");
+    if (!validBusinessDate(raw.currentDate)) throw createError("MANUAL_SYNC_INVALID", "行动日期无效。");
+    if (!["pending", "completed", "partially_completed", "skipped", "rescheduled"].includes(raw.status)) throw createError("MANUAL_SYNC_INVALID", "行动状态无效。");
+    if (!Number.isInteger(raw.estimatedMinutes) || raw.estimatedMinutes < 5 || raw.estimatedMinutes > 240) throw createError("MANUAL_SYNC_INVALID", "行动预计时间无效。");
+    if (raw.actualMinutes !== undefined && (!Number.isInteger(raw.actualMinutes) || raw.actualMinutes < 1 || raw.actualMinutes > 480)) throw createError("MANUAL_SYNC_INVALID", "行动实际时间无效。");
+  }
+  if (kind === "打卡" && (typeof raw.goalId !== "string" || !raw.goalId || !validBusinessDate(raw.businessDate))) {
+    throw createError("MANUAL_SYNC_INVALID", "打卡数据无效。");
+  }
   return { ...raw, id, updatedAt };
 }
 
@@ -45,6 +76,7 @@ function publicRecord(value) {
   const next = { ...value };
   delete next._id;
   delete next._openid;
+  delete next.userId;
   delete next.serverUpdatedAt;
   return next;
 }
@@ -81,24 +113,44 @@ function ensureManualCollections() {
   return collectionsReady;
 }
 
-async function listOwned(collection, openid, limit = 500) {
-  const result = await db.collection(collection).where({ _openid: openid }).limit(limit).get();
-  return (result.data || []).map(publicRecord);
+async function listOwned(collection, openid, limit = 2000) {
+  const pageSize = 100;
+  const records = [];
+  for (let offset = 0; offset < limit; offset += pageSize) {
+    const result = await db.collection(collection).where({ _openid: openid }).skip(offset).limit(pageSize).get();
+    const page = result.data || [];
+    records.push(...page.map(publicRecord));
+    if (page.length < pageSize) break;
+  }
+  return records;
 }
 
-async function mergeCollection(openid, userId, collection, rawItems, kind) {
+async function prepareCollectionMerge(openid, collection, rawItems, kind) {
   const incoming = (Array.isArray(rawItems) ? rawItems : []).map((item) => cleanRecord(item, kind));
   const current = await listOwned(collection, openid);
   const merged = new Map(current.map((item) => [item.id, item]));
+  const changes = [];
   for (const item of incoming) {
     const existing = merged.get(item.id);
-    if (!existing || String(item.updatedAt) > String(existing.updatedAt || "")) merged.set(item.id, item);
+    if (shouldReplace(existing, item)) {
+      merged.set(item.id, item);
+      changes.push(item);
+    }
   }
-  for (const item of merged.values()) {
+  return { items: Array.from(merged.values()), changes };
+}
+
+async function persistCollectionChanges(openid, userId, collection, changes) {
+  for (const item of changes) {
     const docId = stableId(collection, `${openid}:${item.id}`);
-    await db.collection(collection).doc(docId).set({ data: { ...item, _openid: openid, userId, serverUpdatedAt: db.serverDate() } });
+    await db.runTransaction(async (transaction) => {
+      const ref = transaction.collection(collection).doc(docId);
+      const found = await ref.get().catch(() => null);
+      const existing = found && found.data ? publicRecord(found.data) : null;
+      if (!shouldReplace(existing, item)) return;
+      await ref.set({ data: { ...item, _openid: openid, userId, serverUpdatedAt: db.serverDate() } });
+    });
   }
-  return Array.from(merged.values());
 }
 
 async function syncManualData(openid, event) {
@@ -106,18 +158,32 @@ async function syncManualData(openid, event) {
   const account = await resolveAccount(openid, true);
   const store = event && event.store;
   if (!store || store.version !== 1) throw createError("MANUAL_SYNC_INVALID", "本地行动数据无效。");
-  const goals = await mergeCollection(openid, account.userId, COLLECTIONS.goals, store.goals, "目标");
+  const prepared = await Promise.all([
+    prepareCollectionMerge(openid, COLLECTIONS.goals, store.goals, "目标"),
+    prepareCollectionMerge(openid, COLLECTIONS.tasks, store.tasks, "行动"),
+    prepareCollectionMerge(openid, COLLECTIONS.checkins, store.checkins, "打卡"),
+    prepareCollectionMerge(openid, COLLECTIONS.archivedGoals, store.archivedGoals, "归档目标"),
+    prepareCollectionMerge(openid, COLLECTIONS.achievementUnlocks,
+      (store.achievementUnlocks || []).map((item) => ({ ...item, id: item.achievementId, updatedAt: item.unlockedAt })), "成就"),
+    prepareCollectionMerge(openid, COLLECTIONS.sparkCheckins,
+      (store.sparkCheckins || []).map((item) => ({ ...item, id: item.businessDate, updatedAt: item.checkedAt })), "火花签到"),
+  ]);
+  const [goalMerge, taskMerge, checkinMerge, archivedMerge, achievementMerge, sparkMerge] = prepared;
+  const goals = goalMerge.items;
+  const tasks = taskMerge.items;
+  const checkins = checkinMerge.items;
   const goalIds = new Set(goals.map((item) => item.id));
-  const tasks = await mergeCollection(openid, account.userId, COLLECTIONS.tasks, store.tasks, "行动");
-  const checkins = await mergeCollection(openid, account.userId, COLLECTIONS.checkins, store.checkins, "打卡");
-  if (tasks.some((item) => !goalIds.has(item.goalId)) || checkins.some((item) => !goalIds.has(item.goalId))) {
+  if (tasks.some((item) => !item.deletedAt && !goalIds.has(item.goalId)) || checkins.some((item) => !item.deletedAt && !goalIds.has(item.goalId))) {
     throw createError("MANUAL_SYNC_INVALID", "行动或打卡不属于当前目标。");
   }
-  const archivedGoals = await mergeCollection(openid, account.userId, COLLECTIONS.archivedGoals, store.archivedGoals, "归档目标");
-  const achievementUnlocks = await mergeCollection(openid, account.userId, COLLECTIONS.achievementUnlocks,
-    (store.achievementUnlocks || []).map((item) => ({ ...item, id: item.achievementId, updatedAt: item.unlockedAt })), "成就");
-  const sparkCheckins = await mergeCollection(openid, account.userId, COLLECTIONS.sparkCheckins,
-    (store.sparkCheckins || []).map((item) => ({ ...item, id: item.businessDate, updatedAt: item.checkedAt })), "火花签到");
+  await Promise.all([
+    persistCollectionChanges(openid, account.userId, COLLECTIONS.goals, goalMerge.changes),
+    persistCollectionChanges(openid, account.userId, COLLECTIONS.tasks, taskMerge.changes),
+    persistCollectionChanges(openid, account.userId, COLLECTIONS.checkins, checkinMerge.changes),
+    persistCollectionChanges(openid, account.userId, COLLECTIONS.archivedGoals, archivedMerge.changes),
+    persistCollectionChanges(openid, account.userId, COLLECTIONS.achievementUnlocks, achievementMerge.changes),
+    persistCollectionChanges(openid, account.userId, COLLECTIONS.sparkCheckins, sparkMerge.changes),
+  ]);
   await db.collection("users").doc(account.userId).update({ data: { legacyMigrationCompleted: true, updatedAt: db.serverDate() } });
   return {
     version: 1,
@@ -125,9 +191,9 @@ async function syncManualData(openid, event) {
     goals,
     tasks,
     checkins,
-    archivedGoals,
-    achievementUnlocks,
-    sparkCheckins,
+    archivedGoals: archivedMerge.items,
+    achievementUnlocks: achievementMerge.items,
+    sparkCheckins: sparkMerge.items,
   };
 }
 

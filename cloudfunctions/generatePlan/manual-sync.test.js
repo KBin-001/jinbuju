@@ -30,7 +30,16 @@ function createDatabase() {
           };
         },
         where(query) {
-          return { limit() { return { async get() { return { data: Array.from(records.values()).filter((item) => matches(item, query)).map(clone) }; } }; } };
+          let offset = 0;
+          let count = Number.MAX_SAFE_INTEGER;
+          const builder = {
+            skip(value) { offset = value; return builder; },
+            limit(value) { count = value; return builder; },
+            async get() {
+              return { data: Array.from(records.values()).filter((item) => matches(item, query)).slice(offset, offset + count).map(clone) };
+            },
+          };
+          return builder;
         },
         limit() { return { async get() { return { data: Array.from(records.values()).map(clone) }; } }; },
       };
@@ -61,9 +70,12 @@ Module._load = function mockLoad(request, parent, isMain) {
   if (request === "./repository" && parent?.filename.endsWith("manual-sync.js")) {
     return { stableId: (prefix, key) => `${prefix}_${key}` };
   }
+  if (request === "./account" && parent?.filename.endsWith("manual-sync.js")) {
+    return { resolveAccount: async () => ({ userId: "user_test" }) };
+  }
   return originalLoad.call(this, request, parent, isMain);
 };
-const { executeCoachAction, getCoachActionStatus } = require("./manual-sync");
+const { executeCoachAction, getCoachActionStatus, syncManualData } = require("./manual-sync");
 Module._load = originalLoad;
 
 const openid = "openid_test";
@@ -78,14 +90,27 @@ function seedCreateProposal(id, overrides = {}) {
 }
 
 (async () => {
+  database.seed("users", "user_test", { userId: "user_test" });
+  const oldTime = "2026-07-01T00:00:00.000Z";
+  const newTime = "2026-07-02T00:00:00.000Z";
+  const goal = { id: "goal_sync", title: "准备考试", category: "custom", status: "active", createdAt: oldTime, updatedAt: newTime };
+  const task = { id: "task_sync", goalId: goal.id, title: "复习一章", plannedDate: "2026-07-02", currentDate: "2026-07-02", estimatedMinutes: 30, status: "pending", source: "manual", createdAt: oldTime, updatedAt: newTime };
+  const synced = await syncManualData(openid, { store: { version: 1, activeGoalId: goal.id, goals: [goal], tasks: [task], checkins: [], archivedGoals: [], achievementUnlocks: [], sparkCheckins: [] } });
+  assert.equal(synced.tasks.length, 1);
+  assert.equal(database.list("manual_tasks").some((item) => item.id === task.id), true);
+
+  const tombstone = { ...task, deletedAt: newTime };
+  const deleted = await syncManualData(openid, { store: { version: 1, activeGoalId: goal.id, goals: [goal], tasks: [tombstone], checkins: [], archivedGoals: [], achievementUnlocks: [], sparkCheckins: [] } });
+  assert.equal(deleted.tasks.find((item) => item.id === task.id).deletedAt, newTime);
+
   seedCreateProposal("proposal_ok");
   const created = await executeCoachAction(openid, { action: "executeCoachAction", proposalId: "proposal_ok", requestId: "req_ok" });
   assert.equal(created.task.title, "看NBA");
   assert.equal(database.read("coach_action_proposals", "proposal_ok").status, "executed");
-  assert.equal(database.list("manual_tasks").length, 1);
+  assert.equal(database.list("manual_tasks").length, 2);
   const repeated = await executeCoachAction(openid, { action: "executeCoachAction", proposalId: "proposal_ok", requestId: "req_repeat" });
   assert.equal(repeated.task.id, created.task.id);
-  assert.equal(database.list("manual_tasks").length, 1);
+  assert.equal(database.list("manual_tasks").length, 2);
 
   seedCreateProposal("proposal_rollback");
   database.failUpdate("coach_action_proposals", "proposal_rollback", true);

@@ -16,7 +16,7 @@ global.wx = {
 };
 
 const { createGoal, endGoal, getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } = require("../services/manualGoal.ts");
-const { createTask, getTasksByDate, getTodayPageTasks, rescheduleTask, updateTaskStatus } = require("../services/manualTask.ts");
+const { createTask, deleteTask, getTask, getTasksByDate, getTodayPageTasks, rescheduleTask, updateTaskStatus } = require("../services/manualTask.ts");
 const { getProgressSummary, recordDailyCheckin } = require("../services/manualStats.ts");
 
 const today = "2026-06-21";
@@ -27,6 +27,7 @@ assert.equal(getActiveGoals().length, 2);
 assert.equal(getActiveGoal().id, cetGoal.id);
 assert.equal(setCurrentGoal(blogGoal.id).id, blogGoal.id);
 assert.equal(getActiveGoal().id, blogGoal.id);
+assert.equal(storage.has("JINBUJU_MANUAL_SNAPSHOT_V1"), true);
 
 assert.throws(() => createTask({ goalId: blogGoal.id, title: "", currentDate: today, estimatedMinutes: 30 }));
 assert.throws(() => createTask({ goalId: blogGoal.id, title: "无效时间", currentDate: today, estimatedMinutes: 4 }));
@@ -39,7 +40,10 @@ createTask({ goalId: cetGoal.id, title: "背30个单词", currentDate: today, es
 updateTaskStatus(completed.id, "completed", 35);
 updateTaskStatus(partial.id, "partially_completed", 20, "not_enough_time");
 assert.throws(() => updateTaskStatus(pending.id, "completed", 481));
-rescheduleTask(pending.id);
+const successor = rescheduleTask(pending.id, today);
+assert.equal(successor.currentDate, "2026-06-22");
+assert.equal(successor.originTaskId, pending.id);
+assert.equal(rescheduleTask(pending.id, today).id, successor.id);
 
 assert.equal(getTasksByDate(blogGoal.id, today).length, 2);
 assert.equal(getTasksByDate(blogGoal.id, "2026-06-22").length, 1);
@@ -57,9 +61,18 @@ assert.equal(summary.totalActionDays, 1);
 assert.equal(summary.todayCompleted, 1);
 assert.equal(summary.todayTotal, 2);
 
+const deleted = createTask({ goalId: cetGoal.id, title: "临时行动", currentDate: today, estimatedMinutes: 30 });
+deleteTask(deleted.id);
+assert.equal(getTask(deleted.id), null);
+assert.equal(getTasksByDate(cetGoal.id, today).some((task) => task.id === deleted.id), false);
+const carriedPartial = createTask({ goalId: cetGoal.id, title: "完成一部分", currentDate: today, estimatedMinutes: 30 });
+updateTaskStatus(carriedPartial.id, "partially_completed", 15, "not_enough_time");
+rescheduleTask(carriedPartial.id, today);
+assert.equal(getProgressSummary(cetGoal.id, today).totalActualMinutes, 15);
+
 const archivedGoal = endGoal(blogGoal.id);
 assert.equal(archivedGoal.id, blogGoal.id);
-assert.equal(archivedGoal.actions.length, 3);
+assert.equal(archivedGoal.actions.length, 4);
 assert.equal(archivedGoal.stats.completedActions, 1);
 assert.equal(archivedGoal.stats.actualMinutes, 55);
 assert.equal(archivedGoal.stats.completionRate, 33);

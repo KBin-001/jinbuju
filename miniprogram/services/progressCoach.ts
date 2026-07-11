@@ -75,11 +75,12 @@ function callProgressCoach<T>(data: Record<string, unknown>, timeoutMilliseconds
 function rangeStart(scope: CoachRange, today: string): string | undefined {
   const todayDate = new Date(`${today}T00:00:00`);
   if (scope === "day") return today;
-  if (scope === "week") return formatDate(addDays(todayDate, -6));
+  if (scope === "week") {
+    const mondayOffset = (todayDate.getDay() + 6) % 7;
+    return formatDate(addDays(todayDate, -mondayOffset));
+  }
   if (scope === "month") {
-    const day = todayDate.getDay();
-    const mondayOffset = day === 0 ? -6 : 1 - day;
-    return formatDate(addDays(todayDate, mondayOffset - 28));
+    return formatDate(new Date(todayDate.getFullYear(), todayDate.getMonth(), 1));
   }
   return undefined;
 }
@@ -167,9 +168,9 @@ function prepareProgressCoachSnapshot(scope: CoachRange, goalId?: string, force 
   return request;
 }
 
-export function analyzeProgress(goalId: string, scope: CoachRange): Promise<ProgressCoachAnalysis> {
-  const snapshot = buildSnapshot(scope, goalId);
-  return callProgressCoach<ProgressCoachAnalysis>({ action: "analyzeProgress", goalId, scope, snapshot });
+export function analyzeProgress(goalId: string, scope: CoachRange, analysisDate = getTodayBusinessDate()): Promise<ProgressCoachAnalysis> {
+  const snapshot = buildSnapshot(scope, goalId, analysisDate);
+  return callProgressCoach<ProgressCoachAnalysis>({ action: "analyzeProgress", goalId, scope, analysisDate, snapshot });
 }
 
 export async function askProgressCoach(

@@ -52,23 +52,53 @@ export function verifyCoachRuntime(): Promise<void> {
   return verifiedRuntime;
 }
 
-export async function syncManualData(): Promise<ManualDataStore> {
-  const local = readManualStore();
-  const merged = await call<ManualDataStore>({ action: "syncManualData", store: local });
-  const achievementMap = new Map((merged.achievementUnlocks || []).map((item) => [item.achievementId, item]));
-  (local.achievementUnlocks || []).forEach((item) => {
-    if (!achievementMap.has(item.achievementId)) achievementMap.set(item.achievementId, item);
+function mergeRecords<T>(remote: T[], local: T[], keyOf: (item: T) => string, updatedAtOf: (item: T) => string): T[] {
+  const map = new Map(remote.map((item) => [keyOf(item), item]));
+  local.forEach((item) => {
+    const key = keyOf(item);
+    const existing = map.get(key);
+    const localTime = updatedAtOf(item);
+    const remoteTime = existing ? updatedAtOf(existing) : "";
+    const remoteDeleteWinsTie = existing
+      && localTime === remoteTime
+      && Boolean((existing as any).deletedAt)
+      && !Boolean((item as any).deletedAt);
+    if (!existing || localTime > remoteTime || (localTime === remoteTime && !remoteDeleteWinsTie)) map.set(key, item);
   });
-  const sparkMap = new Map((merged.sparkCheckins || []).map((item) => [item.businessDate, item]));
-  (local.sparkCheckins || []).forEach((item) => {
-    const existing = sparkMap.get(item.businessDate);
-    if (!existing || item.checkedAt < existing.checkedAt) sparkMap.set(item.businessDate, item);
+  return Array.from(map.values());
+}
+
+let pendingManualSync: Promise<ManualDataStore> | undefined;
+
+export function syncManualData(): Promise<ManualDataStore> {
+  if (pendingManualSync) return pendingManualSync;
+  const requestSnapshot = JSON.parse(JSON.stringify(readManualStore())) as ManualDataStore;
+  const pending = call<ManualDataStore>({ action: "syncManualData", store: requestSnapshot }).then((remote) => {
+    // 请求期间可能发生本地写入；以响应到达时的本地状态再次合并，避免旧响应覆盖新操作。
+    const current = readManualStore();
+    const merged: ManualDataStore = {
+      version: 1,
+      activeGoalId: current.activeGoalId || remote.activeGoalId,
+      goals: mergeRecords(remote.goals || [], current.goals || [], (item) => item.id, (item) => item.updatedAt || item.createdAt || ""),
+      tasks: mergeRecords(remote.tasks || [], current.tasks || [], (item) => item.id, (item) => item.updatedAt || item.createdAt || ""),
+      checkins: mergeRecords(remote.checkins || [], current.checkins || [], (item) => item.id, (item) => item.updatedAt || item.createdAt || ""),
+      archivedGoals: mergeRecords(remote.archivedGoals || [], current.archivedGoals || [], (item) => item.id, (item) => item.archivedAt || item.endedAt || ""),
+      achievementUnlocks: mergeRecords(remote.achievementUnlocks || [], current.achievementUnlocks || [], (item) => item.achievementId, (item) => item.unlockedAt || ""),
+      sparkCheckins: mergeRecords(remote.sparkCheckins || [], current.sparkCheckins || [], (item) => item.businessDate, (item) => item.checkedAt || "")
+        .sort((a, b) => a.businessDate.localeCompare(b.businessDate)),
+    };
+    if (!merged.goals.some((goal) => goal.id === merged.activeGoalId && goal.status === "active")) {
+      merged.activeGoalId = merged.goals.find((goal) => goal.status === "active")?.id;
+    }
+    writeManualStore(merged, { skipCloudPersist: true });
+    emit("manual:sync", merged);
+    return merged;
   });
-  merged.achievementUnlocks = Array.from(achievementMap.values());
-  merged.sparkCheckins = Array.from(sparkMap.values()).sort((a, b) => a.businessDate.localeCompare(b.businessDate));
-  writeManualStore(merged);
-  emit("manual:sync", merged);
-  return merged;
+  pendingManualSync = pending.then(
+    (value) => { pendingManualSync = undefined; return value; },
+    (error) => { pendingManualSync = undefined; throw error; },
+  );
+  return pendingManualSync;
 }
 
 function cacheCoachActionResult(result: CoachActionResult): CoachActionResult {

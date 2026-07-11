@@ -41,6 +41,8 @@ export interface ProgressCoachSuccess {
   rhythmDiagnosis: string[];
   nextSuggestions: string[];
   evidence: ProgressCoachEvidence[];
+  generatedAt?: string;
+  sourceUpdatedAt?: string;
 }
 
 export type ProgressCoachAnalysis = ProgressCoachSuccess;

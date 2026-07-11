@@ -24,6 +24,32 @@ export function getTodayBusinessDate(now: Date = new Date()): string {
   return `${year}-${pad(month)}-${pad(day)}`;
 }
 
+export function isValidBusinessDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return parsed.getUTCFullYear() === year
+    && parsed.getUTCMonth() + 1 === month
+    && parsed.getUTCDate() === day;
+}
+
+/** 只按日历字段运算业务日期，不受设备时区或夏令时影响。 */
+export function addBusinessDays(value: string, days: number): string {
+  if (!isValidBusinessDate(value) || !Number.isInteger(days)) throw new Error("无效的业务日期");
+  const [year, month, day] = value.split("-").map(Number);
+  const result = new Date(Date.UTC(year, month - 1, day + days));
+  return `${result.getUTCFullYear()}-${pad(result.getUTCMonth() + 1)}-${pad(result.getUTCDate())}`;
+}
+
+export function differenceInBusinessDays(start: string, end: string): number {
+  if (!isValidBusinessDate(start) || !isValidBusinessDate(end)) return 0;
+  const toUtc = (value: string) => {
+    const [year, month, day] = value.split("-").map(Number);
+    return Date.UTC(year, month - 1, day);
+  };
+  return Math.round((toUtc(end) - toUtc(start)) / DAY_MILLISECONDS);
+}
+
 export function addDays(date: Date, days: number): Date {
   const result = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   result.setDate(result.getDate() + days);
@@ -31,18 +57,15 @@ export function addDays(date: Date, days: number): Date {
 }
 
 export function getTomorrow(): string {
-  return formatDate(addDays(new Date(), 1));
+  return addBusinessDays(getTodayBusinessDate(), 1);
 }
 
 export function getDefaultDeadline(): string {
-  return formatDate(addDays(new Date(), 30));
+  return addBusinessDays(getTodayBusinessDate(), 30);
 }
 
 export function daysUntil(dateValue: string): number {
-  const today = new Date();
-  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-  const target = new Date(`${dateValue}T00:00:00`).getTime();
-  return Math.round((target - start) / DAY_MILLISECONDS);
+  return differenceInBusinessDays(getTodayBusinessDate(), dateValue);
 }
 
 export function formatDisplayDate(dateValue: string): string {

@@ -2,6 +2,7 @@ import { ActionTask, ArchivedGoal, DailyCheckin, Goal, ManualDataStore } from ".
 import { emit } from "../utils/eventBus";
 
 const STORAGE_KEY = "JINBUJU_MANUAL_MVP_V1";
+const SNAPSHOT_KEY = "JINBUJU_MANUAL_SNAPSHOT_V1";
 
 function emptyStore(): ManualDataStore {
   return { version: 1, goals: [], tasks: [], checkins: [], archivedGoals: [], achievementUnlocks: [], sparkCheckins: [] };
@@ -10,17 +11,39 @@ function emptyStore(): ManualDataStore {
 let memoryStore: ManualDataStore = emptyStore();
 let persistTimer: number | undefined;
 let lastPersistedJson = "";
+let hydrated = false;
+let writeGeneration = 0;
+
+function cloneStore(value: ManualDataStore): ManualDataStore {
+  return JSON.parse(JSON.stringify(value)) as ManualDataStore;
+}
+
+function ensureHydrated(): void {
+  if (hydrated) return;
+  hydrated = true;
+  const snapshot = wx.getStorageSync(SNAPSHOT_KEY) as Partial<ManualDataStore> | undefined;
+  if (snapshot?.version === 1) {
+    memoryStore = normalizeStore(snapshot);
+    lastPersistedJson = JSON.stringify(memoryStore);
+  }
+}
+
+function persistLocalSnapshot(): void {
+  wx.setStorageSync(SNAPSHOT_KEY, cloneStore(memoryStore));
+}
 
 function scheduleCloudPersist(): void {
+  const generation = ++writeGeneration;
   if (persistTimer !== undefined) clearTimeout(persistTimer);
   persistTimer = setTimeout(() => {
     persistTimer = undefined;
-    const snapshot = JSON.stringify(memoryStore);
+    const payload = cloneStore(memoryStore);
+    const snapshot = JSON.stringify(payload);
     if (snapshot === lastPersistedJson || !wx.cloud) return;
-    wx.cloud.callFunction({ name: "generatePlan", data: { action: "syncManualData", store: memoryStore } })
+    wx.cloud.callFunction({ name: "generatePlan", data: { action: "syncManualData", store: payload } })
       .then((response: any) => {
         if (!response?.result?.success) throw new Error(response?.result?.error?.message || "云端保存失败");
-        if (JSON.stringify(memoryStore) === snapshot) lastPersistedJson = snapshot;
+        if (generation === writeGeneration && JSON.stringify(memoryStore) === snapshot) lastPersistedJson = snapshot;
         emit("manual:cloud-saved", undefined);
       })
       .catch((error: Error) => emit("manual:cloud-error", error));
@@ -50,24 +73,40 @@ function normalizeStore(value: Partial<ManualDataStore>): ManualDataStore {
 
 export function loadManualStoreIntoMemory(value?: ManualDataStore): void {
   memoryStore = value ? normalizeStore(value) : emptyStore();
+  hydrated = true;
   lastPersistedJson = value ? JSON.stringify(memoryStore) : "";
+  persistLocalSnapshot();
 }
 
 export function clearLegacyManualStore(): void { wx.removeStorageSync(STORAGE_KEY); }
 
 export function readManualStore(): ManualDataStore {
-  return memoryStore;
+  ensureHydrated();
+  return cloneStore(memoryStore);
 }
 
-export function writeManualStore(value: ManualDataStore): void {
-  memoryStore = normalizeStore(value);
-  scheduleCloudPersist();
+export function writeManualStore(value: ManualDataStore, options: { skipCloudPersist?: boolean } = {}): void {
+  ensureHydrated();
+  const previous = memoryStore;
+  memoryStore = normalizeStore(cloneStore(value));
+  try {
+    persistLocalSnapshot();
+  } catch (error) {
+    memoryStore = previous;
+    throw error;
+  }
+  if (!options.skipCloudPersist) scheduleCloudPersist();
 }
 
 export function clearManualStore(): void {
   memoryStore = emptyStore();
   lastPersistedJson = "";
+  hydrated = true;
+  writeGeneration += 1;
+  if (persistTimer !== undefined) clearTimeout(persistTimer);
+  persistTimer = undefined;
   clearLegacyManualStore();
+  wx.removeStorageSync(SNAPSHOT_KEY);
 }
 
 export function createLocalId(prefix: string): string {

@@ -33,8 +33,12 @@ export function getGoals(): Goal[] {
 }
 
 function buildStats(actions: ActionTask[]): ArchivedGoalStats {
-  // 过滤掉 rescheduled（已顺延）和 skipped（今天不做），它们不应计入可见行动总数
-  const visibleActions = actions.filter((task) => task.status !== "rescheduled" && task.status !== "skipped");
+  const activeActions = actions.filter((task) => !task.deletedAt);
+  // 顺延原任务不重复计入行动数，但“完成一部分后顺延”的已投入时间仍属于历史沉淀。
+  const visibleActions = activeActions.filter((task) => task.status !== "rescheduled" && task.status !== "skipped");
+  const rescheduledActualMinutes = activeActions
+    .filter((task) => task.status === "rescheduled" && task.statusBeforeReschedule === "partially_completed")
+    .reduce((sum, task) => sum + (task.actualMinutes || 0), 0);
   const completedActions = visibleActions.filter((task) => task.status === "completed").length;
   const totalActions = visibleActions.length;
 
@@ -42,7 +46,7 @@ function buildStats(actions: ActionTask[]): ArchivedGoalStats {
     totalActions,
     completedActions,
     estimatedMinutes: visibleActions.reduce((sum, task) => sum + (task.estimatedMinutes || 0), 0),
-    actualMinutes: visibleActions.reduce((sum, task) => sum + (task.actualMinutes || 0), 0),
+    actualMinutes: visibleActions.reduce((sum, task) => sum + (task.actualMinutes || 0), 0) + rescheduledActualMinutes,
     completionRate: totalActions ? Math.round((completedActions / totalActions) * 100) : 0,
   };
 }

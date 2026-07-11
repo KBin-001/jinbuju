@@ -170,11 +170,19 @@ function normalizeSnapshot(event) {
 
 function buildPeriod(range, today, snapshot) {
   if (range === "day") return { startDate: today, endDate: today };
-  if (range === "week") return { startDate: addBusinessDays(today, -6), endDate: today };
+  if (range === "week") {
+    const date = new Date(`${today}T00:00:00Z`);
+    const mondayOffset = (date.getUTCDay() + 6) % 7;
+    return { startDate: addBusinessDays(today, -mondayOffset), endDate: addBusinessDays(today, 6 - mondayOffset) };
+  }
   if (range === "month") {
-    const day = new Date(`${today}T00:00:00Z`).getUTCDay();
-    const mondayOffset = day === 0 ? -6 : 1 - day;
-    return { startDate: addBusinessDays(today, mondayOffset - 28), endDate: today };
+    const date = new Date(`${today}T00:00:00Z`);
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth();
+    const startDate = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+    const end = new Date(Date.UTC(year, month + 1, 0));
+    const endDate = `${end.getUTCFullYear()}-${String(end.getUTCMonth() + 1).padStart(2, "0")}-${String(end.getUTCDate()).padStart(2, "0")}`;
+    return { startDate, endDate };
   }
   const candidates = snapshot.tasks.map((item) => item.currentDate)
     .concat(snapshot.checkins.map((item) => item.businessDate))
@@ -525,7 +533,15 @@ async function prepareProgressCoach(openid, event) {
 async function analyzeProgress(openid, event) {
   const snapshot = normalizeSnapshot(event);
   const saved = await saveAndReloadSnapshot(openid, snapshot);
-  return analyzeSnapshot(saved);
+  if (saved.analysis && saved.analysisSourceHash === saved.sourceHash) {
+    return { ...saved.analysis, generatedAt: saved.analysisGeneratedAt || "", sourceUpdatedAt: saved.sourceUpdatedAt || "" };
+  }
+  const analysis = await analyzeSnapshot(saved);
+  const generatedAt = new Date().toISOString();
+  await db.collection("progress_ai_snapshots").doc(saved._id).update({
+    data: { analysis, analysisSourceHash: saved.sourceHash, analysisGeneratedAt: generatedAt, updatedAt: db.serverDate() },
+  });
+  return { ...analysis, generatedAt, sourceUpdatedAt: saved.sourceUpdatedAt || "" };
 }
 
 async function askProgressCoach(openid, event, generator = generateTextWithMetadata) {
