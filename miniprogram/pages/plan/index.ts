@@ -1,8 +1,7 @@
 import { FEATURE_FLAGS } from "../../config/features";
-import { getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } from "../../services/manualGoal";
+import { getActiveGoal, getActiveGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
-import { getTasksByDate, getTasksByGoal } from "../../services/manualTask";
-import { analyzeProgress, prepareProgressCoach } from "../../services/progressCoach";
+import { getTasksByGoal } from "../../services/manualTask";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
@@ -43,6 +42,7 @@ interface TrendBar {
   minutes: number;
   actions: number;
   heightPercent: number;
+  actionHeightPercent: number;
   tooltipBottomPercent: number;
   isMax: boolean;
   isToday: boolean;
@@ -320,8 +320,15 @@ function getHeatLevel(minutes: number): HeatLevel {
   return 4;
 }
 
+function taskBusinessDate(task: ActionTask): string {
+  return task.activityDate || task.currentDate;
+}
+
 function inRange(task: ActionTask, start: string, end: string): boolean {
-  return task.currentDate >= start && task.currentDate <= end && task.status !== "rescheduled";
+  const date = taskBusinessDate(task);
+  if (task.deletedAt || task.status === "skipped") return false;
+  if (task.status === "rescheduled" && !(task.actualMinutes || 0)) return false;
+  return date >= start && date <= end;
 }
 
 function formatMonthDay(date: string): string {
@@ -487,6 +494,7 @@ function buildBarChart(
 
   const trendBars: TrendBar[] = bars.map((item, index) => {
     const heightPercent = item.minutes <= 0 ? 0 : Math.max(4, (item.minutes / maxValue) * 78);
+    const actionHeightPercent = item.actions <= 0 ? 2 : Math.max(6, (item.actions / maxActions) * 78);
     const tooltipAlign: TrendBar["tooltipAlign"] = index === 0 ? "left" : index === bars.length - 1 ? "right" : "center";
     return {
       key: item.key,
@@ -495,6 +503,7 @@ function buildBarChart(
       minutes: item.minutes,
       actions: item.actions,
       heightPercent,
+      actionHeightPercent,
       tooltipBottomPercent: Math.min(68, heightPercent),
       isMax: item.minutes > 0 && item.minutes === maxMinuteValue,
       isToday: item.isToday,
@@ -530,7 +539,7 @@ function buildWeekSummary(
 
   const taskDates = tasks
     .filter((task) => task.status === "completed" || task.status === "partially_completed")
-    .map((task) => task.currentDate);
+    .map(taskBusinessDate);
   const streakDays = computeStreakDays(taskDates, today);
 
   const todayIndex = buckets.findIndex((bucket) => bucket.key === today);
@@ -584,22 +593,21 @@ function buildMonthSummary(
   tasks: ActionTask[],
   today: string,
 ): TrendSummary {
-  const perWeek = buckets.map((bucket) => sumRange(tasks, bucket.start, bucket.end));
+  const perWeek = buckets.map((bucket) => bucket.start > today
+    ? { minutes: 0, actions: 0, totalActions: 0 }
+    : sumRange(tasks, bucket.start, bucket.end > today ? today : bucket.end));
   const totalMinutes = perWeek.reduce((sum, item) => sum + item.minutes, 0);
   const totalActions = perWeek.reduce((sum, item) => sum + item.actions, 0);
   const totalActionCount = perWeek.reduce((sum, item) => sum + item.totalActions, 0);
   const activeWeeks = perWeek.filter((item) => item.minutes > 0).length;
   const completionRate = totalActionCount > 0 ? Math.round((totalActions / totalActionCount) * 100) : 0;
-  const dayCount = buckets.reduce((sum, bucket) => {
-    const start = toDate(bucket.start);
-    const end = toDate(bucket.end);
-    return sum + Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1;
-  }, 0);
+  const monthStart = buckets[0]?.start || today;
+  const dayCount = Math.max(1, Math.round((toDate(today).getTime() - toDate(monthStart).getTime()) / (24 * 60 * 60 * 1000)) + 1);
   const avgMinutes = dayCount > 0 ? Math.round(totalMinutes / dayCount) : 0;
 
   const taskDates = tasks
     .filter((task) => task.status === "completed" || task.status === "partially_completed")
-    .map((task) => task.currentDate);
+    .map(taskBusinessDate);
   const streakDays = computeStreakDays(taskDates, today);
   const todayDate = toDate(today);
   const previousStart = formatDate(new Date(todayDate.getFullYear(), todayDate.getMonth() - 1, 1));
@@ -651,12 +659,13 @@ function buildYearHeatmap(
 
   const dayMap = new Map<string, { minutes: number; actions: number }>();
   for (const task of tasks) {
-    if (!task.currentDate.startsWith(String(year))) continue;
-    if (task.status === "rescheduled") continue;
-    const entry = dayMap.get(task.currentDate) || { minutes: 0, actions: 0 };
+    const businessDate = taskBusinessDate(task);
+    if (!businessDate.startsWith(String(year)) || task.deletedAt || task.status === "skipped") continue;
+    if (task.status === "rescheduled" && !(task.actualMinutes || 0)) continue;
+    const entry = dayMap.get(businessDate) || { minutes: 0, actions: 0 };
     entry.minutes += task.actualMinutes || 0;
     if (task.status === "completed") entry.actions += 1;
-    dayMap.set(task.currentDate, entry);
+    dayMap.set(businessDate, entry);
   }
 
   const jan1Day = jan1.getDay();
@@ -720,11 +729,12 @@ function buildYearSummary(year: number, today: string, tasks: ActionTask[]): Yea
   const activeDates: string[] = [];
 
   for (const task of tasks) {
-    if (!task.currentDate.startsWith(String(year))) continue;
-    if (task.status === "rescheduled") continue;
+    const businessDate = taskBusinessDate(task);
+    if (!businessDate.startsWith(String(year)) || task.deletedAt || task.status === "skipped") continue;
+    if (task.status === "rescheduled" && !(task.actualMinutes || 0)) continue;
     const minutes = task.actualMinutes || 0;
-    if (minutes > 0 && !activeDates.includes(task.currentDate)) {
-      activeDates.push(task.currentDate);
+    if (minutes > 0 && !activeDates.includes(businessDate)) {
+      activeDates.push(businessDate);
       checkinDays += 1;
     }
     totalMinutes += minutes;
@@ -745,13 +755,14 @@ function buildYearSummary(year: number, today: string, tasks: ActionTask[]): Yea
     if (currentStreak > maxStreakDays) maxStreakDays = currentStreak;
   }
 
-  const insufficient = checkinDays < 7;
+  const insufficient = checkinDays < 1;
   let summaryText: string;
   if (insufficient) {
-    summaryText = "今年的记录还不多，继续打卡后颜色会慢慢变深。";
+    summaryText = "完成第一次真实行动后，年度山色会从那一天开始留下记录。";
+  } else if (checkinDays < 7) {
+    summaryText = `今年已有 ${checkinDays} 天留下行动记录，继续积累后会更容易看见自己的节奏。`;
   } else {
-    const percentile = Math.min(95, Math.round((checkinDays / Math.max(1, dayOfYear)) * 100));
-    summaryText = `今年你有 ${checkinDays} 天坚持了投入，超过了 ${percentile}% 的用户 🎉`;
+    summaryText = `今年已有 ${checkinDays} 天留下行动记录，每一次投入都在形成自己的节奏。`;
   }
 
   return { checkinDays, totalMinutes, maxStreakDays, summaryText, insufficient };
@@ -762,14 +773,15 @@ function buildYearHighlights(year: number, tasks: ActionTask[]): YearHighlights 
   const monthMap = new Map<number, number>();
 
   for (const task of tasks) {
-    if (!task.currentDate.startsWith(String(year))) continue;
-    if (task.status === "rescheduled") continue;
-    const entry = dayMap.get(task.currentDate) || { minutes: 0, actions: 0 };
+    const businessDate = taskBusinessDate(task);
+    if (!businessDate.startsWith(String(year)) || task.deletedAt || task.status === "skipped") continue;
+    if (task.status === "rescheduled" && !(task.actualMinutes || 0)) continue;
+    const entry = dayMap.get(businessDate) || { minutes: 0, actions: 0 };
     entry.minutes += task.actualMinutes || 0;
     if (task.status === "completed") entry.actions += 1;
-    dayMap.set(task.currentDate, entry);
+    dayMap.set(businessDate, entry);
 
-    const month = Number(task.currentDate.slice(5, 7)) - 1;
+    const month = Number(businessDate.slice(5, 7)) - 1;
     monthMap.set(month, (monthMap.get(month) || 0) + (task.actualMinutes || 0));
   }
 
@@ -853,12 +865,26 @@ function buildMilestones(actionDays: number): { milestones: MilestoneView[]; nex
 function buildRecentRecords(tasks: ActionTask[]): RecentRecord[] {
   return tasks
     .filter((task) => task.status === "completed" || task.status === "partially_completed")
+    .sort((left, right) => String(right.completedAt || right.updatedAt).localeCompare(String(left.completedAt || left.updatedAt)))
     .slice(0, 3)
     .map((task) => ({
       id: task.id,
       title: task.title,
       statusText: task.status === "completed" ? "已完成" : "完成一部分",
-      minutesText: `${task.actualMinutes || task.estimatedMinutes} 分钟`,
+      minutesText: (task.actualMinutes || 0) > 0 ? `实际 ${task.actualMinutes} 分钟` : "未记录实际投入",
+    }));
+}
+
+function buildPendingRecords(tasks: ActionTask[], today: string): RecentRecord[] {
+  return tasks
+    .filter((task) => (task.status === "pending" || task.status === "partially_completed") && task.currentDate <= today && !task.deletedAt)
+    .sort((left, right) => right.currentDate.localeCompare(left.currentDate) || right.updatedAt.localeCompare(left.updatedAt))
+    .slice(0, 3)
+    .map((task) => ({
+      id: task.id,
+      title: task.title,
+      statusText: task.status === "partially_completed" || task.currentDate < today ? "待继续" : "待开始",
+      minutesText: `预计 ${task.estimatedMinutes} 分钟`,
     }));
 }
 
@@ -947,8 +973,7 @@ Page(withAppTheme({
     goalOptions: [] as GoalOption[],
     canSwitchGoal: false,
     goalPickerVisible: false,
-    trendLineEnabled: FEATURE_FLAGS.ENABLE_TREND_LINE,
-    chartCanvasVisible: true,
+    completionDotsEnabled: FEATURE_FLAGS.ENABLE_TREND_LINE,
     summary: null as ProgressSummary | null,
     levelLabel: "Lv.1 · 自律新兵",
     levelNumber: "Lv.1",
@@ -977,13 +1002,13 @@ Page(withAppTheme({
     nextMilestoneText: "距离下个里程碑还差 7 天",
     medalState: { achieved: false, current: true } as MedalState,
     recentRecords: [] as RecentRecord[],
+    pendingRecords: [] as RecentRecord[],
     latestRecord: null as RecentRecord | null,
     hasRecentRecords: false,
-    hasHistoryReview: false,
+    hasPendingRecords: false,
+    hasActionData: false,
   },
   focusGoalHandler: null as null | (() => void),
-  chartCanvasTimer: null as ReturnType<typeof setTimeout> | null,
-  coachRequestKey: "",
 
   onLoad() {
     this.focusGoalHandler = () => this.load();
@@ -991,10 +1016,6 @@ Page(withAppTheme({
   },
 
   onUnload() {
-    if (this.chartCanvasTimer) {
-      clearTimeout(this.chartCanvasTimer);
-      this.chartCanvasTimer = null;
-    }
     if (this.focusGoalHandler) {
       off("goal:focus:update", this.focusGoalHandler);
       this.focusGoalHandler = null;
@@ -1003,21 +1024,8 @@ Page(withAppTheme({
 
   onShow() {
     (this as any).getTabBar?.()?.syncSelected?.();
-    if (this.chartCanvasTimer) clearTimeout(this.chartCanvasTimer);
-    this.setData({ appTheme: getCurrentThemeId(), chartCanvasVisible: false });
+    this.setData({ appTheme: getCurrentThemeId() });
     this.load();
-    this.chartCanvasTimer = setTimeout(() => {
-      this.setData({ chartCanvasVisible: true }, () => wx.nextTick(() => { this.drawGoalRing(); this.drawTrendLine(); }));
-      this.chartCanvasTimer = null;
-    }, 220);
-  },
-
-  onHide() {
-    if (this.chartCanvasTimer) {
-      clearTimeout(this.chartCanvasTimer);
-      this.chartCanvasTimer = null;
-    }
-    this.setData({ chartCanvasVisible: false });
   },
 
   load() {
@@ -1028,12 +1036,17 @@ Page(withAppTheme({
       const activeGoals = getActiveGoals();
       const summary = goal ? getProgressSummary(goal.id, today) : null;
       const allTasks = goal ? getTasksByGoal(goal.id) : [];
-      const todayTasks = goal ? getTasksByDate(goal.id, today) : [];
       const rate = completionRate(summary);
       const trendView = buildTrendView(this.data.trendRange, allTasks, today);
       const milestoneResult = buildMilestones(summary?.totalActionDays || 0);
 
-      const recentRecords = buildRecentRecords(todayTasks);
+      const recentRecords = buildRecentRecords(allTasks);
+      const pendingRecords = buildPendingRecords(allTasks, today);
+      const hasActionData = allTasks.some((task) => !task.deletedAt && task.status !== "skipped" && (
+        task.status === "completed"
+        || task.status === "partially_completed"
+        || (task.actualMinutes || 0) > 0
+      ));
       const currentLevelLabel = levelLabel(summary?.totalActionDays || 0);
       const [levelNumber, levelName] = currentLevelLabel.split(" · ");
       this.setData({
@@ -1066,13 +1079,11 @@ Page(withAppTheme({
         nextMilestoneText: milestoneResult.nextText,
         medalState: milestoneResult.medalState,
         recentRecords,
+        pendingRecords,
         latestRecord: recentRecords[0] || null,
         hasRecentRecords: recentRecords.length > 0,
-        hasHistoryReview: getArchivedGoals().length > 0,
-      }, () => {
-        this.drawGoalRing();
-        this.drawTrendLine();
-        this.prepareCoach();
+        hasPendingRecords: pendingRecords.length > 0,
+        hasActionData,
       });
     } catch (error) {
       this.setData({
@@ -1088,29 +1099,23 @@ Page(withAppTheme({
 
   noop() {},
 
-  prepareCoach() {
-    const goalId = this.data.goal?.id;
-    const range = this.data.trendRange;
-    if (!goalId || range === "year") {
-      this.coachRequestKey = "";
-      this.setData({ coachStatus: "idle", coachSummary: "", coachNextStep: "" });
-      return;
-    }
-    const requestKey = `${range}:${goalId}:${getTodayBusinessDate()}`;
-    this.coachRequestKey = requestKey;
-    this.setData({ coachStatus: "loading", coachSummary: "", coachNextStep: "" });
-    prepareProgressCoach(range, goalId)
-      .then(() => analyzeProgress(goalId, range))
-      .then((analysis) => {
-        if (this.coachRequestKey !== requestKey) return;
-        this.setData({ coachStatus: "ready", coachSummary: analysis.summary, coachNextStep: analysis.nextSuggestions[0] || "继续保持当前节奏。" });
-      }, () => {
-        if (this.coachRequestKey === requestKey) this.setData({ coachStatus: "error", coachSummary: "", coachNextStep: "" });
-      });
-  },
-
   createGoal() {
     wx.navigateTo({ url: "/pages/goal-create/index" });
+  },
+
+  addTodayAction() {
+    const goalId = this.data.goal?.id;
+    if (!goalId) {
+      this.createGoal();
+      return;
+    }
+    wx.navigateTo({ url: `/pages/action-edit/index?goalId=${encodeURIComponent(goalId)}&date=${getTodayBusinessDate()}` });
+  },
+
+  openAction(event: { currentTarget: { dataset: { id?: string } } }) {
+    const taskId = String(event.currentTarget.dataset.id || "");
+    if (!taskId) return;
+    wx.navigateTo({ url: `/pages/action-edit/index?id=${encodeURIComponent(taskId)}` });
   },
 
   openGoalPicker() {
@@ -1122,12 +1127,7 @@ Page(withAppTheme({
   },
 
   closeGoalPicker() {
-    this.setData({ goalPickerVisible: false }, () => {
-      wx.nextTick(() => {
-        this.drawGoalRing();
-        this.drawTrendLine();
-      });
-    });
+    this.setData({ goalPickerVisible: false });
   },
 
   switchGoal(event: { currentTarget: { dataset: { id?: string } } }) {
@@ -1165,19 +1165,13 @@ Page(withAppTheme({
       yearHighlights: trendView.yearHighlights,
       selectedTrendItem: null,
       selectedHeatmapDay: null,
-    }, () => {
-      this.drawTrendLine();
-      this.prepareCoach();
     });
   },
 
   openAiCoach() {
-    if (this.data.trendRange === "year") {
-      wx.showToast({ title: "年度教练分析正在准备中", icon: "none" });
-      return;
-    }
     const goalId = this.data.goal?.id || "";
-    const query = [`scope=${this.data.trendRange}`];
+    const scope = this.data.trendRange === "year" ? "overall" : this.data.trendRange;
+    const query = [`scope=${scope}`];
     if (goalId) query.push(`goalId=${encodeURIComponent(goalId)}`);
     wx.navigateTo({ url: `/pages/ai-coach/index?${query.join("&")}` });
   },
@@ -1192,7 +1186,7 @@ Page(withAppTheme({
     this.setData({
       barChart: trendView.barChart,
       selectedTrendItem: trendView.barChart.bars.find((bar) => bar.active) || null,
-    }, () => this.drawTrendLine());
+    });
   },
 
   onChartBackdropTap() {
@@ -1201,7 +1195,7 @@ Page(withAppTheme({
     this.setData({
       barChart: { ...this.data.barChart, bars },
       selectedTrendItem: null,
-    }, () => this.drawTrendLine());
+    });
   },
 
   onHeatmapDayTap(event: { currentTarget: { dataset: { date?: string } } }) {
@@ -1239,110 +1233,10 @@ Page(withAppTheme({
     });
   },
 
-  drawGoalRing() {
-    if (!this.data.goal || !this.data.chartCanvasVisible || this.data.goalPickerVisible) return;
-    const query = wx.createSelectorQuery();
-    query.select("#goalRing").fields({ node: true, size: true }).exec((res) => {
-      if (!res || !res[0] || !res[0].node) return;
-      const canvas = res[0].node as { width: number; height: number; getContext: (type: "2d") => CanvasRenderingContext2D };
-      const ctx = canvas.getContext("2d");
-      const dpr = wx.getWindowInfo().pixelRatio;
-      const width = res[0].width;
-      const height = res[0].height;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-      ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, width, height);
-      const centerX = width / 2;
-      const centerY = height / 2;
-      const lineWidth = Math.max(10, width * 0.075);
-      const radius = Math.max(1, Math.min(width, height) / 2 - lineWidth);
-      const startAngle = -Math.PI / 2;
-      const progress = Math.max(0, Math.min(100, this.data.goalProgressPercent)) / 100;
-
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      ctx.strokeStyle = "#E8DDC3";
-      ctx.lineWidth = lineWidth;
-      ctx.lineCap = "round";
-      ctx.stroke();
-
-      if (progress > 0) {
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, startAngle, startAngle + Math.PI * 2 * progress);
-        ctx.strokeStyle = "#31584B";
-        ctx.lineWidth = lineWidth;
-        ctx.lineCap = "round";
-        ctx.stroke();
-      }
-    });
-  },
-
-  drawTrendLine() {
-    if (!FEATURE_FLAGS.ENABLE_TREND_LINE) return;
-    if (this.data.trendRange === "year") return;
-    const bars = this.data.barChart.bars;
-    if (bars.length === 0 || this.data.barChart.insufficient) return;
-
-    const query = wx.createSelectorQuery();
-    query.select("#trendLine").fields({ node: true, size: true }).exec((res) => {
-      if (!res || !res[0] || !res[0].node) return;
-      const canvas = res[0].node as { width: number; height: number; getContext: (type: "2d") => CanvasRenderingContext2D };
-      const ctx = canvas.getContext("2d");
-      const dpr = wx.getWindowInfo().pixelRatio;
-      const width = res[0].width;
-      const height = res[0].height;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-      ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, width, height);
-
-      const maxValue = Math.max(1, this.data.barChart.maxActions);
-      const count = bars.length;
-      const chartTopPadding = 28;
-      const chartBottomPadding = 9;
-      const drawableHeight = Math.max(1, height - chartTopPadding - chartBottomPadding);
-      const points = bars.map((bar, index) => {
-        const ratio = Math.max(0, Math.min(1, bar.actions / maxValue));
-        return {
-          x: ((index + 0.5) / count) * width,
-          y: chartTopPadding + (1 - ratio) * drawableHeight,
-        };
-      });
-
-      // 平滑曲线
-      ctx.beginPath();
-      ctx.strokeStyle = "#91A99E";
-      ctx.lineWidth = 1.5;
-      ctx.lineJoin = "round";
-      ctx.lineCap = "round";
-      if (points.length === 1) {
-        ctx.moveTo(points[0].x, points[0].y);
-        ctx.lineTo(points[0].x, points[0].y);
-      } else {
-        ctx.moveTo(points[0].x, points[0].y);
-        for (let i = 0; i < points.length - 1; i += 1) {
-          const curr = points[i];
-          const next = points[i + 1];
-          const midX = (curr.x + next.x) / 2;
-          ctx.bezierCurveTo(midX, curr.y, midX, next.y, next.x, next.y);
-        }
-      }
-      ctx.stroke();
-    });
-  },
-
   openHistoryReview() {
-    const archivedGoals = getArchivedGoals().sort((a, b) => {
-      const bTime = b.archivedAt || b.endedAt || b.createdAt;
-      const aTime = a.archivedAt || a.endedAt || a.createdAt;
-      return bTime.localeCompare(aTime);
-    });
-    const latest = archivedGoals[0];
-    if (!latest) {
-      wx.showToast({ title: "暂无历史复盘", icon: "none" });
-      return;
-    }
-    wx.navigateTo({ url: `/pages/goal-review/index?id=${latest.id}` });
+    if (!this.data.goal) return;
+    // 当前目标的每日行动、投入和完成记录由日历详情页承接；
+    // 历史目标复盘仍保留在“我的 - 历史目标”，两者不再混用。
+    wx.navigateTo({ url: "/pages/today-data/index" });
   },
 }));

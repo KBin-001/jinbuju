@@ -701,7 +701,12 @@ slogan: "",
         name: this.data.team.name,
         anonymityMode: enabled ? "anonymous" : "public",
         allowMemberInvite: this.data.team.allowMemberInvite,
+        slogan: this.data.team.slogan || "",
       });
+      // 乐观更新：云函数可能未返回 slogan，用本地值补上
+      if (data.team && !data.team.slogan && this.data.team.slogan) {
+        data.team = { ...data.team, slogan: this.data.team.slogan };
+      }
       this.applyTeamData(data.team, data.members, data.dailyStats);
       this.setData({ savingSettings: false });
       wx.showToast({ title: enabled ? "匿名模式已开启" : "匿名模式已关闭", icon: "success" });
@@ -781,6 +786,10 @@ settingsDraft: { name: team.name, slogan: team.slogan || "" } as TeamSettingsDra
         await updateTeamSettings({ name, slogan });
       }
       const data = await getMyTeam({ pageSize: 20 });
+      // 乐观更新：云函数可能未返回 slogan，用本地保存的值补上
+      if (data.team && !data.team.slogan && slogan) {
+        data.team = { ...data.team, slogan };
+      }
       this.applyTeamData(data.team, data.members, data.dailyStats);
       this.setData({ settingsVisible: false, savingSettings: false });
       wx.showToast({ title: "小队设置已保存", icon: "success" });

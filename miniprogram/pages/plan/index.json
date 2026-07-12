@@ -1,1 +1,6 @@
-{"navigationBarTitleText":"","navigationStyle":"custom","enablePullDownRefresh":false}
+{
+  "navigationBarTitleText": "",
+  "navigationStyle": "custom",
+  "enablePullDownRefresh": false,
+  "backgroundColor": "#F7F3EA"
+}

@@ -218,7 +218,7 @@
         <t-input class="settings-input" maxlength="20" value="{{settingsDraft.name}}" placeholder="输入 2–20 个字符" disabled="{{!settingsCanEditTeam}}" bindchange="inputTeamName" />
         <view class="settings-count">{{settingsDraft.name.length}} / 20</view>
         <view class="setting-label settings-slogan-label">小队宣传语</view>
-        <t-textarea class="settings-input settings-slogan-input" maxlength="30" value="{{settingsDraft.slogan}}" placeholder="例如：每天进步一点点，一起走得更远" disabled="{{!settingsCanEditTeam}}" bindchange="inputTeamSlogan" />
+        <t-input class="settings-input" maxlength="30" value="{{settingsDraft.slogan}}" placeholder="例如：每天进步一点点" disabled="{{!settingsCanEditTeam}}" bindchange="inputTeamSlogan" />
         <view class="settings-count">{{settingsDraft.slogan.length}} / 30</view>
         <view class="owner-setting-row" bindtap="openMemberManagement"><text>成员管理</text><text>›</text></view>
         <view class="owner-setting-row"><view><text>匿名模式</text><text class="owner-setting-help">成员将{{team.anonymityMode === 'anonymous' ? '匿名展示' : '按资料权限展示'}}</text></view><t-switch value="{{team.anonymityMode === 'anonymous'}}" bindchange="toggleTeamAnonymousMode" /></view>

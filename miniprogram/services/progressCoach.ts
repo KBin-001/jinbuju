@@ -94,7 +94,10 @@ function buildSnapshot(scope: CoachRange, requestedGoalId?: string, analysisDate
   const goalIds = new Set(goals.map((goal) => goal.id));
   const start = rangeStart(scope, analysisDate);
   const inRange = (date: string) => !start || (date >= start && date <= analysisDate);
-  const tasks = store.tasks.filter((task) => goalIds.has(task.goalId) && inRange(task.currentDate));
+  const tasks = store.tasks.filter((task) => {
+    const businessDate = task.activityDate || task.currentDate;
+    return goalIds.has(task.goalId) && !task.deletedAt && inRange(businessDate);
+  });
   const checkins = store.checkins.filter((item) => goalIds.has(item.goalId) && inRange(item.businessDate));
   const normalizedGoals = goals.map((goal) => ({
     id: goal.id,
@@ -111,7 +114,7 @@ function buildSnapshot(scope: CoachRange, requestedGoalId?: string, analysisDate
       goalId: task.goalId,
       title: task.title,
       plannedDate: task.plannedDate,
-      currentDate: task.currentDate,
+      currentDate: task.activityDate || task.currentDate,
       status: task.status,
       estimatedMinutes: task.estimatedMinutes,
       actualMinutes: task.actualMinutes,

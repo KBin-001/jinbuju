@@ -2,7 +2,7 @@ import { getActiveGoal, getActiveGoals, getGoal } from "../../services/manualGoa
 import { getTasksByGoal } from "../../services/manualTask";
 import { getProgressSummary } from "../../services/manualStats";
 import { getLocalUserProfile } from "../../services/profile";
-import { askProgressCoach, prepareProgressCoach } from "../../services/progressCoach";
+import { askProgressCoach } from "../../services/progressCoach";
 import { executeCoachAction } from "../../services/manualSync";
 import { getCurrentThemeId } from "../../services/theme";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
@@ -199,13 +199,7 @@ Page({
       recentActionDate: recentActionDate ? `${Number(recentActionDate.slice(5, 7))}/${Number(recentActionDate.slice(8, 10))}` : "暂无",
       judgement: judgement(stats, this.data.scopeLabel),
       bottleneck: bottleneck(stats, streakDays),
-    }, () => this.prepareContext());
-  },
-
-  prepareContext(force = false): Promise<unknown> {
-    const goalId = this.data.scope === "overall" ? undefined : this.data.goalId;
-    if (this.data.scope !== "overall" && !goalId) return Promise.reject(new Error("当前没有可以分析的目标。"));
-    return prepareProgressCoach(this.data.scope, goalId, force).catch(() => undefined);
+    });
   },
 
   goBack() { wx.navigateBack({ delta: 1 }); },

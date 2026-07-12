@@ -1,20 +1,43 @@
+const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
+
 const root = path.resolve(__dirname, "..");
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
-function assert(condition, message) { if (!condition) throw new Error(message); }
-
 const page = read("miniprogram/pages/plan/index.ts");
 const template = read("miniprogram/pages/plan/index.wxml");
+const coachPage = read("miniprogram/pages/ai-coach/index.ts");
+const coachService = read("miniprogram/services/progressCoach.ts");
 
-assert(template.includes("coachStatus === 'ready' ? 'AI 教练' : '行动总结'"), "进度页未区分真实 AI 与本地总结");
-assert(template.includes("AI 暂不可用 · 本地规则建议"), "进度页 AI 失败时未标注本地规则来源");
-assert(template.includes("AI 已读取真实行动记录"), "AI 成功状态未说明数据来源");
-assert(template.includes("正在读取真实行动记录"), "AI 加载状态未说明正在读取真实数据");
-assert(page.includes('coachStatus: "idle" as "idle" | "loading" | "ready" | "error"'), "进度页 AI 状态结构不完整");
-assert(page.includes("function buildWeekBuckets") && page.includes("mondayOffset"), "周趋势未按自然周构建");
-assert(page.includes("function buildMonthBuckets") && page.includes("monthStartDate"), "月趋势未按自然月构建");
-assert(page.includes("function trendPeriodLabel"), "趋势页缺少自然周期范围文案");
-assert(page.includes("rangeLabel"), "趋势数据未暴露统计范围标签");
+assert.match(template, /还没有目标/);
+assert.match(template, /先创建一个想推进的方向/);
+assert.match(template, /已经了解你的目标/);
+assert.match(template, /添加第一条行动后，进度会开始记录/);
+assert.match(template, /wx:if="\{\{hasActionData\}\}" class="growth-stats/);
+assert.match(template, /wx:if="\{\{hasActionData\}\}" class="trend-card/);
+assert.match(template, /最近完成/);
+assert.match(template, /待继续行动/);
+assert.match(template, /bindtap="openAiCoach"/);
+assert.match(template, /完成行动（点）/);
+assert.doesNotMatch(template, /<canvas/);
+assert.doesNotMatch(template, /trendLine/);
+assert.match(template, /growth-start-card/);
+assert.match(template, /第一步，会让远山有了方向/);
+assert((template.match(/progress-mountain-path-v2\.jpg/g) || []).length >= 4, "进度页关键区域必须保留山水品牌层次");
 
-console.log("进度页 AI 来源标签与自然周期入口检查通过");
+assert.doesNotMatch(page, /analyzeProgress\s*\(/, "进入进度页不得自动生成 AI 报告");
+assert.doesNotMatch(page, /prepareProgressCoach\s*\(/, "进入进度页不得发起 AI 上下文网络请求");
+assert.doesNotMatch(coachPage, /prepareProgressCoach\s*\(/, "打开 AI 面板不得自动发起上下文网络请求");
+assert.match(coachService, /askProgressCoach[\s\S]*await prepareProgressCoach/, "只能在用户发送问题时准备上下文并调用 AI");
+assert.match(page, /task\.activityDate \|\| task\.currentDate/, "趋势必须使用真实行动业务日期");
+assert.match(page, /task\.status === "rescheduled" && !\(task\.actualMinutes \|\| 0\)/, "顺延前真实投入必须保留");
+assert.doesNotMatch(page, /超过了 \$\{percentile\}% 的用户/, "不得伪造用户分位比较");
+assert.match(page, /const insufficient = checkinDays < 1/, "年度热力图只能在完全无记录时进入空状态");
+assert.match(coachService, /!task\.deletedAt/, "AI 上下文必须排除软删除行动");
+assert.match(page, /function buildWeekBuckets/);
+assert.match(page, /function buildMonthBuckets/);
+assert.match(page, /function trendPeriodLabel/);
+assert.match(page, /pages\/today-data\/index/, "查看历史记录必须进入当前目标的每日记录闭环");
+assert.doesNotMatch(page, /暂无历史复盘/, "当前目标历史入口不应错误依赖已归档目标");
+
+console.log("进度页三态、真实统计与 AI 按需调用契约测试通过");
