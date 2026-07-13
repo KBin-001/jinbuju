@@ -64,7 +64,8 @@ function cleanRecord(raw, kind) {
     if (!validBusinessDate(raw.currentDate)) throw createError("MANUAL_SYNC_INVALID", "行动日期无效。");
     if (!["pending", "completed", "partially_completed", "skipped", "rescheduled"].includes(raw.status)) throw createError("MANUAL_SYNC_INVALID", "行动状态无效。");
     if (!Number.isInteger(raw.estimatedMinutes) || raw.estimatedMinutes < 5 || raw.estimatedMinutes > 240) throw createError("MANUAL_SYNC_INVALID", "行动预计时间无效。");
-    if (raw.actualMinutes !== undefined && (!Number.isInteger(raw.actualMinutes) || raw.actualMinutes < 1 || raw.actualMinutes > 480)) throw createError("MANUAL_SYNC_INVALID", "行动实际时间无效。");
+    if (raw.actualMinutes !== undefined && (!Number.isInteger(raw.actualMinutes) || raw.actualMinutes < 0 || raw.actualMinutes > 480)) throw createError("MANUAL_SYNC_INVALID", "行动实际时间无效。");
+    if (raw.reflection !== undefined && (typeof raw.reflection !== "string" || raw.reflection.length > 200)) throw createError("MANUAL_SYNC_INVALID", "行动感受记录无效。");
   }
   if (kind === "打卡" && (typeof raw.goalId !== "string" || !raw.goalId || !validBusinessDate(raw.businessDate))) {
     throw createError("MANUAL_SYNC_INVALID", "打卡数据无效。");

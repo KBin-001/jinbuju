@@ -200,4 +200,6 @@
       </view>
     </view>
   </view>
+
+  <action-record-editor visible="{{recordEditorVisible}}" task="{{recordEditorTask}}" saving="{{savingRecord}}" deleting="{{deletingRecord}}" bind:close="closeRecordEditor" bind:save="saveRecordEditor" bind:delete="deleteRecordEditor" />
 </view>

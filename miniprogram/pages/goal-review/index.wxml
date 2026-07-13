@@ -46,6 +46,23 @@
         </view>
       </view>
 
+      <view class="section-card reflection-section">
+        <view class="section-head">
+          <view>
+            <text class="section-title">行动感受与收获</text>
+            <text class="section-subtitle">这些真实记录会成为以后复盘和 AI 建议的依据</text>
+          </view>
+          <text class="reflection-count">{{reflectionRecords.length}} 条</text>
+        </view>
+        <view wx:if="{{reflectionRecords.length === 0}}" class="empty-note">这段目标还没有留下感受记录。以后完成行动时写下一句话，就能逐渐看见自己的方法与变化。</view>
+        <view wx:else class="reflection-list">
+          <view wx:for="{{reflectionRecords}}" wx:key="id" class="reflection-row">
+            <view class="reflection-meta"><text>{{item.dateText}}</text><text>{{item.title}}</text></view>
+            <text class="reflection-copy">{{item.reflection}}</text>
+          </view>
+        </view>
+      </view>
+
       <view class="insight-grid">
         <view class="insight-card"><view class="insight-icon">芽</view><text class="insight-title">这次遇到的阻力</text><text class="insight-copy">{{reasonSummary}}</text></view>
         <view class="insight-card insight-card--warm"><view class="insight-icon">光</view><text class="insight-title">下次可以这样开始</text><text class="insight-copy">{{suggestion}}</text></view>

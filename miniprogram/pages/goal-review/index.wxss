@@ -50,6 +50,15 @@ page { background: #F5F7F2; }
 .action-title { min-width: 0; margin-left: 14rpx; overflow: hidden; flex: 1; font-size: 24rpx; text-overflow: ellipsis; white-space: nowrap; }
 .action-date { margin-left: 12rpx; color: #71827A; font-size: 19rpx; }.action-minutes { width: 86rpx; margin-left: 12rpx; color: #71827A; font-size: 20rpx; text-align: right; }
 
+.section-subtitle { display: block; margin-top: 8rpx; color: #7C817D; font-size: 20rpx; line-height: 30rpx; }
+.reflection-count { flex: none; margin-left: 20rpx; padding: 7rpx 15rpx; border-radius: 18rpx; background: #EDF4F0; color: #527466; font-size: 19rpx; }
+.reflection-list { margin-top: 18rpx; }
+.reflection-row { padding: 22rpx 0; border-bottom: 1rpx solid #E6EEE9; }
+.reflection-row:last-child { padding-bottom: 0; border-bottom: 0; }
+.reflection-meta { display: flex; align-items: center; gap: 14rpx; color: #7C817D; font-size: 19rpx; }
+.reflection-meta text:last-child { min-width: 0; overflow: hidden; color: #486159; text-overflow: ellipsis; white-space: nowrap; }
+.reflection-copy { display: block; margin-top: 11rpx; padding: 17rpx 19rpx; border-left: 5rpx solid #C89B4A; border-radius: 0 16rpx 16rpx 0; background: #F8F6EF; color: #3F4F49; font-size: 23rpx; line-height: 36rpx; }
+
 .insight-grid { margin-top: 24rpx; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20rpx; }
 .insight-card { position: relative; padding: 28rpx; overflow: hidden; border: 1rpx solid #D7E8DF; border-radius: 28rpx; background: #EFF8F3; }
 .insight-card--warm { background: #FFF9E8; border-color: #F0E4BB; }

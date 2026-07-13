@@ -69,6 +69,7 @@ interface ActivitySnapshot {
 interface TeamStatsView {
   todayCompletionRate: number;
   completedMembers: number;
+  startedMembers: number;
   totalMembers: number;
   totalGrowthMinutes: number;
 }
@@ -251,16 +252,23 @@ function toMemberView(member: TeamMember, team: Team | null): MemberView {
 
 function buildTeamStats(team: Team, dailyStats: TeamDailyStats | null, members: MemberView[]): TeamStatsView {
   const totalMembers = team.memberCount || members.length;
-  const completedMembers = dailyStats?.completedMembers
+  const rawCompletedMembers = dailyStats?.completedMembers
     ?? members.filter((member) => member.todayStatus === "completed").length;
-  const todayCompletionRate = dailyStats?.completionRate
+  const completedMembers = Math.max(0, Math.min(totalMembers, rawCompletedMembers));
+  const rawCompletionRate = dailyStats?.completionRate
     ?? (totalMembers > 0 ? Math.round((completedMembers / totalMembers) * 100) : 0);
-  const totalGrowthMinutes = dailyStats?.totalGrowthMinutes
-    ?? members.reduce((sum, member) => sum + (member.growthMinutes || 0), 0);
+  const todayCompletionRate = Math.max(0, Math.min(100, rawCompletionRate));
+  const rawStartedMembers = dailyStats
+    ? Math.max(0, dailyStats.completedMembers + dailyStats.partialMembers)
+    : members.filter((member) => member.todayStatus === "completed" || member.todayStatus === "partial").length;
+  const startedMembers = Math.max(completedMembers, Math.min(totalMembers, rawStartedMembers));
+  const totalGrowthMinutes = Math.max(0, dailyStats?.totalGrowthMinutes
+    ?? members.reduce((sum, member) => sum + (member.growthMinutes || 0), 0));
 
   return {
     todayCompletionRate,
     completedMembers,
+    startedMembers,
     totalMembers,
     totalGrowthMinutes,
   };
@@ -301,14 +309,14 @@ function companionActionSummary(member: MemberView): string {
 }
 
 function buildHeroAvatarSlots(members: MemberView[]): HeroAvatarSlot[] {
-  const slots = members.slice(0, 4).map((member): HeroAvatarSlot => ({
+  const slots = members.slice(0, 3).map((member): HeroAvatarSlot => ({
     id: member.id,
     avatar: member.avatar || "",
     avatarText: member.avatarText,
     isEmpty: false,
   }));
-  if (members.length > 4) {
-    slots.push({ id: "extra", avatar: "", avatarText: `+${members.length - 4}`, isEmpty: false, isExtra: true });
+  if (members.length > 3) {
+    slots.push({ id: "extra", avatar: "", avatarText: `+${members.length - 3}`, isEmpty: false, isExtra: true });
   }
   return slots;
 }
@@ -368,13 +376,16 @@ function buildSelfActionPrompt(members: MemberView[]): SelfActionPrompt {
   if (!self) return { text: "回到今日页，继续自己的节奏", buttonText: "去今日行动", allDone: false };
   const details = self.todayActionDetails || [];
   if (details.length === 0) {
-    return { text: "今天还没有行动，先添加一小步", buttonText: "去添加行动", allDone: false };
+    return { text: "今天还没有行动，先添加一小步", buttonText: "添加今日行动", allDone: false };
   }
   const remaining = details.filter((detail) => detail.status !== "completed" && detail.status !== "missed").length;
   if (remaining === 0) {
-    return { text: "今天的行动已完成，保持轻松节奏", buttonText: "查看今日", allDone: true };
+    return { text: "今天的行动已完成，保持轻松节奏", buttonText: "查看今日成果", allDone: true };
   }
-  return { text: `今天还有 ${remaining} 项行动可以继续`, buttonText: "去今日行动", allDone: false };
+  if (self.todayStatus === "partial") {
+    return { text: `已经开始，今天还有 ${remaining} 项行动可以继续`, buttonText: "继续我的行动", allDone: false };
+  }
+  return { text: `你今天还有 ${remaining} 项行动可以开始`, buttonText: "开始我的行动", allDone: false };
 }
 
 function formatMemberUpdateTime(value: string): string {
@@ -420,6 +431,7 @@ Page(withAppTheme({
     teamStats: {
       todayCompletionRate: 0,
       completedMembers: 0,
+      startedMembers: 0,
       totalMembers: 0,
       totalGrowthMinutes: 0,
     } as TeamStatsView,

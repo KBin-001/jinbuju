@@ -119,6 +119,7 @@ function buildSnapshot(scope: CoachRange, requestedGoalId?: string, analysisDate
       estimatedMinutes: task.estimatedMinutes,
       actualMinutes: task.actualMinutes,
       issueReason: task.issueReason,
+      reflection: task.reflection,
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
     })),

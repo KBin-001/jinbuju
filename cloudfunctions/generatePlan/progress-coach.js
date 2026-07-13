@@ -96,7 +96,7 @@ function normalizeGoal(raw) {
 }
 
 function normalizeTask(raw, allowedGoalIds, seenIds) {
-  assertExactKeys(raw, ["id", "goalId", "title", "plannedDate", "currentDate", "status", "estimatedMinutes", "actualMinutes", "issueReason", "createdAt", "updatedAt"], "行动");
+  assertExactKeys(raw, ["id", "goalId", "title", "plannedDate", "currentDate", "status", "estimatedMinutes", "actualMinutes", "issueReason", "reflection", "createdAt", "updatedAt"], "行动");
   const id = requiredText(raw.id, "行动标识", 3, 100);
   if (seenIds.has(id)) fail("PROGRESS_SNAPSHOT_INVALID", "行动标识重复。");
   seenIds.add(id);
@@ -105,6 +105,7 @@ function normalizeTask(raw, allowedGoalIds, seenIds) {
   const status = String(raw.status || "");
   if (!VALID_TASK_STATUSES.has(status)) fail("PROGRESS_SNAPSHOT_INVALID", "行动状态无效。");
   const issueReason = optionalText(raw.issueReason, 40);
+  const reflection = optionalText(raw.reflection, 200);
   if (issueReason && !VALID_ISSUE_REASONS.has(issueReason)) fail("PROGRESS_SNAPSHOT_INVALID", "行动问题原因无效。");
   return {
     id,
@@ -118,6 +119,7 @@ function normalizeTask(raw, allowedGoalIds, seenIds) {
       ? 0
       : boundedInteger(raw.actualMinutes, "实际时间", 0, 480),
     issueReason,
+    reflection,
     createdAt: optionalIsoDate(raw.createdAt, "行动创建时间"),
     updatedAt: optionalIsoDate(raw.updatedAt, "行动更新时间"),
   };

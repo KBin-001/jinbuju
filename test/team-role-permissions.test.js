@@ -21,7 +21,7 @@ for (const publicField of ["displayTeamName", "displayRoomCode", "team.memberCou
 }
 
 // 动态权限：队长可管理，成员保留只读信息与退出路径。
-assert.match(homeWxml, /wx:if="{{isOwner}}"[^>]*hero-control--settings[\s\S]*wx:else[^>]*hero-control--settings[^>]*bindtap="openTeamInfo"/,
+assert.match(homeWxml, /wx:if="{{isOwner}}"[^>]*hero-settings[^>]*bindtap="openTeamSettings"[\s\S]*wx:else[^>]*hero-settings[^>]*bindtap="openTeamInfo"/,
   "队长应看到设置，普通成员应在同一位置看到只读小队信息");
 assert.match(homeWxml, /wx:if="{{!isOwner}}"[^>]*class="self-detail-action self-detail-action--danger"[^>]*bindtap="confirmLeaveOrDissolve"/,
   "普通成员必须可从自己的资料退出小队");
@@ -47,8 +47,19 @@ assert.match(cloud, /allowMemberInvite/,
   "云端响应必须返回成员邀请策略");
 assert.match(homeTs, /role\s*===\s*["']owner["'][\s\S]{0,200}allowMemberInvite|allowMemberInvite[\s\S]{0,200}role\s*===\s*["']owner["']/,
   "邀请可见性必须由 owner 优先与 allowMemberInvite 共同计算");
-assert.match(homeWxml, /wx:if="{{isOwner \|\| canInviteFriends}}"[^>]*hero-control--invite/,
+assert.match(homeWxml, /wx:if="{{canInviteFriends[^}]*}}"[^>]*hero-invite[^>]*bindtap="inviteFriends"/,
   "邀请入口必须使用动态权限而非对所有成员常驻");
+
+// 顶部价值层级：真实同行进度与个人行动优先，房间号仅保留轻量复制入口。
+for (const field of ["teamStats.completedMembers", "teamStats.totalMembers", "teamStats.todayCompletionRate", "teamStats.startedMembers", "selfActionPrompt.text", "selfActionPrompt.buttonText"]) {
+  assert(homeWxml.includes(`{{${field}}}`), `今日同行面板缺少真实字段 ${field}`);
+}
+assert.match(homeWxml, /class="hero-primary[^>]*bindtap="goToday"/,
+  "顶部主按钮必须回到用户自己的今日行动");
+assert.doesNotMatch(homeWxml, /class="room-landscape/,
+  "房间号不应继续占用独立大卡片");
+assert.match(homeTs, /startedMembers[\s\S]{0,300}todayStatus === "completed"[\s\S]{0,120}todayStatus === "partial"|todayStatus === "completed"[\s\S]{0,120}todayStatus === "partial"[\s\S]{0,300}startedMembers/,
+  "已开始人数必须来自真实完成或部分完成状态");
 
 // 云端是隐私裁剪边界；排行榜和动态不得依赖客户端二次隐藏。
 assert.match(cloud, /user\.useProfileInTeam\s*!==\s*false/,

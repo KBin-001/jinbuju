@@ -94,10 +94,11 @@ function seedCreateProposal(id, overrides = {}) {
   const oldTime = "2026-07-01T00:00:00.000Z";
   const newTime = "2026-07-02T00:00:00.000Z";
   const goal = { id: "goal_sync", title: "准备考试", category: "custom", status: "active", createdAt: oldTime, updatedAt: newTime };
-  const task = { id: "task_sync", goalId: goal.id, title: "复习一章", plannedDate: "2026-07-02", currentDate: "2026-07-02", estimatedMinutes: 30, status: "pending", source: "manual", createdAt: oldTime, updatedAt: newTime };
+  const task = { id: "task_sync", goalId: goal.id, title: "复习一章", plannedDate: "2026-07-02", currentDate: "2026-07-02", estimatedMinutes: 30, actualMinutes: 25, status: "completed", reflection: "先列提纲再复习更清楚", source: "manual", createdAt: oldTime, updatedAt: newTime };
   const synced = await syncManualData(openid, { store: { version: 1, activeGoalId: goal.id, goals: [goal], tasks: [task], checkins: [], archivedGoals: [], achievementUnlocks: [], sparkCheckins: [] } });
   assert.equal(synced.tasks.length, 1);
   assert.equal(database.list("manual_tasks").some((item) => item.id === task.id), true);
+  assert.equal(database.list("manual_tasks").find((item) => item.id === task.id).reflection, "先列提纲再复习更清楚");
 
   const tombstone = { ...task, deletedAt: newTime };
   const deleted = await syncManualData(openid, { store: { version: 1, activeGoalId: goal.id, goals: [goal], tasks: [tombstone], checkins: [], archivedGoals: [], achievementUnlocks: [], sparkCheckins: [] } });

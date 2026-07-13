@@ -1,7 +1,7 @@
 import { FEATURE_FLAGS } from "../../config/features";
 import { getActiveGoal, getActiveGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
-import { getTasksByGoal } from "../../services/manualTask";
+import { deleteTask, getTask, getTasksByGoal, SaveActionRecordInput, updateActionRecord } from "../../services/manualTask";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
@@ -1007,6 +1007,11 @@ Page(withAppTheme({
     hasRecentRecords: false,
     hasPendingRecords: false,
     hasActionData: false,
+    recordEditorVisible: false,
+    editingRecordId: "",
+    recordEditorTask: null as ActionTask | null,
+    savingRecord: false,
+    deletingRecord: false,
   },
   focusGoalHandler: null as null | (() => void),
 
@@ -1115,7 +1120,53 @@ Page(withAppTheme({
   openAction(event: { currentTarget: { dataset: { id?: string } } }) {
     const taskId = String(event.currentTarget.dataset.id || "");
     if (!taskId) return;
+    const task = getTask(taskId);
+    if (task?.status === "completed" || task?.status === "partially_completed") {
+      this.setData({ recordEditorVisible: true, editingRecordId: task.id, recordEditorTask: task, savingRecord: false, deletingRecord: false });
+      return;
+    }
     wx.navigateTo({ url: `/pages/action-edit/index?id=${encodeURIComponent(taskId)}` });
+  },
+
+  closeRecordEditor() {
+    if (!this.data.savingRecord && !this.data.deletingRecord) this.setData({ recordEditorVisible: false, recordEditorTask: null, editingRecordId: "" });
+  },
+
+  saveRecordEditor(event: CustomEvent<Omit<SaveActionRecordInput, "taskId">>) {
+    if (this.data.savingRecord || !this.data.editingRecordId) return;
+    this.setData({ savingRecord: true });
+    try {
+      updateActionRecord({ taskId: this.data.editingRecordId, ...event.detail });
+      this.setData({ recordEditorVisible: false, recordEditorTask: null, editingRecordId: "", savingRecord: false });
+      this.load();
+      wx.showToast({ title: "记录已更新", icon: "success" });
+    } catch (error) {
+      this.setData({ savingRecord: false });
+      wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
+    }
+  },
+
+  deleteRecordEditor() {
+    if (this.data.savingRecord || this.data.deletingRecord || !this.data.editingRecordId) return;
+    wx.showModal({
+      title: "删除行动记录？",
+      content: "删除后会同步影响今日统计、目标进度和历史复盘，且无法恢复。",
+      confirmText: "删除",
+      confirmColor: "#9B4B45",
+      success: (result) => {
+        if (!result.confirm) return;
+        this.setData({ deletingRecord: true });
+        try {
+          deleteTask(this.data.editingRecordId);
+          this.setData({ recordEditorVisible: false, recordEditorTask: null, editingRecordId: "", deletingRecord: false });
+          this.load();
+          wx.showToast({ title: "记录已删除", icon: "success" });
+        } catch (error) {
+          this.setData({ deletingRecord: false });
+          wx.showToast({ title: error instanceof Error ? error.message : "删除失败", icon: "none" });
+        }
+      },
+    });
   },
 
   openGoalPicker() {

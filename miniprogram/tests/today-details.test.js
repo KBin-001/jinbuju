@@ -16,7 +16,7 @@ global.wx = {
 };
 
 const { createGoal } = require("../services/manualGoal.ts");
-const { createTask, getTask, updateTaskCompletionTime, updateTaskStatus } = require("../services/manualTask.ts");
+const { createTask, getTask, updateActionRecord, updateTaskCompletionTime, updateTaskStatus } = require("../services/manualTask.ts");
 const { getTodayDataBounds, getTodayDataCalendar, getTodayDataDetails } = require("../services/todayDetails.ts");
 
 const goal = createGoal({ title: "考公", category: "civil_service" });
@@ -28,6 +28,7 @@ updateTaskStatus(completed.id, "completed", 30);
 updateTaskStatus(partial.id, "partially_completed", 20, "not_enough_time");
 updateTaskStatus(yesterday.id, "completed", 15);
 updateTaskCompletionTime(completed.id, "2026-06-21", "08:15");
+updateActionRecord({ taskId: completed.id, title: completed.title, businessDate: "2026-06-21", time: "08:15", actualMinutes: 30, status: "completed", reflection: "言语题先找转折词更快" });
 assert.equal(new Date(getTask(completed.id).completedAt).getHours(), 8);
 assert.equal(new Date(getTask(completed.id).completedAt).getMinutes(), 15);
 assert.throws(() => updateTaskCompletionTime(completed.id, "2026-06-21", "25:00"));
@@ -39,6 +40,7 @@ assert.deepEqual(day.metrics, { minutes: 50, completed: 1, focusRate: 50, total:
 assert.deepEqual(day.previous, { minutes: 15, completed: 1, focusRate: 100, total: 1 });
 assert.equal(day.completedTasks.length, 1);
 assert.equal(day.completedTasks[0].minutes, 30);
+assert.equal(day.completedTasks[0].reflection, "言语题先找转折词更快");
 assert.equal(day.durationTotal, 30);
 assert.equal(day.bars.reduce((sum, item) => sum + item.value, 0), 50);
 assert.match(day.pieGradient, /^conic-gradient/);

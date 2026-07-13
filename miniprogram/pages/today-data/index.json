@@ -3,5 +3,8 @@
   "navigationBarBackgroundColor": "#F5F7F2",
   "navigationBarTextStyle": "black",
   "backgroundColor": "#F5F7F2",
-  "enablePullDownRefresh": false
+  "enablePullDownRefresh": false,
+  "usingComponents": {
+    "action-record-editor": "/components/action-record-editor/index"
+  }
 }

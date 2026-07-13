@@ -29,6 +29,8 @@ export interface ActionTask {
   currentDate: string;
   estimatedMinutes: number;
   actualMinutes?: number;
+  /** 当天的感受、收获或困难；用于日详情、AI 分析与历史复盘。 */
+  reflection?: string;
   status: ActionTaskStatus;
   source: "manual" | "ai";
   issueReason?: ActionIssueReason;

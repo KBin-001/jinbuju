@@ -24,6 +24,7 @@ export interface DurationSlice {
   percent: number;
   color: string;
   completedTime: string;
+  reflection: string;
 }
 
 export interface TodayDataDetails {
@@ -127,7 +128,7 @@ export function getTodayDataDetails(goalId: string, date: string, period: Detail
     const percent = durationTotal ? Math.round((minutes / durationTotal) * 100) : 0;
     const completedDate = new Date(task.completedAt || task.updatedAt || task.createdAt);
     const completedTime = Number.isNaN(completedDate.getTime()) ? "--:--" : `${String(completedDate.getHours()).padStart(2, "0")}:${String(completedDate.getMinutes()).padStart(2, "0")}`;
-    return { id: task.id, title: task.title, minutes, percent, color: COLORS[index % COLORS.length], completedTime };
+    return { id: task.id, title: task.title, minutes, percent, color: COLORS[index % COLORS.length], completedTime, reflection: task.reflection || "" };
   });
   const pieParts = durationTotal ? completedTasks.map((task, index) => {
     const start = accumulated;

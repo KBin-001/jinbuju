@@ -38,69 +38,58 @@
   <view wx:else class="team-content">
     <view wx:if="{{serviceNotice}}" class="team-service-notice">{{serviceNotice}}</view>
     <view class="team-hero paper-card">
-      <view class="hero-main">
-        <view class="hero-copy">
-          <view class="hero-title">{{displayTeamName}}</view>
-          <view class="hero-slogan">{{team.slogan || team.announcement || team.description || '一起行动，各自成长'}}</view>
-          <view class="hero-days">同行第 <text>{{teamDays}}</text> 天</view>
+      <view class="hero-identity">
+        <view class="hero-identity-copy">
+          <view class="hero-title-line"><text class="hero-title">{{displayTeamName}}</text><text class="hero-spark">✦</text></view>
+          <view class="hero-subtitle">{{team.slogan || team.announcement || team.description || '一起行动，各自成长'}}<text> · 同行第 {{teamDays}} 天</text></view>
+        </view>
+        <view wx:if="{{isOwner}}" class="hero-settings" bindtap="openTeamSettings" hover-class="hero-settings--pressed">
+          <image src="/assets/team/icon-settings.svg" mode="aspectFit" /><text>设置</text>
+        </view>
+        <view wx:else class="hero-settings" bindtap="openTeamInfo" hover-class="hero-settings--pressed">
+          <image src="/assets/team/icon-settings.svg" mode="aspectFit" /><text>信息</text>
+        </view>
+      </view>
 
-          <view class="hero-members">
-            <view class="hero-avatar-stack">
-              <view
-                wx:for="{{heroAvatarSlots}}"
-                wx:key="id"
-                class="hero-avatar {{item.isEmpty ? 'hero-avatar--empty' : ''}} {{item.isExtra ? 'hero-avatar--extra' : ''}}"
-              >
-                <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
-                <text wx:elif="{{item.isExtra}}">{{item.avatarText}}</text>
-                <image wx:else src="/images/avatar.png" mode="aspectFill" />
-              </view>
+      <view class="hero-today">
+        <view class="hero-today-heading"><t-icon name="time-filled" size="31rpx" /><text>{{teamStats.totalMembers <= 1 ? '今天你先走了一步' : '今日同行'}}</text></view>
+
+        <view class="hero-progress-head">
+          <view class="hero-progress-value"><text>{{teamStats.completedMembers}}</text><text>/ {{teamStats.totalMembers}} 人已完成</text></view>
+          <view class="hero-progress-rate">{{teamStats.todayCompletionRate}}<text>%</text></view>
+        </view>
+        <view class="hero-progress-track"><view class="hero-progress-fill" style="width: {{teamStats.todayCompletionRate}}%;"><view wx:if="{{teamStats.todayCompletionRate > 0}}" class="hero-progress-node"></view></view></view>
+
+        <view class="hero-today-meta">
+          <view class="hero-today-meta-item"><t-icon name="usergroup" size="31rpx" /><text><text class="hero-today-meta-number">{{teamStats.startedMembers}}</text> 人已经开始</text></view>
+          <view class="hero-today-meta-dot"></view>
+          <view class="hero-today-meta-item"><t-icon name="time" size="31rpx" /><text>共同投入 <text class="hero-today-meta-number">{{teamStats.totalGrowthMinutes}}</text> 分钟</text></view>
+        </view>
+
+        <view class="hero-self-prompt {{selfActionPrompt.allDone ? 'hero-self-prompt--done' : ''}}">
+          <view class="hero-self-leaf"></view>
+          <text>{{selfActionPrompt.text}}</text>
+        </view>
+
+        <view class="hero-primary {{selfActionPrompt.allDone ? 'hero-primary--done' : ''}}" bindtap="goToday" hover-class="hero-primary--pressed">
+          <text>{{selfActionPrompt.buttonText}}</text><view class="hero-primary-mountain"></view>
+        </view>
+
+        <view class="hero-community-row">
+          <view class="hero-avatar-stack">
+            <view wx:for="{{heroAvatarSlots}}" wx:key="id" class="hero-avatar {{item.isExtra ? 'hero-avatar--extra' : ''}}">
+              <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+              <text wx:elif="{{item.isExtra}}">{{item.avatarText}}</text>
+              <image wx:else src="/images/avatar.png" mode="aspectFill" />
             </view>
-            <view class="hero-member-count">{{team.memberCount}}/20人</view>
           </view>
+          <view wx:if="{{canInviteFriends && team.memberCount < (team.maxMembers || 20)}}" class="hero-invite" bindtap="inviteFriends" hover-class="hero-invite--pressed">
+            <image src="/assets/team/icon-invite.svg" mode="aspectFit" /><text>{{teamStats.totalMembers <= 1 ? '邀请第一位伙伴' : '邀请伙伴'}}</text>
+          </view>
+          <view wx:elif="{{team.memberCount >= (team.maxMembers || 20)}}" class="hero-member-waiting">小队已满</view>
         </view>
 
-        <view class="hero-controls">
-          <view wx:if="{{isOwner || canInviteFriends}}" class="hero-control hero-control--invite" bindtap="inviteFriends">
-            <image src="/assets/team/icon-invite.svg" mode="aspectFit" />
-            <text>邀请好友</text>
-          </view>
-          <view wx:if="{{isOwner}}" class="hero-control hero-control--settings" bindtap="openTeamSettings">
-            <image src="/assets/team/icon-settings.svg" mode="aspectFit" />
-            <text>小队设置</text>
-          </view>
-          <view wx:else class="hero-control hero-control--settings" bindtap="openTeamInfo">
-            <image src="/assets/team/icon-settings.svg" mode="aspectFit" />
-            <text>小队信息</text>
-          </view>
-        </view>
-      </view>
-
-      <view class="room-landscape" bindtap="copyRoomCode" hover-class="room-landscape--pressed" aria-label="复制房间号">
-        <image class="room-landscape__image" src="/assets/team-header-watercolor-v2.jpg" mode="aspectFill" />
-        <view class="room-landscape__veil"></view>
-        <view class="room-landscape__copy">
-          <text class="room-landscape__label">小队房间号</text>
-          <text class="room-landscape__code">{{displayRoomCode}}</text>
-        </view>
-        <view class="room-landscape__action"><image src="/assets/team/icon-copy.svg" mode="aspectFit" /><text>复制</text></view>
-      </view>
-
-      <view class="hero-stats">
-        <view class="hero-stat">
-          <view class="hero-stat-label">今日完成</view>
-          <view class="hero-stat-value">{{teamStats.completedMembers}}<text>人</text></view>
-        </view>
-        <view class="hero-stat-divider"></view>
-        <view class="hero-stat">
-          <view class="hero-stat-label">共同投入</view>
-          <view class="hero-stat-value">{{teamStats.totalGrowthMinutes}}<text>min</text></view>
-        </view>
-        <view class="hero-stat-divider"></view>
-        <view class="hero-stat">
-          <view class="hero-stat-label">同行天数</view>
-          <view class="hero-stat-value">{{teamDays}}<text>天</text></view>
-        </view>
+        <view class="hero-room" bindtap="copyRoomCode" hover-class="hero-room--pressed" aria-label="复制房间号">房间 {{displayRoomCode}}<text>·</text><text class="hero-room-copy">复制</text></view>
       </view>
     </view>
 
@@ -241,7 +230,7 @@
         <view class="team-info-slogan">{{team.slogan || team.announcement || team.description || '一起行动，各自成长'}}</view>
         <view class="team-info-row"><text>队长</text><text>{{teamOwnerName}}</text></view>
         <view class="team-info-row"><text>我的加入时间</text><text>{{teamJoinedDate}}</text></view>
-        <view class="team-info-row"><text>小队人数</text><text>{{team.memberCount}}/20人</text></view>
+        <view class="team-info-row"><text>小队人数</text><text>{{team.memberCount}}/{{team.maxMembers || 20}}人</text></view>
         <view class="team-info-row"><text>加入规则</text><text>{{teamRuleText}}</text></view>
         <view class="team-info-row"><text>匿名状态</text><text>{{team.anonymityMode === 'anonymous' ? '匿名模式' : '公开模式'}}</text></view>
       </scroll-view>

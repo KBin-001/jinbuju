@@ -27,7 +27,9 @@ const EXAMPLE_ACTION_TITLES = ["背单词 30 个", "阅读 30 分钟", "听力�
 interface ViewTask extends ActionTask { displayTitle: string; statusLabel: string; statusTone: string; rescheduled: boolean; dateLabel: string; partialHint: boolean; actionSubtext: string; actionIconType: "book" | "audio" | "note"; canComplete: boolean; }
 interface ViewTaskGroup { key: "today" | "continue"; title: string; tasks: ViewTask[]; }
 interface TodayMood { title: string; copy: string; tone: "empty" | "low" | "half" | "done"; mark: string; }
+interface ProactiveInsight { label: string; title: string; body: string; tone: "start" | "progress" | "near" | "done" | "streak"; }
 interface ProgressSegment { active: boolean; }
+interface StatsRhythmBar { key: string; height: number; active: boolean; }
 interface WeekDayView { label: string; date: string; day: string; isToday: boolean; isSelected: boolean; isCurrentMonth: boolean; }
 interface CalendarDayView extends WeekDayView { hasAction: boolean; isCompleted: boolean; }
 interface CalendarView { title: string; days: CalendarDayView[]; }
@@ -71,6 +73,22 @@ function progressSegments(summary: TodaySummary): ProgressSegment[] {
   const activeCount = summary.completedCount + summary.partialCount;
   return Array.from({ length: total }, (_, index) => ({ active: index < activeCount }));
 }
+function buildStatsRhythmBars(tasks: ActionTask[]): StatsRhythmBar[] {
+  const buckets = Array.from({ length: 12 }, () => 0);
+  tasks.forEach((task) => {
+    const minutes = Math.max(0, Number(task.actualMinutes || 0));
+    if (!minutes) return;
+    const timestamp = new Date(task.completedAt || task.updatedAt || task.createdAt);
+    const bucketIndex = Number.isNaN(timestamp.getTime()) ? 0 : Math.min(11, Math.floor(timestamp.getHours() / 2));
+    buckets[bucketIndex] += minutes;
+  });
+  const maxMinutes = Math.max(0, ...buckets);
+  return buckets.map((minutes, index) => ({
+    key: `rhythm-${index}`,
+    active: minutes > 0,
+    height: minutes > 0 && maxMinutes > 0 ? Math.max(12, Math.round((minutes / maxMinutes) * 42)) : 5,
+  }));
+}
 function todayMood(summary: TodaySummary): TodayMood {
   const percent = completionPercent(summary);
   if (!summary.totalCount) return { title: "今天还没开局", copy: "先放一件小事上来，别让今天空过去。", tone: "empty", mark: "启" };
@@ -80,20 +98,66 @@ function todayMood(summary: TodaySummary): TodayMood {
   if (summary.partialCount > 0) return { title: "已经开始推进了", copy: `有 ${summary.partialCount} 项完成了一部分，继续把它收住。`, tone: "low", mark: "进" };
   return { title: "今天别空手离开", copy: `还有 ${summary.totalCount} 项等你开动，挑最小的一件先做。`, tone: "low", mark: "动" };
 }
-function dailyNudge(tasks: ViewTask[], selectedDate: string, today: string): string {
-  const dayLabel = selectedDate === today ? "今天" : "这一天";
-  const remaining = tasks.filter((task) => task.status === "pending" || task.status === "partially_completed");
-  if (remaining.length > 0) {
-    const nextTask = remaining[0];
-    return `先从“${nextTask.displayTitle}”开始，专注 10 分钟，就是${dayLabel}扎实的一步。`;
+function buildProactiveInsight(summary: TodaySummary, tasks: ViewTask[], progress: ReturnType<typeof getProgressSummary> | null, selectedDate: string, today: string): ProactiveInsight {
+  const isToday = selectedDate === today;
+  const unfinished = tasks.filter((task) => task.status === "pending" || task.status === "partially_completed");
+  const remaining = Math.max(0, summary.totalCount - summary.completedCount);
+  const streak = progress?.currentStreakDays || 0;
+
+  if (isToday && streak >= 7) {
+    return {
+      label: "AI 主动观察",
+      title: `你已经连续行动 ${streak} 天`,
+      body: remaining === 0 ? "今天也完成了，建议记录一下这周最有效的做法。" : `先收掉剩下 ${remaining} 项，连续节奏就能稳稳保住。`,
+      tone: "streak",
+    };
   }
-  if (tasks.length > 0 && tasks.every((task) => task.status === "completed")) {
-    return `${dayLabel}已经稳稳推进了，花 2 分钟记下最有效的做法吧。`;
+  if (isToday && summary.totalCount > 0 && remaining === 1) {
+    const next = unfinished[0];
+    return {
+      label: "AI 主动观察",
+      title: "还剩最后一项，今天就能闭环",
+      body: next ? `优先处理“${next.displayTitle}”，先做 ${Math.min(20, next.estimatedMinutes)} 分钟。` : "把最后一步收住，比继续加任务更重要。",
+      tone: "near",
+    };
   }
-  if (tasks.length > 0) {
-    return `${dayLabel}先照顾好自己的节奏，下一次从一件最小的事重新开始。`;
+  if (summary.totalCount > 0 && remaining === 0) {
+    return {
+      label: "AI 主动观察",
+      title: isToday ? "今天的行动已经完成" : "这一天的行动已经完成",
+      body: "现在适合做 2 分钟复盘：记下顺利的原因，明天会更容易启动。",
+      tone: "done",
+    };
   }
-  return `先添加一件 15～30 分钟能完成的小事，让${dayLabel}轻轻开个头。`;
+  if (summary.completedCount > 0 || summary.partialCount > 0 || summary.actualMinutes > 0) {
+    return {
+      label: "AI 主动观察",
+      title: "今天的节奏已经启动",
+      body: remaining > 0 ? `还有 ${remaining} 项可以继续，不需要加码，先推进最小的一步。` : "已有真实投入，保持收口比继续堆任务更重要。",
+      tone: "progress",
+    };
+  }
+  if (summary.totalCount > 0) {
+    const next = unfinished[0] || tasks[0];
+    return {
+      label: "AI 主动观察",
+      title: "今天还没开始，先降低启动成本",
+      body: next ? `从“${next.displayTitle}”开始，只要求先做 10 分钟。` : "选一件最小行动开始，先让今天有记录。",
+      tone: "start",
+    };
+  }
+  return {
+    label: "AI 主动观察",
+    title: "先添加一项今日行动",
+    body: "我会根据完成状态、实际投入和连续天数，主动提醒你下一步。",
+    tone: "start",
+  };
+}
+function buildAiPriorityInsight(analysis: { nextSuggestions: string[]; rhythmDiagnosis: string[] }, fallback: ProactiveInsight): ProactiveInsight {
+  const priority = String(analysis.nextSuggestions[0] || "").trim();
+  const reason = String(analysis.rhythmDiagnosis[0] || "").trim();
+  if (!priority) return fallback;
+  return { label: "AI 优先级 1", title: priority, body: reason || fallback.body, tone: "progress" };
 }
 function buildWeekDays(today: string, selectedDate: string, weekOffset: number): { weekTitle: string; weekDays: WeekDayView[] } {
   const selected = new Date(`${selectedDate}T00:00:00`);
@@ -194,6 +258,7 @@ Page(withAppTheme({
     completionPercent: 0,
     focusPercent: 0,
     remainingCount: 0,
+    statsRhythmBars: buildStatsRhythmBars([]) as StatsRhythmBar[],
     remainingEstimatedMinutes: 0,
     progressSegments: [] as ProgressSegment[],
     actionListExpanded: false,
@@ -208,9 +273,7 @@ Page(withAppTheme({
     todayMoodMark: "启",
     currentStreakDays: 0,
     coachStatus: "idle" as "idle" | "loading" | "ready" | "error",
-    coachSummary: "",
-    coachNextStep: "",
-    dailyNudge: "先添加一件 15～30 分钟能完成的小事，让今天轻轻开个头。",
+    proactiveInsight: { label: "AI 主动观察", title: "先添加一项今日行动", body: "我会根据完成状态、实际投入和连续天数，主动提醒你下一步。", tone: "start" } as ProactiveInsight,
     weekday: "",
     weekdayShort: "",
     selectedDate: "",
@@ -315,6 +378,7 @@ Page(withAppTheme({
         completionPercent: completionPercent(summary),
         focusPercent: focusPercent(summary),
         remainingCount: remainingCount(summary),
+        statsRhythmBars: buildStatsRhythmBars(selectedTasks),
         remainingEstimatedMinutes: remainingEstimatedMinutes(tasks, selectedDate),
         progressSegments: progressSegments(summary),
         hiddenActionCount: Math.max(0, tasks.length - visibleTasks.length),
@@ -325,7 +389,7 @@ Page(withAppTheme({
         todayMoodTone: mood.tone,
         todayMoodMark: mood.mark,
         currentStreakDays: progress?.currentStreakDays || 0,
-        dailyNudge: dailyNudge(tasks, selectedDate, today),
+        proactiveInsight: buildProactiveInsight(summary, tasks, progress, selectedDate, today),
         weekday: copy.weekday,
         weekdayShort: copy.weekday.replace("星期", "周"),
         weekTitle: week.weekTitle,
@@ -336,7 +400,6 @@ Page(withAppTheme({
         calendarDays: calendar.days,
         navigating: false,
       }, () => {
-        this.drawSummaryRing();
         this.prepareTodayCoach();
       });
     } catch (error) { this.setData({ status: "error", errorMessage: error instanceof Error ? error.message : "本地数据读取失败" }); }
@@ -344,70 +407,19 @@ Page(withAppTheme({
   useDefaultAvatar() { this.setData({ displayAvatarUrl: "" }); },
   prepareTodayCoach() {
     const goal = this.data.goal;
-    if (!goal?.id) {
-      this.coachRequestKey = "";
-      this.setData({ coachStatus: "idle", coachSummary: "", coachNextStep: "" });
-      return;
-    }
+    if (!goal?.id) { this.coachRequestKey = ""; this.setData({ coachStatus: "idle" }); return; }
     const analysisDate = this.data.selectedDate || getTodayBusinessDate();
     const requestKey = `day:${goal.id}:${analysisDate}`;
     this.coachRequestKey = requestKey;
-    this.setData({ coachStatus: "loading", coachSummary: "", coachNextStep: "" });
+    this.setData({ coachStatus: "loading" });
     prepareProgressCoach("day", goal.id, false, analysisDate)
       .then(() => analyzeProgress(goal.id, "day", analysisDate))
       .then((analysis) => {
         if (this.coachRequestKey !== requestKey) return;
-        this.setData({
-          coachStatus: "ready",
-          coachSummary: analysis.summary,
-          coachNextStep: analysis.nextSuggestions[0] || "继续完成眼前这一小步。",
-        });
+        this.setData({ coachStatus: "ready", proactiveInsight: buildAiPriorityInsight(analysis, this.data.proactiveInsight) });
       }, () => {
-        if (this.coachRequestKey === requestKey) this.setData({ coachStatus: "error", coachSummary: "", coachNextStep: "" });
+        if (this.coachRequestKey === requestKey) this.setData({ coachStatus: "error" });
       });
-  },
-  drawSummaryRing() {
-    wx.nextTick(() => {
-      const query = wx.createSelectorQuery().in(this);
-      query.select("#stats-progress-ring").fields({ node: true, size: true }).exec((result) => {
-        const field = result?.[0] as { node?: any; width?: number; height?: number } | undefined;
-        const canvas = field?.node;
-        const width = Number(field?.width || 0);
-        const height = Number(field?.height || 0);
-        if (!canvas || !width || !height) return;
-
-        const dpr = wx.getWindowInfo().pixelRatio || 1;
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        const context = canvas.getContext("2d");
-        context.scale(dpr, dpr);
-        context.clearRect(0, 0, width, height);
-        context.lineCap = "round";
-
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const radius = Math.min(width, height) * 0.40;
-        const lineWidth = Math.min(width, height) * 0.13;
-        const start = -Math.PI / 2;
-        const ratio = Math.max(0, Math.min(1, this.data.completionPercent / 100));
-
-        // 轨道
-        context.beginPath();
-        context.strokeStyle = "#E9D9AD";
-        context.lineWidth = lineWidth;
-        context.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        context.stroke();
-
-        // 进度弧
-        if (ratio > 0) {
-          context.beginPath();
-          context.strokeStyle = "#31584B";
-          context.lineWidth = lineWidth;
-          context.arc(centerX, centerY, radius, start, start + Math.PI * 2 * ratio);
-          context.stroke();
-        }
-      });
-    });
   },
   retry() { this.load(); },
   toggleActionList() {
@@ -436,7 +448,7 @@ Page(withAppTheme({
     this.load();
   },
   closeCalendar() {
-    this.setData({ calendarVisible: false }, () => this.drawSummaryRing());
+    this.setData({ calendarVisible: false });
   },
   switchCalendarMonth(event: { currentTarget: { dataset: { delta?: string | number } } }) {
     const delta = Number(event.currentTarget.dataset.delta || 0);
@@ -483,7 +495,6 @@ Page(withAppTheme({
     if (this.data.quickAddSubmitting) return;
     this.setData(
       { quickAddVisible: false, quickDurationVisible: false, quickAddTouchDeltaY: 0 },
-      () => this.drawSummaryRing(),
     );
   },
   noop() {},
@@ -540,7 +551,7 @@ Page(withAppTheme({
   openTask(event: { currentTarget: { dataset: { id?: string } } }) {
     const id = String(event.currentTarget.dataset.id || ""); const task = this.data.tasks.find((item) => item.id === id); if (!task) return;
     wx.showActionSheet({ itemList: ["标记完成", "完成一部分", "顺延到明天", "今天不做", "编辑", "删除"], success: ({ tapIndex }) => {
-      if (tapIndex === 0) this.askActual(task, "completed"); else if (tapIndex === 1) this.chooseReason(task, "partially_completed"); else if (tapIndex === 2) this.reschedule(task); else if (tapIndex === 3) this.chooseReason(task, "skipped"); else if (tapIndex === 4) wx.navigateTo({ url: `/pages/action-edit/index?id=${task.id}` }); else if (tapIndex === 5) this.remove(task);
+      if (tapIndex === 0) this.completeTask(task); else if (tapIndex === 1) this.chooseReason(task, "partially_completed"); else if (tapIndex === 2) this.reschedule(task); else if (tapIndex === 3) this.chooseReason(task, "skipped"); else if (tapIndex === 4) wx.navigateTo({ url: `/pages/action-edit/index?id=${task.id}` }); else if (tapIndex === 5) this.remove(task);
     } });
   },
   applyTaskPatch(updatedTask: ViewTask, prevScrollTop: number) {
@@ -561,6 +572,7 @@ Page(withAppTheme({
       completionPercent: completionPercent(summary),
       focusPercent: focusPercent(summary),
       remainingCount: remainingCount(summary),
+      statsRhythmBars: buildStatsRhythmBars(todayTasks),
       remainingEstimatedMinutes: remainingEstimatedMinutes(tasks, selectedDate),
       progressSegments: progressSegments(summary),
       hiddenActionCount: Math.max(0, tasks.length - visibleTasks.length),
@@ -570,7 +582,7 @@ Page(withAppTheme({
       todayMoodTone: mood.tone,
       todayMoodMark: mood.mark,
       currentStreakDays: progress?.currentStreakDays || 0,
-      dailyNudge: dailyNudge(tasks, selectedDate, today),
+      proactiveInsight: buildProactiveInsight(summary, tasks, progress, selectedDate, today),
     });
     wx.nextTick(() => wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 }));
   },
@@ -604,7 +616,7 @@ Page(withAppTheme({
     this.setData({ completionSheetVisible: false });
     if (this.completionSheetTimer) clearTimeout(this.completionSheetTimer);
     this.completionSheetTimer = setTimeout(() => {
-      this.setData({ completionSheetRendered: false }, () => this.drawSummaryRing());
+      this.setData({ completionSheetRendered: false });
       this.completionSheetTimer = null;
     }, 260);
   },
@@ -624,7 +636,7 @@ Page(withAppTheme({
       return;
     }
     if (task.status !== "completed") {
-      this.askActual(task, "completed");
+      this.completeTask(task);
       return;
     }
     const prevScrollTop = this.data.currentScrollTop;
@@ -641,10 +653,21 @@ Page(withAppTheme({
     const id = String(event.currentTarget.dataset.id || "");
     const task = this.data.tasks.find((item) => item.id === id);
     if (!task || task.status === "completed") return;
-    this.askActual(task, "completed");
+    this.completeTask(task);
   },
-  askActual(task: ViewTask, status: "completed" | "partially_completed", reason?: ActionIssueReason) {
-    wx.showModal({ title: status === "completed" ? "记录实际投入" : "完成一部分", editable: true, placeholderText: "请输入实际投入分钟数", content: task.actualMinutes ? String(task.actualMinutes) : "", confirmText: "保存", success: (result) => { if (!result.confirm) return; const minutes = Number(String(result.content || "").trim()); if (!Number.isInteger(minutes) || minutes < 1 || minutes > 480) { wx.showToast({ title: "请输入 1～480 的整数分钟", icon: "none" }); return; } try { updateTaskStatus(task.id, status, minutes, reason); this.load(); if (status === "completed") { wx.vibrateShort({ type: "light" }); if (task.currentDate === getTodayBusinessDate() && this.data.selectedDate === getTodayBusinessDate()) this.openCompletionSheet(); } } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" }); } } });
+  completeTask(task: ViewTask) {
+    try {
+      updateTaskStatus(task.id, "completed", 0);
+      wx.vibrateShort({ type: "light" });
+      wx.showToast({ title: "已完成", icon: "success" });
+      this.load();
+      if (task.currentDate === getTodayBusinessDate() && this.data.selectedDate === getTodayBusinessDate()) this.openCompletionSheet();
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
+    }
+  },
+  askActual(task: ViewTask, status: "partially_completed", reason?: ActionIssueReason) {
+    wx.showModal({ title: "完成一部分", editable: true, placeholderText: "请输入实际投入分钟数", content: task.actualMinutes ? String(task.actualMinutes) : "", confirmText: "保存", success: (result) => { if (!result.confirm) return; const minutes = Number(String(result.content || "").trim()); if (!Number.isInteger(minutes) || minutes < 1 || minutes > 480) { wx.showToast({ title: "请输入 1～480 的整数分钟", icon: "none" }); return; } try { updateTaskStatus(task.id, status, minutes, reason); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" }); } } });
   },
   chooseReason(task: ViewTask, status: "partially_completed" | "skipped") { wx.showActionSheet({ itemList: REASONS.map((item) => item.label), success: ({ tapIndex }) => { const reason = REASONS[tapIndex]?.value; if (!reason) return; if (status === "partially_completed") this.askActual(task, status, reason); else { try { updateTaskStatus(task.id, status, task.actualMinutes, reason); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" }); } } } }); },
   reschedule(task: ViewTask) { try { rescheduleTask(task.id); wx.showToast({ title: "已顺延到明天", icon: "success" }); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "顺延失败", icon: "none" }); } },

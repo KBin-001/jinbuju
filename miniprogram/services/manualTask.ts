@@ -3,6 +3,7 @@ import { ActionIssueReason, ActionTask, ActionTaskStatus, TodaySummary } from ".
 import { createLocalId, readManualStore, writeManualStore } from "./manualStore";
 
 export interface SaveTaskInput { id?: string; goalId: string; title: string; description?: string; currentDate: string; estimatedMinutes: number; }
+export interface SaveActionRecordInput { taskId: string; title: string; businessDate: string; time: string; actualMinutes: number; status: "completed" | "partially_completed" | "pending"; reflection?: string; }
 
 function validate(input: SaveTaskInput): void {
   const title = input.title.trim();
@@ -75,7 +76,9 @@ export function updateTaskStatus(taskId: string, status: ActionTaskStatus, actua
   const nextActualMinutes = actualMinutes === undefined ? task.actualMinutes : actualMinutes;
   if (status === "completed" || status === "partially_completed") {
     if (!Number.isInteger(nextActualMinutes)) throw new Error("实际时间请输入整数分钟");
-    if ((nextActualMinutes as number) < 1 || (nextActualMinutes as number) > 480) throw new Error("实际时间应在 1～480 分钟之间");
+    // 完成动作可以先只记录完成事实，实际投入由历史记录补充；部分完成仍必须有真实投入。
+    const minimumMinutes = status === "completed" ? 0 : 1;
+    if ((nextActualMinutes as number) < minimumMinutes || (nextActualMinutes as number) > 480) throw new Error("实际时间应在 0～480 分钟之间");
   }
   const now = new Date().toISOString();
   task.status = status;
@@ -149,6 +152,39 @@ export function rescheduleTask(taskId: string, businessToday = getTodayBusinessD
   store.tasks.push(successor);
   writeManualStore(store);
   return successor;
+}
+
+export function updateActionRecord(input: SaveActionRecordInput): ActionTask {
+  const title = String(input.title || "").trim();
+  const reflection = String(input.reflection || "").trim();
+  if (title.length < 2 || title.length > 40) throw new Error("行动标题请控制在 2～40 个字");
+  if (reflection.length > 200) throw new Error("今日感受最多 200 个字");
+  if (!isValidBusinessDate(input.businessDate)) throw new Error("请选择有效日期");
+  if (!/^\d{2}:\d{2}$/.test(input.time)) throw new Error("请选择有效时间");
+  const [hour, minute] = input.time.split(":").map(Number);
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23 || !Number.isInteger(minute) || minute < 0 || minute > 59) throw new Error("请选择有效时间");
+  if (!Number.isInteger(input.actualMinutes) || input.actualMinutes < 0 || input.actualMinutes > 480) throw new Error("实际投入应为 0～480 分钟");
+  if (input.status === "partially_completed" && input.actualMinutes < 1) throw new Error("部分完成需要记录实际投入");
+  const recordedAt = new Date(`${input.businessDate}T${input.time}:00+08:00`);
+  if (Number.isNaN(recordedAt.getTime())) throw new Error("请选择有效完成时间");
+  if (recordedAt.getTime() > Date.now()) throw new Error("完成时间不能晚于当前时间");
+
+  const store = readManualStore();
+  const task = store.tasks.find((item) => item.id === input.taskId && !item.deletedAt);
+  if (!task) throw new Error("行动不存在");
+  if (!store.goals.some((goal) => goal.id === task.goalId && goal.status === "active")) throw new Error("目标已结束，不能修改行动");
+  const now = new Date().toISOString();
+  task.title = title;
+  task.currentDate = input.businessDate;
+  task.status = input.status;
+  task.reflection = reflection || undefined;
+  task.actualMinutes = input.status === "pending" ? undefined : input.actualMinutes;
+  task.activityDate = input.status === "pending" ? undefined : input.businessDate;
+  task.completedAt = input.status === "pending" ? undefined : recordedAt.toISOString();
+  task.issueReason = input.status === "partially_completed" ? task.issueReason : undefined;
+  task.updatedAt = now;
+  writeManualStore(store);
+  return task;
 }
 
 export function deleteTask(taskId: string): void {

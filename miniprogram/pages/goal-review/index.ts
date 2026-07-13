@@ -5,6 +5,7 @@ import { ActionIssueReason, ActionTask, ArchivedGoal } from "../../types/manual"
 interface StatItem { label: string; value: string; unit: string; }
 interface TrendDay { date: string; label: string; completed: number; minutes: number; completedHeight: number; minutesHeight: number; }
 interface ActionView extends ActionTask { dateText: string; minutesText: string; }
+interface ReflectionView { id: string; title: string; dateText: string; reflection: string; }
 
 const REASON_LABELS: Record<ActionIssueReason, string> = {
   not_enough_time: "时间不够",
@@ -64,6 +65,19 @@ function valuableActions(actions: ActionTask[]): ActionView[] {
     }));
 }
 
+function reflectionRecords(actions: ActionTask[]): ReflectionView[] {
+  return actions
+    .filter((task) => Boolean(task.reflection?.trim()))
+    .sort((a, b) => `${b.currentDate}${b.completedAt || b.updatedAt}`.localeCompare(`${a.currentDate}${a.completedAt || a.updatedAt}`))
+    .slice(0, 12)
+    .map((task) => ({
+      id: task.id,
+      title: task.title,
+      dateText: shortDate(task.completedAt || task.currentDate),
+      reflection: task.reflection!.trim(),
+    }));
+}
+
 function reasonSummary(actions: ActionTask[]): string {
   const counts = new Map<string, number>();
   actions.filter((task) => task.status !== "completed" && task.issueReason).forEach((task) => {
@@ -95,6 +109,7 @@ Page(withAppTheme({
     stats: [] as StatItem[],
     trendDays: [] as TrendDay[],
     valuableActions: [] as ActionView[],
+    reflectionRecords: [] as ReflectionView[],
     reasonSummary: "",
     suggestion: "",
   },
@@ -123,6 +138,7 @@ Page(withAppTheme({
         ],
         trendDays: buildTrend(goal.actions),
         valuableActions: valuableActions(goal.actions),
+        reflectionRecords: reflectionRecords(goal.actions),
         reasonSummary: reasonSummary(goal.actions),
         suggestion: suggestion(goal),
       });

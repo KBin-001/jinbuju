@@ -100,18 +100,19 @@
         <view class="card-count">{{completedTasks.length}} 项</view>
       </view>
       <view wx:if="{{completedTasks.length > 0}}" class="completed-list">
-        <view wx:for="{{completedTasks}}" wx:key="id" class="completed-row">
+        <view wx:for="{{completedTasks}}" wx:key="id" class="completed-row" data-id="{{item.id}}" catchtap="openRecordEditor">
           <view class="completed-check">✓</view>
           <view class="completed-copy">
             <view class="completed-title">{{item.title}}</view>
             <view class="completed-meta-line">
               <text class="completed-goal">{{goalTitle}}</text>
-              <view class="completion-time-chip" data-id="{{item.id}}" catchtap="openTimeEditor">
+              <view class="completion-time-chip">
                 <text class="completion-time-clock">◷</text>
                 <text>完成于 {{item.completedTime}}</text>
                 <text class="completion-time-edit">修改</text>
               </view>
             </view>
+            <view wx:if="{{item.reflection}}" class="completed-reflection">“{{item.reflection}}”</view>
           </view>
           <view class="completed-duration"><view>{{item.minutes}}分</view><text>专注</text></view>
         </view>
@@ -164,44 +165,13 @@
     </view>
   </view>
 
-  <view wx:if="{{timeEditorRendered}}" class="time-editor-layer {{timeEditorVisible ? 'is-visible' : ''}}" catchtouchmove="noop">
-    <view class="time-editor-mask" catchtap="closeTimeEditor"></view>
-    <view class="time-editor-panel" catchtap="noop">
-      <view class="time-editor-header">
-        <view>
-          <view class="time-editor-eyebrow">COMPLETION TIME</view>
-          <view class="time-editor-title">修改完成时间</view>
-        </view>
-        <view class="time-editor-close" catchtap="closeTimeEditor">×</view>
-      </view>
-      <view class="time-editor-task">{{editingTaskTitle}}</view>
-
-      <view class="time-selector">
-        <view class="time-stepper">
-          <view class="time-step-button" data-part="hour" data-delta="1" catchtap="adjustCompletionTime">＋</view>
-          <view class="time-step-value">{{draftHourText}}</view>
-          <view class="time-step-label">时</view>
-          <view class="time-step-button" data-part="hour" data-delta="-1" catchtap="adjustCompletionTime">−</view>
-        </view>
-        <view class="time-separator">:</view>
-        <view class="time-stepper">
-          <view class="time-step-button" data-part="minute" data-delta="1" catchtap="adjustCompletionTime">＋</view>
-          <view class="time-step-value">{{draftMinuteText}}</view>
-          <view class="time-step-label">分</view>
-          <view class="time-step-button" data-part="minute" data-delta="-1" catchtap="adjustCompletionTime">−</view>
-        </view>
-      </view>
-
-      <view class="time-preview-row">
-        <text>完成时间</text>
-        <text>{{dateLabel}} · {{draftTimeText}}</text>
-      </view>
-      <view class="time-sync-status {{timeSyncText === '已保存到本地' ? 'is-saved' : ''}}">{{timeSyncText}}</view>
-
-      <view class="time-editor-actions">
-        <t-button class="time-cancel-button" disabled="{{savingTime}}" catchtap="closeTimeEditor">取消</t-button>
-        <t-button class="time-save-button" loading="{{savingTime}}" disabled="{{savingTime}}" catchtap="saveCompletionTime">保存时间</t-button>
-      </view>
-    </view>
-  </view>
+  <action-record-editor
+    visible="{{recordEditorVisible}}"
+    task="{{recordEditorTask}}"
+    saving="{{savingRecord}}"
+    deleting="{{deletingRecord}}"
+    bind:close="closeRecordEditor"
+    bind:save="saveRecordEditor"
+    bind:delete="deleteRecordEditor"
+  />
 </view>

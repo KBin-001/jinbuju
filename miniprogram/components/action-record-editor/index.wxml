@@ -1,0 +1,56 @@
+<view wx:if="{{visible}}" class="record-layer" catchtouchmove="noop">
+  <view class="record-mask" catchtap="close"></view>
+  <view class="record-panel" catchtap="noop">
+    <view class="record-grabber"></view>
+    <view class="record-head">
+      <view><view class="record-eyebrow">ACTION RECORD</view><view class="record-title">编辑行动记录</view></view>
+      <view class="record-close" catchtap="close"><t-icon name="close" size="34rpx" /></view>
+    </view>
+    <scroll-view class="record-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+      <view class="record-field">
+        <view class="record-label">行动标题</view>
+        <view class="record-input-shell"><input value="{{title}}" maxlength="40" placeholder="请输入行动标题" bindinput="inputTitle" /><t-icon name="edit" size="31rpx" /></view>
+      </view>
+
+      <view class="record-field">
+        <view class="record-label">完成时间</view>
+        <view class="record-date-shell">
+          <t-icon name="calendar" size="35rpx" />
+          <picker class="record-date-picker" mode="date" value="{{recordDate}}" bindchange="changeDate"><view>{{recordDate}}</view></picker>
+          <picker class="record-time-picker" mode="time" value="{{recordTime}}" bindchange="changeTime"><view>{{recordTime}}</view></picker>
+          <t-icon name="chevron-right" size="30rpx" />
+        </view>
+      </view>
+
+      <view class="record-field">
+        <view class="record-label">实际投入</view>
+        <view class="record-input-shell record-minutes-shell"><t-icon name="time" size="35rpx" /><input type="number" value="{{actualMinutesText}}" maxlength="3" bindinput="inputMinutes" /><text>分钟</text></view>
+      </view>
+
+      <view class="record-field">
+        <view class="record-label">完成情况</view>
+        <view class="record-segments">
+          <view class="record-segment {{status === 'completed' ? 'is-active' : ''}}" data-status="completed" catchtap="chooseStatus"><t-icon wx:if="{{status === 'completed'}}" name="check" size="24rpx" />已完成</view>
+          <view class="record-segment {{status === 'partially_completed' ? 'is-active' : ''}}" data-status="partially_completed" catchtap="chooseStatus">部分完成</view>
+          <view class="record-segment {{status === 'pending' ? 'is-active' : ''}}" data-status="pending" catchtap="chooseStatus">未完成</view>
+        </view>
+      </view>
+
+      <view class="record-field">
+        <view class="record-label">今日感受 / 收获</view>
+        <view class="record-reflection-shell"><textarea value="{{reflection}}" maxlength="200" auto-height="{{false}}" cursor-spacing="40" placeholder="记录你的感受、收获或遇到的困难…" bindinput="inputReflection" /><text>{{reflection.length}}/200</text></view>
+      </view>
+
+      <view class="record-ai-note">
+        <view class="record-ai-mark">AI</view>
+        <view><view class="record-ai-title">AI 教练小贴士</view><view class="record-ai-copy">记录真实投入和感受，AI 教练会结合这些信息分析你的行动节奏，并在复盘中给出更贴合的建议。</view></view>
+      </view>
+
+      <view class="record-scroll-spacer"></view>
+    </scroll-view>
+    <view class="record-footer">
+      <button class="record-save" loading="{{saving}}" disabled="{{saving || deleting || title.length < 2}}" bindtap="save"><t-icon name="save" size="31rpx" />{{saving ? '正在保存' : '保存记录'}}</button>
+      <view class="record-delete {{deleting ? 'is-disabled' : ''}}" catchtap="remove">{{deleting ? '正在删除…' : '删除记录'}}</view>
+    </view>
+  </view>
+</view>

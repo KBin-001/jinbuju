@@ -16,7 +16,7 @@ global.wx = {
 };
 
 const { createGoal, endGoal, getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } = require("../services/manualGoal.ts");
-const { createTask, deleteTask, getTask, getTasksByDate, getTodayPageTasks, rescheduleTask, updateTaskStatus } = require("../services/manualTask.ts");
+const { createTask, deleteTask, getTask, getTasksByDate, getTodayPageTasks, rescheduleTask, updateActionRecord, updateTaskStatus } = require("../services/manualTask.ts");
 const { getProgressSummary, recordDailyCheckin } = require("../services/manualStats.ts");
 
 const today = "2026-06-21";
@@ -38,7 +38,19 @@ const pending = createTask({ goalId: blogGoal.id, title: "检查移动端适配"
 createTask({ goalId: cetGoal.id, title: "背30个单词", currentDate: today, estimatedMinutes: 30 });
 
 updateTaskStatus(completed.id, "completed", 35);
+updateActionRecord({
+  taskId: completed.id,
+  title: "完成首页布局",
+  businessDate: today,
+  time: "20:15",
+  actualMinutes: 35,
+  status: "completed",
+  reflection: "布局拆小后更容易推进",
+});
+assert.equal(getTask(completed.id).reflection, "布局拆小后更容易推进");
+assert.equal(new Date(getTask(completed.id).completedAt).getHours(), 20);
 updateTaskStatus(partial.id, "partially_completed", 20, "not_enough_time");
+updateActionRecord({ taskId: partial.id, title: partial.title, businessDate: today, time: "20:30", actualMinutes: 20, status: "partially_completed", reflection: "资料准备不足，明天先列参考来源" });
 assert.throws(() => updateTaskStatus(pending.id, "completed", 481));
 const successor = rescheduleTask(pending.id, today);
 assert.equal(successor.currentDate, "2026-06-22");
@@ -76,6 +88,7 @@ assert.equal(archivedGoal.actions.length, 4);
 assert.equal(archivedGoal.stats.completedActions, 1);
 assert.equal(archivedGoal.stats.actualMinutes, 55);
 assert.equal(archivedGoal.stats.completionRate, 33);
+assert.equal(archivedGoal.actions.find((task) => task.id === completed.id).reflection, "布局拆小后更容易推进");
 assert.equal(getActiveGoals().length, 1);
 assert.equal(getActiveGoal().id, cetGoal.id);
 assert.equal(getArchivedGoals()[0].id, blogGoal.id);

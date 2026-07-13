@@ -53,40 +53,48 @@
 
     <block wx:else>
       <view class="stats-card" bindtap="openTodayDataDetails" hover-class="stats-card--pressed">
-        <view class="stats-col">
-          <view class="stats-col-label"><t-icon name="check-rectangle" size="36rpx" /><text>已完成</text></view>
-          <view class="stats-col-value">{{summary.completedCount}}/{{summary.totalCount}}</view>
-        </view>
-        <view class="stats-col">
-          <view class="stats-col-label"><t-icon name="time" size="36rpx" /><text>今日投入</text></view>
-          <view class="stats-col-value">{{summary.actualMinutes}}<text class="stats-col-unit">min</text></view>
-        </view>
-        <view class="stats-col stats-col--progress">
-          <view class="stats-col-label"><t-icon name="chart-pie" size="36rpx" /><text>今日进度</text></view>
-          <view class="stats-ring-wrap">
-            <canvas
-              wx:if="{{!calendarVisible && !quickAddVisible && !completionSheetRendered}}"
-              type="2d"
-              id="stats-progress-ring"
-              class="stats-ring-canvas"
-            ></canvas>
-            <view class="stats-ring-text">{{completionPercent}}%</view>
+        <image class="stats-landscape" src="/assets/stats-card-landscape-v2.jpg" mode="aspectFill" />
+        <view class="stats-landscape-veil"></view>
+        <view class="stats-grid">
+          <view class="stats-column stats-column--done">
+            <view class="stats-label"><view class="stats-icon stats-icon--solid"><t-icon name="check" size="22rpx" /></view><text>已完成</text></view>
+            <view class="stats-value stats-value--done"><text>{{summary.completedCount}}</text><text class="stats-value-slash">/</text><text>{{summary.totalCount}}</text></view>
+            <view class="stats-foot stats-foot--done {{completionPercent === 100 && summary.totalCount > 0 ? 'is-complete' : ''}}">
+              <view class="stats-foot-check"><t-icon name="check" size="17rpx" /></view>
+              <text>{{summary.totalCount === 0 ? '等待开始' : (completionPercent === 100 ? '全部完成' : (summary.completedCount > 0 ? '稳步推进' : '尚未完成'))}}</text>
+            </view>
+          </view>
+          <view class="stats-column stats-column--minutes">
+            <view class="stats-label"><view class="stats-icon stats-icon--time"><t-icon name="time" size="27rpx" /></view><text>今日投入</text></view>
+            <view class="stats-value stats-value--minutes">{{summary.actualMinutes}}<text class="stats-value-unit">min</text></view>
+            <view class="stats-mini-bars" aria-label="今日投入时段分布">
+              <view wx:for="{{statsRhythmBars}}" wx:key="key" class="stats-mini-bar {{item.active ? 'is-active' : ''}}" style="height: {{item.height}}rpx;"></view>
+            </view>
+          </view>
+          <view class="stats-column stats-column--progress">
+            <view class="stats-label"><view class="stats-icon stats-icon--solid stats-icon--mountain"><view class="stats-icon-mountain"></view></view><text>今日进度</text></view>
+            <view class="stats-value stats-value--progress">{{completionPercent}}<text class="stats-value-unit stats-value-unit--percent">%</text></view>
+            <view class="stats-mountain-track">
+              <view class="stats-mountain-fill" style="width: {{completionPercent}}%;"></view>
+            </view>
+            <view class="stats-achievement-pill">
+              {{completionPercent === 100 && summary.totalCount > 0 ? '目标达成' : (remainingCount > 0 ? '还差 ' + remainingCount + ' 项' : '尚未开始')}}
+            </view>
           </view>
         </view>
       </view>
 
       <view class="reference-coach-entry" bindtap="openDailyCoach" hover-class="reference-card--pressed">
-        <image class="reference-coach-background" src="/assets/today-coach-watercolor-v2.jpg" mode="aspectFill" />
+        <!-- 机器人插画已停用：主动观察只使用山水背景，不抢占提醒内容。 -->
+        <!-- <image class="reference-coach-background" src="/assets/today-coach-watercolor-v2.jpg" mode="aspectFill" /> -->
+        <image class="reference-coach-background" src="/assets/progress-mountain-path-v2.jpg" mode="aspectFill" />
         <view class="reference-coach-veil"></view>
         <view class="reference-coach-copy">
-          <view class="reference-coach-title">
-            <view class="reference-coach-mark">✦</view>
-            <text>{{coachStatus === 'ready' ? 'AI 教练' : '行动建议'}}</text>
-            <text class="reference-coach-source">{{coachStatus === 'loading' ? '正在读取记录' : (coachStatus === 'ready' ? '已读取真实记录' : (coachStatus === 'error' ? 'AI 暂不可用' : '本地规则'))}}</text>
-            <text class="reference-coach-arrow">›</text>
+          <view class="proactive-insight proactive-insight--{{proactiveInsight.tone}}">
+            <view class="proactive-label">{{proactiveInsight.label}}</view>
+            <view class="proactive-title">{{proactiveInsight.title}}</view>
+            <view class="proactive-body">{{proactiveInsight.body}}</view>
           </view>
-          <view class="reference-coach-subtitle">{{coachStatus === 'loading' ? '正在根据今天的真实行动准备建议…' : (coachStatus === 'ready' ? coachSummary : dailyNudge)}}</view>
-          <view wx:if="{{coachStatus === 'ready' && coachNextStep}}" class="reference-coach-next">下一步 · {{coachNextStep}}</view>
         </view>
       </view>
 
