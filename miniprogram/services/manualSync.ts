@@ -3,6 +3,7 @@ import { CoachActionResult, CoachActionStatusResult } from "../types/progressCoa
 import { emit } from "../utils/eventBus";
 import { readManualStore, writeManualStore } from "./manualStore";
 import { CloudRequestError, createCloudRequestId, logCloudRequest } from "../utils/cloudRequest";
+import { markSyncFailed, markSyncing } from "./syncStatus";
 
 interface CloudResult<T> { success: boolean; data?: T; error?: { code?: string; message?: string } }
 
@@ -72,6 +73,7 @@ let pendingManualSync: Promise<ManualDataStore> | undefined;
 
 export function syncManualData(): Promise<ManualDataStore> {
   if (pendingManualSync) return pendingManualSync;
+  markSyncing();
   const requestSnapshot = JSON.parse(JSON.stringify(readManualStore())) as ManualDataStore;
   const pending = call<ManualDataStore>({ action: "syncManualData", store: requestSnapshot }).then((remote) => {
     // 请求期间可能发生本地写入；以响应到达时的本地状态再次合并，避免旧响应覆盖新操作。
@@ -82,8 +84,8 @@ export function syncManualData(): Promise<ManualDataStore> {
       goals: mergeRecords(remote.goals || [], current.goals || [], (item) => item.id, (item) => item.updatedAt || item.createdAt || ""),
       tasks: mergeRecords(remote.tasks || [], current.tasks || [], (item) => item.id, (item) => item.updatedAt || item.createdAt || ""),
       checkins: mergeRecords(remote.checkins || [], current.checkins || [], (item) => item.id, (item) => item.updatedAt || item.createdAt || ""),
-      archivedGoals: mergeRecords(remote.archivedGoals || [], current.archivedGoals || [], (item) => item.id, (item) => item.archivedAt || item.endedAt || ""),
-      achievementUnlocks: mergeRecords(remote.achievementUnlocks || [], current.achievementUnlocks || [], (item) => item.achievementId, (item) => item.unlockedAt || ""),
+      archivedGoals: mergeRecords(remote.archivedGoals || [], current.archivedGoals || [], (item) => item.id, (item) => item.updatedAt || item.archivedAt || item.endedAt || ""),
+      achievementUnlocks: mergeRecords(remote.achievementUnlocks || [], current.achievementUnlocks || [], (item) => item.achievementId, (item) => item.celebratedAt || item.unlockedAt || ""),
       sparkCheckins: mergeRecords(remote.sparkCheckins || [], current.sparkCheckins || [], (item) => item.businessDate, (item) => item.checkedAt || "")
         .sort((a, b) => a.businessDate.localeCompare(b.businessDate)),
     };
@@ -96,7 +98,7 @@ export function syncManualData(): Promise<ManualDataStore> {
   });
   pendingManualSync = pending.then(
     (value) => { pendingManualSync = undefined; return value; },
-    (error) => { pendingManualSync = undefined; throw error; },
+    (error) => { pendingManualSync = undefined; markSyncFailed(error); throw error; },
   );
   return pendingManualSync;
 }

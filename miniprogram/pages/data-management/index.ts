@@ -1,20 +1,27 @@
-import { ProfileServiceError } from "../../services/profile";
+import { clearCloudBusinessData, deleteCloudAccount } from "../../services/account";
+import { clearLocalCachesAndRestore } from "../../services/dataSync";
 import { clearManualStore } from "../../services/manualStore";
-import { deleteCloudAccount } from "../../services/account";
+import { ProfileServiceError } from "../../services/profile";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 
+type DangerMode = "" | "business" | "account";
+
 interface InputEvent {
-  detail: {
-    value?: string;
-  };
+  detail: { value?: string };
 }
+
+const CONFIRM_TEXT: Record<Exclude<DangerMode, "">, string> = {
+  business: "删除成长数据",
+  account: "注销账号",
+};
 
 Page(withAppTheme({
   data: {
     appTheme: getCurrentThemeId() as string,
-    confirmedRisk: false,
+    dangerMode: "" as DangerMode,
     confirmation: "",
-    deleting: false,
+    processing: false,
+    localClearing: false,
     errorMessage: "",
   },
 
@@ -22,73 +29,81 @@ Page(withAppTheme({
     this.setData({ appTheme: getCurrentThemeId() });
   },
 
-  startDelete() {
-    if (this.data.deleting) return;
+  openSync() {
+    wx.navigateTo({ url: "/pages/data-sync/index" });
+  },
+
+  clearLocalCache() {
+    if (this.data.processing || this.data.localClearing) return;
     wx.showModal({
-      title: "确认清除全部数据？",
-      content:
-        "目标、行动阶段、每日行动、打卡、小队关系和鼓励记录都会被清除，且无法恢复。",
-      confirmText: "继续",
-      confirmColor: "#B44C43",
-      success: (result: { confirm: boolean }) => {
-        if (result.confirm) {
-          this.setData({
-            confirmedRisk: true,
-            confirmation: "",
-            errorMessage: "",
-          });
-        }
+      title: "清除并从云端恢复？",
+      content: "只清除当前设备缓存。目标、行动和收藏不会从云端删除；操作需要保持联网。",
+      confirmText: "清除并恢复",
+      success: (result) => {
+        if (!result.confirm) return;
+        this.setData({ localClearing: true, errorMessage: "" });
+        clearLocalCachesAndRestore().then(() => {
+          wx.showToast({ title: "已从云端恢复", icon: "success" });
+        }).catch((error: Error) => {
+          this.setData({ errorMessage: error.message || "云端恢复未完成，请联网重试" });
+        }).then(() => this.setData({ localClearing: false }));
       },
     });
   },
 
-  clearLocalData() {
-    if (this.data.deleting) return;
+  startBusinessDelete() {
+    this.openDangerConfirmation("business");
+  },
+
+  startAccountDelete() {
+    this.openDangerConfirmation("account");
+  },
+
+  openDangerConfirmation(mode: Exclude<DangerMode, "">) {
+    if (this.data.processing) return;
+    const isAccount = mode === "account";
     wx.showModal({
-      title: "清除本地数据？",
-      content: "只会清除当前设备上的目标、行动、打卡和历史复盘数据，不会操作线上数据库。清除后无法恢复。",
-      confirmText: "确认清除",
-      confirmColor: "#9B4B45",
-      success: (result: { confirm: boolean }) => {
-        if (!result.confirm) return;
-        clearManualStore();
-        wx.removeStorageSync("welcomeCompleted");
-        wx.showToast({ title: "本地数据已清除", icon: "success" });
-        setTimeout(() => wx.reLaunch({ url: "/pages/welcome/index" }), 350);
+      title: isAccount ? "申请注销账号？" : "删除全部成长数据？",
+      content: isAccount
+        ? "账号资料、绑定关系和成长数据将永久删除；如你是小队队长，需要先转让或解散小队。"
+        : "目标、行动、复盘和成长收藏将永久删除。账号资料、手机号绑定、协议记录和小队关系保留。",
+      confirmText: "继续",
+      confirmColor: "#9B554D",
+      success: (result) => {
+        if (result.confirm) this.setData({ dangerMode: mode, confirmation: "", errorMessage: "" });
       },
     });
+  },
+
+  cancelDanger() {
+    if (this.data.processing) return;
+    this.setData({ dangerMode: "", confirmation: "", errorMessage: "" });
   },
 
   onConfirmationInput(event: InputEvent) {
-    this.setData({
-      confirmation: String(event.detail.value || ""),
-      errorMessage: "",
-    });
+    this.setData({ confirmation: String(event.detail.value || ""), errorMessage: "" });
   },
 
-  submitDelete() {
-    if (this.data.deleting || this.data.confirmation !== "确认清除") return;
-    this.setData({ deleting: true, errorMessage: "" });
-    deleteCloudAccount()
-      .then(() => {
-        clearManualStore();
-        wx.reLaunch({
-          url: "/pages/welcome/index?dataCleared=1",
-          success: () => {
-            wx.showToast({
-              title: "数据已清除",
-              icon: "success",
-            });
-          },
-        });
-      })
-      .catch((error: Error) => {
-        const serviceError = error as ProfileServiceError;
-        this.setData({
-          deleting: false,
-          errorMessage:
-            serviceError.message || "数据暂时未能清除，请稍后重试。",
-        });
+  submitDanger() {
+    const mode = this.data.dangerMode as Exclude<DangerMode, "">;
+    if (!mode || this.data.processing || this.data.confirmation !== CONFIRM_TEXT[mode]) return;
+    this.setData({ processing: true, errorMessage: "" });
+    const operation = mode === "business" ? clearCloudBusinessData() : deleteCloudAccount();
+    operation.then(() => {
+      clearManualStore();
+      if (mode === "account") {
+        wx.removeStorageSync("welcomeCompleted");
+        wx.reLaunch({ url: "/pages/welcome/index?accountDeleted=1" });
+        return;
+      }
+      wx.showToast({ title: "成长数据已删除", icon: "success" });
+      setTimeout(() => wx.switchTab({ url: "/pages/profile/index" }), 450);
+    }).catch((error: Error) => {
+      const serviceError = error as ProfileServiceError;
+      this.setData({
+        processing: false,
+        errorMessage: serviceError.message || (mode === "account" ? "账号暂时无法注销，请稍后重试" : "成长数据暂时无法删除，请稍后重试"),
       });
+    });
   },
 }));

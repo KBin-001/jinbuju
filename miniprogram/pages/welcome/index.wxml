@@ -1,14 +1,15 @@
 <view class="welcome-page" data-theme="{{appTheme}}">
   <image class="welcome-mountain" src="/assets/today-hero-mountain-v2.jpg" mode="aspectFill" />
   <view class="welcome-mountain-veil"></view>
+
   <view wx:if="{{status === 'loading'}}" class="welcome-state">
-    <view class="loading-dot"></view>
+    <t-loading size="44rpx" theme="circular" />
     <view class="state-title">正在准备进步局</view>
-    <view class="state-description">马上就好。</view>
+    <view class="state-description">马上就好</view>
   </view>
 
   <view wx:elif="{{status === 'error'}}" class="welcome-state">
-    <view class="state-mark">!</view>
+    <t-icon name="error-circle" size="52rpx" />
     <view class="state-title">启动失败</view>
     <view class="state-description">{{errorMessage}}</view>
     <t-button class="primary-button" bindtap="retry">重新加载</t-button>
@@ -16,45 +17,30 @@
 
   <view wx:else class="welcome-content">
     <view class="brand">
-      <view class="brand-mark">
-        <view class="brand-step brand-step-small"></view>
-        <view class="brand-step brand-step-medium"></view>
-        <view class="brand-step brand-step-large"></view>
-      </view>
+      <view class="brand-mark"><view class="brand-step brand-step-small"></view><view class="brand-step brand-step-medium"></view><view class="brand-step brand-step-large"></view></view>
       <text class="brand-name">进步局</text>
     </view>
 
     <view class="hero">
       <view class="hero-label">把目标变成行动</view>
       <view class="hero-title">把想变好，拆成今天就能做到的一步</view>
-      <view class="hero-subtitle">创建目标，手动安排每天的小行动，记录真实投入和进步</view>
+      <view class="hero-subtitle">创建长期目标，安排每天的具体行动，记录真实投入和进步。</view>
     </view>
 
     <view wx:if="{{showExample}}" class="example-card">
-      <view class="example-heading">
-        <view>
-          <view class="example-tag">目标示例</view>
-          <view class="example-title">长期目标：提升面试表达</view>
-        </view>
-        <view class="example-day">今天</view>
-      </view>
-      <view class="example-task">
-        <view class="task-check">1</view>
-        <view class="task-content">
-          <view class="task-title">整理三段关键经历</view>
-          <view class="task-meta">约 20 分钟 · 完成后即可打卡</view>
-        </view>
-      </view>
+      <view class="example-heading"><view><view class="example-tag">目标示例</view><view class="example-title">长期目标：提升面试表达</view></view><view class="example-day">今天</view></view>
+      <view class="example-task"><view class="task-check">1</view><view class="task-content"><view class="task-title">整理三段关键经历</view><view class="task-meta">约 20 分钟 · 完成后即可记录</view></view></view>
       <view class="example-note">每天只做清晰、可完成的一小步。</view>
     </view>
 
     <view class="welcome-actions">
-      <t-button class="start-button" hover-class="start-button-active" bindtap="startPlanning">
-        创建长期目标
-      </t-button>
-      <t-button class="example-button" hover-class="example-button-active" bindtap="toggleExample">
-        {{showExample ? '收起示例' : '先看看示例'}}
-      </t-button>
+      <checkbox-group class="agreement-check" bindchange="onConsentChange">
+        <label><checkbox value="agree" checked="{{consentChecked}}" color="#245B4D" /><text>我已分别阅读并同意</text></label>
+        <view class="agreement-links"><text catchtap="openPrivacy">《隐私政策》</text><text catchtap="openTerms">《用户协议》</text></view>
+      </checkbox-group>
+      <view wx:if="{{errorMessage}}" class="agreement-error">{{errorMessage}}</view>
+      <t-button class="start-button" loading="{{submitting}}" disabled="{{!consentChecked || submitting}}" bindtap="startPlanning">{{submitting ? '正在保存同意记录' : '开始创建目标'}}</t-button>
+      <t-button class="example-button" disabled="{{submitting}}" bindtap="toggleExample">{{showExample ? '收起示例' : '先看看示例'}}</t-button>
     </view>
   </view>
 </view>

@@ -14,6 +14,7 @@ export interface Goal {
   startedAt?: string;
   endedAt?: string;
   archivedAt?: string;
+  deletedAt?: string;
   updatedAt: string;
 }
 
@@ -59,6 +60,7 @@ export interface DailyCheckin {
   actualMinutes: number;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
 }
 
 export interface DailyActionSummary {
@@ -126,11 +128,17 @@ export interface ArchivedGoalStats {
 export interface ArchivedGoal {
   id: string;
   title: string;
+  category?: GoalCategory;
+  description?: string;
   status: "completed" | "ended" | "archived";
   createdAt: string;
   startedAt?: string;
   endedAt: string;
   archivedAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+  restoredAt?: string;
+  purgedAt?: string;
   actions: ActionTask[];
   stats: ArchivedGoalStats;
 }

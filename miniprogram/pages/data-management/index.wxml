@@ -1,50 +1,42 @@
 <view class="page data-page" data-theme="{{appTheme}}">
-  <view class="page-header growth-hero data-hero">
-    <view class="page-eyebrow">你的数据由你决定</view>
-    <view class="page-title">数据管理</view>
-    <view class="page-subtitle">清除操作不可恢复，请先了解影响范围。</view>
+  <view class="data-hero">
+    <text class="page-eyebrow">你的数据由你决定</text>
+    <text class="page-title">数据管理</text>
+    <text class="page-subtitle">清除缓存、删除成长数据和注销账号是三个不同操作。</text>
   </view>
 
-  <view class="card scope-card">
-    <view class="section-title">将清除的数据</view>
-    <view class="scope-list">
-      <view>用户资料、头像与账号绑定信息</view>
-      <view>目标、每日行动、投入时间与成长统计</view>
-      <view>AI 教练分析快照与确认过的操作记录</view>
-      <view>小队成员关系、榜单快照与固定鼓励</view>
-      <view>当前设备上的缓存与未完成草稿</view>
+  <view class="section-card safe-card">
+    <view class="section-head"><view><text class="section-title">当前设备缓存</text><text class="section-desc">只影响这台设备，不删除任何云端业务数据。</text></view><t-icon name="device" size="42rpx" /></view>
+    <view class="button-row">
+      <t-button variant="outline" theme="primary" bindtap="openSync">查看同步状态</t-button>
+      <t-button variant="outline" theme="primary" loading="{{localClearing}}" disabled="{{localClearing || processing}}" bindtap="clearLocalCache">清除并恢复</t-button>
     </view>
   </view>
 
-  <view class="warning-card">
-    清除完成后无法恢复。小队中其他成员的数据不会被删除；系统只会移除你的成员关系并更新相应人数。
+  <view class="section-card">
+    <view class="section-head"><view><text class="section-title">删除成长数据</text><text class="section-desc">永久删除目标、行动、复盘和成长收藏。</text></view><t-icon name="delete" size="42rpx" /></view>
+    <view class="retained-note">保留：账号资料、手机号绑定、协议记录和小队关系。</view>
+    <t-button class="danger-outline-button" variant="outline" disabled="{{processing || localClearing}}" bindtap="startBusinessDelete">删除全部成长数据</t-button>
   </view>
 
-  <t-button
-    wx:if="{{!confirmedRisk}}"
-    class="danger-outline-button"
-    bindtap="startDelete"
-  >注销账号并删除全部数据</t-button>
+  <view class="section-card account-card">
+    <view class="section-head"><view><text class="section-title">注销账号</text><text class="section-desc">永久删除账号及归属于你的数据，且无法恢复。</text></view><t-icon name="user-clear" size="42rpx" /></view>
+    <view class="retained-note retained-note--warning">队长需先转让或解散小队。注销失败时，本地不会伪装成已完成。</view>
+    <t-button class="danger-button" disabled="{{processing || localClearing}}" bindtap="startAccountDelete">申请注销账号</t-button>
+  </view>
 
-  <view wx:else class="card confirmation-card">
-    <view class="section-title">再次确认</view>
-    <view class="confirmation-copy">
-      请输入“确认清除”，然后提交最终请求。
+  <view wx:if="{{errorMessage}}" class="error-copy"><t-icon name="error-circle" size="28rpx" />{{errorMessage}}</view>
+
+  <view wx:if="{{dangerMode}}" class="danger-panel">
+    <view class="danger-mask" bindtap="cancelDanger"></view>
+    <view class="danger-sheet">
+      <view class="sheet-handle"></view>
+      <text class="sheet-title">{{dangerMode === 'account' ? '确认注销账号' : '确认删除成长数据'}}</text>
+      <text class="sheet-copy">请输入“{{dangerMode === 'account' ? '注销账号' : '删除成长数据'}}”完成第二次确认。</text>
+      <t-input value="{{confirmation}}" placeholder="请输入确认文字" maxlength="20" disabled="{{processing}}" bindchange="onConfirmationInput" />
+      <view wx:if="{{errorMessage}}" class="sheet-error">{{errorMessage}}</view>
+      <t-button class="sheet-danger" loading="{{processing}}" disabled="{{processing || confirmation !== (dangerMode === 'account' ? '注销账号' : '删除成长数据')}}" bindtap="submitDanger">{{processing ? '正在处理' : '确认执行'}}</t-button>
+      <t-button variant="text" disabled="{{processing}}" bindtap="cancelDanger">取消</t-button>
     </view>
-    <t-input
-      class="confirmation-input"
-      value="{{confirmation}}"
-      placeholder="确认清除"
-      maxlength="20"
-      disabled="{{deleting}}"
-      bindchange="onConfirmationInput"
-    />
-    <view wx:if="{{errorMessage}}" class="error-copy">{{errorMessage}}</view>
-    <t-button
-      class="danger-button"
-      loading="{{deleting}}"
-      disabled="{{confirmation !== '确认清除' || deleting}}"
-      bindtap="submitDelete"
-    >{{deleting ? '正在注销' : '确认注销账号'}}</t-button>
   </view>
 </view>

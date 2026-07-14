@@ -23,8 +23,13 @@ const REQUIRED_COLLECTIONS = [
   "manual_goals",
   "manual_tasks",
   "manual_checkins",
+  "manual_archived_goals",
+  "achievement_unlocks",
+  "spark_checkins",
   "coach_action_proposals",
   "account_bindings",
+  "user_consents",
+  "account_operations",
 ];
 let collectionsReady = false;
 

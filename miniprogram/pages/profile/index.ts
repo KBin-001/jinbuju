@@ -1,6 +1,6 @@
 import { endGoal, getActiveGoal, getActiveGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
-import { bindAccountPhone, bootstrapAccount, getAccountRuntime, updateCloudProfile, uploadProfileAvatar } from "../../services/account";
+import { bootstrapAccount, getAccountRuntime, updateCloudProfile, uploadProfileAvatar } from "../../services/account";
 import { CloudAccount } from "../../types/account";
 import {
   getCurrentTheme,
@@ -19,6 +19,7 @@ import { getAchievementCollection } from "../../services/achievement";
 import { readManualStore } from "../../services/manualStore";
 import { differenceInBusinessDays, getTodayBusinessDate } from "../../utils/date";
 import { AchievementProgress } from "../../types/achievement";
+import { getSyncRuntime } from "../../services/syncStatus";
 
 /** 前端主题换肤宏定义：与全局 FEATURE_FLAGS.ENABLE_THEME_SWITCHING 对齐 */
 const THEME_SWITCHING_ENABLED = FEATURE_FLAGS.ENABLE_THEME_SWITCHING;
@@ -68,6 +69,17 @@ interface AchievementPreview extends AchievementProgress {
 
 function shortDate(value?: string): string {
   return value ? value.slice(0, 10) : "";
+}
+
+function syncTimeLabel(value?: string): string {
+  if (!value) return "等待首次同步";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "同步时间待刷新";
+  const now = new Date();
+  const time = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  return date.toDateString() === now.toDateString()
+    ? `今天 ${time}`
+    : `${date.getMonth() + 1}月${date.getDate()}日 ${time}`;
 }
 
 function daysSince(value?: string): number {
@@ -124,8 +136,8 @@ function buildWeeklySummary(): WeeklyProfileSummary {
   };
 }
 
-function buildAchievementPreviews(): AchievementPreview[] {
-  const achievements = getAchievementCollection().achievements.slice().sort((a, b) => {
+function buildAchievementPreviews(achievementItems: AchievementProgress[]): AchievementPreview[] {
+  const achievements = achievementItems.slice().sort((a, b) => {
     if (a.unlocked !== b.unlocked) return a.unlocked ? -1 : 1;
     if (a.unlocked && b.unlocked) return String(b.unlockedAt || "").localeCompare(String(a.unlockedAt || ""));
     return b.progressPercent - a.progressPercent;
@@ -166,14 +178,19 @@ Page({
     userProfile: null as UserDisplayProfile | null,
     cloudAccount: null as CloudAccount | null,
     accountLoading: true,
-    phoneBinding: false,
-    accountSheetVisible: false,
+    profileSaving: false,
     status: "loading" as ProfilePageStatus,
     errorMessage: "",
     displayName: "行动伙伴",
     displayAvatarUrl: "",
     displayAvatarText: "",
+    displayId: "",
     joinedDays: 1,
+    journeyProgress: 0,
+    journeyNote: "等待第一个目标",
+    syncTone: "neutral",
+    syncTitle: "正在连接云端",
+    syncLabel: "等待首次同步",
     stats: {
       streakDays: 0,
       completedActions: 0,
@@ -182,6 +199,7 @@ Page({
     weeklySummary: { actionDays: 0, completedActions: 0, actualMinutes: 0 } as WeeklyProfileSummary,
     currentGoal: null as GoalCardView | null,
     achievementPreviews: [] as AchievementPreview[],
+    achievementSummary: "0 / 18",
     profileEditorVisible: false,
     profileDraftNickname: "",
     profileDraftAvatarUrl: "",
@@ -206,6 +224,12 @@ Page({
         errorMessage: error instanceof Error ? error.message : "账号加载失败，请检查网络后重试。",
       });
     });
+  },
+
+  onPullDownRefresh() {
+    bootstrapAccount(true).then(() => this.loadProfile()).catch((error) => {
+      wx.showToast({ title: error instanceof Error ? error.message : "刷新失败", icon: "none" });
+    }).then(() => wx.stopPullDownRefresh(), () => wx.stopPullDownRefresh());
   },
 
   retry() {
@@ -235,11 +259,20 @@ Page({
       const goals = activeGoals.map((goal) => toGoalCard(goal, currentGoalId));
       const accountState = getAccountRuntime();
       const userProfile = accountState?.profile || null;
-      const stats = buildGrowthStats(activeGoals);
+      const stats = buildGrowthStats(readManualStore().goals.filter((goal) => !goal.deletedAt));
       const store = readManualStore();
       const earliestGoalDate = store.goals.concat(store.archivedGoals as unknown as Goal[])
         .map((goal) => goal.createdAt).filter(Boolean).sort()[0];
       const joinedAt = accountState?.profile.joinedAt || earliestGoalDate;
+      const achievementCollection = getAchievementCollection();
+      const sync = getSyncRuntime();
+      const usingCache = accountState?.source === "cache" || sync.usingCache;
+      const syncTitle = usingCache
+        ? "当前展示上次同步数据"
+        : sync.phase === "failed"
+          ? "同步未完成"
+          : "数据已同步到云端";
+      const currentGoal = goals.find((goal) => goal.isCurrent) || goals[0] || null;
 
       this.setData({
         goals,
@@ -253,11 +286,18 @@ Page({
         displayName: userProfile?.nickname || "行动伙伴",
         displayAvatarUrl: userProfile?.avatarUrl || "",
         displayAvatarText: "",
+        displayId: accountState?.account.displayId || "",
+        syncTone: usingCache || sync.phase === "failed" ? "warning" : "success",
+        syncTitle,
+        syncLabel: syncTimeLabel(accountState?.sync.lastSuccessfulAt || sync.lastSuccessfulAt),
         stats,
         weeklySummary: buildWeeklySummary(),
-        currentGoal: goals.find((goal) => goal.isCurrent) || goals[0] || null,
-        achievementPreviews: buildAchievementPreviews(),
+        currentGoal,
+        achievementPreviews: buildAchievementPreviews(achievementCollection.achievements),
+        achievementSummary: `${achievementCollection.unlockedCount} / ${achievementCollection.totalCount}`,
         joinedDays: daysSince(joinedAt),
+        journeyProgress: currentGoal?.progressPercent || 0,
+        journeyNote: currentGoal ? `当前目标已完成 ${currentGoal.progressPercent}%` : "从第一个目标开始",
       });
     } catch (error) {
       this.setData({
@@ -282,14 +322,6 @@ Page({
 
   closeProfileEditor() {
     this.setData({ profileEditorVisible: false });
-  },
-
-  openAccountSheet() {
-    this.setData({ accountSheetVisible: true });
-  },
-
-  closeAccountSheet() {
-    this.setData({ accountSheetVisible: false });
   },
 
   noop() {},
@@ -344,6 +376,8 @@ Page({
   },
 
   async saveProfileEditor() {
+    if (this.data.profileSaving) return;
+    this.setData({ profileSaving: true });
     try {
       let avatarUrl = this.data.profileDraftAvatarUrl;
       if (avatarUrl && !avatarUrl.startsWith("cloud://") && !avatarUrl.startsWith("https://")) {
@@ -361,28 +395,12 @@ Page({
         displayAvatarUrl: userProfile.avatarUrl,
         displayAvatarText: userProfile.nickname.slice(0, 1) || "岚",
         profileEditorVisible: false,
+        profileSaving: false,
       });
       wx.showToast({ title: "资料已保存", icon: "success" });
     } catch (error) {
+      this.setData({ profileSaving: false });
       wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
-    }
-  },
-
-  async onGetPhoneNumber(event: { detail?: { code?: string } }) {
-    const code = String(event.detail?.code || "");
-    if (!code) {
-      wx.showToast({ title: "未授权手机号", icon: "none" });
-      return;
-    }
-    this.setData({ phoneBinding: true });
-    try {
-      const cloudAccount = await bindAccountPhone(code);
-      this.setData({ cloudAccount });
-      wx.showToast({ title: "手机号已绑定", icon: "success" });
-    } catch (error) {
-      wx.showToast({ title: error instanceof Error ? error.message : "手机号绑定失败", icon: "none" });
-    } finally {
-      this.setData({ phoneBinding: false });
     }
   },
 
@@ -456,8 +474,8 @@ Page({
       this.openProfileEditor();
       return;
     }
-    if (key === "backup") {
-      this.openAccountSheet();
+    if (key === "sync") {
+      wx.navigateTo({ url: "/pages/data-sync/index" });
       return;
     }
     if (key === "settings") {
@@ -477,7 +495,7 @@ Page({
       return;
     }
     if (key === "privacy") {
-      wx.navigateTo({ url: "/pages/legal/privacy/index" });
+      wx.navigateTo({ url: "/pages/privacy-center/index" });
       return;
     }
     if (key === "terms") {
@@ -486,6 +504,10 @@ Page({
     }
     if (key === "about") {
       wx.navigateTo({ url: "/pages/about/index" });
+      return;
+    }
+    if (key === "account") {
+      wx.navigateTo({ url: "/pages/account-security/index" });
       return;
     }
     if (key === "ai") {

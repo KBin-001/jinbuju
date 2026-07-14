@@ -110,6 +110,7 @@ function buildSelfGoalAndTasks(): { goal: Goal; tasks: ActionTask[]; archived: A
       startedAt: daysAgoDate(25),
       endedAt: daysAgoDate(14),
       archivedAt: daysAgoISO(14),
+      updatedAt: daysAgoISO(14),
       actions: archivedTasks,
       stats: {
         totalActions: 3,

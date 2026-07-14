@@ -88,10 +88,15 @@ const { executeCoachAction, getCoachActionStatus, syncManualData } = require("./
 const {
   bindPhone,
   bootstrapAccount,
+  clearUserBusinessData,
+  completeOnboarding,
   deleteCloudAccount,
+  getDataOverview,
   importLegacyProfile,
+  unbindPhone,
   updateCloudProfile,
 } = require("./account");
+const { getConsentStatus, recordConsent, withdrawConsent } = require("./privacy");
 const COACH_RUNTIME_VERSION = "coach-actions-2026-07-07.3";
 
 function success(data) {
@@ -163,7 +168,10 @@ function failure(error) {
     "PHONE_CODE_INVALID",
     "PHONE_AUTH_FAILED",
     "PHONE_ALREADY_BOUND",
+    "PHONE_CONSENT_REQUIRED",
     "CONFIRMATION_REQUIRED",
+    "ACCOUNT_DELETE_FAILED",
+    "CONSENT_INVALID",
     "STAGE_ALREADY_EXISTS",
     "STAGE_GENERATION_IN_PROGRESS",
     "STAGE_GENERATION_LIMIT_REACHED",
@@ -266,6 +274,14 @@ function failure(error) {
     DELETE_CONFIRMATION_INVALID: error.message,
     DELETE_IN_PROGRESS: "数据正在清除，请勿重复提交。",
     DATA_DELETE_FAILED: "数据暂时未能清除，请稍后重试。",
+    PROFILE_INVALID: error.message,
+    PHONE_CODE_INVALID: error.message,
+    PHONE_AUTH_FAILED: error.message,
+    PHONE_ALREADY_BOUND: error.message,
+    PHONE_CONSENT_REQUIRED: error.message,
+    CONFIRMATION_REQUIRED: error.message,
+    ACCOUNT_DELETE_FAILED: error.message,
+    CONSENT_INVALID: error.message,
     STAGE_ALREADY_EXISTS: error.message,
     STAGE_GENERATION_IN_PROGRESS: error.message,
     STAGE_GENERATION_LIMIT_REACHED: error.message,
@@ -515,7 +531,14 @@ exports.main = async (event) => {
     if (event.action === "bootstrapAccount") return success(await bootstrapAccount(context.OPENID));
     if (event.action === "updateCloudProfile") return success(await updateCloudProfile(context.OPENID, event));
     if (event.action === "bindPhone") return success(await bindPhone(context.OPENID, event));
+    if (event.action === "unbindPhone") return success(await unbindPhone(context.OPENID));
     if (event.action === "importLegacyProfile") return success(await importLegacyProfile(context.OPENID, event));
+    if (event.action === "completeOnboarding") return success(await completeOnboarding(context.OPENID));
+    if (event.action === "getDataOverview") return success(await getDataOverview(context.OPENID));
+    if (event.action === "clearUserBusinessData") return success(await clearUserBusinessData(context.OPENID, event));
+    if (event.action === "getConsentStatus") return success(await getConsentStatus(context.OPENID));
+    if (event.action === "recordConsent") return success(await recordConsent(context.OPENID, event));
+    if (event.action === "withdrawConsent") return success(await withdrawConsent(context.OPENID, event));
     if (event.action === "deleteCloudAccount") return success(await deleteCloudAccount(context.OPENID, event));
 
     if (event.action === "generate") {

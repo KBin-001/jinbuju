@@ -175,3 +175,21 @@ export function saveGenerationProgress(value: GenerationProgress): void {
 export function clearGenerationProgress(): void {
   wx.removeStorageSync(GENERATION_PROGRESS_KEY);
 }
+
+/** 清理仅用于当前设备的草稿、预览和生成过程缓存，不触碰云端业务数据或主题偏好。 */
+export function clearTransientStorageCaches(): void {
+  [
+    GOAL_DRAFT_KEY,
+    PLAN_PREVIEW_KEY,
+    GOAL_EDIT_STEP_KEY,
+    NEXT_WEEK_PREVIEW_KEY,
+    LONG_TERM_GOAL_DRAFT_KEY,
+    OLD_LONG_TERM_GOAL_DRAFT_KEY,
+    STAGE_PREVIEW_KEY,
+    OLD_STAGE_PREVIEW_KEY,
+    GOAL_ANALYSIS_KEY,
+    GOAL_CLARIFICATION_ANSWERS_KEY,
+    GENERATION_STATE_KEY,
+    GENERATION_PROGRESS_KEY,
+  ].forEach((key) => wx.removeStorageSync(key));
+}

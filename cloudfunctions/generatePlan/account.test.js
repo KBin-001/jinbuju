@@ -56,17 +56,35 @@ Module._load = function load(request, parent, isMain) {
 };
 
 const account = require("./account");
+const { stableId } = require("./repository");
+const { POLICY_VERSIONS } = require("./legal-constants");
+
+function allowPhoneBinding(userId) {
+  const id = stableId("consent", `${userId}:phone_binding:${POLICY_VERSIONS.phone_binding}`);
+  records.set(key("user_consents", id), {
+    userId,
+    type: "phone_binding",
+    version: POLICY_VERSIONS.phone_binding,
+    agreed: true,
+    withdrawnAt: "",
+  });
+}
 
 (async () => {
   const first = await account.bootstrapAccount("openid-a");
   const second = await account.bootstrapAccount("openid-a");
   assert.equal(first.account.userId, second.account.userId);
   assert.equal(JSON.stringify(first).includes("openid-a"), false);
+  assert.match(first.account.displayId, /^JB-[A-F0-9]{8}$/);
 
+  allowPhoneBinding(first.account.userId);
   const bound = await account.bindPhone("openid-a", { code: "phone-code-a" });
   assert.equal(bound.phoneMasked, "138****8000");
+  const phoneBinding = records.get(key("account_bindings", stableId("binding", `phone:${phone}`)));
+  assert.equal(phoneBinding.providerKeyHash.includes(phone), false);
 
-  await account.bootstrapAccount("openid-b");
+  const other = await account.bootstrapAccount("openid-b");
+  allowPhoneBinding(other.account.userId);
   await assert.rejects(
     account.bindPhone("openid-b", { code: "phone-code-b" }),
     (error) => error.code === "PHONE_ALREADY_BOUND",

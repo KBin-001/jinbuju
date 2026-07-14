@@ -28,8 +28,15 @@ page { background: #F7F3EA; }
 .task-meta, .example-note { margin-top: 5rpx; color: #7C817D; font-size: 21rpx; }
 .example-note { margin-top: 18rpx; }
 .welcome-actions { margin-top: auto; padding-top: 28rpx; }
+.agreement-check { margin-bottom: 20rpx; color: #616B66; font-size: 22rpx; line-height: 34rpx; text-align: center; }
+.agreement-check label { display: inline-flex; align-items: center; }
+.agreement-check checkbox { transform: scale(.78); transform-origin: center; }
+.agreement-links { display: inline-flex; justify-content: center; }
+.agreement-links text { color: #245B4D; font-weight: 600; }
+.agreement-error { margin: -6rpx 0 16rpx; color: #9B554D; font-size: 22rpx; line-height: 32rpx; text-align: center; }
 .start-button, .example-button { width: 100%; height: 92rpx; display: flex; align-items: center; justify-content: center; border-radius: 46rpx; font-size: 28rpx; font-weight: 680; }
 .start-button { background: #245B4D; color: #FFFCF6; box-shadow: 0 12rpx 30rpx rgba(36,91,77,.18); }
+.start-button[disabled] { opacity: .48; box-shadow: none; }
 .example-button { margin-top: 14rpx; border: 1rpx solid rgba(36,91,77,.2); background: rgba(255,252,246,.8); color: #245B4D; }
 .start-button-active, .example-button-active { opacity: .86; transform: scale(.985); }
 @media (max-height: 700px) { .hero { margin-top: 7vh; } .hero-title { font-size: 50rpx; } .example-card { margin-top: 20rpx; padding: 21rpx; } .start-button, .example-button { height: 82rpx; } }

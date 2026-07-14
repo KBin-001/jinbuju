@@ -1,5 +1,6 @@
 {
-  "navigationBarTitleText": "历史数据",
+  "navigationBarTitleText": "历史目标",
   "navigationStyle": "custom",
-  "enablePullDownRefresh": false
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
 }

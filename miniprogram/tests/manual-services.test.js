@@ -15,7 +15,19 @@ global.wx = {
   removeStorageSync: (key) => storage.delete(key),
 };
 
-const { createGoal, endGoal, getActiveGoal, getActiveGoals, getArchivedGoals, setCurrentGoal } = require("../services/manualGoal.ts");
+const {
+  createGoal,
+  endGoal,
+  getActiveGoal,
+  getActiveGoals,
+  getArchivedGoals,
+  getRecentlyDeletedGoals,
+  purgeArchivedGoal,
+  restoreArchivedGoal,
+  setCurrentGoal,
+  softDeleteArchivedGoal,
+} = require("../services/manualGoal.ts");
+const { readManualStore } = require("../services/manualStore.ts");
 const { createTask, deleteTask, getTask, getTasksByDate, getTodayPageTasks, rescheduleTask, updateActionRecord, updateTaskStatus } = require("../services/manualTask.ts");
 const { getProgressSummary, recordDailyCheckin } = require("../services/manualStats.ts");
 
@@ -92,5 +104,20 @@ assert.equal(archivedGoal.actions.find((task) => task.id === completed.id).refle
 assert.equal(getActiveGoals().length, 1);
 assert.equal(getActiveGoal().id, cetGoal.id);
 assert.equal(getArchivedGoals()[0].id, blogGoal.id);
+
+softDeleteArchivedGoal(blogGoal.id);
+assert.equal(getArchivedGoals().some((goal) => goal.id === blogGoal.id), false);
+assert.equal(getRecentlyDeletedGoals()[0].id, blogGoal.id);
+const restoredGoal = restoreArchivedGoal(blogGoal.id);
+assert.equal(restoredGoal.status, "active");
+assert.equal(getRecentlyDeletedGoals().length, 0);
+
+endGoal(cetGoal.id);
+softDeleteArchivedGoal(cetGoal.id);
+purgeArchivedGoal(cetGoal.id);
+assert.equal(getRecentlyDeletedGoals().some((goal) => goal.id === cetGoal.id), false);
+const purgedSnapshot = readManualStore().archivedGoals.find((goal) => goal.id === cetGoal.id);
+assert.equal(Boolean(purgedSnapshot.purgedAt), true);
+assert.equal(purgedSnapshot.actions.length, 0);
 
 console.log("manual service tests passed");

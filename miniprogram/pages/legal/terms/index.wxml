@@ -1,34 +1,13 @@
 <view class="page legal-page" data-theme="{{appTheme}}">
   <view class="legal-title">进步局用户协议</view>
-  <view class="legal-notice">
-    发布说明：运营主体、联系方式、生效日期和争议解决条款尚未写入仓库，正式发布前需要由运营方补充并完成专业法律审核。
-  </view>
-
-  <view class="legal-section">
-    <view class="legal-heading">服务说明</view>
-    <view class="legal-copy">
-      进步局提供目标管理、每日行动、时间记录、成长趋势、小队同行和 AI 教练。AI 内容仅作为行动与复盘建议，不构成考试结果、职业录用、医疗、法律或投资等专业承诺。
-    </view>
-  </view>
-
-  <view class="legal-section">
-    <view class="legal-heading">使用规则</view>
-    <view class="legal-copy">
-      你应合理使用自己的账户，不得尝试访问他人数据、绕过权限验证、操纵小队榜单、批量滥用 AI 服务或发布违法、不安全内容。
-    </view>
-  </view>
-
-  <view class="legal-section">
-    <view class="legal-heading">服务变更</view>
-    <view class="legal-copy">
-      部分能力可能因云服务、网络、版本更新或合规要求暂时不可用。服务发生变化时，应尽量保留已有行动记录并提供清晰提示。
-    </view>
-  </view>
-
-  <view class="legal-section">
-    <view class="legal-heading">账户与数据</view>
-    <view class="legal-copy">
-      你可以停止使用服务，并在数据管理页清除与当前微信用户身份直接关联的数据。清除后相关记录无法恢复。
-    </view>
-  </view>
+  <view class="legal-meta">版本：terms-1.0-rc.1 · 发布状态：候选稿</view>
+  <view class="legal-notice">上线前必须补充运营主体、联系渠道、发布日期、生效日期、责任边界和争议解决条款，并完成专业法律审核。</view>
+  <view class="legal-section"><view class="legal-heading">1. 服务内容</view><view class="legal-copy">进步局提供目标管理、每日行动、投入记录、成长趋势、小队同行和 AI 教练。功能以当前小程序实际开放范围为准，部分能力可能因网络、云服务或版本更新暂时不可用。</view></view>
+  <view class="legal-section"><view class="legal-heading">2. 微信身份与账号</view><view class="legal-copy">本产品使用微信身份建立账号，不提供虚构的账号密码体系。你应在自己的微信环境中使用服务并妥善管理设备。手机号绑定为可选能力，只有确实需要时才由你主动触发。</view></view>
+  <view class="legal-section"><view class="legal-heading">3. 使用规则</view><view class="legal-copy">你不得访问或篡改他人数据、绕过身份与权限校验、操纵小队榜单、批量滥用 AI 服务，或上传违法、侵权及危害系统安全的内容。小队鼓励功能用于轻量陪伴，不作为聊天或骚扰工具。</view></view>
+  <view class="legal-section"><view class="legal-heading">4. AI 内容说明</view><view class="legal-copy">AI 教练基于你真实记录提供分析、提醒和下一步建议，可能存在不完整或不准确之处。AI 输出不构成医疗、法律、投资、就业录用或其他专业结论；重要决定应由你结合实际情况判断。</view></view>
+  <view class="legal-section"><view class="legal-heading">5. 数据与内容</view><view class="legal-copy">你保留自己输入内容依法享有的权利，并授权我们在提供同步、统计、复盘、分享和 AI 建议所必需的范围内处理。隐私与数据处理规则以当前版本《隐私政策》为准。</view></view>
+  <view class="legal-section"><view class="legal-heading">6. 目标删除和账号注销</view><view class="legal-copy">历史目标支持归档、移到最近删除、恢复和彻底删除。删除全部成长数据会保留账号、协议记录和小队关系；注销账号会删除账号及归属数据。队长需先转让或解散小队，危险操作均需二次确认。</view></view>
+  <view class="legal-section"><view class="legal-heading">7. 服务变更与协议更新</view><view class="legal-copy">为安全、合规或产品改进，我们可能调整服务。重大协议更新应明确提示并重新取得主动同意，不以默认勾选或仅继续使用代替必要确认。</view></view>
+  <view class="legal-section"><view class="legal-heading">8. 反馈与未完成条款</view><view class="legal-copy">当前可通过“关于进步局”的微信反馈入口提交问题。运营主体、有效联系方式、法律适用和争议解决条款尚待上线前确认，因此本候选稿不能替代正式发布版本。</view></view>
 </view>

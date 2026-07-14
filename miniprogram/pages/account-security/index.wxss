@@ -1,0 +1,30 @@
+page { background: var(--color-background); }
+.account-page { color: var(--color-text-main); }
+.account-hero { min-height: 170rpx; padding: 30rpx; display: flex; align-items: center; gap: 22rpx; border: 1rpx solid var(--color-border-soft); border-radius: var(--radius-card); background: var(--gradient-card-mint); box-shadow: var(--shadow-card-soft); }
+.account-hero__mark { width: 88rpx; height: 88rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 28rpx; background: var(--color-primary); color: #fff; }
+.account-hero__title { color: var(--color-primary); font-family: "Songti SC", STSong, serif; font-size: 38rpx; font-weight: 700; }
+.account-hero__subtitle { margin-top: 8rpx; color: var(--color-text-secondary); font-size: 23rpx; line-height: 34rpx; }
+.identity-card, .phone-card, .link-card { margin-top: var(--gap-card); }
+.section-title, .link-title { font-size: 30rpx; font-weight: 700; }
+.identity-row, .phone-status, .link-row { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
+.identity-row, .phone-status { margin-top: 24rpx; }
+.identity-label { color: var(--color-text-secondary); font-size: 22rpx; }
+.identity-value { margin-top: 7rpx; color: var(--color-primary); font-size: 30rpx; font-weight: 700; }
+.safe-chip, .optional-chip { padding: 10rpx 18rpx; border-radius: 999rpx; background: var(--color-success-soft); color: var(--color-success); font-size: 21rpx; }
+.optional-chip { background: var(--color-warning-soft); color: var(--color-warning); }
+.identity-note, .phone-purpose, .link-note { margin-top: 16rpx; color: var(--color-text-secondary); font-size: 23rpx; line-height: 36rpx; }
+.phone-purpose { padding: 22rpx; border-radius: 22rpx; background: var(--color-card-soft); }
+.consent-check { margin-top: 22rpx; }
+.consent-check label { display: flex; align-items: flex-start; gap: 12rpx; color: var(--color-text-secondary); font-size: 23rpx; line-height: 34rpx; }
+.phone-button, .unbind-button { width: 100%; min-height: var(--size-control-lg); margin-top: 24rpx; border-radius: 44rpx; background: var(--color-primary); color: #fff; font-size: 26rpx; font-weight: 650; line-height: 88rpx; }
+.unbind-button { border: 1rpx solid var(--color-danger); background: var(--color-card); color: var(--color-danger); }
+.is-disabled { opacity: .45; }
+.error-message { margin-top: 18rpx; color: var(--color-danger); font-size: 23rpx; line-height: 34rpx; }
+.link-card { padding-top: 4rpx; padding-bottom: 4rpx; }
+.link-row { min-height: 116rpx; }
+.link-row + .link-row { border-top: 1rpx solid var(--color-divider); }
+.link-row > view:first-child { min-width: 0; flex: 1; }
+.link-note { margin-top: 6rpx; }
+.link-title--danger { color: var(--color-danger); }
+.is-pressed { opacity: .66; }
+@media (max-width: 350px) { .account-page { padding-right: 24rpx; padding-left: 24rpx; } }

@@ -165,7 +165,7 @@ async function syncManualData(openid, event) {
     prepareCollectionMerge(openid, COLLECTIONS.checkins, store.checkins, "打卡"),
     prepareCollectionMerge(openid, COLLECTIONS.archivedGoals, store.archivedGoals, "归档目标"),
     prepareCollectionMerge(openid, COLLECTIONS.achievementUnlocks,
-      (store.achievementUnlocks || []).map((item) => ({ ...item, id: item.achievementId, updatedAt: item.unlockedAt })), "成就"),
+      (store.achievementUnlocks || []).map((item) => ({ ...item, id: item.achievementId, updatedAt: item.celebratedAt || item.unlockedAt })), "成就"),
     prepareCollectionMerge(openid, COLLECTIONS.sparkCheckins,
       (store.sparkCheckins || []).map((item) => ({ ...item, id: item.businessDate, updatedAt: item.checkedAt })), "火花签到"),
   ]);
@@ -185,7 +185,15 @@ async function syncManualData(openid, event) {
     persistCollectionChanges(openid, account.userId, COLLECTIONS.achievementUnlocks, achievementMerge.changes),
     persistCollectionChanges(openid, account.userId, COLLECTIONS.sparkCheckins, sparkMerge.changes),
   ]);
-  await db.collection("users").doc(account.userId).update({ data: { legacyMigrationCompleted: true, updatedAt: db.serverDate() } });
+  const userSyncData = {
+    lastManualSyncAt: new Date().toISOString(),
+    updatedAt: db.serverDate(),
+  };
+  if (event && event.migration === true) {
+    userSyncData.legacyMigrationCompleted = true;
+    userSyncData.migrationVersion = 1;
+  }
+  await db.collection("users").doc(account.userId).update({ data: userSyncData });
   return {
     version: 1,
     activeGoalId: goals.some((item) => item.id === store.activeGoalId) ? store.activeGoalId : goals.find((item) => item.status === "active")?.id,

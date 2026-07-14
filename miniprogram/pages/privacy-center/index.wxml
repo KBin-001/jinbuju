@@ -1,0 +1,41 @@
+<view class="page privacy-page" data-theme="{{appTheme}}">
+  <view class="privacy-hero">
+    <view class="privacy-hero__mark"><t-icon name="lock-on" size="48rpx" /></view>
+    <view><view class="privacy-hero__title">隐私与授权</view><view class="privacy-hero__subtitle">只说明真实处理的信息，也保留你的选择权</view></view>
+  </view>
+
+  <view wx:if="{{loading}}" class="card state-card"><t-loading size="48rpx" theme="circular" /><view class="state-title">正在读取协议记录</view></view>
+  <block wx:else>
+    <view class="card version-card">
+      <view class="section-title">当前协议版本</view>
+      <view class="version-row"><view><view>隐私政策</view><text>{{status.versions.privacy}}</text></view><view class="record-chip {{status.consents.privacy.agreed ? '' : 'record-chip--pending'}}">{{status.consents.privacy.agreed ? '已记录' : '待确认'}}</view></view>
+      <view class="version-row"><view><view>用户协议</view><text>{{status.versions.terms}}</text></view><view class="record-chip {{status.consents.terms.agreed ? '' : 'record-chip--pending'}}">{{status.consents.terms.agreed ? '已记录' : '待确认'}}</view></view>
+      <view class="draft-note">当前为发布候选版本。运营主体、联系方式、发布日期和生效日期仍需上线前人工确认。</view>
+      <view class="legal-links"><view bindtap="openPrivacy">阅读隐私政策</view><view bindtap="openTerms">阅读用户协议</view></view>
+      <checkbox-group class="agreement-check" bindchange="onConsentChange"><label><checkbox value="agree" checked="{{consentChecked}}" color="#245B4D" /><text>我已分别阅读并同意当前版本的隐私政策与用户协议</text></label></checkbox-group>
+      <t-button class="confirm-button" loading="{{saving}}" disabled="{{!consentChecked || saving}}" bindtap="confirmAgreements">保存同意记录</t-button>
+      <view wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</view>
+    </view>
+
+    <view class="card list-card">
+      <view class="section-title">个人信息收集清单</view>
+      <view class="info-item"><t-icon name="user" size="34rpx" /><view><view>微信身份、昵称与头像</view><text>用于建立账号、展示个人资料和小队身份</text></view></view>
+      <view class="info-item"><t-icon name="flag" size="34rpx" /><view><view>目标、行动、投入与复盘</view><text>用于今日计划、进度统计、历史目标和 AI 建议</text></view></view>
+      <view class="info-item"><t-icon name="user" size="34rpx" /><view><view>小队关系与公开行动摘要</view><text>用于成员身份、行动榜与轻量鼓励</text></view></view>
+      <view class="info-item"><t-icon name="info-circle" size="34rpx" /><view><view>手机号（可选）</view><text>仅在用户主动授权并确认用途后绑定</text></view></view>
+    </view>
+
+    <view class="card list-card">
+      <view class="section-title">第三方与权限说明</view>
+      <view class="plain-copy">微信平台提供身份上下文和手机号授权；腾讯云 CloudBase 承载数据库、云函数、云存储和 AI 网关。AI 实际模型提供方与数据保留策略需在正式环境核实后写入最终政策。</view>
+      <view class="plain-copy">当前使用的敏感能力包括选择微信头像、获取手机号和保存分享图片到相册；未发现位置、通讯录、麦克风或摄像头采集。</view>
+    </view>
+
+    <view class="card rights-card">
+      <view class="section-title">你的数据权利</view>
+      <view class="rights-row" bindtap="openAccountSecurity"><view><view>手机号绑定与解除</view><text>拒绝绑定不影响核心功能</text></view><t-icon name="chevron-right" size="32rpx" /></view>
+      <view class="rights-row" bindtap="withdrawOptionalConsent"><view><view>撤回可选手机号处理同意</view><text>已绑定时请先解除绑定</text></view><t-icon name="chevron-right" size="32rpx" /></view>
+      <view class="rights-row" bindtap="openDataManagement"><view><view>删除数据与注销账号</view><text>三类操作分开处理并二次确认</text></view><t-icon name="chevron-right" size="32rpx" /></view>
+    </view>
+  </block>
+</view>

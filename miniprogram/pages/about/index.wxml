@@ -6,12 +6,16 @@
   </view>
   <view class="card about-card">
     <view class="about-heading">把长期目标，变成今天真实推进的一步</view>
-    <view class="about-copy">
-      进步局通过每日行动、目标进度、小队同行和 AI 教练，帮助你保持自己的节奏。所有进度、投入和复盘都来自真实行动记录。
-    </view>
+    <view class="about-copy">进步局通过每日行动、目标进度、小队同行和 AI 教练，帮助你保持自己的节奏。所有进度、投入和复盘都来自真实行动记录。</view>
   </view>
-  <view class="card about-card about-card--small"><view class="about-heading">现代东方山水</view><view class="about-copy">山水代表长期方向，脚下的行动代表今天。我们希望界面安静、清晰，也始终尊重真实数据。</view></view>
-  <view class="about-footnote">
-    正式上线前，运营主体、联系方式和法律文本仍需完成合规审核。
+  <view class="card about-card about-card--small">
+    <view class="about-heading">帮助与反馈</view>
+    <view class="about-copy">遇到数据同步、隐私或功能问题时，请说明发生时间和操作路径；不要在反馈中填写完整手机号、OpenID 或其他敏感凭证。</view>
+    <button class="feedback-button" open-type="feedback">通过微信提交反馈</button>
   </view>
+  <view class="card about-card about-card--small">
+    <view class="about-link" bindtap="openPrivacy"><text>隐私政策</text><t-icon name="chevron-right" size="30rpx" /></view>
+    <view class="about-link" bindtap="openTerms"><text>用户协议</text><t-icon name="chevron-right" size="30rpx" /></view>
+  </view>
+  <view class="about-footnote">正式上线前，运营主体、联系方式和候选法律文本仍需完成合规审核。</view>
 </view>

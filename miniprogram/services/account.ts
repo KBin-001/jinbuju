@@ -1,14 +1,49 @@
-import { AccountBootstrapResult, AccountRuntimeState, CloudAccount, CloudUserProfile } from "../types/account";
+import { AccountBootstrapResult, AccountRuntimeState, CloudAccount, CloudDataOverview, CloudUserProfile } from "../types/account";
 import { ManualDataStore } from "../types/manual";
 import { UserDisplayProfile } from "../types/profile";
 import { emit } from "../utils/eventBus";
 import { clearLegacyManualStore, loadManualStoreIntoMemory, readLegacyManualStore, readManualStore } from "./manualStore";
+import { hydrateSyncRuntime, markSyncCached, resetSyncRuntime } from "./syncStatus";
 
 const LEGACY_PROFILE_KEY = "JINBUJU_USER_DISPLAY_PROFILE_V1";
+const ACCOUNT_CACHE_KEY = "JINBUJU_ACCOUNT_CACHE_V1";
 let runtime: AccountRuntimeState | null = null;
 let bootPromise: Promise<AccountRuntimeState> | null = null;
 
 interface CloudResult<T> { success: boolean; data?: T; error?: { code?: string; message?: string } }
+
+function displayId(userId: string): string {
+  const suffix = String(userId || "").replace(/[^a-zA-Z0-9]/g, "").slice(-8).toUpperCase();
+  return `JB-${suffix || "ACCOUNT"}`;
+}
+
+function normalizeBootstrap(value: AccountBootstrapResult): AccountBootstrapResult {
+  const account = value.account || {} as CloudAccount;
+  return {
+    ...value,
+    account: {
+      ...account,
+      displayId: account.displayId || displayId(account.userId),
+      phoneBound: Boolean(account.phoneBound),
+      phoneMasked: String(account.phoneMasked || ""),
+    },
+    sync: {
+      lastSuccessfulAt: String(value.sync?.lastSuccessfulAt || ""),
+      migrationVersion: Math.max(0, Number(value.sync?.migrationVersion || (value.migrationCompleted ? 1 : 0))),
+    },
+  };
+}
+
+function persistAccountCache(value: AccountRuntimeState): void {
+  wx.setStorageSync(ACCOUNT_CACHE_KEY, value);
+}
+
+function readAccountCache(): AccountRuntimeState | null {
+  const value = wx.getStorageSync(ACCOUNT_CACHE_KEY) as AccountRuntimeState | undefined;
+  if (!value?.account?.userId || !value.profile) return null;
+  const normalized = normalizeBootstrap(value);
+  return { ...normalized, ready: true, source: "cache" };
+}
 
 function call<T>(action: string, data: Record<string, unknown> = {}, timeout = 20000): Promise<T> {
   return new Promise<any>((resolve, reject) => {
@@ -58,7 +93,10 @@ async function migrateLegacy(base: AccountBootstrapResult): Promise<ManualDataSt
   if (legacyProfile) await call("importLegacyProfile", { profile: legacyProfile });
   if (legacyStore) loadManualStoreIntoMemory(legacyStore);
   const source = readManualStore();
-  const merged = await call<ManualDataStore>("syncManualData", { store: source }, 30000);
+  const merged = await call<ManualDataStore>("syncManualData", {
+    store: source,
+    migration: Boolean(legacyStore || legacyProfile),
+  }, 30000);
   merged.archivedGoals = merged.archivedGoals || source.archivedGoals;
   merged.achievementUnlocks = merged.achievementUnlocks || source.achievementUnlocks;
   merged.sparkCheckins = merged.sparkCheckins || source.sparkCheckins;
@@ -73,10 +111,21 @@ async function migrateLegacy(base: AccountBootstrapResult): Promise<ManualDataSt
 export function bootstrapAccount(force = false): Promise<AccountRuntimeState> {
   if (runtime?.ready && !force) return Promise.resolve(runtime);
   if (bootPromise && !force) return bootPromise;
-  const pending = call<AccountBootstrapResult>("bootstrapAccount").then(async (base) => {
+  const pending = call<AccountBootstrapResult>("bootstrapAccount").then(async (rawBase) => {
+    const base = normalizeBootstrap(rawBase);
     await migrateLegacy(base);
-    const refreshed = await call<AccountBootstrapResult>("bootstrapAccount");
-    runtime = { ...refreshed, ready: true };
+    const refreshed = normalizeBootstrap(await call<AccountBootstrapResult>("bootstrapAccount"));
+    runtime = { ...refreshed, ready: true, source: "cloud" };
+    persistAccountCache(runtime);
+    hydrateSyncRuntime(refreshed.sync.lastSuccessfulAt, false);
+    emit("account:update", runtime);
+    return runtime;
+  }).catch((error) => {
+    const cached = readAccountCache();
+    if (!cached) throw error;
+    runtime = cached;
+    hydrateSyncRuntime(cached.sync.lastSuccessfulAt, true);
+    markSyncCached(error as { code?: string; message?: string });
     emit("account:update", runtime);
     return runtime;
   });
@@ -108,9 +157,38 @@ export async function bindAccountPhone(code: string): Promise<CloudAccount> {
   return account;
 }
 
+export async function unbindAccountPhone(): Promise<CloudAccount> {
+  const account = await call<CloudAccount>("unbindPhone");
+  if (runtime) {
+    runtime = { ...runtime, account };
+    persistAccountCache(runtime);
+  }
+  emit("account:update", runtime);
+  return account;
+}
+
+export async function getCloudDataOverview(): Promise<CloudDataOverview> {
+  return call<CloudDataOverview>("getDataOverview", {}, 30000);
+}
+
+export async function clearCloudBusinessData(): Promise<void> {
+  await call("clearUserBusinessData", { confirmation: "CLEAR_BUSINESS_DATA" }, 30000);
+  loadManualStoreIntoMemory();
+}
+
+export async function completeCloudOnboarding(): Promise<void> {
+  await call("completeOnboarding");
+  if (runtime) {
+    runtime = { ...runtime, profile: { ...runtime.profile, welcomeCompleted: true } };
+    persistAccountCache(runtime);
+  }
+}
+
 export async function deleteCloudAccount(): Promise<void> {
   await call("deleteCloudAccount", { confirmation: "DELETE" }, 30000);
   runtime = null;
   loadManualStoreIntoMemory();
+  wx.removeStorageSync(ACCOUNT_CACHE_KEY);
+  resetSyncRuntime();
   emit("account:update", null);
 }

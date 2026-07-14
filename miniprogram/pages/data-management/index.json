@@ -1,3 +1,8 @@
 {
-  "navigationBarTitleText": "数据管理"
+  "navigationBarTitleText": "数据管理",
+  "usingComponents": {
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-input": "tdesign-miniprogram/input/input"
+  }
 }

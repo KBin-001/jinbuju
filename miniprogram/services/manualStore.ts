@@ -65,7 +65,12 @@ function normalizeStore(value: Partial<ManualDataStore>): ManualDataStore {
     goals,
     tasks: Array.isArray(value.tasks) ? (value.tasks as ActionTask[]).map((task) => ({ ...task, goalId: task.goalId || fallbackGoalId })) : [],
     checkins: Array.isArray(value.checkins) ? value.checkins as DailyCheckin[] : [],
-    archivedGoals: Array.isArray(value.archivedGoals) ? value.archivedGoals as ArchivedGoal[] : [],
+    archivedGoals: Array.isArray(value.archivedGoals)
+      ? (value.archivedGoals as ArchivedGoal[]).map((goal) => ({
+        ...goal,
+        updatedAt: goal.updatedAt || goal.archivedAt || goal.endedAt || goal.createdAt,
+      }))
+      : [],
     achievementUnlocks: Array.isArray(value.achievementUnlocks) ? value.achievementUnlocks : [],
     sparkCheckins: Array.isArray(value.sparkCheckins) ? value.sparkCheckins : [],
   };

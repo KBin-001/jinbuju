@@ -1,0 +1,38 @@
+<view class="page sync-page" data-theme="{{appTheme}}">
+  <view class="sync-hero">
+    <view class="sync-hero__icon"><t-icon name="cloud" size="48rpx" /></view>
+    <view class="sync-hero__copy">
+      <view class="sync-hero__title">数据与同步</view>
+      <view class="sync-hero__subtitle">{{syncTitle}}</view>
+    </view>
+    <view class="sync-state {{usingCache ? 'sync-state--warning' : ''}}">{{usingCache ? '使用缓存' : '云端连接'}}</view>
+  </view>
+
+  <view wx:if="{{status === 'loading'}}" class="card state-card"><t-loading size="48rpx" theme="circular" /><view class="state-title">正在核对云端数据</view></view>
+  <view wx:elif="{{status === 'error'}}" class="card state-card"><t-icon name="cloud" size="64rpx" /><view class="state-title">暂时无法连接云端</view><view class="state-description">{{errorMessage}}</view><t-button class="primary-button" loading="{{syncing}}" bindtap="retrySync">重新同步</t-button></view>
+
+  <block wx:else>
+    <view class="card status-card">
+      <view class="card-head"><view><view class="card-title">同步状态</view><view class="card-note">最近成功：{{lastSyncLabel}}</view></view><t-button class="mini-button" loading="{{syncing}}" disabled="{{syncing || clearingCache}}" bindtap="retrySync">重新同步</t-button></view>
+      <view class="status-message {{usingCache ? 'status-message--warning' : ''}}">{{syncDescription}}</view>
+      <view wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</view>
+    </view>
+
+    <view class="card overview-card">
+      <view class="card-title">云端数据概览</view>
+      <view class="overview-grid">
+        <view class="overview-item"><text>{{overview.counts.activeGoals}}</text><view>进行中目标</view></view>
+        <view class="overview-item"><text>{{overview.counts.historicalGoals}}</text><view>历史目标</view></view>
+        <view class="overview-item"><text>{{overview.counts.actions}}</text><view>行动记录</view></view>
+        <view class="overview-item"><text>{{overview.counts.achievements}}</text><view>成长收藏</view></view>
+      </view>
+      <view class="overview-foot">打卡记录 {{overview.counts.checkins}} 条 · 数据口径来自当前云环境</view>
+    </view>
+
+    <view class="card manage-card">
+      <view class="manage-row"><view><view class="manage-title">本机缓存</view><view class="manage-note">当前占用 {{cacheLabel}}，不包含云端存储空间</view></view><t-button class="row-button" loading="{{clearingCache}}" disabled="{{syncing || clearingCache}}" bindtap="clearLocalCache">清除缓存</t-button></view>
+      <view class="manage-row" bindtap="explainExport" hover-class="is-pressed"><view><view class="manage-title">数据导出</view><view class="manage-note">查看当前可行性与开放计划</view></view><t-icon name="chevron-right" size="32rpx" /></view>
+      <view class="manage-row" bindtap="openDataManagement" hover-class="is-pressed"><view><view class="manage-title">云端数据与账号</view><view class="manage-note">删除成长数据或注销账号</view></view><t-icon name="chevron-right" size="32rpx" /></view>
+    </view>
+  </block>
+</view>

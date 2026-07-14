@@ -79,11 +79,14 @@ function createArchivedGoal(goal: Goal, actions: ActionTask[], now: string, stat
   return {
     id: goal.id,
     title: goal.title,
+    category: goal.category,
+    description: goal.description,
     status,
     createdAt: goal.createdAt,
     startedAt: goal.startedAt || goal.createdAt,
     endedAt: goal.endedAt || now,
     archivedAt: goal.archivedAt || now,
+    updatedAt: now,
     actions: actions.map((task) => ({ ...task })),
     stats,
   };
@@ -103,7 +106,107 @@ export function getArchivedGoals(): ArchivedGoal[] {
 
   return archivedFromSnapshots
     .concat(legacyArchived)
+    .filter((goal) => !goal.deletedAt && !goal.restoredAt && !goal.purgedAt)
     .sort((a, b) => b.archivedAt.localeCompare(a.archivedAt));
+}
+
+export function getRecentlyDeletedGoals(): ArchivedGoal[] {
+  return (readManualStore().archivedGoals || [])
+    .filter((goal) => Boolean(goal.deletedAt) && !goal.purgedAt)
+    .sort((a, b) => String(b.deletedAt || "").localeCompare(String(a.deletedAt || "")));
+}
+
+export function softDeleteArchivedGoal(goalId: string): ArchivedGoal {
+  const store = readManualStore();
+  const archived = store.archivedGoals.find((item) => item.id === goalId && !item.purgedAt);
+  if (!archived) throw new Error("历史目标不存在");
+  const now = new Date().toISOString();
+  archived.deletedAt = now;
+  archived.restoredAt = undefined;
+  archived.updatedAt = now;
+  writeManualStore(store);
+  return { ...archived };
+}
+
+export function restoreArchivedGoal(goalId: string): Goal {
+  const store = readManualStore();
+  const archived = store.archivedGoals.find((item) => item.id === goalId && item.deletedAt && !item.purgedAt);
+  if (!archived) throw new Error("最近删除中没有这个目标");
+  const now = new Date().toISOString();
+  let goal = store.goals.find((item) => item.id === goalId);
+  if (!goal) {
+    goal = {
+      id: archived.id,
+      title: archived.title,
+      category: archived.category || "custom",
+      description: archived.description,
+      status: "active",
+      createdAt: archived.createdAt,
+      startedAt: archived.startedAt || now,
+      updatedAt: now,
+    };
+    store.goals.push(goal);
+  } else {
+    goal.title = archived.title;
+    goal.category = archived.category || goal.category || "custom";
+    goal.description = archived.description;
+    goal.status = "active";
+    goal.deletedAt = undefined;
+    goal.endedAt = undefined;
+    goal.archivedAt = undefined;
+    goal.updatedAt = now;
+  }
+  archived.deletedAt = undefined;
+  archived.restoredAt = now;
+  archived.updatedAt = now;
+  if (!store.activeGoalId || !store.goals.some((item) => item.id === store.activeGoalId && item.status === "active")) {
+    store.activeGoalId = goal.id;
+  }
+  writeManualStore(store);
+  emit("goal:focus:update", { goalId: store.activeGoalId || "" });
+  return { ...goal };
+}
+
+/**
+ * 彻底删除采用“最小同步墓碑”：业务内容在本地和云端被清空，只保留 id 与删除时间，
+ * 用于阻止其他设备上的旧快照把数据重新带回。
+ */
+export function purgeArchivedGoal(goalId: string): void {
+  const store = readManualStore();
+  const archived = store.archivedGoals.find((item) => item.id === goalId && item.deletedAt && !item.purgedAt);
+  if (!archived) throw new Error("目标不在最近删除中");
+  const now = new Date().toISOString();
+  archived.title = "已删除目标";
+  archived.description = undefined;
+  archived.actions = [];
+  archived.stats = { totalActions: 0, completedActions: 0, estimatedMinutes: 0, actualMinutes: 0, completionRate: 0 };
+  archived.purgedAt = now;
+  archived.updatedAt = now;
+
+  store.goals.filter((goal) => goal.id === goalId).forEach((goal) => {
+    goal.title = "已删除目标";
+    goal.description = undefined;
+    goal.status = "archived";
+    goal.deletedAt = now;
+    goal.updatedAt = now;
+  });
+  store.tasks.filter((task) => task.goalId === goalId).forEach((task) => {
+    task.title = "已删除行动";
+    task.description = undefined;
+    task.reflection = undefined;
+    task.actualMinutes = 0;
+    task.deletedAt = now;
+    task.updatedAt = now;
+  });
+  store.checkins.filter((checkin) => checkin.goalId === goalId).forEach((checkin) => {
+    checkin.completedCount = 0;
+    checkin.partialCount = 0;
+    checkin.actualMinutes = 0;
+    checkin.deletedAt = now;
+    checkin.updatedAt = now;
+  });
+  if (store.activeGoalId === goalId) store.activeGoalId = undefined;
+  writeManualStore(store);
 }
 
 export function createGoal(input: CreateGoalInput): Goal {

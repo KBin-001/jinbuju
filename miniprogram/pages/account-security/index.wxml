@@ -1,0 +1,31 @@
+<view class="page account-page" data-theme="{{appTheme}}">
+  <view class="account-hero">
+    <view class="account-hero__mark"><t-icon name="user" size="48rpx" /></view>
+    <view><view class="account-hero__title">账号与安全</view><view class="account-hero__subtitle">围绕微信身份管理，不设置额外账号密码</view></view>
+  </view>
+
+  <view wx:if="{{loading}}" class="card state-card"><t-loading size="48rpx" theme="circular" /><view class="state-title">正在读取账号状态</view></view>
+  <block wx:else>
+    <view class="card identity-card">
+      <view class="section-title">微信身份</view>
+      <view class="identity-row"><view><view class="identity-label">展示标识</view><view class="identity-value">{{account.displayId}}</view></view><view class="safe-chip">已连接</view></view>
+      <view class="identity-note">该标识用于你识别自己的进步局账号，不会展示 OpenID。</view>
+    </view>
+
+    <view class="card phone-card">
+      <view class="section-title">手机号绑定</view>
+      <view class="phone-status"><view><view class="identity-label">当前状态</view><view class="identity-value">{{account.phoneBound ? account.phoneMasked : '暂未绑定'}}</view></view><view class="optional-chip">可选</view></view>
+      <view class="phone-purpose">手机号仅用于后续确实需要的账号辅助与必要通知。拒绝或解除绑定，不影响目标、行动、进度和小队等核心功能。</view>
+      <checkbox-group wx:if="{{!account.phoneBound}}" class="consent-check" bindchange="onPhoneConsentChange"><label><checkbox value="agree" checked="{{phoneConsentChecked}}" color="#245B4D" /><text>我已阅读并同意手机号绑定说明，并知晓该信息为可选</text></label></checkbox-group>
+      <button wx:if="{{!account.phoneBound}}" class="phone-button {{!phoneConsentChecked ? 'is-disabled' : ''}}" open-type="getPhoneNumber" bindgetphonenumber="onGetPhoneNumber" disabled="{{operating || !phoneConsentChecked}}">{{operating ? '正在处理' : '绑定手机号'}}</button>
+      <t-button wx:else class="unbind-button" loading="{{operating}}" disabled="{{operating}}" bindtap="unbindPhone">解除绑定</t-button>
+      <view wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</view>
+    </view>
+
+    <view class="card link-card">
+      <view class="link-row" bindtap="openDataSync" hover-class="is-pressed"><view><view class="link-title">数据与同步</view><view class="link-note">查看云端状态和本机缓存</view></view><t-icon name="chevron-right" size="32rpx" /></view>
+      <view class="link-row" bindtap="openPrivacyCenter" hover-class="is-pressed"><view><view class="link-title">隐私与授权</view><view class="link-note">协议版本、信息清单和撤回说明</view></view><t-icon name="chevron-right" size="32rpx" /></view>
+      <view class="link-row" bindtap="openDataManagement" hover-class="is-pressed"><view><view class="link-title link-title--danger">数据删除与账号注销</view><view class="link-note">高风险操作需要二次确认</view></view><t-icon name="chevron-right" size="32rpx" /></view>
+    </view>
+  </block>
+</view>

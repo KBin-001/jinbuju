@@ -1,4 +1,4 @@
-export type AchievementCategory = "action" | "streak" | "focus" | "footprint" | "weekly";
+export type AchievementCategory = "action" | "streak" | "focus" | "footprint" | "weekly" | "reflection";
 
 export type AchievementId =
   | "action_1"
@@ -15,7 +15,10 @@ export type AchievementId =
   | "days_100"
   | "week_actions_5"
   | "week_minutes_300"
-  | "week_perfect";
+  | "week_perfect"
+  | "reflection_1"
+  | "reflection_10"
+  | "reflection_30";
 
 export type AchievementMetric =
   | "completedActions"
@@ -24,7 +27,10 @@ export type AchievementMetric =
   | "actionDays"
   | "weeklyCompletedActions"
   | "weeklyMinutes"
-  | "weeklyCompletionRate";
+  | "weeklyCompletionRate"
+  | "reflectionCount";
+
+export type AchievementTier = "mist" | "jade" | "gold";
 
 export interface AchievementDefinition {
   id: AchievementId;
@@ -41,6 +47,7 @@ export interface AchievementDefinition {
 export interface AchievementUnlockRecord {
   achievementId: AchievementId;
   unlockedAt: string;
+  celebratedAt?: string;
 }
 
 export interface AchievementProgress extends AchievementDefinition {
@@ -50,6 +57,10 @@ export interface AchievementProgress extends AchievementDefinition {
   progressPercent: number;
   progressText: string;
   remainingText: string;
+  tier: AchievementTier;
+  dataNote: string;
+  nearUnlock: boolean;
+  ariaLabel: string;
 }
 
 export interface AchievementCategoryView {
@@ -66,4 +77,5 @@ export interface AchievementCollection {
   progressPercent: number;
   categories: AchievementCategoryView[];
   achievements: AchievementProgress[];
+  newlyUnlocked: AchievementProgress[];
 }

@@ -69,6 +69,7 @@ page,
   --radius-tag: 18rpx;
   --gap-card: 20rpx;
   --gap-section: 36rpx;
+  --size-control-lg: 88rpx;
   --padding-page: 24rpx 32rpx 160rpx;
 
   --td-brand-color: #245B4D;
