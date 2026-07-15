@@ -1,163 +1,117 @@
-<view class="coach-page" data-theme="{{appTheme}}" style="padding-top: {{topInset}}px;">
-  <view class="coach-ambient" aria-hidden="true">
-    <image class="coach-ambient-mountain" src="/assets/ai-coach/mountain-bg.svg" mode="aspectFill" />
-    <view class="coach-ambient-glow coach-ambient-glow--top"></view>
-    <view class="coach-ambient-glow coach-ambient-glow--bottom"></view>
-  </view>
-  <view class="coach-header">
-    <view class="coach-back" bindtap="goBack" hover-class="coach-pressed" aria-label="返回">‹</view>
-    <view class="coach-heading">
-      <view class="coach-title">AI 教练 <text>✦</text></view>
-      <view class="coach-subtitle">只分析今天，不做长期复盘</view>
+<view class="coach-page" data-theme="{{appTheme}}">
+  <view class="status-bar-mask" style="height: {{statusBarHeight}}px;" aria-hidden="true"></view>
+  <view class="coach-hero" style="height: {{heroHeight}}px;">
+    <image class="hero-mountain" src="/assets/ai-coach-shanshui-v1.jpg" mode="aspectFill" aria-hidden="true" />
+    <view class="hero-wash"></view>
+    <view class="coach-nav" style="top: {{navTop}}px; height: {{navHeight}}px; padding-right: {{menuRightInset}}px;">
+      <view class="nav-back" bindtap="goBack" role="button" aria-label="返回上一页" hover-class="is-pressed"><t-icon name="chevron-left" size="43rpx" /></view>
+      <view class="nav-heading">
+        <view class="nav-title-line"><text class="nav-title">AI 成长教练</text><view class="title-spark"></view></view>
+        <view class="nav-subtitle">专属你的行动教练 · 陪你持续成长</view>
+      </view>
+      <view class="records-button" bindtap="openTodayRecords" role="button" aria-label="查看今日记录" hover-class="is-pressed"><text>今日记录</text><t-icon name="chevron-right" size="25rpx" /></view>
     </view>
   </view>
 
-  <scroll-view class="coach-prompts" scroll-x show-scrollbar="{{false}}" enhanced>
-    <view class="coach-prompts-inner">
-      <view class="coach-prompt" data-suggestion="帮我分析一下今天的完成情况" bindtap="chooseSuggestion" hover-class="coach-pressed">📊 今日完成情况</view>
-      <view class="coach-prompt" data-suggestion="我今天最需要调整什么" bindtap="chooseSuggestion" hover-class="coach-pressed">？ 今日卡点</view>
-      <view class="coach-prompt" data-suggestion="告诉我今天最适合做的下一步" bindtap="chooseSuggestion" hover-class="coach-pressed">✦ 下一步建议</view>
+  <view class="section-tabs" role="tablist">
+    <view class="section-tab is-active" data-section="review" bindtap="selectSection" role="tab" aria-selected="true">今日复盘</view>
+    <view class="section-tab" data-section="insights" bindtap="selectSection" role="tab">长期洞察</view>
+  </view>
+
+  <view wx:if="{{status === 'loading'}}" class="page-state">
+    <view class="loading-orb"><view></view></view>
+    <text class="state-title">正在整理今天的行动记录</text>
+    <text class="state-copy">结论只基于你的真实完成与投入数据</text>
+  </view>
+
+  <view wx:elif="{{status === 'error'}}" class="page-state page-state--error">
+    <view class="state-icon"><t-icon name="error-circle" size="48rpx" /></view>
+    <text class="state-title">今日分析读取失败</text>
+    <text class="state-copy">{{errorMessage}}</text>
+    <button class="retry-button" bindtap="loadAnalysis">重新读取</button>
+  </view>
+
+  <view wx:else id="today-review" class="coach-content">
+    <view class="coach-card conclusion-card">
+      <view class="conclusion-copy">
+        <view class="card-eyebrow">今日结论</view>
+        <view class="conclusion-title">{{workspace.conclusionTitle}}</view>
+        <view class="conclusion-subtitle">{{workspace.conclusionSubtitle}}</view>
+      </view>
+      <view class="growth-orb" aria-hidden="true">
+        <view class="orb-ring"></view><view class="orb-sun"></view>
+        <view class="orb-mountain orb-mountain--back"></view><view class="orb-mountain orb-mountain--front"></view>
+        <view class="orb-base"></view><view class="orb-path"></view>
+      </view>
+      <view class="metric-panel">
+        <view class="metric-item">
+          <t-icon name="check-circle" size="43rpx" />
+          <view class="metric-value">{{analysis.completedCount}}<text>/{{analysis.totalCount}}</text></view>
+          <view class="metric-label">完成行动</view>
+        </view>
+        <view class="metric-divider"></view>
+        <view class="metric-item">
+          <t-icon name="time" size="43rpx" />
+          <view class="metric-value">{{analysis.actualMinutes}}<text> 分钟</text></view>
+          <view class="metric-label">实际投入</view>
+        </view>
+        <view class="metric-divider"></view>
+        <view class="metric-item metric-item--status">
+          <t-icon name="chart-line" size="43rpx" />
+          <view class="metric-value metric-status metric-status--{{workspace.statusTone}}">{{workspace.todayStatus}}</view>
+          <view class="metric-label">今日状态</view>
+        </view>
+      </view>
+      <view class="completion-caption">今日行动完成率 {{analysis.completionPercent}}%</view>
+      <view class="completion-track"><view class="completion-fill" style="width: {{analysis.completionPercent}}%;"></view></view>
     </view>
-  </scroll-view>
 
-  <view wx:if="{{status === 'loading'}}" class="coach-state">
-    <image src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFit" />
-    <text>正在整理今天的行动分析</text>
-  </view>
-
-  <view wx:elif="{{status === 'error'}}" class="coach-state coach-state--error">
-    <text class="coach-state-title">今日分析读取失败</text>
-    <text class="coach-state-copy">{{errorMessage}}</text>
-    <button bindtap="loadAnalysis">重新读取</button>
-  </view>
-
-  <scroll-view wx:else class="coach-conversation" scroll-y show-scrollbar="{{false}}" enhanced scroll-into-view="{{scrollIntoView}}">
-    <view class="coach-bot-row">
-      <image class="coach-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFill" />
-      <view class="coach-bubble coach-bot-bubble">
-        <text>早上好，{{displayName}}！</text>
-        <text>我已经分析了 {{analysis.dateLabel}} 的执行情况。</text>
-        <text>下面只看今天，不做长期评价。</text>
+    <view class="coach-card judgement-card">
+      <view class="card-eyebrow card-eyebrow--spark">教练判断<view class="eyebrow-spark"></view></view>
+      <view class="judgement-title">{{workspace.judgementTitle}}</view>
+      <view class="evidence-list">
+        <view wx:for="{{workspace.evidences}}" wx:key="id" class="evidence-item">
+          <view class="evidence-icon evidence-icon--{{item.tone}}"><t-icon name="{{item.icon}}" size="35rpx" /></view>
+          <view class="evidence-copy"><view class="evidence-title">{{item.title}}</view><view class="evidence-description">{{item.description}}</view></view>
+        </view>
       </view>
     </view>
 
-    <view class="coach-user-row">
-      <view class="coach-bubble coach-user-bubble">帮我分析一下今天的完成情况</view>
-      <text class="coach-time">今日记录</text>
-    </view>
+    <view class="coach-card chat-card">
+      <view class="chat-heading">继续和教练聊聊</view>
+      <view class="quick-list">
+        <view class="quick-question" data-question="为什么这样判断？" bindtap="chooseSuggestion" role="button">为什么这样判断？</view>
+        <view class="quick-question" data-question="帮我调整明天计划" bindtap="chooseSuggestion" role="button">帮我调整明天计划</view>
+        <view class="quick-question" data-question="分析最近一周" data-scope="week" bindtap="chooseSuggestion" role="button">分析最近一周</view>
+      </view>
 
-    <view class="coach-bot-row coach-report-row">
-      <image class="coach-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFill" />
-      <view class="coach-bubble coach-report-bubble">
-        <view class="coach-report-intro">好的，以下是你的今日分析报告：</view>
-
-        <view class="coach-report-card">
-          <view class="coach-report-title">今日完成情况</view>
-          <view class="coach-report-metrics">
-            <view class="coach-report-metric">
-              <text class="coach-report-value coach-report-value--green">{{analysis.completedCount}}/{{analysis.totalCount}}</text>
-              <text class="coach-report-label">已完成</text>
+      <view wx:if="{{messages.length}}" class="recent-messages">
+        <view wx:for="{{messages}}" wx:key="id" class="message message--{{item.role}}">
+          <view wx:if="{{item.role === 'user'}}" class="message-user">{{item.content}}</view>
+          <view wx:else class="message-coach">
+            <view class="message-mark"><view></view></view>
+            <view class="message-body">
+              <view class="message-answer">{{item.mode === 'direct' ? item.content : item.summary}}</view>
+              <view wx:if="{{item.advice}}" class="message-advice">{{item.advice}}</view>
+              <view wx:if="{{item.showFull}}" class="message-full">{{item.content}}</view>
+              <button wx:if="{{item.canExpand}}" class="message-toggle" data-id="{{item.id}}" bindtap="toggleFullReply">{{item.showFull ? '收起完整回复' : '展开完整回复'}}</button>
+              <view wx:if="{{item.actionProposal && item.actionProposal.id}}" class="proposal-card">
+                <view class="proposal-title">{{item.actionProposal.summary}}</view>
+                <button wx:if="{{item.actionProposal.status === 'pending'}}" class="proposal-confirm" data-proposal-id="{{item.actionProposal.id}}" bindtap="confirmCoachAction">{{executingProposalId === item.actionProposal.id ? '正在执行…' : '确认执行'}}</button>
+                <view wx:else class="proposal-done">已执行并同步到行动记录</view>
+              </view>
             </view>
-            <view class="coach-report-metric">
-              <view><text class="coach-report-value">{{analysis.actualMinutes}}</text><text class="coach-report-unit">min</text></view>
-              <text class="coach-report-label">实际投入</text>
-            </view>
-            <view class="coach-report-metric">
-              <view><text class="coach-report-value">{{analysis.completionPercent}}</text><text class="coach-report-unit">%</text></view>
-              <text class="coach-report-label">完成率</text>
-            </view>
           </view>
-          <view class="coach-report-progress">
-            <view class="coach-report-progress-inner" style="width: {{analysis.completionPercent}}%;"></view>
-          </view>
-        </view>
-
-        <view class="coach-report-card coach-analysis-card">
-          <view class="coach-report-title">表现分析</view>
-          <view class="coach-analysis-line">
-            <view class="coach-analysis-dot coach-analysis-dot--green"></view>
-            <text>{{analysis.judgement}}</text>
-          </view>
-          <view wx:if="{{analysis.bottlenecks.length}}" class="coach-analysis-line">
-            <view class="coach-analysis-dot coach-analysis-dot--amber"></view>
-            <text>{{analysis.bottlenecks[0]}}</text>
-          </view>
-        </view>
-
-        <view class="coach-guided-actions coach-guided-actions--report">
-          <view wx:for="{{replyQuestions}}" wx:key="*this" class="coach-guided-action" data-suggestion="{{item}}" bindtap="chooseSuggestion" hover-class="coach-pressed">{{item}}</view>
         </view>
       </view>
-    </view>
 
-    <view wx:for="{{messages}}" wx:key="id" id="{{item.id}}" class="{{item.role === 'assistant' ? 'coach-bot-row coach-followup-row' : 'coach-user-row coach-followup-row'}}">
-      <image wx:if="{{item.role === 'assistant'}}" class="coach-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFill" />
-      <view wx:if="{{item.role === 'user'}}" class="coach-bubble coach-user-bubble">{{item.content}}</view>
-      <view wx:elif="{{item.mode === 'direct'}}" class="coach-direct-wrap">
-        <view class="coach-bubble coach-bot-bubble coach-direct-reply">{{item.content}}</view>
-        <view wx:if="{{item.actionProposal && item.actionProposal.candidateTaskTitles && item.actionProposal.candidateTaskTitles.length}}" class="coach-action-candidates">
-          <view wx:for="{{item.actionProposal.candidateTaskTitles}}" wx:key="*this" class="coach-action-candidate" data-suggestion="我完成的是{{item}}" bindtap="chooseSuggestion">{{item}}</view>
-        </view>
-        <view wx:if="{{item.actionProposal && item.actionProposal.id}}" class="coach-action-proposal">
-          <view class="coach-action-proposal-label">待确认操作</view>
-          <view class="coach-action-proposal-summary">{{item.actionProposal.summary}}</view>
-          <view wx:if="{{item.actionProposal.status === 'pending'}}" class="coach-action-proposal-actions">
-            <view class="coach-action-confirm" data-proposal-id="{{item.actionProposal.id}}" bindtap="confirmCoachAction">{{executingProposalId === item.actionProposal.id ? '正在执行…' : '确认执行'}}</view>
-          </view>
-          <view wx:else class="coach-action-success" bindtap="goToday">已完成并同步 · 返回今日页 ›</view>
-        </view>
-      </view>
-      <view wx:else class="coach-compact-reply">
-        <view wx:if="{{item.summary}}" class="coach-compact-summary">{{item.summary}}</view>
-        <view wx:if="{{item.metrics.length}}" class="coach-compact-metrics">
-          <view wx:for="{{item.metrics}}" wx:for-item="metric" wx:key="label" class="coach-compact-metric"><text class="coach-compact-metric-value">{{metric.value}}</text><text class="coach-compact-metric-label">{{metric.label}}</text></view>
-        </view>
-        <view wx:if="{{item.insights.length}}" class="coach-compact-insights">
-          <view wx:for="{{item.insights}}" wx:for-item="insight" wx:key="*this" class="coach-compact-insight"><view></view><text>{{insight}}</text></view>
-        </view>
-        <view wx:if="{{item.advice}}" class="coach-compact-divider"></view>
-        <view wx:if="{{item.advice}}" class="coach-compact-advice-label">建议</view>
-        <view wx:if="{{item.advice}}" class="coach-compact-advice">{{item.advice}}</view>
-        <view wx:if="{{item.showFull}}" class="coach-compact-full">{{item.content}}</view>
-        <view wx:if="{{item.canExpand}}" class="coach-compact-toggle" data-id="{{item.id}}" bindtap="toggleFullReply">{{item.showFull ? '收起完整回复' : '展开完整回复'}}</view>
-        <view wx:if="{{item.followUps.length}}" class="coach-guided-actions">
-          <view wx:for="{{item.followUps}}" wx:for-item="followItem" wx:key="*this" class="coach-guided-action" data-suggestion="{{followItem}}" bindtap="chooseSuggestion" hover-class="coach-pressed">{{followItem}}</view>
-        </view>
+      <view wx:if="{{asking}}" class="thinking-row"><view class="thinking-orb"></view><text>正在结合真实记录思考</text></view>
+      <view wx:if="{{chatError}}" class="chat-error"><text>{{chatError}}</text><button bindtap="retryLastQuestion">重新发送</button></view>
+      <view class="chat-input-row">
+        <input class="chat-input" value="{{question}}" maxlength="120" disabled="{{asking}}" placeholder="和教练说说你的情况……" placeholder-class="chat-placeholder" bindinput="inputQuestion" confirm-type="send" bindconfirm="sendQuestion" />
+        <view class="send-button {{asking ? 'is-disabled' : ''}}" bindtap="sendQuestion" role="button" aria-label="发送"><t-icon name="send" size="34rpx" /></view>
       </view>
     </view>
-
-    <view wx:if="{{asking}}" id="coach-thinking" class="coach-bot-row coach-followup-row">
-      <image class="coach-robot" src="/assets/coach-ui/jinbuju-ai-robot.png" mode="aspectFill" />
-      <view class="coach-bubble coach-bot-bubble coach-typing">
-        <view class="coach-breathe-wrap">
-          <view class="coach-breathe-stage">
-            <view class="coach-breathe-ring"></view>
-            <view class="coach-breathe-orb"></view>
-          </view>
-          <text class="coach-breathe-text">思考中</text>
-        </view>
-      </view>
-    </view>
-
-    <view wx:if="{{chatError}}" id="daily-chat-error" class="coach-chat-error"><text>{{chatError}}</text><view bindtap="retryLastQuestion">重新发送</view></view>
-
-    <view class="coach-scroll-spacer"></view>
-  </scroll-view>
-
-  <view class="coach-message-bar">
-    <view class="coach-input-wrap">
-      <input
-        class="coach-input"
-        value="{{question}}"
-        maxlength="160"
-        disabled="{{asking}}"
-        placeholder="向 AI 教练发送消息..."
-        placeholder-class="coach-placeholder"
-        bindinput="inputQuestion"
-        confirm-type="send"
-        bindconfirm="sendQuestion"
-      />
-    </view>
-    <view class="coach-send {{asking ? 'is-disabled' : ''}}" bindtap="sendQuestion" hover-class="coach-pressed">➤</view>
   </view>
+
 </view>

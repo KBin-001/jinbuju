@@ -23,6 +23,10 @@ const DURATION_OPTIONS = [
   { label: "240 分钟", value: 240 },
 ];
 const DEFAULT_QUICK_ADD_MINUTE_INDEX = DURATION_OPTIONS.findIndex((option) => option.value === 30);
+const QUICK_DURATION_VALUES = new Set([15, 30, 45, 60, 120]);
+const QUICK_DURATION_OPTIONS = DURATION_OPTIONS
+  .map((option, sourceIndex) => ({ ...option, sourceIndex }))
+  .filter((option) => QUICK_DURATION_VALUES.has(option.value));
 const EXAMPLE_ACTION_TITLES = ["背单词 30 个", "阅读 30 分钟", "听力练习 20 分钟", "真题复盘 1 套"];
 interface ViewTask extends ActionTask { displayTitle: string; statusLabel: string; statusTone: string; rescheduled: boolean; dateLabel: string; partialHint: boolean; actionSubtext: string; actionIconType: "book" | "audio" | "note"; canComplete: boolean; }
 interface ViewTaskGroup { key: "today" | "continue"; title: string; tasks: ViewTask[]; }
@@ -132,7 +136,7 @@ function buildProactiveInsight(summary: TodaySummary, tasks: ViewTask[], progres
   if (summary.completedCount > 0 || summary.partialCount > 0 || summary.actualMinutes > 0) {
     return {
       label: "AI 主动观察",
-      title: "今天的节奏已经启动",
+      title: isToday ? "今天的节奏已经启动" : "这一天已有行动记录",
       body: remaining > 0 ? `还有 ${remaining} 项可以继续，不需要加码，先推进最小的一步。` : "已有真实投入，保持收口比继续堆任务更重要。",
       tone: "progress",
     };
@@ -141,15 +145,15 @@ function buildProactiveInsight(summary: TodaySummary, tasks: ViewTask[], progres
     const next = unfinished[0] || tasks[0];
     return {
       label: "AI 主动观察",
-      title: "今天还没开始，先降低启动成本",
-      body: next ? `从“${next.displayTitle}”开始，只要求先做 10 分钟。` : "选一件最小行动开始，先让今天有记录。",
+      title: isToday ? "今天还没开始，先降低启动成本" : "这一天还没有行动记录",
+      body: next ? `从“${next.displayTitle}”开始，只要求先做 10 分钟。` : (isToday ? "选一件最小行动开始，先让今天有记录。" : "可以回到今天，安排一件容易开始的小行动。"),
       tone: "start",
     };
   }
   return {
     label: "AI 主动观察",
     title: "先添加一项今日行动",
-    body: "我会根据完成状态、实际投入和连续天数，主动提醒你下一步。",
+    body: "我会根据完成状态、实际投入和连续天数，给出下一步建议。",
     tone: "start",
   };
 }
@@ -290,9 +294,9 @@ Page(withAppTheme({
     navigating: false,
     quickAddVisible: false,
     quickAddTitle: "",
-    quickAddDescription: "",
     quickAddMinutes: 30,
     quickDurationOptions: DURATION_OPTIONS,
+    quickDurationPrimaryOptions: QUICK_DURATION_OPTIONS,
     quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX,
     quickDurationVisible: false,
     quickAddSubmitting: false,
@@ -313,6 +317,7 @@ Page(withAppTheme({
   focusGoalHandler: null as null | (() => void),
   completionSheetTimer: null as ReturnType<typeof setTimeout> | null,
   coachRequestKey: "",
+  coachRequestGeneration: 0,
   onPageScroll(event: { scrollTop: number }) {
     this.setData({ currentScrollTop: event.scrollTop });
   },
@@ -410,15 +415,16 @@ Page(withAppTheme({
     if (!goal?.id) { this.coachRequestKey = ""; this.setData({ coachStatus: "idle" }); return; }
     const analysisDate = this.data.selectedDate || getTodayBusinessDate();
     const requestKey = `day:${goal.id}:${analysisDate}`;
+    const generation = ++this.coachRequestGeneration;
     this.coachRequestKey = requestKey;
     this.setData({ coachStatus: "loading" });
     prepareProgressCoach("day", goal.id, false, analysisDate)
       .then(() => analyzeProgress(goal.id, "day", analysisDate))
       .then((analysis) => {
-        if (this.coachRequestKey !== requestKey) return;
+        if (this.coachRequestKey !== requestKey || this.coachRequestGeneration !== generation) return;
         this.setData({ coachStatus: "ready", proactiveInsight: buildAiPriorityInsight(analysis, this.data.proactiveInsight) });
       }, () => {
-        if (this.coachRequestKey === requestKey) this.setData({ coachStatus: "error" });
+        if (this.coachRequestKey === requestKey && this.coachRequestGeneration === generation) this.setData({ coachStatus: "error" });
       });
   },
   retry() { this.load(); },
@@ -489,7 +495,7 @@ Page(withAppTheme({
   },
   addTask() {
     if (!this.data.goal) { this.goCreateGoal(); return; }
-    this.setData({ quickAddVisible: true, quickAddTitle: "", quickAddDescription: "", quickAddMinutes: 30, quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX, quickDurationVisible: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
+    this.setData({ quickAddVisible: true, quickAddTitle: "", quickAddMinutes: 30, quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX, quickDurationVisible: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
   },
   closeQuickAdd() {
     if (this.data.quickAddSubmitting) return;
@@ -499,7 +505,6 @@ Page(withAppTheme({
   },
   noop() {},
   inputQuickAddTitle(event: { detail: { value?: string } }) { this.setData({ quickAddTitle: String(event.detail.value || "").slice(0, 40) }); },
-  inputQuickAddDescription(event: { detail: { value?: string } }) { this.setData({ quickAddDescription: String(event.detail.value || "").slice(0, 150) }); },
   openDurationPicker() {
     if (this.data.quickAddSubmitting) return;
     this.setData({ quickDurationVisible: true });
@@ -512,6 +517,34 @@ Page(withAppTheme({
     const option = DURATION_OPTIONS[index];
     if (!option) return;
     this.setData({ quickAddMinuteIndex: index, quickAddMinutes: option.value, quickDurationVisible: false });
+  },
+  selectQuickDurationChip(event: { currentTarget: { dataset: { index?: string | number } } }) {
+    const index = Number(event.currentTarget.dataset.index);
+    const option = DURATION_OPTIONS[index];
+    if (!option || this.data.quickAddSubmitting) return;
+    this.setData({ quickAddMinuteIndex: index, quickAddMinutes: option.value });
+  },
+  openCustomDuration() {
+    if (this.data.quickAddSubmitting) return;
+    wx.showModal({
+      title: "自定义预计投入",
+      content: String(this.data.quickAddMinutes || 30),
+      editable: true,
+      placeholderText: "请输入 5～240 分钟",
+      cancelText: "取消",
+      confirmText: "确定",
+      confirmColor: "#245B4D",
+      success: (result) => {
+        if (!result.confirm) return;
+        const minutes = Number(String(result.content || "").trim());
+        if (!Number.isInteger(minutes) || minutes < 5 || minutes > 240) {
+          wx.showToast({ title: "请输入 5～240 的整数分钟", icon: "none" });
+          return;
+        }
+        const matchedIndex = DURATION_OPTIONS.findIndex((option) => option.value === minutes);
+        this.setData({ quickAddMinutes: minutes, quickAddMinuteIndex: matchedIndex });
+      },
+    });
   },
   quickAddTouchStart(event: WechatMiniprogram.TouchEvent) {
     const touch = event.touches[0];
@@ -536,12 +569,11 @@ Page(withAppTheme({
       createTask({
         goalId: goal.id,
         title: this.data.quickAddTitle,
-        description: this.data.quickAddDescription,
-        estimatedMinutes: DURATION_OPTIONS[this.data.quickAddMinuteIndex]?.value || 30,
-        currentDate: this.data.selectedDate || getTodayBusinessDate(),
+        estimatedMinutes: Number(this.data.quickAddMinutes || 30),
+        currentDate: getTodayBusinessDate(),
       });
       wx.showToast({ title: "行动已添加", icon: "success" });
-      this.setData({ quickAddVisible: false, quickAddTitle: "", quickAddDescription: "", quickAddMinutes: 30, quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX, quickDurationVisible: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
+      this.setData({ quickAddVisible: false, quickAddTitle: "", quickAddMinutes: 30, quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX, quickDurationVisible: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
       this.load();
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
@@ -657,7 +689,7 @@ Page(withAppTheme({
   },
   completeTask(task: ViewTask) {
     try {
-      updateTaskStatus(task.id, "completed", 0);
+      updateTaskStatus(task.id, "completed", task.actualMinutes ?? 0);
       wx.vibrateShort({ type: "light" });
       wx.showToast({ title: "已完成", icon: "success" });
       this.load();

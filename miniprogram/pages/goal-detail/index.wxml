@@ -1,78 +1,104 @@
 <view class="page goal-detail-page" data-theme="{{appTheme}}">
-  <view wx:if="{{status === 'loading'}}" class="state-card card">
-    <view class="loading-dot"></view>
-    <view class="state-title">正在读取目标</view>
-  </view>
-
-  <view wx:elif="{{status === 'error'}}" class="state-card card">
-    <view class="state-mark">!</view>
-    <view class="state-title">{{errorMessage}}</view>
-    <t-button class="primary-button" bindtap="retry">重试</t-button>
-  </view>
-
-  <block wx:else>
-    <view class="detail-hero">
-      <view class="hero-kicker">GOAL DETAIL</view>
-      <view class="hero-title">{{goal.title}}</view>
-      <view class="hero-subtitle">每日行动 · 见证成长</view>
-      <view class="hero-progress">
-        <view class="hero-progress-copy">
-          <text>当前进度</text>
-          <text>{{progressPercent}}%</text>
-        </view>
-        <view class="progress-bar">
-          <view class="progress-bar-inner" style="width: {{progressPercent}}%;"></view>
-        </view>
-      </view>
+  <view class="page-content">
+    <view wx:if="{{status === 'loading'}}" class="state-card">
+      <t-loading theme="circular" size="48rpx" />
+      <text class="state-title">正在读取目标</text>
+      <text class="state-desc">正在整理你的行动与投入记录</text>
     </view>
 
-    <view class="stat-grid">
-      <view wx:for="{{statItems}}" wx:key="label" class="stat-card">
-        <view class="stat-value">{{item.value}}</view>
-        <view class="stat-label">{{item.label}}</view>
-      </view>
+    <view wx:elif="{{status === 'error'}}" class="state-card">
+      <t-icon name="error-circle" size="54rpx" />
+      <text class="state-title">暂时无法读取</text>
+      <text class="state-desc">{{errorMessage}}</text>
+      <view class="state-button" hover-class="tap-pressed" bindtap="retry">重新加载</view>
     </view>
 
-    <view class="action-row">
-      <t-button wx:if="{{!isCurrentGoal}}" class="secondary-button compact-action" bindtap="setAsCurrentGoal">设为当前目标</t-button>
-      <t-button class="secondary-button compact-action" bindtap="addAction">添加行动</t-button>
-      <t-button class="secondary-button compact-action" bindtap="openReview">复盘入口</t-button>
-    </view>
-
-    <view class="section-card">
-      <view class="section-head">
-        <view class="section-title">每日行动记录</view>
-        <view class="section-count">{{dailyActions.length}} 条</view>
-      </view>
-      <view wx:if="{{dailyActions.length === 0}}" class="empty-note">还没有行动记录，可以先添加今天的一小步。</view>
-      <view wx:else class="record-list">
-        <view wx:for="{{dailyActions}}" wx:key="id" class="record-card">
-          <view class="record-head">
-            <view class="record-title">{{item.title}}</view>
-            <t-tag class="status-chip {{item.statusTone}}" theme="primary" variant="light">{{item.statusLabel}}</t-tag>
+    <block wx:else>
+      <view class="detail-hero">
+        <image class="hero-mountain" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" />
+        <view class="hero-veil"></view>
+        <view class="hero-content">
+          <view class="hero-status-row">
+            <text class="hero-eyebrow">这一程的目标</text>
+            <text class="goal-status {{isCurrentGoal ? 'goal-status--current' : ''}}">{{isCurrentGoal ? '当前目标' : '进行中'}}</text>
           </view>
-          <view class="record-meta">{{item.dateText}} · 预计 {{item.estimatedMinutes}} 分钟 · 实际 {{item.actualText}}</view>
+          <text class="hero-title">{{goal.title}}</text>
+          <text class="hero-description">{{goal.description || '把长期目标拆成每天可以完成的一小步。'}}</text>
+
+          <view class="hero-progress-copy">
+            <text>{{progressText}}</text>
+            <text>{{progressPercent}}%</text>
+          </view>
+          <view class="progress-track">
+            <view class="progress-fill" style="width: {{progressPercent}}%;"></view>
+          </view>
         </view>
       </view>
-    </view>
 
-    <view class="section-card">
-      <view class="section-head">
-        <view class="section-title">历史完成记录</view>
-        <view class="section-count">{{completedActions.length}} 条</view>
-      </view>
-      <view wx:if="{{completedActions.length === 0}}" class="empty-note">完成行动后，这里会沉淀你的完成记录。</view>
-      <view wx:else class="record-list">
-        <view wx:for="{{completedActions}}" wx:key="id" class="record-card done-card">
-          <view class="record-title">{{item.title}}</view>
-          <view class="record-meta">{{item.dateText}} · 实际 {{item.actualText}}</view>
+      <view class="rhythm-card">
+        <view class="section-heading">
+          <view>
+            <text class="section-kicker">投入与节奏</text>
+            <text class="section-title">每一步，都有记录</text>
+          </view>
+          <text class="section-note">数据来自真实行动</text>
+        </view>
+        <view class="stat-grid">
+          <view wx:for="{{statItems}}" wx:key="label" class="stat-item">
+            <text class="stat-value">{{item.value}}</text>
+            <text class="stat-label">{{item.label}}</text>
+          </view>
         </view>
       </view>
-    </view>
 
-    <view class="danger-actions">
-      <t-button class="secondary-button" loading="{{lifecycleSubmitting}}" disabled="{{lifecycleSubmitting}}" bindtap="replaceGoal">更换目标</t-button>
-      <t-button class="danger-button" loading="{{lifecycleSubmitting}}" disabled="{{lifecycleSubmitting}}" bindtap="endGoal">终止目标</t-button>
-    </view>
-  </block>
+      <view class="quick-actions">
+        <view class="primary-action" hover-class="primary-action--pressed" bindtap="addAction">
+          <t-icon name="add" size="34rpx" />
+          <text>添加行动</text>
+        </view>
+        <view wx:if="{{!isCurrentGoal}}" class="secondary-action" hover-class="tap-pressed" bindtap="setAsCurrentGoal">设为当前目标</view>
+        <view wx:else class="secondary-action" hover-class="tap-pressed" bindtap="viewProgress">查看成长数据</view>
+      </view>
+
+      <view class="record-section">
+        <view class="section-heading section-heading--records">
+          <view>
+            <text class="section-kicker">行动足迹</text>
+            <text class="section-title">最近行动</text>
+          </view>
+          <view class="records-link" bindtap="viewAllActions" hover-class="tap-pressed">查看全部<t-icon name="chevron-right" size="27rpx" /></view>
+        </view>
+
+        <view wx:if="{{actionRecords.length === 0}}" class="empty-record">
+          <image class="empty-mountain" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" />
+          <text class="empty-title">还没有行动记录</text>
+          <text class="empty-desc">先安排一个容易完成的小行动，让目标真正开始。</text>
+          <view class="empty-button" hover-class="tap-pressed" bindtap="addAction">添加第一个行动</view>
+        </view>
+
+        <view wx:else class="record-list">
+          <view wx:for="{{actionRecords}}" wx:key="id" class="record-item">
+            <view class="record-marker {{item.statusTone}}"></view>
+            <view class="record-content">
+              <view class="record-head">
+                <text class="record-title">{{item.title}}</text>
+                <text class="record-status {{item.statusTone}}">{{item.statusLabel}}</text>
+              </view>
+              <text class="record-meta">{{item.dateText}} · 预计 {{item.estimatedMinutes}} 分钟 · 实际 {{item.actualText}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="management-card">
+        <text class="section-kicker">目标管理</text>
+        <text class="management-title">需要调整这一程？</text>
+        <text class="management-desc">更换或结束目标时，已有行动和投入记录都会完整保留在历史目标中。</text>
+        <view class="management-actions">
+          <view class="management-button" hover-class="tap-pressed" bindtap="replaceGoal">更换目标</view>
+          <view class="management-button management-button--danger {{lifecycleSubmitting ? 'is-disabled' : ''}}" hover-class="tap-pressed" bindtap="endGoal">结束目标</view>
+        </view>
+      </view>
+    </block>
+  </view>
 </view>

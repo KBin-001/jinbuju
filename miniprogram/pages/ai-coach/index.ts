@@ -59,11 +59,18 @@ function summarize(tasks: ActionTask[]): PeriodStats {
   };
 }
 
-function getTopInset(): number {
+function getNavigationMetrics() {
   try {
-    return wx.getWindowInfo().statusBarHeight + 8;
+    const windowInfo = wx.getWindowInfo();
+    const menu = wx.getMenuButtonBoundingClientRect();
+    return {
+      statusBarHeight: windowInfo.statusBarHeight,
+      navTop: Math.max(windowInfo.statusBarHeight, menu.top),
+      navHeight: Math.max(32, menu.height),
+      menuRightInset: Math.max(92, windowInfo.windowWidth - menu.left + 8),
+    };
   } catch (_error) {
-    return 52;
+    return { statusBarHeight: 44, navTop: 44, navHeight: 32, menuRightInset: 96 };
   }
 }
 
@@ -123,7 +130,7 @@ function errorMessage(rawError: unknown): string {
 Page({
   data: {
     appTheme: getCurrentThemeId(),
-    topInset: getTopInset(),
+    ...getNavigationMetrics(),
     scope: "overall" as CoachRange,
     requestedGoalId: "",
     goalId: "",
@@ -167,7 +174,7 @@ Page({
   },
 
   onShow() {
-    this.setData({ appTheme: getCurrentThemeId(), topInset: getTopInset() });
+    this.setData({ appTheme: getCurrentThemeId(), ...getNavigationMetrics() });
   },
 
   loadLocalOverview() {
@@ -258,7 +265,7 @@ Page({
         canExpand: mode !== "direct" && result.answer.length > 180,
         actionProposal: result.actionProposal,
       };
-      this.setData({ messages: this.data.messages.concat(assistantMessage), asking: false, scrollIntoView: assistantMessage.id });
+      this.setData({ messages: this.data.messages.concat(assistantMessage).slice(-6), asking: false, scrollIntoView: assistantMessage.id });
     } catch (error) {
       this.setData({ asking: false, chatError: errorMessage(error), failedQuestion: question, scrollIntoView: "chat-error" });
     }

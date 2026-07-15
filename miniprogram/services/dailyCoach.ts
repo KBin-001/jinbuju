@@ -108,7 +108,8 @@ function buildSuggestions(priority: DailyCoachTask | null, pendingCount: number,
 export function getDailyCoachAnalysis(date: string, requestedGoalId?: string): DailyCoachAnalysis {
   if (!validDate(date)) throw new Error("日期参数无效");
   const goal = chooseGoal(requestedGoalId);
-  const tasks = goal ? getTasksByDate(goal.id, date) : [];
+  // 与今日页统一口径：明确标记“今天不做”的行动不进入完成率分母。
+  const tasks = goal ? getTasksByDate(goal.id, date).filter((task) => task.status !== "skipped") : [];
   const completedTasks = tasks.filter((task) => task.status === "completed").map(toViewTask);
   const pendingTasks = tasks
     .filter((task) => task.status === "pending" || task.status === "partially_completed")

@@ -1,5 +1,9 @@
 {
   "navigationStyle": "custom",
   "navigationBarTitleText": "AI 进度教练",
-  "enablePullDownRefresh": false
+  "enablePullDownRefresh": false,
+  "backgroundColor": "#F7F3EA",
+  "usingComponents": {
+    "t-icon": "tdesign-miniprogram/icon/icon"
+  }
 }

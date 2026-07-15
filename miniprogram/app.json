@@ -3,6 +3,7 @@
     "pages/welcome/index",
     "pages/goal-create/index",
     "pages/action-edit/index",
+    "pages/action-records/index",
     "pages/goal-generate/index",
     "pages/plan-preview/index",
     "pages/stage-review/index",

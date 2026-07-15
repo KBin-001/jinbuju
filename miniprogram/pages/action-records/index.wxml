@@ -1,0 +1,44 @@
+<view class="action-records-page" data-theme="{{appTheme}}">
+  <view class="custom-nav">
+    <view class="nav-back" bindtap="goBack" hover-class="tap-pressed" aria-role="button" aria-label="返回"><t-icon name="chevron-left" size="42rpx" /></view>
+    <text class="nav-title">行动记录</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <view class="page-content">
+    <view wx:if="{{status === 'loading'}}" class="state-card"><t-loading theme="circular" size="48rpx" /><text class="state-title">正在整理行动记录</text></view>
+    <view wx:elif="{{status === 'error'}}" class="state-card"><t-icon name="error-circle" size="52rpx" /><text class="state-title">暂时无法读取</text><text class="state-desc">{{errorMessage}}</text><view class="state-action" bindtap="retry">重新加载</view></view>
+
+    <block wx:else>
+      <view wx:if="{{goal}}" class="records-hero">
+        <image class="hero-mountain" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" />
+        <view class="hero-veil"></view>
+        <view class="hero-content"><text class="hero-eyebrow">当前目标</text><text class="hero-title">{{goal.title}}</text><text class="hero-summary">完成 {{summary.completed}} 项 · 实际投入 {{summary.minutes}} 分钟 · 待继续 {{summary.continuing}} 项</text></view>
+      </view>
+
+      <view wx:if="{{goal}}" class="filter-bar">
+        <view wx:for="{{filterOptions}}" wx:key="key" class="filter-item {{filter === item.key ? 'is-active' : ''}}" data-filter="{{item.key}}" bindtap="changeFilter">{{item.label}}</view>
+      </view>
+
+      <view wx:if="{{!goal}}" class="state-card"><image class="empty-mountain" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" /><text class="state-title">还没有当前目标</text><text class="state-desc">创建目标后，行动记录会在这里按日期汇总。</text><view class="state-action" bindtap="addAction">创建目标</view></view>
+
+      <view wx:elif="{{groups.length === 0}}" class="state-card compact-state"><t-icon name="task" size="50rpx" /><text class="state-title">{{filter === 'completed' ? '还没有已完成行动' : filter === 'continue' ? '没有需要继续的行动' : '还没有行动记录'}}</text><text class="state-desc">{{filter === 'all' ? '添加一项今天能完成的小行动，让记录从此刻开始。' : '可以切换到全部记录查看其他状态。'}}</text><view wx:if="{{filter === 'all'}}" class="state-action" bindtap="addAction">添加今日行动</view><view wx:else class="state-action" bindtap="showAll">查看全部</view></view>
+
+      <view wx:else class="record-groups">
+        <view wx:for="{{groups}}" wx:key="date" class="date-group">
+          <view class="date-heading"><text class="date-title">{{item.dateLabel}}</text><text class="date-summary">完成 {{item.completedCount}} 项 · 投入 {{item.actualMinutes}} 分钟</text></view>
+          <view class="record-card">
+            <view wx:for="{{item.records}}" wx:for-item="record" wx:key="id" class="record-row" data-id="{{record.id}}" bindtap="openRecord" hover-class="tap-pressed">
+              <view class="record-status {{record.completed ? 'is-completed' : record.partial ? 'is-partial' : 'is-pending'}}"><t-icon wx:if="{{record.completed}}" name="check" size="24rpx" /><t-icon wx:elif="{{record.partial}}" name="time" size="24rpx" /><view wx:else class="pending-dot"></view></view>
+              <view class="record-main"><view class="record-top"><text class="record-title">{{record.title}}</text><text class="status-text {{record.completed ? 'is-completed' : record.partial ? 'is-partial' : 'is-pending'}}">{{record.statusText}}</text></view><text class="record-meta">{{record.minutesText}}</text></view>
+              <t-icon name="chevron-right" size="28rpx" color="#969A96" />
+            </view>
+          </view>
+        </view>
+        <view wx:if="{{hasMore}}" class="load-more" bindtap="loadMore" hover-class="tap-pressed">加载更多记录</view>
+      </view>
+    </block>
+  </view>
+
+  <action-record-editor visible="{{recordEditorVisible}}" task="{{recordEditorTask}}" saving="{{savingRecord}}" deleting="{{deletingRecord}}" bind:close="closeRecordEditor" bind:save="saveRecordEditor" bind:delete="deleteRecordEditor" />
+</view>

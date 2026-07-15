@@ -48,10 +48,6 @@ Page(withAppTheme({
     this.setData({ title: String(event.detail.value || "").slice(0, 40) });
   },
 
-  inputDescription(event: { detail: { value?: string } }) {
-    this.setData({ description: String(event.detail.value || "").slice(0, 150) });
-  },
-
   inputMinutes(event: { detail: { value?: string } }) {
     this.setData({ estimatedMinutes: Number(event.detail.value) });
   },

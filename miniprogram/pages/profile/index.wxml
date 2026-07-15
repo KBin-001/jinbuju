@@ -37,11 +37,10 @@
 
       <view class="paper-card goal-card">
         <image class="goal-card__background" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" /><view class="goal-card__veil"></view>
-        <view wx:if="{{currentGoal}}" class="goal-card__content" data-id="{{currentGoal.id}}" bindtap="openGoal" hover-class="is-pressed" aria-role="button" aria-label="查看当前目标">
-          <view class="goal-card__head"><text class="section-kicker">当前目标</text><text class="goal-today">{{currentGoal.suggestion}}</text></view>
+        <view wx:if="{{currentGoal}}" class="goal-card__content">
+          <view class="goal-card__head"><text class="section-kicker">当前目标</text><view class="goal-manage" catchtap="manageGoals" hover-class="is-pressed" aria-role="button" aria-label="管理目标">管理<t-icon name="chevron-right" size="28rpx" /></view></view>
           <text class="goal-title">{{currentGoal.title}}</text>
-          <view class="goal-progress-row"><view class="goal-track"><view class="goal-track__fill" style="width: {{currentGoal.progressPercent}}%;"></view></view><text>{{currentGoal.progressPercent}}%</text></view>
-          <view class="goal-card-actions"><view class="goal-card-action" catchtap="viewAllStats">查看进度</view><view class="goal-card-action goal-card-action--ghost" catchtap="manageGoals">管理目标</view></view>
+          <text class="goal-persisted">{{currentGoal.continuityText}}</text>
         </view>
         <view wx:else class="goal-empty"><text class="section-kicker">当前目标</text><text class="goal-empty__title">还没有进行中的目标</text><text class="goal-empty__copy">从今天能完成的一小步开始。</text><view class="goal-empty__button" bindtap="createGoal">添加目标</view></view>
       </view>

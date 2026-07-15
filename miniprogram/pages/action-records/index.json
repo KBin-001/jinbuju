@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "行动记录",
+  "navigationStyle": "custom",
+  "enablePullDownRefresh": false,
+  "usingComponents": {
+    "action-record-editor": "/components/action-record-editor/index"
+  }
+}

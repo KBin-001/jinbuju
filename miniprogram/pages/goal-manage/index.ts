@@ -1,25 +1,18 @@
 import { endGoal, getActiveGoal, getActiveGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { withAppTheme } from "../../services/theme";
-import { differenceInBusinessDays, getTodayBusinessDate } from "../../utils/date";
 import { Goal, ProgressSummary } from "../../types/manual";
 
 interface GoalManageCardView {
   id: string;
   title: string;
-  days: number;
+  description: string;
   progressPercent: number;
   isCurrent: boolean;
-  statusText: "当前目标" | "待继续";
-}
-
-function daysSince(value?: string): number {
-  if (!value) return 1;
-  const start = value.slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return 1;
-  const today = getTodayBusinessDate();
-  const diff = differenceInBusinessDays(start, today);
-  return Math.max(1, diff + 1);
+  statusText: "当前目标" | "可切换";
+  continuityText: string;
+  actionText: string;
+  minutesText: string;
 }
 
 function progressPercent(summary: ProgressSummary): number {
@@ -28,16 +21,27 @@ function progressPercent(summary: ProgressSummary): number {
     : 0;
 }
 
+function continuityText(summary: ProgressSummary): string {
+  if (summary.currentStreakDays > 0) return `连续行动 ${summary.currentStreakDays} 天`;
+  if (summary.totalActionDays > 0) return `累计行动 ${summary.totalActionDays} 天`;
+  return "等待第一次行动";
+}
+
 function toCard(goal: Goal, currentGoalId: string): GoalManageCardView {
   const summary = getProgressSummary(goal.id);
   const isCurrent = goal.id === currentGoalId;
   return {
     id: goal.id,
     title: goal.title,
-    days: Math.max(daysSince(goal.startedAt || goal.createdAt), summary.totalActionDays || 0),
+    description: goal.description || "把目标拆成每天可以完成的一小步",
     progressPercent: progressPercent(summary),
     isCurrent,
-    statusText: isCurrent ? "当前目标" : "待继续",
+    statusText: isCurrent ? "当前目标" : "可切换",
+    continuityText: continuityText(summary),
+    actionText: summary.totalTasks > 0
+      ? `已完成 ${summary.completedTasks} / ${summary.totalTasks} 项行动`
+      : "还没有行动记录",
+    minutesText: `累计投入 ${summary.totalActualMinutes} 分钟`,
   };
 }
 
@@ -45,7 +49,10 @@ Page(withAppTheme({
   data: {
     goals: [] as GoalManageCardView[],
     activeGoalCount: 0,
+    currentGoalTitle: "",
     endingGoalId: "",
+    loading: true,
+    errorMessage: "",
   },
 
   onShow() {
@@ -55,17 +62,24 @@ Page(withAppTheme({
   loadGoals() {
     try {
       const activeGoals = getActiveGoals();
-      const currentGoalId = getActiveGoal()?.id || activeGoals[0]?.id || "";
+      const currentGoal = getActiveGoal() || activeGoals[0] || null;
       this.setData({
-        goals: activeGoals.map((goal) => toCard(goal, currentGoalId)),
+        goals: activeGoals.map((goal) => toCard(goal, currentGoal?.id || "")),
         activeGoalCount: activeGoals.length,
+        currentGoalTitle: currentGoal?.title || "",
         endingGoalId: "",
+        loading: false,
+        errorMessage: "",
       });
     } catch (error) {
-      wx.showToast({ title: error instanceof Error ? error.message : "目标读取失败", icon: "none" });
+      this.setData({
+        loading: false,
+        errorMessage: error instanceof Error ? error.message : "目标暂时无法读取",
+      });
     }
   },
 
+  retry() { this.setData({ loading: true, errorMessage: "" }); this.loadGoals(); },
   goBack() { wx.navigateBack({ delta: 1 }); },
   createGoal() { wx.navigateTo({ url: "/pages/goal-create/index" }); },
 
@@ -81,7 +95,7 @@ Page(withAppTheme({
       setCurrentGoal(id);
       wx.switchTab({ url: "/pages/plan/index" });
     } catch (error) {
-      wx.showToast({ title: error instanceof Error ? error.message : "成长档案打开失败", icon: "none" });
+      wx.showToast({ title: error instanceof Error ? error.message : "成长数据暂时无法打开", icon: "none" });
     }
   },
 
@@ -103,10 +117,10 @@ Page(withAppTheme({
     if (!id || this.data.endingGoalId) return;
     wx.showModal({
       title: "结束这个目标？",
-      content: `“${title}”会保存到历史目标，已有行动和成长记录都会保留。`,
+      content: `“${title}”会进入历史目标，已有行动、投入和成长记录都会保留。`,
       cancelText: "再想想",
       confirmText: "确认结束",
-      confirmColor: "#356859",
+      confirmColor: "#B86152",
       success: (result) => {
         if (!result.confirm) return;
         this.setData({ endingGoalId: id });

@@ -1,5 +1,9 @@
 {
   "navigationStyle": "custom",
-  "navigationBarTitleText": "每日 AI 教练",
-  "enablePullDownRefresh": false
+  "navigationBarTitleText": "AI 成长教练",
+  "enablePullDownRefresh": false,
+  "backgroundColor": "#F7F3EA",
+  "usingComponents": {
+    "t-icon": "tdesign-miniprogram/icon/icon"
+  }
 }

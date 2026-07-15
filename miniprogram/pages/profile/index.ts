@@ -42,12 +42,9 @@ function getProfileLayout(): { topInset: number; menuTop: number; menuHeight: nu
 interface GoalCardView {
   id: string;
   title: string;
-  days: number;
   progressPercent: number;
   isCurrent: boolean;
-  suggestion: string;
-  remainingActions: number;
-  totalActions: number;
+  continuityText: string;
 }
 
 /** 成长概览统计 */
@@ -98,19 +95,16 @@ function progressPercent(summary: ProgressSummary | null): number {
 
 function toGoalCard(goal: Goal, currentGoalId: string): GoalCardView {
   const summary = getProgressSummary(goal.id);
-  const today = getTodayBusinessDate();
-  const todayTask = readManualStore().tasks.find((task) =>
-    task.goalId === goal.id && task.currentDate === today &&
-    (task.status === "pending" || task.status === "partially_completed"));
   return {
     id: goal.id,
     title: goal.title,
-    days: Math.max(daysSince(goal.startedAt || goal.createdAt), summary.totalActionDays || 0),
     progressPercent: progressPercent(summary),
     isCurrent: goal.id === currentGoalId,
-    suggestion: todayTask ? `今日建议 · ${todayTask.title}` : "今天先完成一小步",
-    remainingActions: Math.max(0, summary.totalTasks - summary.completedTasks),
-    totalActions: summary.totalTasks,
+    continuityText: summary.currentStreakDays > 0
+      ? `已连续行动 ${summary.currentStreakDays} 天`
+      : summary.totalActionDays > 0
+        ? `累计行动 ${summary.totalActionDays} 天`
+        : "还未开始行动",
   };
 }
 

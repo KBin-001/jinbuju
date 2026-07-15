@@ -33,16 +33,17 @@ page { background: #f7f3ea; }
 .first-action-mark { display: flex; align-items: center; justify-content: center; width: 70rpx; height: 70rpx; flex: 0 0 auto; border-radius: 22rpx; color: #245b4d; background: #e9f0eb; }
 .first-action-content { min-width: 0; flex: 1; }
 .first-action-button { flex: 0 0 auto; }
-.coach-card { display: flex; align-items: stretch; min-height: 230rpx; margin-top: 22rpx; padding: 30rpx; gap: 22rpx; overflow: hidden; }
+.coach-card { display: block; min-height: 304rpx; margin-top: 22rpx; padding: 30rpx; overflow: hidden; border-radius: 32rpx; }
 .coach-landscape, .coach-landscape__veil { position: absolute; width: 100%; height: 100%; inset: 0; pointer-events: none; }
-.coach-landscape { opacity: .48; }
-.coach-landscape__veil { background: linear-gradient(90deg, rgba(255,252,246,.98) 0%, rgba(255,252,246,.9) 58%, rgba(255,252,246,.52) 100%); }
-.coach-copy { position: relative; z-index: 1; min-width: 0; flex: 1; }
+.coach-landscape { opacity: .82; }
+.coach-landscape__veil { background: linear-gradient(90deg, rgba(255,252,246,.99) 0%, rgba(255,252,246,.94) 48%, rgba(255,252,246,.72) 64%, rgba(255,252,246,.24) 100%),linear-gradient(180deg,transparent 55%,rgba(255,252,246,.2) 100%); }
+.coach-copy { position: relative; z-index: 1; width: 64%; min-width: 0; }
 .coach-title-row { display: flex; align-items: center; gap: 13rpx; }
 .coach-icon { display: flex; align-items: center; justify-content: center; width: 58rpx; height: 58rpx; border-radius: 50%; color: #245b4d; background: #eaf0ec; }
-.coach-message { max-width: 500rpx; margin-top: 18rpx; color: #43504b; font-size: 25rpx; line-height: 39rpx; }
-.coach-note { margin-top: 12rpx; color: #8b908c; font-size: 20rpx; line-height: 30rpx; }
-.coach-action { position: relative; z-index: 1; display: flex; align-items: center; align-self: flex-end; min-height: 64rpx; flex: 0 0 auto; color: #9b7432; font-size: 22rpx; font-weight: 600; white-space: nowrap; }
+.coach-period { color: #8b682f; font-size: 18rpx; line-height: 26rpx; font-weight: 650; letter-spacing: 1rpx; }
+.coach-message { margin-top: 16rpx; display: -webkit-box; overflow: hidden; color: #43504b; font-size: 23rpx; line-height: 36rpx; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.coach-note { margin-top: 10rpx; color: #737b77; font-size: 19rpx; line-height: 29rpx; }
+.coach-action { position: absolute; z-index: 2; right: 26rpx; bottom: 24rpx; min-height: 60rpx; padding: 0 18rpx; display: flex; align-items: center; border: 1rpx solid rgba(36,91,77,.15); border-radius: 30rpx; background: rgba(255,252,246,.86); color: #8b682f; font-size: 21rpx; font-weight: 650; white-space: nowrap; }
 .growth-start-card { min-height: 330rpx; margin-top: 22rpx; overflow: hidden; }
 .growth-start-landscape, .growth-start-veil { position: absolute; width: 100%; height: 100%; inset: 0; }
 .growth-start-landscape { opacity: .78; }
@@ -105,6 +106,10 @@ page { background: #f7f3ea; }
 .heatmap-detail { width: fit-content; max-width: 100%; margin: 16rpx auto 0; padding: 12rpx 18rpx; border-radius: 16rpx; color: #fff; background: #245b4d; font-size: 19rpx; }
 .history-link { display: flex; align-items: center; justify-content: flex-end; min-height: 72rpx; margin-top: 10rpx; color: #9b7432; font-size: 22rpx; font-weight: 600; }
 .record-group { margin-top: 24rpx; }
+.records-heading { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
+.records-all { min-height: 56rpx; display: flex; align-items: center; color: #245b4d; font-size: 21rpx; font-weight: 600; }
+.records-empty { margin-top: 20rpx; padding: 26rpx; border-radius: 20rpx; background: rgba(247,243,234,.58); color: #7c817d; font-size: 22rpx; line-height: 34rpx; text-align: center; }
+.records-empty view { min-height: 58rpx; margin-top: 10rpx; display: flex; align-items: center; justify-content: center; color: #245b4d; font-weight: 650; }
 .record-group-title { margin-bottom: 8rpx; color: #7c817d; font-size: 21rpx; }
 .record-row { display: flex; align-items: center; min-height: 94rpx; gap: 18rpx; border-bottom: 1rpx solid rgba(110,125,116,.12); }
 .record-status { box-sizing: border-box; width: 42rpx; height: 42rpx; flex: 0 0 auto; border: 2rpx solid #b9c8c1; border-radius: 50%; }
@@ -140,7 +145,7 @@ page { background: #f7f3ea; }
   .goal-hero { padding: 28rpx 25rpx; }
   .goal-title { font-size: 34rpx; }
   .first-action-card { align-items: flex-start; flex-wrap: wrap; }.first-action-content { min-width: calc(100% - 96rpx); }.first-action-button { width: 100%; margin-top: 4rpx; }
-  .coach-card { display: block; padding: 26rpx; }.coach-action { justify-content: flex-end; margin-top: 10rpx; }
+  .coach-card { min-height: 292rpx; padding: 26rpx; }.coach-copy { width: 68%; }.coach-message { font-size: 21rpx; line-height: 32rpx; }.coach-action { right: 20rpx; bottom: 18rpx; }
   .growth-start-content { width: 82%; padding: 28rpx 24rpx; }.growth-start-title { font-size: 28rpx; }.growth-path-line { width: 34rpx; margin-right: 6rpx; margin-left: 6rpx; }
   .trend-card, .records-card { padding-right: 22rpx; padding-left: 22rpx; }
   .section-head { align-items: flex-start; flex-direction: column; }.trend-tabs { align-self: flex-end; }

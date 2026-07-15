@@ -864,7 +864,7 @@ function buildMilestones(actionDays: number): { milestones: MilestoneView[]; nex
 
 function buildRecentRecords(tasks: ActionTask[]): RecentRecord[] {
   return tasks
-    .filter((task) => task.status === "completed" || task.status === "partially_completed")
+    .filter((task) => task.status === "completed" && !task.deletedAt)
     .sort((left, right) => String(right.completedAt || right.updatedAt).localeCompare(String(left.completedAt || left.updatedAt)))
     .slice(0, 3)
     .map((task) => ({
@@ -1115,6 +1115,12 @@ Page(withAppTheme({
       return;
     }
     wx.navigateTo({ url: `/pages/action-edit/index?goalId=${encodeURIComponent(goalId)}&date=${getTodayBusinessDate()}` });
+  },
+
+  openActionRecords() {
+    const goalId = this.data.goal?.id;
+    if (!goalId) return;
+    wx.navigateTo({ url: `/pages/action-records/index?goalId=${encodeURIComponent(goalId)}` });
   },
 
   openAction(event: { currentTarget: { dataset: { id?: string } } }) {

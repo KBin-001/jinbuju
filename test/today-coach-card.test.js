@@ -20,7 +20,8 @@ assert(page.includes('prepareProgressCoach("day"'), "今日页未在后台准备
 assert(page.includes("analyzeProgress(goal.id, \"day\""), "今日页未在后台请求 AI 分析");
 assert(!template.includes("value-strip"), "首页不应保留重复价值卡");
 assert(!template.includes("reference-coach-title"), "首页不应保留重复 AI 教练标题");
-assert(template.includes("progress-mountain-path-v2.jpg"), "主动观察应使用山水背景");
+assert(template.includes("ai-coach-shanshui-v1.jpg"), "今日建议应使用专用 AI 山水背景");
+assert(template.includes("coachStatus === 'ready'") && template.includes("coachStatus === 'loading'") && template.includes("coachStatus === 'error'"), "今日建议必须区分 AI 成功、加载和失败回退状态");
 assert(!template.includes('src="/assets/today-coach-watercolor-v2.jpg" mode="aspectFill" />\n        <view'), "机器人插画不应处于启用状态");
 assert(template.includes("stats-grid"), "今日成果卡缺少三列统计结构");
 assert(template.includes("stats-value--done"), "今日成果卡缺少完成指标");

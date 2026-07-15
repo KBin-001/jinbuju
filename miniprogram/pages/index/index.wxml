@@ -85,15 +85,14 @@
       </view>
 
       <view class="reference-coach-entry" bindtap="openDailyCoach" hover-class="reference-card--pressed">
-        <!-- 机器人插画已停用：主动观察只使用山水背景，不抢占提醒内容。 -->
-        <!-- <image class="reference-coach-background" src="/assets/today-coach-watercolor-v2.jpg" mode="aspectFill" /> -->
-        <image class="reference-coach-background" src="/assets/progress-mountain-path-v2.jpg" mode="aspectFill" />
+        <image class="reference-coach-background" src="/assets/ai-coach-shanshui-v1.jpg" mode="aspectFill" aria-hidden="true" />
         <view class="reference-coach-veil"></view>
         <view class="reference-coach-copy">
           <view class="proactive-insight proactive-insight--{{proactiveInsight.tone}}">
-            <view class="proactive-label">{{proactiveInsight.label}}</view>
-            <view class="proactive-title">{{proactiveInsight.title}}</view>
-            <view class="proactive-body">{{proactiveInsight.body}}</view>
+            <view class="proactive-label">{{coachStatus === 'ready' ? 'AI 今日建议' : coachStatus === 'loading' ? '正在整理建议' : '今日数据提示'}}</view>
+            <view class="proactive-title">{{coachStatus === 'loading' ? '正在结合今日行动整理下一步' : proactiveInsight.title}}</view>
+            <view class="proactive-body">{{coachStatus === 'loading' ? '建议生成期间，你仍然可以照常查看和完成行动。' : proactiveInsight.body}}</view>
+            <view class="coach-entry-footer"><text>{{coachStatus === 'error' ? 'AI 暂时不可用，当前展示本地建议' : '查看建议依据'}}</text><t-icon name="chevron-right" size="27rpx" /></view>
           </view>
         </view>
       </view>
@@ -175,12 +174,8 @@
       class="quick-add-panel"
       style="transform: translateY({{quickAddTouchDeltaY}}px);"
       catchtap="noop"
-      bindtouchstart="quickAddTouchStart"
-      bindtouchmove="quickAddTouchMove"
-      bindtouchend="quickAddTouchEnd"
-      bindtouchcancel="quickAddTouchEnd"
     >
-      <view class="quick-add-grabber"></view>
+      <view class="quick-add-grabber" bindtouchstart="quickAddTouchStart" bindtouchmove="quickAddTouchMove" bindtouchend="quickAddTouchEnd" bindtouchcancel="quickAddTouchEnd"></view>
       <view class="quick-add-header">
         <view>
           <view class="quick-add-title">添加今日行动</view>
@@ -189,7 +184,7 @@
           <t-icon name="close" />
         </view>
       </view>
-      <view class="quick-add-copy">写下一件今天能推进的小事，保存后会出现在今日行动安排里。</view>
+      <view class="quick-add-copy">写下一件今天能推进的小事，行动会安排到今天。</view>
 
       <view class="quick-add-field">
         <view class="quick-add-label">行动标题</view>
@@ -203,35 +198,20 @@
           bindchange="inputQuickAddTitle"
         />
       </view>
-      <view class="quick-add-field">
-        <view class="quick-add-label">补充说明</view>
-        <t-textarea
-          class="quick-add-textarea"
-          value="{{quickAddDescription}}"
-          maxlength="150"
-          placeholder="可选：写清楚材料、范围或完成标准"
-          placeholder-class="quick-add-placeholder"
-          auto-height="{{false}}"
-          bindchange="inputQuickAddDescription"
-        />
-      </view>
       <view class="quick-add-field quick-add-minutes-row">
-        <view>
+        <view class="quick-add-label-row">
           <view class="quick-add-label">预计投入</view>
-          <view class="quick-add-hint">点右侧滚动选择时间</view>
+          <view class="quick-add-hint">选择一个容易开始的时长</view>
         </view>
-        <view class="quick-add-minutes-control" catchtap="openDurationPicker">
-          <text class="quick-add-minutes-value">{{quickAddMinutes}}</text>
-          <text class="quick-add-minute-unit">分钟</text>
-          <view class="quick-add-picker-arrow">
-            <t-icon name="chevron-down" />
-          </view>
+        <view class="quick-duration-chips">
+          <view wx:for="{{quickDurationPrimaryOptions}}" wx:key="value" class="quick-duration-chip {{quickAddMinuteIndex === item.sourceIndex ? 'is-selected' : ''}}" data-index="{{item.sourceIndex}}" catchtap="selectQuickDurationChip">{{item.value}} 分钟</view>
+          <view class="quick-duration-chip {{quickAddMinutes !== 15 && quickAddMinutes !== 30 && quickAddMinutes !== 45 && quickAddMinutes !== 60 && quickAddMinutes !== 120 ? 'is-selected' : ''}}" catchtap="openCustomDuration">{{quickAddMinutes !== 15 && quickAddMinutes !== 30 && quickAddMinutes !== 45 && quickAddMinutes !== 60 && quickAddMinutes !== 120 ? quickAddMinutes + ' 分钟' : '自定义'}}</view>
         </view>
       </view>
 
       <view class="quick-add-actions">
         <t-button class="quick-add-secondary" disabled="{{quickAddSubmitting}}" catchtap="closeQuickAdd">取消</t-button>
-        <t-button class="quick-add-primary" loading="{{quickAddSubmitting}}" disabled="{{quickAddSubmitting}}" catchtap="saveQuickAdd">保存行动</t-button>
+        <t-button class="quick-add-primary" loading="{{quickAddSubmitting}}" disabled="{{quickAddSubmitting || quickAddTitle.length < 2}}" catchtap="saveQuickAdd">保存行动</t-button>
       </view>
     </view>
 

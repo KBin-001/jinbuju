@@ -23,7 +23,9 @@ assert.doesNotMatch(template, /<canvas/);
 assert.doesNotMatch(template, /trendLine/);
 assert.match(template, /growth-start-card/);
 assert.match(template, /第一步，会让远山有了方向/);
-assert((template.match(/progress-mountain-path-v2\.jpg/g) || []).length >= 4, "进度页关键区域必须保留山水品牌层次");
+assert((template.match(/progress-mountain-path-v2\.jpg/g) || []).length >= 3, "进度页关键区域必须保留山水品牌层次");
+assert.match(template, /ai-coach-shanshui-v1\.jpg/, "成长教练应使用专用 AI 山水背景");
+assert.match(template, /当前为数据观察/, "规则文案不得冒充 AI 自动生成结论");
 
 assert.doesNotMatch(page, /analyzeProgress\s*\(/, "进入进度页不得自动生成 AI 报告");
 assert.doesNotMatch(page, /prepareProgressCoach\s*\(/, "进入进度页不得发起 AI 上下文网络请求");

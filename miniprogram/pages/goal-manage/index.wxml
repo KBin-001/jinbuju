@@ -1,47 +1,58 @@
 <view class="goal-manage-page" data-theme="{{appTheme}}">
   <view class="custom-nav">
-    <view class="nav-back" bindtap="goBack" hover-class="tap-pressed" aria-label="返回">‹</view>
-    <text class="nav-title">管理目标</text>
+    <view class="nav-back" bindtap="goBack" hover-class="tap-pressed" aria-role="button" aria-label="返回"><t-icon name="chevron-left" size="42rpx" /></view>
+    <text class="nav-title">目标管理</text>
     <view class="nav-placeholder"></view>
   </view>
 
   <view class="page-content">
     <view class="hero-card">
-      <view class="hero-mark">芽</view>
+      <image class="hero-mountain" src="/assets/profile/profile-header-mist-v2.jpg" mode="aspectFill" />
+      <view class="hero-veil"></view>
       <view class="hero-copy">
-        <view class="hero-count-row"><text class="hero-title">进行中的目标</text><text class="hero-count">{{activeGoalCount}}</text></view>
-        <text class="hero-subtitle">一次专注一个目标，也允许自己慢慢来。</text>
+        <text class="hero-eyebrow">目标与方向</text>
+        <view class="hero-count-row"><text class="hero-title">正在推进</text><text class="hero-count">{{activeGoalCount}}</text><text class="hero-unit">个目标</text></view>
+        <text wx:if="{{currentGoalTitle}}" class="hero-subtitle">当前专注 · {{currentGoalTitle}}</text>
+        <text wx:else class="hero-subtitle">从一个真正想推进的方向开始</text>
       </view>
-      <view class="hero-leaf hero-leaf--one"></view><view class="hero-leaf hero-leaf--two"></view>
     </view>
 
-    <view wx:if="{{goals.length === 0}}" class="empty-card">
-      <view class="empty-icon">◎</view>
+    <view wx:if="{{loading}}" class="state-card"><t-loading size="46rpx" theme="circular" /><text>正在整理目标</text></view>
+    <view wx:elif="{{errorMessage}}" class="state-card"><t-icon name="error-circle" size="52rpx" /><text class="state-title">目标暂时没有加载出来</text><text class="state-desc">{{errorMessage}}</text><view class="state-button" bindtap="retry">重新加载</view></view>
+    <view wx:elif="{{goals.length === 0}}" class="empty-card">
+      <image class="empty-mountain" src="/assets/profile/journey-mark.svg" mode="aspectFit" />
       <text class="empty-title">还没有进行中的目标</text>
-      <text class="empty-desc">从一个真正想推进的小目标开始，今天先走一小步。</text>
+      <text class="empty-desc">选择一个真正想推进的方向，再从今天能完成的一小步开始。</text>
       <view class="empty-button" bindtap="createGoal" hover-class="tap-pressed">创建第一个目标</view>
     </view>
 
     <view wx:else class="goal-list">
-      <view wx:for="{{goals}}" wx:key="id" class="goal-card">
+      <view wx:for="{{goals}}" wx:key="id" class="goal-card {{item.isCurrent ? 'goal-card--current' : ''}}">
+        <view class="goal-card__wash"></view>
         <view class="goal-head">
-          <view class="goal-icon">◎</view>
-          <view class="goal-info"><text class="goal-title">{{item.title}}</text><text class="goal-days">已坚持 {{item.days}} 天</text></view>
-          <view class="status-chip {{item.isCurrent ? 'status-chip--current' : ''}}">{{item.statusText}}</view>
+          <view class="goal-index">{{index + 1}}</view>
+          <view class="goal-info">
+            <view class="goal-title-row"><text class="goal-title">{{item.title}}</text><view class="status-chip {{item.isCurrent ? 'status-chip--current' : ''}}">{{item.statusText}}</view></view>
+            <text class="goal-description">{{item.description}}</text>
+          </view>
         </view>
-        <view class="progress-row">
-          <view class="progress-track"><view class="progress-fill" style="width: {{item.progressPercent}}%;"></view></view>
-          <text class="progress-value">{{item.progressPercent}}%</text>
+
+        <view class="goal-progress-copy"><text>{{item.actionText}}</text><text>{{item.progressPercent}}%</text></view>
+        <view class="progress-track"><view class="progress-fill" style="width: {{item.progressPercent}}%;"></view></view>
+        <view class="goal-facts"><text>{{item.continuityText}}</text><text>{{item.minutesText}}</text></view>
+
+        <view class="goal-primary-actions">
+          <view class="goal-primary" data-id="{{item.id}}" catchtap="openDetail" hover-class="action-pressed">查看目标详情</view>
+          <view wx:if="{{!item.isCurrent}}" class="goal-switch" data-id="{{item.id}}" catchtap="setAsCurrent" hover-class="action-pressed">设为当前</view>
+          <view wx:else class="current-note"><t-icon name="check-circle-filled" size="26rpx" />正在专注</view>
         </view>
-        <view class="goal-actions">
-          <view class="goal-action" data-id="{{item.id}}" catchtap="openDetail" hover-class="action-pressed">查看详情</view>
-          <view class="goal-action" data-id="{{item.id}}" catchtap="viewArchive" hover-class="action-pressed">成长档案</view>
-          <view wx:if="{{!item.isCurrent}}" class="goal-action" data-id="{{item.id}}" catchtap="setAsCurrent" hover-class="action-pressed">设为当前</view>
-          <view class="goal-action goal-action--end {{endingGoalId === item.id ? 'is-disabled' : ''}}" data-id="{{item.id}}" data-title="{{item.title}}" catchtap="confirmEndGoal" hover-class="action-pressed">{{endingGoalId === item.id ? '正在结束' : '结束目标'}}</view>
+        <view class="goal-secondary-actions">
+          <view data-id="{{item.id}}" catchtap="viewArchive" hover-class="action-pressed">查看成长数据</view>
+          <view class="end-action {{endingGoalId === item.id ? 'is-disabled' : ''}}" data-id="{{item.id}}" data-title="{{item.title}}" catchtap="confirmEndGoal" hover-class="action-pressed">{{endingGoalId === item.id ? '正在结束' : '结束目标'}}</view>
         </view>
       </view>
     </view>
   </view>
 
-  <view class="bottom-action"><view class="primary-button" bindtap="createGoal" hover-class="primary-button--pressed"><text class="primary-plus">＋</text>添加新目标</view></view>
+  <view class="bottom-action"><view class="primary-button" bindtap="createGoal" hover-class="primary-button--pressed"><t-icon name="add" size="34rpx" />添加新目标</view></view>
 </view>
