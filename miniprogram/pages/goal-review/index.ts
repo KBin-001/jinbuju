@@ -227,7 +227,7 @@ Page(withAppTheme({
           { label: "目标历时", value: String(goal.stats.totalDays || 1), unit: "天" },
           { label: "完成行动", value: `${completedActions}/${totalActions}`, unit: "" },
           { label: "实际投入", value: String(goal.stats.actualMinutes || 0), unit: "分钟" },
-          { label: "完成率", value: String(goal.stats.completionRate || 0), unit: "%" },
+          { label: "行动完成率", value: String(goal.stats.completionRate || 0), unit: "%" },
         ],
         trendDays,
         importantActions: important,

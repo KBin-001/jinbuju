@@ -12,15 +12,13 @@
     <view class="achievement-content">
       <view class="achievement-hero">
         <view class="achievement-hero-copy">
-          <view class="achievement-hero-kicker">成长荣誉</view>
+          <view class="achievement-hero-kicker">成长记录</view>
           <view class="achievement-hero-title">认真走过的路，都值得被收藏</view>
-          <view class="achievement-hero-summary"><text class="achievement-hero-number">{{unlockedCount}}</text><text> / {{totalCount}} 枚</text><text class="achievement-hero-percent">{{progressPercent}}%</text></view>
-          <view class="achievement-hero-track"><view class="achievement-hero-fill" style="width: {{progressPercent}}%;"></view></view>
+          <view class="achievement-hero-summary"><text class="achievement-hero-number">{{unlockedCount}}</text><text> 项已收藏</text><text class="achievement-hero-percent">共 {{totalCount}} 项</text></view>
         </view>
         <view wx:if="{{nextAchievement}}" class="achievement-featured tier-{{nextAchievement.tier}}" data-id="{{nextAchievement.id}}" bindtap="openAchievement" aria-role="button" aria-label="{{nextAchievement.ariaLabel}}">
-          <view class="achievement-featured-gloss"></view>
           <image src="{{nextAchievement.icon}}" mode="aspectFit" />
-          <text>{{nextAchievement.unlocked ? '最近收藏' : '距离最近'}}</text>
+          <text>{{nextAchievement.unlocked ? '最近收藏' : '接近达成'}}</text>
         </view>
       </view>
 
@@ -36,7 +34,7 @@
         <view class="achievement-grid">
           <view wx:for="{{category.achievements}}" wx:for-item="achievement" wx:key="id" class="achievement-card {{achievement.unlocked ? 'is-unlocked' : 'is-locked'}} {{achievement.nearUnlock ? 'is-near' : ''}} tier-{{achievement.tier}}" data-id="{{achievement.id}}" bindtap="openAchievement" hover-class="is-pressed" aria-role="button" aria-label="{{achievement.ariaLabel}}">
             <view class="achievement-badge-shell">
-              <view class="achievement-badge-ring"></view><view class="achievement-badge-gloss"></view>
+              <view class="achievement-badge-ring"></view>
               <image class="achievement-badge-image" src="{{achievement.icon}}" mode="aspectFit" lazy-load />
               <view class="achievement-state-icon"><t-icon name="{{achievement.unlocked ? 'check-circle-filled' : 'lock-on'}}" size="24rpx" /></view>
             </view>
@@ -46,8 +44,8 @@
           </view>
         </view>
       </view>
-      <view wx:if="{{visibleCategories.length === 0}}" class="achievement-empty">这里暂时没有符合条件的徽章</view>
-      <view class="achievement-bottom-copy">每枚徽章，都来自你真实完成的一小步。</view>
+      <view wx:if="{{visibleCategories.length === 0}}" class="achievement-empty">这里暂时没有符合条件的成长记录</view>
+      <view class="achievement-bottom-copy">每项收藏都来自真实行动记录。</view>
     </view>
   </scroll-view>
 
@@ -78,13 +76,12 @@
   <view wx:if="{{celebrating}}" class="achievement-celebration" catchtouchmove="noop">
     <view class="achievement-celebration-mask"></view>
     <view class="achievement-celebration-card">
-      <view class="achievement-rays"><view></view><view></view><view></view><view></view><view></view><view></view></view>
-      <view class="achievement-reveal tier-{{celebrating.tier}}"><view class="achievement-reveal-gloss"></view><image src="{{celebrating.icon}}" mode="aspectFit" /></view>
-      <view class="achievement-celebration-kicker">新徽章已解锁</view>
+      <view class="achievement-reveal tier-{{celebrating.tier}}"><image src="{{celebrating.icon}}" mode="aspectFit" /></view>
+      <view class="achievement-celebration-kicker">新的成长记录</view>
       <view class="achievement-celebration-title">{{celebrating.title}}</view>
       <view class="achievement-celebration-copy">{{celebrating.description}}</view>
       <view class="achievement-celebration-date">{{celebrationDate}}</view>
-      <view class="achievement-celebration-button" bindtap="closeCelebration" hover-class="is-pressed">收入收藏</view>
+      <view class="achievement-celebration-button" bindtap="closeCelebration" hover-class="is-pressed">知道了</view>
     </view>
   </view>
 </view>

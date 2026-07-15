@@ -37,7 +37,7 @@
           </view>
         </view>
 
-        <view class="goal-progress-copy"><text>{{item.actionText}}</text><text>{{item.progressPercent}}%</text></view>
+        <view class="goal-progress-copy"><text>{{item.actionText}}</text><text>行动完成率 {{item.progressPercent}}%</text></view>
         <view class="progress-track"><view class="progress-fill" style="width: {{item.progressPercent}}%;"></view></view>
         <view class="goal-facts"><text>{{item.continuityText}}</text><text>{{item.minutesText}}</text></view>
 

@@ -22,11 +22,11 @@
       <view class="card-kicker">{{reportName}}</view>
       <view class="overview-title">{{judgement}}</view>
       <view class="metrics-grid">
-        <view class="metric"><text class="metric-value">{{completedCount}}<text>/{{totalCount}}</text></text><text class="metric-label">完成行动</text></view>
+        <view class="metric"><text class="metric-value"><block wx:if="{{totalCount}}">{{completedCount}}<text>/{{totalCount}}</text></block><block wx:else>暂无</block></text><text class="metric-label">完成行动</text></view>
         <view class="metric"><text class="metric-value">{{periodMinutes}}<text> 分钟</text></text><text class="metric-label">实际投入</text></view>
         <view class="metric"><text class="metric-value">{{completionRate}}<text>%</text></text><text class="metric-label">行动完成率</text></view>
       </view>
-      <view class="progress-track"><view class="progress-fill" style="width: {{completionRate}}%;"></view></view>
+      <view wx:if="{{totalCount}}" class="progress-track"><view class="progress-fill" style="width: {{completionRate}}%;"></view></view>
     </view>
 
     <view class="insight-card diagnosis-card">

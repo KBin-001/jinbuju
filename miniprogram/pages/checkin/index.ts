@@ -20,7 +20,7 @@ type PageStatus = "loading" | "ready" | "success" | "error";
 
 interface FeelingOption {
   value: CheckinFeeling;
-  emoji: string;
+  icon: string;
   label: string;
 }
 
@@ -33,10 +33,10 @@ interface TaskItem {
 }
 
 const FEELING_OPTIONS: FeelingOption[] = [
-  { value: "rewarding", emoji: "😊", label: "充实" },
-  { value: "easy", emoji: "😌", label: "平静" },
-  { value: "challenging", emoji: "😓", label: "有点累" },
-  { value: "normal", emoji: "🤔", label: "一般" },
+  { value: "rewarding", icon: "check-circle", label: "充实" },
+  { value: "easy", icon: "sunny", label: "平静" },
+  { value: "challenging", icon: "time", label: "有点累" },
+  { value: "normal", icon: "minus-circle", label: "一般" },
 ];
 
 const ENCOURAGEMENT_MAP: Record<CheckinOverallStatus, string[]> = {

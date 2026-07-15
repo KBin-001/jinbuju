@@ -5,12 +5,12 @@
     <view class="invite-kicker">一起行动，各自成长</view>
     <view class="invite-title">{{teamName}}</view>
     <view class="invite-members">
-      <view class="invite-avatar" wx:for="{{avatars}}" wx:key="id">
-        <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+      <view class="invite-avatar" wx:for="{{avatars}}" wx:key="id" wx:for-index="avatarIndex">
+        <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" data-index="{{avatarIndex}}" binderror="onAvatarError" />
         <text wx:elif="{{item.extraText}}">{{item.extraText}}</text>
         <image wx:else src="/images/avatar.png" mode="aspectFill" />
       </view>
-      <text>{{memberCount}}/20人</text>
+      <text>{{memberCapacityText}}</text>
     </view>
   </view>
 

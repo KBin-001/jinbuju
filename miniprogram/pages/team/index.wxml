@@ -27,7 +27,7 @@
     <view class="paper-card state-card state-card--empty">
       <view class="state-seal">伴</view>
       <view class="state-title">还没有加入小队</view>
-      <view class="state-copy">最多 20 人轻量同行。一起行动，各自成长。</view>
+      <view class="state-copy">创建或使用房间号加入，和伙伴一起记录真实行动。</view>
       <view class="state-actions">
         <view class="state-action state-action--solid" bindtap="createLocalTeam">{{creating ? '正在创建' : '创建小队'}}</view>
         <view class="state-action" bindtap="openJoinPopup">房间号加入</view>
@@ -40,7 +40,7 @@
     <view class="team-hero paper-card">
       <view class="hero-identity">
         <view class="hero-identity-copy">
-          <view class="hero-title-line"><text class="hero-title">{{displayTeamName}}</text><text class="hero-spark">✦</text></view>
+          <view class="hero-title-line"><text class="hero-title">{{displayTeamName}}</text></view>
           <view class="hero-subtitle">{{team.slogan || team.announcement || team.description || '一起行动，各自成长'}}<text> · 同行第 {{teamDays}} 天</text></view>
         </view>
         <view wx:if="{{isOwner}}" class="hero-settings" bindtap="openTeamSettings" hover-class="hero-settings--pressed">
@@ -66,30 +66,32 @@
           <view class="hero-today-meta-item"><t-icon name="time" size="31rpx" /><text>共同投入 <text class="hero-today-meta-number">{{teamStats.totalGrowthMinutes}}</text> 分钟</text></view>
         </view>
 
-        <view class="hero-self-prompt {{selfActionPrompt.allDone ? 'hero-self-prompt--done' : ''}}">
-          <view class="hero-self-leaf"></view>
-          <text>{{selfActionPrompt.text}}</text>
-        </view>
-
-        <view class="hero-primary {{selfActionPrompt.allDone ? 'hero-primary--done' : ''}}" bindtap="goToday" hover-class="hero-primary--pressed">
-          <text>{{selfActionPrompt.buttonText}}</text><view class="hero-primary-mountain"></view>
+        <view class="hero-primary {{selfActionPrompt.allDone ? 'hero-primary--done' : ''}}" bindtap="goToday" hover-class="hero-primary--pressed" aria-role="button" aria-label="{{selfActionPrompt.buttonText}}，{{selfActionPrompt.text}}">
+          <image class="hero-primary-background" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" />
+          <view class="hero-primary-icon"><t-icon name="{{selfActionPrompt.allDone ? 'check' : 'task-time'}}" size="40rpx" /></view>
+          <view class="hero-primary-copy">
+            <text class="hero-primary-title">{{selfActionPrompt.buttonText}}</text>
+            <text class="hero-primary-note">{{selfActionPrompt.text}}</text>
+            <text class="hero-primary-status">{{selfActionPrompt.allDone ? '今日已完成' : '今日待行动'}}</text>
+          </view>
+          <view class="hero-primary-arrow"><t-icon name="chevron-right" size="34rpx" /></view>
         </view>
 
         <view class="hero-community-row">
           <view class="hero-avatar-stack">
-            <view wx:for="{{heroAvatarSlots}}" wx:key="id" class="hero-avatar {{item.isExtra ? 'hero-avatar--extra' : ''}}">
-              <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+            <view wx:for="{{heroAvatarSlots}}" wx:key="id" wx:for-index="avatarIndex" class="hero-avatar {{item.isExtra ? 'hero-avatar--extra' : ''}}">
+              <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" data-index="{{avatarIndex}}" binderror="onHeroAvatarError" />
               <text wx:elif="{{item.isExtra}}">{{item.avatarText}}</text>
               <image wx:else src="/images/avatar.png" mode="aspectFill" />
             </view>
           </view>
-          <view wx:if="{{canInviteFriends && team.memberCount < (team.maxMembers || 20)}}" class="hero-invite" bindtap="inviteFriends" hover-class="hero-invite--pressed">
+          <view wx:if="{{canInviteFriends && team.memberCount < team.maxMembers}}" class="hero-invite" bindtap="inviteFriends" hover-class="hero-invite--pressed">
             <image src="/assets/team/icon-invite.svg" mode="aspectFit" /><text>{{teamStats.totalMembers <= 1 ? '邀请第一位伙伴' : '邀请伙伴'}}</text>
           </view>
-          <view wx:elif="{{team.memberCount >= (team.maxMembers || 20)}}" class="hero-member-waiting">小队已满</view>
+          <view wx:elif="{{team.memberCount >= team.maxMembers}}" class="hero-member-waiting">小队已满</view>
         </view>
 
-        <view class="hero-room" bindtap="copyRoomCode" hover-class="hero-room--pressed" aria-label="复制房间号">房间 {{displayRoomCode}}<text>·</text><text class="hero-room-copy">复制</text></view>
+        <view class="hero-room" bindtap="copyRoomCode" hover-class="hero-room--pressed" aria-label="复制房间号">房间号 {{displayRoomCode}}<text>·</text><text class="hero-room-copy">复制</text></view>
       </view>
     </view>
 
@@ -103,6 +105,7 @@
         <view
           wx:for="{{companionRows}}"
           wx:key="id"
+          wx:for-index="memberIndex"
           class="companion-row companion-row--{{item.statusClass}}"
           data-id="{{item.id}}"
           bindtap="openMemberDetail"
@@ -114,7 +117,7 @@
           </view>
 
           <view class="companion-avatar">
-            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" data-index="{{memberIndex}}" binderror="onCompanionAvatarError" />
             <image wx:else src="/images/avatar.png" mode="aspectFill" />
           </view>
 
@@ -130,7 +133,7 @@
           </view>
 
           <view class="companion-metric">
-            <view class="companion-minutes">{{item.growthMinutes}}<text>min</text></view>
+            <view class="companion-minutes">{{item.growthMinutes}}<text>分钟</text></view>
             <view class="companion-percent">{{item.progressText}}</view>
           </view>
         </view>
@@ -139,9 +142,9 @@
       <view wx:else class="companion-empty">成员开始记录行动后，会在这里留下今天的进度。</view>
 
       <view class="self-prompt {{selfActionPrompt.allDone ? 'self-prompt--done' : ''}}">
-        <image src="/assets/team/icon-flag.svg" mode="aspectFit" />
-        <text>{{selfActionPrompt.text}}</text>
-        <view class="self-prompt-button" bindtap="goToday">{{selfActionPrompt.buttonText}}</view>
+        <view class="self-prompt-icon"><t-icon name="{{selfActionPrompt.allDone ? 'check' : 'task-time'}}" size="28rpx" /></view>
+        <view class="self-prompt-copy"><text class="self-prompt-title">{{selfActionPrompt.buttonText}}</text><text class="self-prompt-note">{{selfActionPrompt.text}}</text></view>
+        <view class="self-prompt-button" bindtap="goToday" hover-class="self-prompt-button--pressed"><text>{{selfActionPrompt.allDone ? '查看' : '前往'}}</text><t-icon name="chevron-right" size="25rpx" /></view>
       </view>
       <view wx:if="{{companionExtra > 0}}" class="companion-more" bindtap="openAllMembers">还有 {{companionExtra}} 位伙伴，查看全部成员</view>
     </view>
@@ -159,13 +162,14 @@
         <view
           wx:for="{{activityList}}"
           wx:key="id"
+          wx:for-index="activityIndex"
           class="activity-row"
           data-id="{{item.memberId}}"
           bindtap="openMemberDetail"
         >
           <view class="activity-line"><view class="activity-dot"></view></view>
           <view class="activity-avatar">
-            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" data-index="{{activityIndex}}" binderror="onActivityAvatarError" />
             <image wx:else src="/images/avatar.png" mode="aspectFill" />
           </view>
           <view class="activity-copy"><text>{{item.name}}</text>{{item.actionText}}</view>
@@ -181,7 +185,7 @@
     <view class="team-popup-mask" catchtap="closeJoinPopup"></view>
     <view class="team-popup" catchtap="noop">
       <view class="popup-handle"></view>
-      <view class="popup-eyebrow">JOIN THE TEAM</view>
+      <view class="popup-eyebrow">加入小队</view>
       <view class="popup-title">输入房间号加入</view>
       <view class="popup-copy">输入伙伴分享的 6 位房间号，一起开始今天的行动。</view>
       <t-input class="room-input" maxlength="6" value="{{roomCodeInput}}" placeholder="例如 TQLR01" bindchange="inputRoomCode" />
@@ -199,7 +203,7 @@
         <view>
           <view class="settings-title">小队设置</view>
         </view>
-        <view class="settings-close" catchtap="closeTeamSettings">×</view>
+        <view class="settings-close" catchtap="closeTeamSettings" aria-label="关闭"><t-icon name="close" size="34rpx" /></view>
       </view>
 
       <view class="settings-simple">
@@ -224,13 +228,13 @@
   <view wx:if="{{teamInfoVisible}}" class="team-settings-layer" catchtouchmove="noop">
     <view class="team-settings-mask" catchtap="closeTeamInfo"></view>
     <view class="team-settings-dialog team-info-dialog" catchtap="noop">
-      <view class="settings-header"><view class="settings-title">小队信息</view><view class="settings-close" catchtap="closeTeamInfo">×</view></view>
+      <view class="settings-header"><view class="settings-title">小队信息</view><view class="settings-close" catchtap="closeTeamInfo" aria-label="关闭"><t-icon name="close" size="34rpx" /></view></view>
       <scroll-view scroll-y class="team-info-scroll">
         <view class="team-info-name">{{team.name}}</view>
         <view class="team-info-slogan">{{team.slogan || team.announcement || team.description || '一起行动，各自成长'}}</view>
         <view class="team-info-row"><text>队长</text><text>{{teamOwnerName}}</text></view>
         <view class="team-info-row"><text>我的加入时间</text><text>{{teamJoinedDate}}</text></view>
-        <view class="team-info-row"><text>小队人数</text><text>{{team.memberCount}}/{{team.maxMembers || 20}}人</text></view>
+        <view class="team-info-row"><text>小队人数</text><text>{{team.memberCount}}/{{team.maxMembers}}人</text></view>
         <view class="team-info-row"><text>加入规则</text><text>{{teamRuleText}}</text></view>
         <view class="team-info-row"><text>匿名状态</text><text>{{team.anonymityMode === 'anonymous' ? '匿名模式' : '公开模式'}}</text></view>
       </scroll-view>
@@ -244,7 +248,7 @@
       <view class="popup-handle"></view>
       <view wx:if="{{selectedMember}}" class="member-detail-head">
         <view class="member-detail-avatar">
-          <image wx:if="{{selectedMember.avatar}}" class="avatar-img" src="{{selectedMember.avatar}}" mode="aspectFill" />
+          <image wx:if="{{selectedMember.avatar}}" class="avatar-img" src="{{selectedMember.avatar}}" mode="aspectFill" binderror="onSelectedMemberAvatarError" />
           <image wx:else src="/images/avatar.png" mode="aspectFill" />
         </view>
         <view class="member-detail-main">

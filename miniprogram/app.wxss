@@ -1,150 +1,20 @@
 @import "./styles/theme.wxss";
 
 page {
-  /* ============= 现代东方山水色板（全局兜底） =============
-   * 与 theme.wxss 的统一品牌令牌保持一致。
-   * ---------------------------------------------------------- */
-
-  /* 主色系（与 theme.wxss 对齐） */
-  --color-primary: #245B4D;
-  --color-primary-deep: #183F35;
-  --color-primary-soft: #E8F0EB;
-  --color-primary-light: #7F9D91;
-  --color-growth: #557D6E;
-  --color-accent: #C89B4A;
-  --color-sun: #C89B4A;
-  --color-coral: #D98A76;
-  --color-blue: #6FA8DC;
-  --color-purple: #9E96C8;
-
-  /* 文字 */
-  --color-text: #24312D;
-  --color-text-main: #24312D;
-  --color-text-secondary: #7C817D;
-  --color-text-light: #9AA8A3;
-  --color-text-muted: #9AA8A3;
-
-  /* 背景 */
-  --color-background: #F7F3EA;
-  --color-background-warm: #F7EBCF;
-  --color-surface: #FFFCF6;
-
-  /* 边框 */
-  --color-border: rgba(103, 94, 77, 0.16);
-
-  --radius-card: 28rpx;
-  --radius-card-small: 24rpx;
-  --radius-card-large: 32rpx;
-  --radius-button: 44rpx;
-  --font-page-title: 40rpx;
-  --font-section-title: 34rpx;
-  --font-card-title: 30rpx;
-  --font-body: 26rpx;
-  --font-caption: 24rpx;
-  --space-page-x: 32rpx;
-  --space-section: 36rpx;
-  --space-card: 24rpx;
-
-  /* 危险态（柔和表达） */
-  --color-danger: #D98A76;
-  --color-danger-light: #FBF1ED;
-
-  /* 阴影 */
-  --shadow-card: 0 10rpx 28rpx rgba(49, 57, 50, 0.07);
-  --shadow-float: 0 16rpx 40rpx rgba(36, 70, 59, 0.12);
-  --shadow-button: 0 10rpx 24rpx rgba(63, 143, 114, 0.22);
-  --shadow-button-primary: 0 12rpx 28rpx rgba(31, 77, 66, 0.18);
-
-  /* 渐变（取代大面积深绿背景） */
-  --gradient-hero: var(--gradient-card-mint);
-  --gradient-gold: linear-gradient(135deg, #FFF3B7, #F4C95D);
-  --gradient-ai: linear-gradient(135deg, #6FA8DC, #9E96C8);
-
-  /* 通用装饰渐变（其他小色块） */
-  --gradient-accent-gold: linear-gradient(145deg, #FFFAF0, #F2DFB4);
-  --gradient-accent-blue: linear-gradient(145deg, #F7F8FF, #DFE5FA);
-  --gradient-accent-purple: linear-gradient(145deg, #FAF8FF, #E6E1F8);
-  --gradient-accent-coral: linear-gradient(145deg, #FFF9F6, #F5DDD7);
-
-  /* TDesign / Ant 组件兼容变量（映射到新色） */
-  --td-brand-color: #245B4D;
-  --td-brand-color-active: #183F35;
-  --td-brand-color-disabled: #B9C7C0;
-  --td-brand-color-light: #E8F0EB;
-  --td-bg-color-page: #F7F3EA;
-  --td-bg-color-container: #FFFCF6;
-  --td-text-color-primary: #24312D;
-  --td-text-color-secondary: #7C817D;
-  --td-component-border: rgba(103, 94, 77, 0.16);
-  --td-radius-default: 24rpx;
-  --td-radius-large: 28rpx;
-  --td-button-primary-bg-color: #245B4D;
-  --td-button-primary-active-bg-color: #183F35;
-  --td-button-primary-color: #FFFFFF;
-  --td-button-default-color: #245B4D;
-  --td-button-default-border-color: rgba(36, 91, 77, 0.22);
-  --td-input-bg-color: #FFFCF6;
-  --td-input-border-color: rgba(103, 94, 77, 0.16);
-  --td-progress-track-color: #E5E9E4;
-  --td-progress-inner-bg-color: #245B4D;
-
-  --button-primary-background-color: #356859;
-  --button-primary-border-color: #356859;
-  --button-primary-color: #FFFFFF;
-  --button-default-background-color: #FFFFFF;
-  --button-default-border-color: #E2EEE8;
-  --button-default-color: #3F8F72;
-  --button-primary-danger-background-color: #D98A76;
-  --button-primary-danger-border-color: #D98A76;
-  --button-disabled-opacity: 0.5;
-
-  --tag-primary-color: #3F8F72;
-  --tag-primary-light-color: #E6F4EC;
-  --tag-success-color: #3F8F72;
-  --tag-success-light-color: #E6F4EC;
-
-  --progress-stroke-color: #3F8F72;
-  --progress-success-color: #68BE8F;
-  --progress-trail-color: #E2EEE8;
-
-  --notice-primary-background-color: #E6F4EC;
-  --notice-primary-color: #24584A;
-  --notice-info-background-color: #E8F1FB;
-  --notice-info-text-color: #4A6E97;
-
-  --steps-finish-bg: #3F8F72;
-  --steps-default-bg: #D7E8DF;
-  --steps-non-active-bg: #E2EEE8;
-  --steps-title-color: #244C43;
-  --steps-desc-color: #6F827B;
-
-  --popup-background: #FFFFFF;
-  --popup-color: #244C43;
-  --dialog-background-color: #FFFFFF;
-  --dialog-title-color: #244C43;
-  --dialog-content-color: #6F827B;
-
-  --input-background-color: #F8FBF9;
-  --input-item-color: #244C43;
-  --input-item-placeholder-color: #9AA8A3;
-
-  --radio-background-color: #3F8F72;
-  --radio-border-color: #C9D8D1;
-  --radio-icon-color: #3F8F72;
-  --radio-text-color: #244C43;
-  --checkbox-background-color: #3F8F72;
-  --checkbox-border-color: #C9D8D1;
-  --checkbox-text-color: #244C43;
-
-  background: var(--color-background);
-  color: var(--color-text);
+  min-height: 100%;
+  background: var(--color-bg-page);
+  color: var(--color-text-main);
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 28rpx;
+  -webkit-font-smoothing: antialiased;
 }
 
 view,
 text,
-button {
+button,
+input,
+textarea,
+scroll-view {
   box-sizing: border-box;
 }
 
@@ -160,112 +30,137 @@ button::after {
   border: 0;
 }
 
+button:not([disabled]) {
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
 button:not([disabled]):active {
-  opacity: 0.86;
-  transform: scale(0.985);
+  opacity: .86;
+  transform: scale(.985);
 }
 
 button[disabled] {
-  cursor: default;
-  opacity: 0.52;
+  opacity: var(--button-disabled-opacity);
 }
 
 .page {
   min-height: 100vh;
-  padding: 24rpx 32rpx 160rpx;
+  padding: var(--padding-page);
   background: transparent;
 }
 
 .page-header {
-  margin-bottom: 32rpx;
+  margin-bottom: 28rpx;
 }
 
 .page-eyebrow {
   color: var(--color-primary);
-  font-size: 24rpx;
+  font-size: var(--font-caption);
   font-weight: 600;
-  letter-spacing: 3rpx;
-  text-transform: uppercase;
+  letter-spacing: 2rpx;
 }
 
 .page-title {
   margin-top: 8rpx;
-  font-size: 54rpx;
-  font-weight: 750;
-  line-height: 1.25;
+  color: var(--color-text-main);
+  font-size: var(--font-page-title);
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 .page-subtitle {
-  margin-top: 14rpx;
+  margin-top: 12rpx;
   color: var(--color-text-secondary);
-  font-size: 28rpx;
+  font-size: var(--font-body);
   line-height: 1.6;
 }
 
 .card {
-  padding: 28rpx;
-  border: 1rpx solid rgba(36, 88, 74, 0.08);
-  border-radius: 28rpx;
-  background: var(--color-surface);
-  box-shadow: var(--shadow-card);
-  animation: card-enter 240ms ease-out both;
+  padding: var(--space-card-inner);
+  border: 1rpx solid var(--color-border-soft);
+  border-radius: var(--radius-card);
+  background: var(--color-bg-card);
+  box-shadow: var(--shadow-card-soft);
 }
 
 .state-card {
-  min-height: 420rpx;
+  min-height: 320rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 40rpx 32rpx;
   text-align: center;
 }
 
 .state-mark {
-  width: 96rpx;
-  height: 96rpx;
+  width: 88rpx;
+  height: 88rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 28rpx;
-  border: 1rpx solid rgba(36, 88, 74, 0.12);
-  background: linear-gradient(145deg, var(--color-primary-light), var(--color-primary-soft));
+  border: 1rpx solid var(--color-border);
+  border-radius: var(--radius-card-small);
+  background: var(--color-primary-soft);
   color: var(--color-primary);
-  font-size: 42rpx;
+  font-size: 38rpx;
   font-weight: 700;
 }
 
 .state-title {
-  margin-top: 28rpx;
-  font-size: 34rpx;
+  margin-top: 24rpx;
+  color: var(--color-text-main);
+  font-size: var(--font-card-title);
   font-weight: 650;
+  line-height: 1.4;
 }
 
 .state-description {
   max-width: 520rpx;
-  margin-top: 14rpx;
+  margin-top: 12rpx;
   color: var(--color-text-secondary);
+  font-size: var(--font-body);
   line-height: 1.65;
 }
 
-.primary-button {
+.primary-button,
+.secondary-button,
+.danger-button {
+  min-height: var(--size-control-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 240rpx;
-  min-height: 88rpx;
-  margin-top: 32rpx;
-  padding: 24rpx 36rpx;
-  border-radius: 999rpx;
-  background: var(--color-primary);
-  color: #ffffff;
+  padding: 20rpx 34rpx;
+  border-radius: var(--radius-button);
+  font-size: var(--font-body);
   font-weight: 650;
   text-align: center;
+}
+
+.primary-button {
+  min-width: 240rpx;
+  margin-top: 28rpx;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
   box-shadow: var(--shadow-button-primary);
 }
 
 .primary-button[disabled] {
-  background: #d9ded8;
-  color: #7f877e;
+  background: #D9DED8;
+  color: #7F877E;
+  box-shadow: none;
+}
+
+.secondary-button {
+  border: 1rpx solid rgba(36, 91, 77, .20);
+  background: var(--color-bg-card);
+  color: var(--color-primary);
+}
+
+.danger-button {
+  border: 1rpx solid rgba(184, 97, 82, .24);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
 }
 
 .growth-primary-button,
@@ -274,43 +169,42 @@ button[disabled] {
 .next-button,
 .add-task-button {
   width: 100%;
-  min-height: 92rpx;
-  border-radius: 999rpx;
+  min-height: var(--size-control-lg);
+  border-radius: var(--radius-button);
   font-weight: 650;
-  --button-primary-background-color: var(--color-primary);
-  --button-primary-border-color: var(--color-primary);
+  --td-button-border-radius: var(--radius-button);
+  --td-button-primary-bg-color: var(--color-primary);
+  --td-button-primary-border-color: var(--color-primary);
   box-shadow: var(--shadow-button);
 }
 
 .growth-component-card {
-  border: 1rpx solid rgba(255, 255, 255, 0.78);
-  border-radius: 28rpx;
-  box-shadow: var(--shadow-card);
+  border: 1rpx solid var(--color-border-soft);
+  border-radius: var(--radius-card);
+  background: var(--color-bg-card);
+  box-shadow: var(--shadow-card-soft);
 }
 
 .growth-hero {
   position: relative;
   overflow: hidden;
-  padding: 38rpx;
-  border-radius: 40rpx;
+  padding: 34rpx;
+  border-radius: var(--radius-hero);
   background: var(--gradient-card-mint);
-  color: var(--color-text);
+  color: var(--color-text-main);
   box-shadow: var(--shadow-card);
 }
 
 .growth-hero::after {
   position: absolute;
-  border-radius: 50%;
-  content: "";
-  pointer-events: none;
-}
-
-.growth-hero::after {
   right: 120rpx;
   bottom: -120rpx;
   width: 210rpx;
   height: 210rpx;
-  background: rgba(36, 88, 74, 0.12);
+  border-radius: 50%;
+  background: rgba(36, 91, 77, .08);
+  content: "";
+  pointer-events: none;
 }
 
 .bento-grid {
@@ -322,10 +216,9 @@ button[disabled] {
 .bento-tile {
   min-width: 0;
   padding: 26rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.78);
-  border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.84);
-  box-shadow: var(--shadow-card);
+  border: 1rpx solid var(--color-border-soft);
+  border-radius: var(--radius-card);
+  background: rgba(255, 252, 246, .94);
 }
 
 .accent-gold { background: var(--gradient-accent-gold); }
@@ -336,10 +229,10 @@ button[disabled] {
 .section-shell {
   margin-top: 28rpx;
   padding: 30rpx;
-  border-radius: 34rpx;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(16rpx);
+  border: 1rpx solid var(--color-border-soft);
+  border-radius: var(--radius-card-large);
+  background: rgba(255, 252, 246, .96);
+  box-shadow: var(--shadow-card-soft);
 }
 
 .growth-progress {
@@ -354,161 +247,73 @@ button[disabled] {
 .quick-task-popup,
 .feedback-popup,
 .management-popup {
-  --popup-background: #F9FBF8;
+  --td-popup-bg-color: var(--color-bg-card);
+  --popup-background: var(--color-bg-card);
 }
 
-.secondary-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 88rpx;
-  padding: 22rpx 34rpx;
-  border: 2rpx solid rgba(36, 88, 74, 0.12);
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--color-primary);
-  font-weight: 650;
-}
-
-.status-chip {
-  height: 40rpx;
+.status-chip,
+.ui-tag {
+  min-height: 44rpx;
   display: inline-flex;
   align-items: center;
-  box-sizing: border-box;
-  padding: 0 18rpx;
-  border-radius: 20rpx;
+  padding: 5rpx 16rpx;
+  border-radius: var(--radius-pill);
   background: var(--color-primary-soft);
   color: var(--color-primary);
-  font-size: 22rpx;
+  font-size: var(--font-tag);
   font-weight: 600;
+  line-height: 1.35;
 }
 
 .progress-bar {
   width: 100%;
-  height: 16rpx;
+  height: 12rpx;
   overflow: hidden;
-  border-radius: 8rpx;
-  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  background: #E5E9E4;
 }
 
 .progress-bar-inner {
   height: 100%;
-  border-radius: 8rpx;
+  border-radius: inherit;
   background: var(--gradient-progress);
-}
-
-.danger-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 88rpx;
-  padding: 22rpx 34rpx;
-  border: 2rpx solid rgba(217, 138, 118, 0.22);
-  border-radius: 999rpx;
-  background: var(--color-danger-light);
-  color: var(--color-danger);
-  font-weight: 650;
 }
 
 .ai-notice,
 .safety-notice {
-  padding: 24rpx 26rpx;
-  border-radius: 22rpx;
-  font-size: 24rpx;
+  padding: 22rpx 24rpx;
+  border-radius: var(--radius-card-small);
+  font-size: var(--font-caption);
   line-height: 1.65;
 }
 
 .ai-notice {
-  border: 1rpx solid rgba(111, 168, 220, 0.22);
+  border: 1rpx solid rgba(88, 122, 134, .18);
   background: var(--color-info-soft);
-  color: #4A6E97;
+  color: var(--color-info);
 }
 
 .safety-notice {
-  border: 1rpx solid rgba(244, 201, 93, 0.32);
-  background: var(--color-background-warm);
-  color: #8A6B1F;
-}
-
-.ui-tag {
-  display: inline-flex;
-  align-items: center;
-  min-height: 48rpx;
-  padding: 8rpx 18rpx;
-  border-radius: 999rpx;
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-  font-size: 22rpx;
-  font-weight: 650;
-}
-
-@keyframes card-enter {
-  from { opacity: 0; transform: translateY(8rpx); }
-  to { opacity: 1; transform: translateY(0); }
+  border: 1rpx solid rgba(168, 112, 37, .22);
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
 }
 
 .loading-dot {
-  width: 20rpx;
-  height: 20rpx;
+  width: 18rpx;
+  height: 18rpx;
   border-radius: 50%;
   background: var(--color-primary);
-  animation: pulse 1.1s ease-in-out infinite;
+  animation: loading-pulse 1.1s ease-in-out infinite;
 }
 
-@keyframes pulse {
+@keyframes loading-pulse {
   0%,
-  100% {
-    opacity: 0.35;
-    transform: scale(0.8);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.15);
-  }
+  100% { opacity: .35; transform: scale(.82); }
+  50% { opacity: 1; transform: scale(1); }
 }
 
-@media (max-width: 340px) {
-  .page {
-    padding-right: 24rpx;
-    padding-left: 24rpx;
-  }
-
-  .page-title {
-    font-size: 44rpx;
-  }
-
-  .card {
-    padding: 26rpx;
-    border-radius: 24rpx;
-  }
-
-  .state-card {
-    min-height: 360rpx;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .card,
-  .loading-dot {
-    animation: none;
-  }
-}
-
-/* Unified TDesign surface. Page-specific themes may change decoration, not the core palette. */
-[data-theme] {
-  --color-primary: #245B4D;
-  --color-primary-deep: #183F35;
-  --color-primary-soft: #E8F0EB;
-  --color-background: #F7F3EA;
-  --color-background-warm: #F7EBCF;
-  --color-surface: #FFFCF6;
-  --color-text: #24312D;
-  --color-text-main: #24312D;
-  --color-text-secondary: #7C817D;
-  --color-border: rgba(103, 94, 77, 0.16);
-}
-
+/* TDesign hosts inherit the shared variables from page/theme. */
 t-button,
 t-input,
 t-textarea,
@@ -523,19 +328,45 @@ t-button.checkin-button,
 t-button.confirm-button,
 t-button.next-button,
 t-button.add-task-button {
-  --td-button-border-radius: 44rpx;
-  --td-button-primary-bg-color: #245B4D;
-  --td-button-primary-active-bg-color: #183F35;
+  --td-button-border-radius: var(--radius-button);
+  --td-button-primary-bg-color: var(--color-primary);
+  --td-button-primary-active-bg-color: var(--color-primary-dark);
 }
 
 t-input,
 t-textarea {
-  --td-input-bg-color: #FFFCF6;
-  --td-textarea-background-color: #FFFCF6;
-  --td-input-border-color: rgba(103, 94, 77, 0.16);
-  --td-textarea-border-color: rgba(103, 94, 77, 0.16);
+  --td-input-bg-color: var(--color-bg-card);
+  --td-input-border-color: var(--color-border);
+  --td-textarea-background-color: var(--color-bg-card);
+  --td-textarea-border-color: var(--color-border);
 }
 
 t-popup {
-  --td-popup-border-radius: 32rpx 32rpx 0 0;
+  --td-popup-border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+}
+
+@media (max-width: 340px) {
+  .page {
+    padding-right: 24rpx;
+    padding-left: 24rpx;
+  }
+
+  .card,
+  .growth-hero,
+  .section-shell {
+    padding-right: 24rpx;
+    padding-left: 24rpx;
+  }
+
+  .state-card {
+    min-height: 280rpx;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:not([disabled]),
+  .loading-dot {
+    transition: none;
+    animation: none;
+  }
 }

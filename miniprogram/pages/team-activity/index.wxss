@@ -377,6 +377,7 @@
   font-size: 25rpx;
   line-height: 36rpx;
 }
+.empty-action { min-height: 68rpx; margin-top: 24rpx; padding: 0 28rpx; display: flex; align-items: center; justify-content: center; border-radius: 34rpx; background: var(--color-primary, #245b4d); color: #fff; font-size: 23rpx; font-weight: 650; }
 
 .bottom-safe-area {
   height: env(safe-area-inset-bottom);

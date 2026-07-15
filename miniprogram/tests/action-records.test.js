@@ -19,6 +19,9 @@ assert.match(planSource, /openActionRecords\(\)/, "进度页必须提供查看�
 
 const quickAdd = fs.readFileSync(path.join(root, "pages/index/index.wxml"), "utf8");
 assert.doesNotMatch(quickAdd, /补充说明/, "今日行动快捷添加不应展示补充说明");
-assert.match(quickAdd, /15[\s\S]*30[\s\S]*45[\s\S]*60[\s\S]*120[\s\S]*自定义/, "预计投入应提供 15、30、45、60、120 和自定义");
+for (const minutes of [30, 45, 60, 90, 120, 240]) {
+  assert.match(todaySource, new RegExp(`value:\\s*${minutes}`), `预计投入必须兼容 ${minutes} 分钟`);
+}
+assert.match(quickAdd, /更多时长/, "快捷添加必须保留更多时长入口");
 
 console.log("action records tests passed");

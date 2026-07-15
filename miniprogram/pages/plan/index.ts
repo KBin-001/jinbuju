@@ -208,12 +208,9 @@ function levelLabel(actionDays: number): string {
   return "Lv.1 · 自律新兵";
 }
 
-function goalStatusText(rate: number, totalTasks: number): string {
+function goalStatusText(completedTasks: number, totalTasks: number): string {
   if (totalTasks <= 0) return "添加行动后开始记录";
-  if (rate >= 100) return "当前行动已完成";
-  if (rate >= 70) return "接近完成";
-  if (rate >= 30) return "稳定推进";
-  return "刚开始";
+  return `累计完成 ${Math.max(0, completedTasks)} / ${totalTasks} 项行动`;
 }
 
 function goalPeriod(goal: Goal | null): string {
@@ -279,7 +276,7 @@ function buildGoalOptions(goals: Goal[], activeGoalId: string, today: string): G
       id: goal.id,
       title: goal.title,
       progressPercent: rate,
-      statusText: goalStatusText(rate, summary.totalTasks),
+      statusText: goalStatusText(summary.completedTasks, summary.totalTasks),
       active: goal.id === activeGoalId,
     };
   });
@@ -1065,7 +1062,7 @@ Page(withAppTheme({
         levelNumber,
         levelName,
         goalPeriod: goalPeriod(goal),
-        goalStatusText: goalStatusText(rate, summary?.totalTasks || 0),
+        goalStatusText: goalStatusText(summary?.completedTasks || 0, summary?.totalTasks || 0),
         goalProgressPercent: rate,
         overviewStats: buildOverview(summary),
         growthConclusionTitle: growthConclusionTitle(this.data.trendRange),
@@ -1156,7 +1153,7 @@ Page(withAppTheme({
     if (this.data.savingRecord || this.data.deletingRecord || !this.data.editingRecordId) return;
     wx.showModal({
       title: "删除行动记录？",
-      content: "删除后会同步影响今日统计、目标进度和历史复盘，且无法恢复。",
+      content: "删除后会同步影响今日统计、目标下的行动统计和历史复盘，且无法恢复。",
       confirmText: "删除",
       confirmColor: "#9B4B45",
       success: (result) => {

@@ -180,8 +180,6 @@ Page({
     displayAvatarText: "",
     displayId: "",
     joinedDays: 1,
-    journeyProgress: 0,
-    journeyNote: "等待第一个目标",
     syncTone: "neutral",
     syncTitle: "正在连接云端",
     syncLabel: "等待首次同步",
@@ -290,8 +288,6 @@ Page({
         achievementPreviews: buildAchievementPreviews(achievementCollection.achievements),
         achievementSummary: `${achievementCollection.unlockedCount} / ${achievementCollection.totalCount}`,
         joinedDays: daysSince(joinedAt),
-        journeyProgress: currentGoal?.progressPercent || 0,
-        journeyNote: currentGoal ? `当前目标已完成 ${currentGoal.progressPercent}%` : "从第一个目标开始",
       });
     } catch (error) {
       this.setData({

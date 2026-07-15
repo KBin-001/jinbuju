@@ -25,18 +25,17 @@ page { background: var(--color-background, #F7F3EA); }
 .profile-state-title { margin-top: 22rpx; font-size: 31rpx; font-weight: 700; }
 .profile-state-copy { max-width: 520rpx; margin-top: 12rpx; color: var(--color-text-secondary); font-size: 24rpx; line-height: 36rpx; }
 .profile-retry-button { min-width: 220rpx; min-height: 80rpx; margin-top: 26rpx; border-radius: 40rpx; background: var(--color-primary); color: #fff; }
-.journey-card { min-height: 258rpx; padding: 32rpx 34rpx; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, rgba(255,252,246,.99), rgba(249,247,239,.96)); }
+.journey-card { min-height: 196rpx; padding: 28rpx 30rpx; display: flex; align-items: center; justify-content: space-between; gap: 24rpx; background: linear-gradient(135deg, rgba(255,252,246,.99), rgba(249,247,239,.96)); }
 .journey-copy { position: relative; z-index: 1; min-width: 0; flex: 1; }
-.journey-title, .journey-motto, .journey-note { display: block; }
-.journey-title { color: var(--color-primary); font-family: "Songti SC", STSong, serif; font-size: 38rpx; line-height: 48rpx; letter-spacing: 2rpx; }
-.journey-days { margin-top: 20rpx; display: flex; align-items: baseline; gap: 7rpx; color: var(--color-text-secondary); font-size: 24rpx; }
-.journey-days__value { color: var(--color-accent); font-family: "Songti SC", STSong, serif; font-size: 48rpx; line-height: 54rpx; }
-.journey-motto { margin-top: 6rpx; color: var(--color-text-secondary); font-family: "Songti SC", STSong, serif; font-size: 25rpx; letter-spacing: 2rpx; }
-.journey-note { margin-top: 10rpx; color: var(--color-primary); font-size: 20rpx; }
-.journey-ring { position: relative; width: 176rpx; height: 176rpx; margin-left: 30rpx; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: conic-gradient(var(--color-primary) var(--journey-progress), rgba(127,157,145,.16) 0); transform: rotate(-42deg); }
-.journey-ring__inner { width: 148rpx; height: 148rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--color-card); transform: rotate(42deg); }
-.journey-ring__inner image { width: 94rpx; height: 94rpx; }
-.journey-ring__dot { position: absolute; right: 4rpx; bottom: 30rpx; width: 10rpx; height: 10rpx; border: 5rpx solid var(--color-card); border-radius: 50%; background: var(--color-accent); }
+.journey-title, .journey-note { display: block; }
+.journey-title { color: var(--color-text-main); font-size: 29rpx; line-height: 40rpx; font-weight: 700; }
+.journey-days { margin-top: 12rpx; display: flex; align-items: baseline; gap: 7rpx; color: var(--color-text-secondary); font-size: 23rpx; }
+.journey-days__value { color: var(--color-primary); font-size: 40rpx; line-height: 46rpx; font-weight: 750; }
+.journey-note { max-width: 290rpx; margin-top: 6rpx; overflow: hidden; color: var(--color-text-secondary); font-size: 20rpx; text-overflow: ellipsis; white-space: nowrap; }
+.journey-account { width: 274rpx; flex: none; }
+.journey-account__status { min-height: 64rpx; padding: 12rpx 16rpx; display: flex; align-items: center; gap: 10rpx; border-radius: 18rpx; background: var(--color-success-soft); color: var(--color-success); font-size: 20rpx; line-height: 28rpx; }
+.journey-account__status--warning { background: var(--color-warning-soft); color: var(--color-warning); }
+.journey-account__action { min-height: 64rpx; margin-top: 8rpx; display: flex; align-items: center; justify-content: flex-end; gap: 4rpx; color: var(--color-primary); font-size: 22rpx; font-weight: 650; }
 .goal-card { min-height: 220rpx; }
 .goal-card__background { position: absolute; top: 0; right: 0; width: 46%; height: 100%; opacity: .34; }
 .goal-card__veil { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,252,246,.995) 0%, rgba(255,252,246,.98) 66%, rgba(255,252,246,.7) 100%); }
@@ -81,9 +80,9 @@ page { background: var(--color-background, #F7F3EA); }
 .manage-item text { display: block; overflow: hidden; font-size: 24rpx; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
 .manage-item text + text { margin-top: 6rpx; color: var(--color-text-secondary); font-size: 19rpx; font-weight: 400; }
 .manage-footer { min-height: 82rpx; margin-top: 18rpx; padding-top: 16rpx; display: flex; align-items: center; justify-content: center; gap: 34rpx; border-top: 1rpx solid var(--color-divider); color: var(--color-primary); font-size: 23rpx; }
-.sheet-layer { position: fixed; z-index: 40; inset: 0; }
+.sheet-layer { position: fixed; z-index: 12000; inset: 0; }
 .sheet-mask { position: absolute; inset: 0; background: rgba(28,35,32,.42); }
-.sheet-panel { position: absolute; right: 0; bottom: 0; left: 0; max-height: 88vh; padding: 12rpx 30rpx calc(28rpx + env(safe-area-inset-bottom)); overflow-y: auto; border-radius: 34rpx 34rpx 0 0; background: var(--color-background); box-shadow: 0 -18rpx 50rpx rgba(23,45,37,.16); }
+.sheet-panel { position: absolute; right: 0; bottom: 0; left: 0; max-height: 88vh; box-sizing: border-box; padding: 12rpx 30rpx calc(28rpx + env(safe-area-inset-bottom)); overflow-y: auto; border-radius: 34rpx 34rpx 0 0; background: var(--color-background); box-shadow: 0 -18rpx 50rpx rgba(23,45,37,.16); }
 .sheet-handle { width: 76rpx; height: 7rpx; margin: 0 auto 18rpx; border-radius: 4rpx; background: rgba(36,49,45,.16); }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; }
 .sheet-kicker, .sheet-title { display: block; }
@@ -106,5 +105,5 @@ page { background: var(--color-background, #F7F3EA); }
 .sheet-cancel { border: 1rpx solid var(--color-border); background: var(--color-card); color: var(--color-primary); }
 .sheet-save { background: var(--color-primary); color: #fff; }
 .is-pressed { opacity: .66; }
-@media (max-width: 350px) { .profile-content { padding-right: 24rpx; padding-left: 24rpx; } .profile-identity { margin-right: 30rpx; margin-left: 30rpx; } .profile-avatar { width: 118rpx; height: 118rpx; } .profile-user-name { font-size: 38rpx; } .journey-ring { width: 150rpx; height: 150rpx; margin-left: 18rpx; } .journey-ring__inner { width: 126rpx; height: 126rpx; } .journey-ring__inner image { width: 80rpx; height: 80rpx; } .manage-grid { grid-template-columns: 1fr; } .manage-sync-note { display: none; } }
+@media (max-width: 350px) { .profile-content { padding-right: 24rpx; padding-left: 24rpx; } .profile-identity { margin-right: 30rpx; margin-left: 30rpx; } .profile-avatar { width: 118rpx; height: 118rpx; } .profile-user-name { font-size: 38rpx; } .journey-card { align-items: stretch; flex-direction: column; } .journey-account { width: 100%; } .journey-account__action { justify-content: flex-start; } .manage-grid { grid-template-columns: 1fr; } .manage-sync-note { display: none; } }
 @media (prefers-reduced-motion: reduce) { .paper-card { animation: none; } }

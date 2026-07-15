@@ -137,10 +137,6 @@ function canShowDetails(team: Team, member: TeamMember): boolean {
 }
 
 function buildProgress(member: TeamMember, detailVisible: boolean): ProgressView {
-  if (typeof member.completionRate === "number") {
-    const percent = Math.max(0, Math.min(100, Math.round(member.completionRate)));
-    return { known: true, percent, text: `${percent}%`, completed: 0, total: 0 };
-  }
   const details = detailVisible && Array.isArray(member.todayActionDetails)
     ? member.todayActionDetails
     : [];
@@ -149,13 +145,15 @@ function buildProgress(member: TeamMember, detailVisible: boolean): ProgressView
     const percent = Math.round((completed / details.length) * 100);
     return { known: true, percent, text: `${percent}%`, completed, total: details.length };
   }
+  // 看不到行动明细时没有可核对的分母，不把成员状态换算成 0% 或 100%。
+  // 这也避免旧缓存中 completionRate 与 todayStatus 不一致时显示虚假满进度。
   if (member.todayStatus === "completed") {
-    return { known: true, percent: 100, text: "100%", completed: 0, total: 0 };
+    return { known: false, percent: 0, text: "已完成", completed: 0, total: 0 };
   }
   if (member.todayStatus === "partial") {
-    return { known: false, percent: 38, text: "进行中", completed: 0, total: 0 };
+    return { known: false, percent: 0, text: "进行中", completed: 0, total: 0 };
   }
-  return { known: true, percent: 0, text: "0%", completed: 0, total: 0 };
+  return { known: false, percent: 0, text: "暂无行动", completed: 0, total: 0 };
 }
 
 function genericActionSummary(status: MemberTodayStatus): string {
@@ -353,7 +351,7 @@ Page(withAppTheme({
       avatar: team.avatar || "",
       avatarText: (team.name || "队").slice(0, 1),
       memberCount: team.memberCount,
-      maxMembers: 20,
+      maxMembers: team.maxMembers,
       roomCode: team.roomCode,
       completedMembers,
       doingMembers,
@@ -417,6 +415,21 @@ Page(withAppTheme({
 
   closeDetail() {
     this.setData({ detailVisible: false, selectedDetail: null });
+  },
+
+  onTeamAvatarError() {
+    if (this.data.team?.avatar) this.setData({ "team.avatar": "" });
+  },
+
+  onMemberAvatarError(event: { currentTarget: { dataset: { index?: number } } }) {
+    const index = Number(event.currentTarget.dataset.index);
+    if (Number.isInteger(index) && index >= 0 && index < this.data.filteredMembers.length) {
+      this.setData({ [`filteredMembers[${index}].avatar`]: "" });
+    }
+  },
+
+  onDetailAvatarError() {
+    if (this.data.selectedDetail?.avatar) this.setData({ "selectedDetail.avatar": "" });
   },
 
   quickEncourage(event: { currentTarget: { dataset: { id?: string } } }) {

@@ -7,6 +7,8 @@ Page({
     roomCode: "",
     teamName: "进步小队",
     memberCount: 0,
+    maxMembers: 0,
+    memberCapacityText: "0人",
     inviterMemberId: "",
     avatars: [] as InviteAvatar[],
   },
@@ -19,7 +21,17 @@ Page({
     const members = team ? cached.members : [];
     const avatars: InviteAvatar[] = members.slice(0, 4).map((member) => ({ id: member.id, avatar: member.avatar || "", extraText: "" }));
     if (members.length > 4) avatars.push({ id: "extra", avatar: "", extraText: `+${members.length - 4}` });
-    this.setData({ roomCode, inviterMemberId, teamName: team?.name || "进步小队", memberCount: team?.memberCount || members.length, avatars });
+    const memberCount = team?.memberCount || members.length;
+    const maxMembers = team?.maxMembers || 0;
+    this.setData({
+      roomCode,
+      inviterMemberId,
+      teamName: team?.name || "进步小队",
+      memberCount,
+      maxMembers,
+      memberCapacityText: maxMembers ? `${memberCount}/${maxMembers}人` : `${memberCount}人`,
+      avatars,
+    });
   },
 
   onShareAppMessage() {
@@ -36,6 +48,13 @@ Page({
   copyGroupText() {
     const text = `邀请你加入「${this.data.teamName}」\n房间号：${this.data.roomCode}\n打开进步局，在小队页输入房间号即可加入。`;
     wx.setClipboardData({ data: text, success: () => wx.showToast({ title: "群邀请文案已复制", icon: "success" }) });
+  },
+
+  onAvatarError(event: { currentTarget: { dataset: { index?: number } } }) {
+    const index = Number(event.currentTarget.dataset.index);
+    if (Number.isInteger(index) && index >= 0 && index < this.data.avatars.length) {
+      this.setData({ [`avatars[${index}].avatar`]: "" });
+    }
   },
 
 });

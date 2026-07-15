@@ -27,7 +27,7 @@
 
           <view class="hero-progress-copy">
             <text>{{progressText}}</text>
-            <text>{{progressPercent}}%</text>
+            <text>行动完成率 {{progressPercent}}%</text>
           </view>
           <view class="progress-track">
             <view class="progress-fill" style="width: {{progressPercent}}%;"></view>

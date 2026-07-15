@@ -9,6 +9,7 @@ export function createCloudRequestId(action: string): string {
 }
 
 export function logCloudRequest(action: string, requestId: string, startedAt: number, error?: CloudRequestError): void {
+  if (!error) return;
   const detail = {
     action,
     requestId,
@@ -16,6 +17,5 @@ export function logCloudRequest(action: string, requestId: string, startedAt: nu
     code: error?.code || "",
     message: error?.message ? String(error.message).slice(0, 160) : "",
   };
-  if (error) console.error("[cloud request] failed", detail);
-  else console.info("[cloud request] succeeded", detail);
+  console.error("[cloud request] failed", detail);
 }

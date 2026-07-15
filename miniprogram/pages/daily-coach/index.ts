@@ -61,10 +61,10 @@ function getNavigationMetrics() {
       navTop,
       navHeight,
       menuRightInset: Math.max(92, windowInfo.windowWidth - menu.left + 8),
-      heroHeight: menu.bottom + 76,
+      heroHeight: menu.bottom + 42,
     };
   } catch (_error) {
-    return { statusBarHeight: 44, navTop: 44, navHeight: 32, menuRightInset: 96, heroHeight: 156 };
+    return { statusBarHeight: 44, navTop: 44, navHeight: 32, menuRightInset: 96, heroHeight: 128 };
   }
 }
 
@@ -179,6 +179,13 @@ Page({
 
   goBack() { wx.navigateBack({ delta: 1 }); },
   openTodayRecords() { wx.navigateTo({ url: `/pages/today-data/index?date=${encodeURIComponent(this.data.analysis.date || getTodayBusinessDate())}` }); },
+  addTodayAction() {
+    if (!this.data.analysis.goalId) {
+      wx.navigateTo({ url: "/pages/goal-create/index" });
+      return;
+    }
+    wx.navigateTo({ url: `/pages/action-edit/index?goalId=${encodeURIComponent(this.data.analysis.goalId)}&date=${encodeURIComponent(this.data.analysis.date || getTodayBusinessDate())}` });
+  },
   selectSection(event: { currentTarget: { dataset: { section?: string } } }) {
     const section = String(event.currentTarget.dataset.section || "review");
     if (section === "insights") {

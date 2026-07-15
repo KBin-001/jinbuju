@@ -1,5 +1,8 @@
 {
   "navigationBarTitleText": "记录今日行动",
+  "navigationBarBackgroundColor": "#F7F3EA",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#F7F3EA",
   "usingComponents": {
   }
 }

@@ -42,13 +42,13 @@
         <text wx:if="{{goalPeriod}}">{{goalPeriod}}</text>
       </view>
       <view wx:if="{{hasActionData}}" class="goal-progress-head">
-        <text>当前进展</text>
+        <text>累计行动完成率</text>
         <text class="goal-progress-value">{{goalProgressPercent}}%</text>
       </view>
-      <view wx:if="{{hasActionData}}" class="goal-progress-track" aria-label="行动完成进度 {{goalProgressPercent}}%">
+      <view wx:if="{{hasActionData}}" class="goal-progress-track" aria-label="累计行动完成率 {{goalProgressPercent}}%">
         <view class="goal-progress-fill" style="width: {{goalProgressPercent}}%;"></view>
       </view>
-      <view class="hero-guidance">{{hasActionData ? '每一次真实行动，都在让目标更清晰。' : '先完成一小步，成长档案会从今天开始。'}}</view>
+      <view class="hero-guidance">{{hasActionData ? '这里只统计已记录行动，不代表目标总体完成度。' : '先完成一小步，成长档案会从今天开始。'}}</view>
     </view>
 
     <view wx:if="{{!hasActionData}}" class="first-action-card surface-card">
@@ -192,7 +192,7 @@
       <view class="goal-picker-header"><view><view class="picker-label">当前目标</view><view class="picker-title">选择要查看的目标</view></view><view class="picker-close" catchtap="closeGoalPicker"><t-icon name="close" size="34rpx" /></view></view>
       <view class="goal-picker-list">
         <view wx:for="{{goalOptions}}" wx:key="id" class="goal-option {{item.active ? 'is-active' : ''}}" data-id="{{item.id}}" catchtap="switchGoal">
-          <view class="goal-option-main"><view class="goal-option-title">{{item.title}}</view><view class="goal-option-meta"><text>{{item.statusText}}</text><text>{{item.progressPercent}}%</text></view><view class="goal-option-track"><view class="goal-option-fill" style="width: {{item.progressPercent}}%;"></view></view></view>
+          <view class="goal-option-main"><view class="goal-option-title">{{item.title}}</view><view class="goal-option-meta"><text>{{item.statusText}}</text><text>行动完成率 {{item.progressPercent}}%</text></view><view class="goal-option-track"><view class="goal-option-fill" style="width: {{item.progressPercent}}%;"></view></view></view>
           <view class="goal-option-action">{{item.active ? '当前' : '切换'}}</view>
         </view>
       </view>

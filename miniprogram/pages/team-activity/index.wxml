@@ -33,6 +33,13 @@
       <view class="empty-copy">创建或加入小队后，这里会展示队友的行动动态。</view>
     </view>
 
+    <view wx:elif="{{loadError}}" class="empty-state paper-card">
+      <view class="empty-icon">!</view>
+      <view class="empty-title">动态暂时没有加载出来</view>
+      <view class="empty-copy">{{loadError}}</view>
+      <view class="empty-action" bindtap="retry">重新加载</view>
+    </view>
+
     <view wx:elif="{{isEmpty}}" class="empty-state paper-card">
       <view class="empty-icon">叶</view>
       <view class="empty-title">暂无动态</view>
@@ -56,7 +63,7 @@
           >
             <view class="timeline-dot"></view>
             <view class="activity-avatar avatar-grad {{item.avatarClass}}">
-              <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+              <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" data-id="{{item.id}}" binderror="onActivityAvatarError" />
               <image wx:else src="/images/avatar.png" mode="aspectFill" />
             </view>
             <view class="activity-main">
@@ -100,7 +107,7 @@
 
       <view class="detail-head">
         <view class="detail-avatar avatar-grad {{selectedDetail.avatarClass}}">
-          <image wx:if="{{selectedDetail.avatar}}" src="{{selectedDetail.avatar}}" mode="aspectFill" />
+          <image wx:if="{{selectedDetail.avatar}}" src="{{selectedDetail.avatar}}" mode="aspectFill" binderror="onDetailAvatarError" />
           <image wx:else src="/images/avatar.png" mode="aspectFill" />
         </view>
         <view class="detail-head-main">

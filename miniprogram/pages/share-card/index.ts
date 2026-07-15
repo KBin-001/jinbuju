@@ -101,9 +101,9 @@ Page({
     errorMessage: "",
     dateText: "",
     weekday: "",
-    nickname: "阿岚",
+    nickname: "微信用户",
     avatarUrl: "",
-    avatarText: "岚",
+    avatarText: "微",
     goalTitle: "",
     done: 0,
     total: 0,
@@ -149,14 +149,14 @@ Page({
       const summary = calculateTodaySummary(todayTasks);
       const progress = getProgressSummary(goal.id, today);
       const profile = getLocalUserProfile();
-      const nickname = profile?.nickname || "阿岚";
+      const nickname = profile?.nickname || "微信用户";
       this.setData({
         status: "ready",
         dateText: today.replace(/-/g, "."),
         weekday: weekdayText(today),
         nickname,
         avatarUrl: profile?.avatarUrl || "",
-        avatarText: nickname.slice(0, 1) || "岚",
+        avatarText: nickname.slice(0, 1) || "微",
         goalTitle: goal.title,
         done: summary.completedCount,
         total: summary.totalCount,
@@ -204,10 +204,8 @@ Page({
     ctx.fillRect(0, 0, CARD_WIDTH, 96);
 
     setFont(ctx, 25, 700);
-    ctx.fillStyle = "#F8D26A";
-    ctx.fillText("♧", 36, 61);
     ctx.fillStyle = "#FFFFFF";
-    ctx.fillText("进度条 · 今日完成卡", 68, 61);
+    ctx.fillText("进度条 · 今日完成卡", 36, 61);
     setFont(ctx, 21, 400);
     ctx.fillStyle = "rgba(255,255,255,0.78)";
     ctx.textAlign = "right";
@@ -217,7 +215,7 @@ Page({
     const avatarX = 40;
     const avatarY = 132;
     const avatarSize = 84;
-    const avatarImage = await loadCanvasImage(canvas, this.data.avatarUrl);
+    const avatarImage = await loadCanvasImage(canvas, this.data.avatarUrl || "/images/icons/avatar.png");
     ctx.save();
     ctx.beginPath();
     ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
@@ -233,13 +231,13 @@ Page({
     } else {
       ctx.fillStyle = "#E3F1E8";
       ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
-      setFont(ctx, 32, 800);
       ctx.fillStyle = "#356859";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(this.data.avatarText, avatarX + avatarSize / 2, avatarY + avatarSize / 2 + 1);
-      ctx.textAlign = "left";
-      ctx.textBaseline = "alphabetic";
+      ctx.beginPath();
+      ctx.arc(avatarX + avatarSize / 2, avatarY + 31, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(avatarX + avatarSize / 2, avatarY + 78, 30, Math.PI, 0);
+      ctx.fill();
     }
     ctx.restore();
 
@@ -268,7 +266,7 @@ Page({
     ctx.fillStyle = "#71827A";
     ctx.fillText(` / ${this.data.total}`, 68 + doneWidth + 2, 370);
     setFont(ctx, 21, 400);
-    ctx.fillText(`◴  今日专注 ${this.data.focusMinutes} 分钟`, 68, 418);
+    ctx.fillText(`今日实际投入 ${this.data.focusMinutes} 分钟`, 68, 418);
 
     ctx.fillStyle = "#E9EFEA";
     ctx.fillRect(337, 300, 1, 124);
@@ -328,7 +326,7 @@ Page({
     fillRounded(ctx, 34, growthY, 622, 78, 24, "#EAF5EF");
     setFont(ctx, 20, 400);
     ctx.fillStyle = "#71827A";
-    ctx.fillText("♨  连续坚持", 64, growthY + 48);
+    ctx.fillText("连续坚持", 64, growthY + 48);
     setFont(ctx, 23, 800);
     ctx.fillStyle = "#233B34";
     ctx.fillText(`${this.data.streak} 天`, 190, growthY + 48);
@@ -336,7 +334,7 @@ Page({
     ctx.fillRect(332, growthY + 22, 1, 34);
     setFont(ctx, 20, 400);
     ctx.fillStyle = "#71827A";
-    ctx.fillText("◎  累计投入", 360, growthY + 48);
+    ctx.fillText("累计投入", 360, growthY + 48);
     setFont(ctx, 23, 800);
     ctx.fillStyle = "#233B34";
     ctx.fillText(`${this.data.totalMinutes} 分钟`, 492, growthY + 48);
@@ -350,7 +348,7 @@ Page({
     ctx.fillRect(52, encouragementY + 44, 586, 1);
     setFont(ctx, 20, 400);
     ctx.fillStyle = "#71827A";
-    ctx.fillText("♧  我在「进度条」记录今天的成长", CARD_WIDTH / 2, encouragementY + 92);
+    ctx.fillText("我在「进度条」记录今天的成长", CARD_WIDTH / 2, encouragementY + 92);
     ctx.textAlign = "left";
 
     return { canvas, dpr, height: cardHeight };

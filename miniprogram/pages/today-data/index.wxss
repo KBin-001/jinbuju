@@ -2,8 +2,8 @@
   min-height: 100vh;
   box-sizing: border-box;
   padding: 28rpx 32rpx calc(64rpx + env(safe-area-inset-bottom));
-  background: #F5F7F2;
-  color: #233B34;
+  background: #F7F3EA;
+  color: #24312D;
   animation: detail-enter 220ms ease-out both;
 }
 
@@ -12,14 +12,15 @@
   align-items: center;
   justify-content: center;
   gap: 8rpx;
-  width: 450rpx;
+  width: 100%;
+  max-width: 450rpx;
   box-sizing: border-box;
   margin: 0 auto 30rpx;
   padding: 10rpx;
   border: 1rpx solid #DDE8E1;
   border-radius: 24rpx;
-  background: #FFFFFF;
-  box-shadow: 0 6rpx 16rpx rgba(31, 70, 58, 0.055);
+  background: #FFFDF8;
+  box-shadow: none;
 }
 
 .date-nav-arrow {
@@ -77,7 +78,7 @@
   overflow: hidden;
   border: 1rpx solid #CFE0D6;
   border-radius: 12rpx;
-  background: #FFFFFF;
+  background: #FFFDF8;
   color: #356859;
   font-size: 19rpx;
   font-weight: 800;
@@ -116,9 +117,10 @@
   min-width: 0;
   padding: 26rpx 14rpx 24rpx;
   border-radius: 28rpx;
-  background: #FFFFFF;
+  border: 1rpx solid rgba(36,91,77,.09);
+  background: #FFFDF8;
   text-align: center;
-  box-shadow: 0 10rpx 26rpx rgba(31, 70, 58, 0.05);
+  box-shadow: none;
 }
 
 .kpi-label {
@@ -155,8 +157,8 @@
   padding: 30rpx;
   border: 1rpx solid #E9EFEA;
   border-radius: 32rpx;
-  background: #FFFFFF;
-  box-shadow: 0 12rpx 30rpx rgba(31, 70, 58, 0.055);
+  background: #FFFDF8;
+  box-shadow: none;
 }
 
 .card-head {
@@ -209,6 +211,7 @@
   height: 300rpx;
   margin-top: 28rpx;
 }
+.chart-empty { min-height: 210rpx; display: flex; align-items: center; justify-content: center; }
 
 .axis-y {
   display: flex;

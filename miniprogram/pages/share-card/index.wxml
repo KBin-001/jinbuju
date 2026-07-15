@@ -6,7 +6,7 @@
     style="top: {{navButtonTop}}px; width: {{navButtonSize}}px; height: {{navButtonSize}}px;"
     bindtap="closePage"
     aria-label="关闭分享卡"
-  >×</t-button>
+  ><t-icon name="close" size="38rpx" /></t-button>
 
   <view wx:if="{{status === 'loading'}}" class="share-state">
     <view class="state-dot"></view>
@@ -23,7 +23,7 @@
     <view class="share-content" style="padding-top: {{contentTop}}px;">
       <view class="share-card">
         <view class="share-brand-bar">
-          <view class="brand-name"><text class="brand-sprout">♧</text>进度条 · 今日完成卡</view>
+          <view class="brand-name"><text class="brand-mark"></text>进度条 · 今日完成卡</view>
           <view class="brand-date">{{dateText}} {{weekday}}</view>
         </view>
 
@@ -31,7 +31,7 @@
           <view class="share-identity">
             <view class="share-avatar">
               <image wx:if="{{avatarUrl}}" src="{{avatarUrl}}" mode="aspectFill" />
-              <text wx:else>{{avatarText}}</text>
+              <image wx:else src="/images/icons/avatar.png" mode="aspectFit" />
             </view>
             <view class="identity-copy">
               <view class="identity-name">{{nickname}}</view>
@@ -46,7 +46,7 @@
             <view class="core-left">
               <view class="core-label">今日完成</view>
               <view class="core-count"><text>{{done}}</text><text class="core-total"> / {{total}}</text></view>
-              <view class="core-minutes"><text class="timer-icon">◴</text>今日专注 {{focusMinutes}} 分钟</view>
+              <view class="core-minutes">今日实际投入 {{focusMinutes}} 分钟</view>
             </view>
             <view class="core-divider"></view>
             <view class="goal-ring" style="background: conic-gradient(#356859 0% {{goalProgress}}%, #DDEBDD {{goalProgress}}% 100%);">
@@ -77,26 +77,26 @@
 
           <view class="share-growth-strip">
             <view class="growth-item">
-              <text class="growth-icon is-yellow">♨</text>
+              <text class="growth-icon is-yellow"><t-icon name="flag" size="28rpx" /></text>
               <text class="growth-label">连续坚持</text>
               <text class="growth-value">{{streak}} 天</text>
             </view>
             <view class="growth-divider"></view>
             <view class="growth-item">
-              <text class="growth-icon">◎</text>
+              <text class="growth-icon"><t-icon name="time" size="28rpx" /></text>
               <text class="growth-label">累计投入</text>
               <text class="growth-value">{{totalMinutes}} 分钟</text>
             </view>
           </view>
 
           <view class="share-encouragement">每天完成一点，就会靠近一点。</view>
-          <view class="share-signature"><text>♧</text>我在「进度条」记录今天的成长</view>
+          <view class="share-signature"><text class="signature-mark"></text>我在「进度条」记录今天的成长</view>
         </view>
       </view>
 
       <view class="share-save-area">
         <t-button class="save-image-button" loading="{{saving}}" disabled="{{saving}}" bindtap="saveImage">
-          <text wx:if="{{!saving}}" class="save-icon">⇩</text>
+          <t-icon wx:if="{{!saving}}" class="save-icon" name="download" size="30rpx" />
           <text>{{saving ? '正在生成图片' : '保存图片'}}</text>
         </t-button>
         <view class="save-tip">图片仅保存在你的设备中</view>

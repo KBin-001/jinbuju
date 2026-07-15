@@ -50,7 +50,7 @@
           <view class="period-item {{period === 'month' ? 'is-active' : ''}}" data-period="month" bindtap="changePeriod">月</view>
         </view>
       </view>
-      <view class="chart-row">
+      <view wx:if="{{hasChartData}}" class="chart-row">
         <view class="axis-y">
           <text wx:for="{{axisLabels}}" wx:key="*this">{{item}}</text>
         </view>
@@ -68,11 +68,12 @@
           </view>
         </view>
       </view>
+      <view wx:else class="card-empty chart-empty">当前统计范围还没有实际投入记录</view>
     </view>
 
     <view class="detail-card duration-card">
       <view class="card-head">
-        <view class="card-title">完成任务时长占比</view>
+        <view class="card-title">完成行动投入占比</view>
         <view wx:if="{{completedTasks.length > 5}}" class="card-link" bindtap="toggleDurations">{{showAllDurations ? '收起' : '查看全部'}}</view>
       </view>
       <view wx:if="{{completedTasks.length > 0}}" class="duration-content">
@@ -96,7 +97,7 @@
 
     <view class="detail-card completed-card">
       <view class="card-head">
-        <view class="card-title">今日完成任务</view>
+        <view class="card-title">已完成行动</view>
         <view class="card-count">{{completedTasks.length}} 项</view>
       </view>
       <view wx:if="{{completedTasks.length > 0}}" class="completed-list">
@@ -129,9 +130,9 @@
     </view>
 
     <view class="detail-cta">
-      <view class="cta-title">每天进步一点点</view>
-      <view class="cta-copy">长期坚持，你会看到自己的成长被认真记录。</view>
-      <t-button class="cta-button" bindtap="goAddAction">继续添加今日行动</t-button>
+      <view class="cta-title">继续安排一项具体行动</view>
+      <view class="cta-copy">新行动会添加到当前所选日期，并与实际投入分开记录。</view>
+      <t-button class="cta-button" bindtap="goAddAction">添加行动</t-button>
     </view>
   </block>
 

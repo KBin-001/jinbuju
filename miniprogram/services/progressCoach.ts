@@ -20,6 +20,8 @@ interface PrepareResult {
 
 const preparedFingerprints = new Map<string, string>();
 const pendingPreparations = new Map<string, Promise<PrepareResult>>();
+const analysisCache = new Map<string, { fingerprint: string; value: ProgressCoachAnalysis }>();
+const pendingAnalyses = new Map<string, { fingerprint: string; promise: Promise<ProgressCoachAnalysis> }>();
 
 function callProgressCoach<T>(data: Record<string, unknown>, timeoutMilliseconds = 30000): Promise<T> {
   const action = String(data.action || "progressCoach");
@@ -174,7 +176,26 @@ function prepareProgressCoachSnapshot(scope: CoachRange, goalId?: string, force 
 
 export function analyzeProgress(goalId: string, scope: CoachRange, analysisDate = getTodayBusinessDate()): Promise<ProgressCoachAnalysis> {
   const snapshot = buildSnapshot(scope, goalId, analysisDate);
-  return callProgressCoach<ProgressCoachAnalysis>({ action: "analyzeProgress", goalId, scope, analysisDate, snapshot });
+  const key = `${scope}:${goalId}:${scope === "day" ? analysisDate : ""}`;
+  const fingerprint = snapshotFingerprint(snapshot);
+  const cached = analysisCache.get(key);
+  if (cached?.fingerprint === fingerprint) return Promise.resolve(cached.value);
+  const pending = pendingAnalyses.get(key);
+  if (pending?.fingerprint === fingerprint) return pending.promise;
+  let request: Promise<ProgressCoachAnalysis>;
+  request = callProgressCoach<ProgressCoachAnalysis>({ action: "analyzeProgress", goalId, scope, analysisDate, snapshot }).then(
+    (value) => {
+      analysisCache.set(key, { fingerprint, value });
+      if (pendingAnalyses.get(key)?.promise === request) pendingAnalyses.delete(key);
+      return value;
+    },
+    (error) => {
+      if (pendingAnalyses.get(key)?.promise === request) pendingAnalyses.delete(key);
+      throw error;
+    },
+  );
+  pendingAnalyses.set(key, { fingerprint, promise: request });
+  return request;
 }
 
 export async function askProgressCoach(

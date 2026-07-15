@@ -36,7 +36,7 @@
             <view class="hero-meta">成员 {{team.memberCount}}/{{team.maxMembers}} · 房间 {{team.roomCode}}</view>
           </view>
           <view class="hero-seal">
-            <image wx:if="{{team.avatar}}" src="{{team.avatar}}" mode="aspectFill" />
+            <image wx:if="{{team.avatar}}" src="{{team.avatar}}" mode="aspectFill" binderror="onTeamAvatarError" />
             <text wx:else>{{team.avatarText}}</text>
           </view>
         </view>
@@ -70,7 +70,7 @@
             confirm-type="search"
             bindinput="onSearchInput"
           />
-          <view wx:if="{{searchKeyword}}" class="search-clear" catchtap="onSearchClear">×</view>
+          <view wx:if="{{searchKeyword}}" class="search-clear" catchtap="onSearchClear" aria-label="清空搜索"><t-icon name="close" size="28rpx" /></view>
         </view>
 
         <scroll-view scroll-x class="filter-tabs" enhanced show-scrollbar="{{false}}">
@@ -95,13 +95,14 @@
         <view
           wx:for="{{filteredMembers}}"
           wx:key="id"
+          wx:for-index="memberIndex"
           class="member-card paper-card member-card--{{item.state}}"
           data-id="{{item.id}}"
           bindtap="openMemberDetail"
         >
-          <view class="member-rank">{{index + 1}}</view>
+          <view class="member-rank">{{memberIndex + 1}}</view>
           <view class="member-avatar avatar-grad {{item.avatarClass}}">
-            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" />
+            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" data-index="{{memberIndex}}" binderror="onMemberAvatarError" />
             <image wx:else src="/images/avatar.png" mode="aspectFill" />
           </view>
 
@@ -112,13 +113,14 @@
               <text class="status-chip status-chip--{{item.state}}">{{item.statusText}}</text>
             </view>
             <view class="member-action">{{item.actionSummary}}</view>
-            <view class="member-progress">
+            <view wx:if="{{item.progressKnown}}" class="member-progress">
               <view class="member-progress-fill member-progress-fill--{{item.state}}" style="width: {{item.progressPercent}}%;"></view>
             </view>
+            <view wx:else class="member-progress member-progress--unknown"></view>
           </view>
 
           <view class="member-side">
-            <view class="member-minutes">{{item.actualMinutes}}<text>min</text></view>
+            <view class="member-minutes">{{item.actualMinutes}}<text>分钟</text></view>
             <view class="member-progress-text">{{item.progressText}}</view>
             <view
               wx:if="{{!item.isSelf}}"
@@ -152,12 +154,12 @@
     <view class="detail-mask" catchtap="closeDetail"></view>
     <view class="detail-sheet" catchtap="noop">
       <view class="detail-handle"></view>
-      <view class="detail-close" catchtap="closeDetail">×</view>
+      <view class="detail-close" catchtap="closeDetail" aria-label="关闭"><t-icon name="close" size="34rpx" /></view>
 
       <scroll-view class="detail-scroll" scroll-y enhanced show-scrollbar="{{false}}">
         <view class="detail-profile">
           <view class="detail-avatar avatar-grad {{selectedDetail.avatarClass}}">
-            <image wx:if="{{selectedDetail.avatar}}" src="{{selectedDetail.avatar}}" mode="aspectFill" />
+            <image wx:if="{{selectedDetail.avatar}}" src="{{selectedDetail.avatar}}" mode="aspectFill" binderror="onDetailAvatarError" />
             <image wx:else src="/images/avatar.png" mode="aspectFill" />
           </view>
           <view class="detail-profile-main">
@@ -173,7 +175,7 @@
 
         <view class="detail-stats paper-card">
           <view class="detail-stat">
-            <view class="detail-stat-value">{{selectedDetail.actualMinutes}}<text>min</text></view>
+            <view class="detail-stat-value">{{selectedDetail.actualMinutes}}<text>分钟</text></view>
             <view class="detail-stat-label">今日投入</view>
           </view>
           <view class="detail-stat-divider"></view>

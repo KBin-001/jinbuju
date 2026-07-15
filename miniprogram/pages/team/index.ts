@@ -757,6 +757,31 @@ slogan: "",
     });
   },
 
+  onHeroAvatarError(event: { currentTarget: { dataset: { index?: number } } }) {
+    const index = Number(event.currentTarget.dataset.index);
+    if (Number.isInteger(index) && index >= 0 && index < this.data.heroAvatarSlots.length) {
+      this.setData({ [`heroAvatarSlots[${index}].avatar`]: "" });
+    }
+  },
+
+  onCompanionAvatarError(event: { currentTarget: { dataset: { index?: number } } }) {
+    const index = Number(event.currentTarget.dataset.index);
+    if (Number.isInteger(index) && index >= 0 && index < this.data.companionRows.length) {
+      this.setData({ [`companionRows[${index}].avatar`]: "" });
+    }
+  },
+
+  onActivityAvatarError(event: { currentTarget: { dataset: { index?: number } } }) {
+    const index = Number(event.currentTarget.dataset.index);
+    if (Number.isInteger(index) && index >= 0 && index < this.data.activityList.length) {
+      this.setData({ [`activityList[${index}].avatar`]: "" });
+    }
+  },
+
+  onSelectedMemberAvatarError() {
+    if (this.data.selectedMember?.avatar) this.setData({ "selectedMember.avatar": "" });
+  },
+
   openTeamSettings() {
     const team = this.data.team;
     const self = this.data.members.find((member) => member.isSelf);

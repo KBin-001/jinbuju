@@ -138,7 +138,7 @@ Page({
     scopeSubtitle: "结合当前目标与累计行动分析",
     reportName: "累计完成情况",
     initialPrompt: "帮我分析一下当前的整体成长情况",
-    displayName: "阿岚",
+    displayName: "微信用户",
     goalTitle: "当前目标",
     completedCount: 0,
     totalCount: 0,
@@ -195,7 +195,7 @@ Page({
     const title = goals.length > 1 ? `${goals.length} 个进行中目标` : goals[0]?.title || "当前目标";
     this.setData({
       goalId: this.data.scope === "overall" ? "" : selectedGoal?.id || "",
-      displayName: profile?.nickname || "阿岚",
+      displayName: profile?.nickname || "微信用户",
       goalTitle: title,
       completedCount: stats.completedActions,
       totalCount: stats.totalActions,

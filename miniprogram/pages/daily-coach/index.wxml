@@ -7,7 +7,6 @@
       <view class="nav-back" bindtap="goBack" role="button" aria-label="返回上一页" hover-class="is-pressed"><t-icon name="chevron-left" size="43rpx" /></view>
       <view class="nav-heading">
         <view class="nav-title-line"><text class="nav-title">AI 成长教练</text><view class="title-spark"></view></view>
-        <view class="nav-subtitle">专属你的行动教练 · 陪你持续成长</view>
       </view>
       <view class="records-button" bindtap="openTodayRecords" role="button" aria-label="查看今日记录" hover-class="is-pressed"><text>今日记录</text><t-icon name="chevron-right" size="25rpx" /></view>
     </view>
@@ -38,11 +37,6 @@
         <view class="conclusion-title">{{workspace.conclusionTitle}}</view>
         <view class="conclusion-subtitle">{{workspace.conclusionSubtitle}}</view>
       </view>
-      <view class="growth-orb" aria-hidden="true">
-        <view class="orb-ring"></view><view class="orb-sun"></view>
-        <view class="orb-mountain orb-mountain--back"></view><view class="orb-mountain orb-mountain--front"></view>
-        <view class="orb-base"></view><view class="orb-path"></view>
-      </view>
       <view class="metric-panel">
         <view class="metric-item">
           <t-icon name="check-circle" size="43rpx" />
@@ -64,6 +58,7 @@
       </view>
       <view class="completion-caption">今日行动完成率 {{analysis.completionPercent}}%</view>
       <view class="completion-track"><view class="completion-fill" style="width: {{analysis.completionPercent}}%;"></view></view>
+      <button wx:if="{{analysis.totalCount === 0}}" class="empty-action-button" bindtap="addTodayAction">{{analysis.goalId ? '添加今日行动' : '创建长期目标'}}</button>
     </view>
 
     <view class="coach-card judgement-card">
@@ -97,7 +92,7 @@
               <button wx:if="{{item.canExpand}}" class="message-toggle" data-id="{{item.id}}" bindtap="toggleFullReply">{{item.showFull ? '收起完整回复' : '展开完整回复'}}</button>
               <view wx:if="{{item.actionProposal && item.actionProposal.id}}" class="proposal-card">
                 <view class="proposal-title">{{item.actionProposal.summary}}</view>
-                <button wx:if="{{item.actionProposal.status === 'pending'}}" class="proposal-confirm" data-proposal-id="{{item.actionProposal.id}}" bindtap="confirmCoachAction">{{executingProposalId === item.actionProposal.id ? '正在执行…' : '确认执行'}}</button>
+                <button wx:if="{{item.actionProposal.status === 'pending'}}" class="proposal-confirm {{executingProposalId ? 'is-disabled' : ''}}" disabled="{{executingProposalId !== ''}}" data-proposal-id="{{item.actionProposal.id}}" bindtap="confirmCoachAction">{{executingProposalId === item.actionProposal.id ? '正在执行' : '确认执行'}}</button>
                 <view wx:else class="proposal-done">已执行并同步到行动记录</view>
               </view>
             </view>
@@ -109,7 +104,7 @@
       <view wx:if="{{chatError}}" class="chat-error"><text>{{chatError}}</text><button bindtap="retryLastQuestion">重新发送</button></view>
       <view class="chat-input-row">
         <input class="chat-input" value="{{question}}" maxlength="120" disabled="{{asking}}" placeholder="和教练说说你的情况……" placeholder-class="chat-placeholder" bindinput="inputQuestion" confirm-type="send" bindconfirm="sendQuestion" />
-        <view class="send-button {{asking ? 'is-disabled' : ''}}" bindtap="sendQuestion" role="button" aria-label="发送"><t-icon name="send" size="34rpx" /></view>
+        <view class="send-button {{asking || !question ? 'is-disabled' : ''}}" bindtap="sendQuestion" role="button" aria-label="发送"><t-icon name="send" size="34rpx" /></view>
       </view>
     </view>
   </view>

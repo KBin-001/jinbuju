@@ -3,13 +3,13 @@
   <view class="record-panel" catchtap="noop">
     <view class="record-grabber"></view>
     <view class="record-head">
-      <view><view class="record-eyebrow">ACTION RECORD</view><view class="record-title">编辑行动记录</view></view>
-      <view class="record-close" catchtap="close"><t-icon name="close" size="34rpx" /></view>
+      <view><view class="record-eyebrow">行动记录</view><view class="record-title">编辑行动记录</view></view>
+      <view class="record-close" catchtap="close" hover-class="is-pressed" aria-role="button" aria-label="关闭编辑弹层"><t-icon name="close" size="34rpx" /></view>
     </view>
     <scroll-view class="record-scroll" scroll-y enhanced show-scrollbar="{{false}}">
       <view class="record-field">
         <view class="record-label">行动标题</view>
-        <view class="record-input-shell"><input value="{{title}}" maxlength="40" placeholder="请输入行动标题" bindinput="inputTitle" /><t-icon name="edit" size="31rpx" /></view>
+        <view class="record-input-shell"><input class="record-title-input" value="{{title}}" maxlength="40" placeholder="请输入行动标题" bindinput="inputTitle" /><t-icon name="edit" size="31rpx" /></view>
       </view>
 
       <view class="record-field">
@@ -24,21 +24,21 @@
 
       <view class="record-field">
         <view class="record-label">实际投入</view>
-        <view class="record-input-shell record-minutes-shell"><t-icon name="time" size="35rpx" /><input type="number" value="{{actualMinutesText}}" maxlength="3" bindinput="inputMinutes" /><text>分钟</text></view>
+        <view class="record-input-shell record-minutes-shell"><t-icon name="time" size="35rpx" /><input class="record-minutes-input" type="number" value="{{actualMinutesText}}" maxlength="3" bindinput="inputMinutes" /><text class="record-minutes-unit">分钟</text></view>
       </view>
 
       <view class="record-field">
         <view class="record-label">完成情况</view>
-        <view class="record-segments">
-          <view class="record-segment {{status === 'completed' ? 'is-active' : ''}}" data-status="completed" catchtap="chooseStatus"><t-icon wx:if="{{status === 'completed'}}" name="check" size="24rpx" />已完成</view>
-          <view class="record-segment {{status === 'partially_completed' ? 'is-active' : ''}}" data-status="partially_completed" catchtap="chooseStatus">部分完成</view>
-          <view class="record-segment {{status === 'pending' ? 'is-active' : ''}}" data-status="pending" catchtap="chooseStatus">未完成</view>
+        <view class="record-segments" aria-role="radiogroup">
+          <view class="record-segment {{status === 'completed' ? 'is-active' : ''}}" data-status="completed" catchtap="chooseStatus" hover-class="is-pressed" aria-role="radio" aria-checked="{{status === 'completed'}}"><t-icon wx:if="{{status === 'completed'}}" name="check" size="24rpx" />已完成</view>
+          <view class="record-segment {{status === 'partially_completed' ? 'is-active' : ''}}" data-status="partially_completed" catchtap="chooseStatus" hover-class="is-pressed" aria-role="radio" aria-checked="{{status === 'partially_completed'}}">部分完成</view>
+          <view class="record-segment {{status === 'pending' ? 'is-active' : ''}}" data-status="pending" catchtap="chooseStatus" hover-class="is-pressed" aria-role="radio" aria-checked="{{status === 'pending'}}">未完成</view>
         </view>
       </view>
 
       <view class="record-field">
         <view class="record-label">今日感受 / 收获</view>
-        <view class="record-reflection-shell"><textarea value="{{reflection}}" maxlength="200" auto-height="{{false}}" cursor-spacing="40" placeholder="记录你的感受、收获或遇到的困难…" bindinput="inputReflection" /><text>{{reflection.length}}/200</text></view>
+        <view class="record-reflection-shell"><textarea class="record-reflection-input" value="{{reflection}}" maxlength="200" auto-height="{{false}}" cursor-spacing="40" placeholder="记录你的感受、收获或遇到的困难…" bindinput="inputReflection" /><text class="record-reflection-counter">{{reflection.length}}/200</text></view>
       </view>
 
       <view class="record-ai-note">
@@ -49,8 +49,8 @@
       <view class="record-scroll-spacer"></view>
     </scroll-view>
     <view class="record-footer">
-      <button class="record-save" loading="{{saving}}" disabled="{{saving || deleting || title.length < 2}}" bindtap="save"><t-icon name="save" size="31rpx" />{{saving ? '正在保存' : '保存记录'}}</button>
-      <view class="record-delete {{deleting ? 'is-disabled' : ''}}" catchtap="remove">{{deleting ? '正在删除…' : '删除记录'}}</view>
+      <button class="record-save {{saving || deleting || title.length < 2 ? 'is-disabled' : ''}}" loading="{{saving}}" disabled="{{saving || deleting || title.length < 2}}" bindtap="save" hover-class="is-pressed"><t-icon name="save" size="31rpx" />{{saving ? '正在保存' : '保存记录'}}</button>
+      <view class="record-delete {{saving || deleting ? 'is-disabled' : ''}}" catchtap="remove" hover-class="is-pressed" aria-role="button" aria-disabled="{{saving || deleting}}">{{deleting ? '正在删除…' : '删除记录'}}</view>
     </view>
   </view>
 </view>

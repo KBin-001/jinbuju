@@ -77,7 +77,6 @@ Page({
     const celebrating = this.celebrationQueue.shift() || null;
     if (!celebrating) return;
     this.setData({ celebrating, celebrationDate: formatUnlockedDate(celebrating.unlockedAt) });
-    try { wx.vibrateShort({ type: "light" }); } catch (_) { /* vibration is optional */ }
   },
 
   closeCelebration() {

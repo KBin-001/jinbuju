@@ -1,8 +1,8 @@
 {
   "navigationBarTitleText": "今日数据",
-  "navigationBarBackgroundColor": "#F5F7F2",
+  "navigationBarBackgroundColor": "#F7F3EA",
   "navigationBarTextStyle": "black",
-  "backgroundColor": "#F5F7F2",
+  "backgroundColor": "#F7F3EA",
   "enablePullDownRefresh": false,
   "usingComponents": {
     "action-record-editor": "/components/action-record-editor/index"

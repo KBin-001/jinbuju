@@ -23,7 +23,7 @@ const DURATION_OPTIONS = [
   { label: "240 分钟", value: 240 },
 ];
 const DEFAULT_QUICK_ADD_MINUTE_INDEX = DURATION_OPTIONS.findIndex((option) => option.value === 30);
-const QUICK_DURATION_VALUES = new Set([15, 30, 45, 60, 120]);
+const QUICK_DURATION_VALUES = new Set([30, 45, 60, 90]);
 const QUICK_DURATION_OPTIONS = DURATION_OPTIONS
   .map((option, sourceIndex) => ({ ...option, sourceIndex }))
   .filter((option) => QUICK_DURATION_VALUES.has(option.value));

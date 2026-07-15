@@ -147,7 +147,7 @@
           <view class="insight-mark"><t-icon name="lightbulb" size="34rpx" /></view>
           <view class="insight-content"><text class="insight-title">下次可以这样开始</text><text class="insight-copy">{{suggestion}}</text></view>
         </view>
-        <text class="insight-note">页面中的小结与建议由完成率和行动记录规则生成，不代表 AI 深度分析。</text>
+        <text class="insight-note">页面中的小结与建议由行动完成率和行动记录规则生成，不代表 AI 深度分析。</text>
       </view>
     </block>
   </view>

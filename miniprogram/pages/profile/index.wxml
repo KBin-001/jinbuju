@@ -22,16 +22,15 @@
     <view wx:elif="{{status === 'error'}}" class="paper-card profile-state-card"><t-icon name="info-circle" size="58rpx" /><text class="profile-state-title">个人档案暂时没有加载出来</text><text class="profile-state-copy">{{errorMessage}}</text><t-button class="profile-retry-button" bindtap="retry">重新加载</t-button></view>
 
     <block wx:else>
-      <view class="paper-card journey-card" bindtap="viewAllStats" hover-class="is-pressed" aria-role="button" aria-label="查看这一程的成长数据">
+      <view class="paper-card journey-card">
         <view class="journey-copy">
-          <text class="journey-title">这一程</text>
+          <text class="journey-title">账户概览</text>
           <view class="journey-days"><text>已加入</text><text class="journey-days__value">{{joinedDays}}</text><text>天</text></view>
-          <text class="journey-motto">每一步，都算数</text>
-          <text class="journey-note">{{journeyNote}}</text>
+          <text class="journey-note">{{displayId || '展示标识建立中'}}</text>
         </view>
-        <view class="journey-ring" style="--journey-progress: {{journeyProgress}}%;">
-          <view class="journey-ring__inner"><image src="/assets/profile/journey-mark.svg" mode="aspectFit" /></view>
-          <view class="journey-ring__dot"></view>
+        <view class="journey-account">
+          <view class="journey-account__status {{syncTone === 'warning' ? 'journey-account__status--warning' : ''}}"><t-icon name="cloud" size="30rpx" /><text>{{syncTitle}}</text></view>
+          <view class="journey-account__action" data-key="account" bindtap="openToolboxItem" hover-class="is-pressed"><text>账号与安全</text><t-icon name="chevron-right" size="28rpx" /></view>
         </view>
       </view>
 
@@ -46,7 +45,7 @@
       </view>
 
       <view class="paper-card growth-card">
-        <view class="growth-head" bindtap="viewAllStats" hover-class="is-pressed"><view><text class="section-title">成长摘要</text><text class="growth-joined">真实行动累计</text></view><view class="growth-link">查看成长数据<t-icon name="chevron-right" size="28rpx" /></view></view>
+        <view class="growth-head" bindtap="viewAllStats" hover-class="is-pressed"><view><text class="section-title">本周与累计</text><text class="growth-joined">来自真实行动记录</text></view><view class="growth-link">查看进度<t-icon name="chevron-right" size="28rpx" /></view></view>
         <view class="growth-grid">
           <view class="growth-item"><text class="growth-value">{{stats.streakDays}}</text><text class="growth-label">连续行动天数</text></view>
           <view class="growth-item"><text class="growth-value">{{stats.completedActions}}</text><text class="growth-label">完成行动</text></view>

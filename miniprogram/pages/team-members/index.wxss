@@ -479,6 +479,7 @@
 .member-progress-fill--completed { background: linear-gradient(90deg, #d8ae53, #be8730); }
 .member-progress-fill--doing { background: linear-gradient(90deg, #92ad9f, #648b7b); }
 .member-progress-fill--pending { background: #d8d6d0; }
+.member-progress--unknown { background: repeating-linear-gradient(90deg, rgba(127,157,145,.14) 0 18rpx, transparent 18rpx 26rpx); }
 
 .member-side {
   display: flex;

@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "patch:icons": "node scripts/patch-tdesign-icon-font.js",
+    "postinstall": "node scripts/patch-tdesign-icon-font.js"
+  },
   "devDependencies": {
     "typescript": "^6.0.3"
   },

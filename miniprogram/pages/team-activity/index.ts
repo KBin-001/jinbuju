@@ -76,6 +76,7 @@ Page(withAppTheme({
     loadingMore: false,
     hasMore: true,
     isEmpty: false,
+    loadError: "",
     total: 0,
     page: 1,
     noTeam: false,
@@ -112,7 +113,7 @@ Page(withAppTheme({
   },
 
   async refresh() {
-    this.setData({ loading: true, page: 1, hasMore: true, isEmpty: false, noTeam: false });
+    this.setData({ loading: true, page: 1, hasMore: true, isEmpty: false, noTeam: false, loadError: "" });
     try {
       const result = await getTeamActivityFeed({ page: 1, pageSize: PAGE_SIZE });
       const views = rebuildViews(result.list);
@@ -123,10 +124,14 @@ Page(withAppTheme({
         total: result.total,
         isEmpty: views.length === 0 && result.pageSize > 0,
         noTeam: result.pageSize === 0,
+        loadError: "",
       });
     } catch (error) {
-      this.setData({ loading: false, isEmpty: true });
-      wx.showToast({ title: error instanceof Error ? error.message : "动态加载失败", icon: "none" });
+      this.setData({
+        loading: false,
+        isEmpty: false,
+        loadError: error instanceof Error ? error.message : "动态加载失败，请检查网络后重试。",
+      });
     }
   },
 
@@ -159,6 +164,20 @@ Page(withAppTheme({
 
   closeDetail() {
     this.setData({ detailVisible: false, selectedDetail: null });
+  },
+
+  retry() {
+    this.refresh();
+  },
+
+  onActivityAvatarError(event: { currentTarget: { dataset: { id?: string } } }) {
+    const id = String(event.currentTarget.dataset.id || "");
+    const index = this.data.activities.findIndex((item) => item.id === id);
+    if (index >= 0) this.setData({ [`activities[${index}].avatar`]: "" });
+  },
+
+  onDetailAvatarError() {
+    if (this.data.selectedDetail?.avatar) this.setData({ "selectedDetail.avatar": "" });
   },
 
   goBack() {

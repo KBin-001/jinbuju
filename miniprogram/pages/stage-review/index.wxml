@@ -79,13 +79,6 @@
     </view>
 
     <view wx:if="{{justReviewed}}" class="review-success-view">
-      <view class="confetti-layer" aria-hidden="true">
-        <view class="confetti-piece confetti-1"></view><view class="confetti-piece confetti-2"></view>
-        <view class="confetti-piece confetti-3"></view><view class="confetti-piece confetti-4"></view>
-        <view class="confetti-piece confetti-5"></view><view class="confetti-piece confetti-6"></view>
-        <view class="confetti-piece confetti-7"></view><view class="confetti-piece confetti-8"></view>
-        <view class="confetti-piece confetti-9"></view><view class="confetti-piece confetti-10"></view>
-      </view>
       <view class="card review-success-card">
         <view class="review-success-mark" aria-label="复盘完成">✓</view>
         <view class="review-success-title">复盘已完成</view>

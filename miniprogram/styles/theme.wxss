@@ -1,139 +1,251 @@
-/* 进步局 · 现代东方山水统一设计令牌
- * 山水负责品牌氛围，正文与数据统一使用高对比度的系统字体和暖色纸张表面。
- * 历史主题 id 仍可被页面读取，但视觉统一到同一套商业化基线，避免页面间色板漂移。
+/* 进步局 · 发布候选版统一设计令牌
+ * 历史主题 id 继续保留给页面状态与兼容逻辑使用，但视觉统一到同一套
+ * 现代东方山水基线。页面只定义布局和少量场景装饰，不再创建第二套色板。
  */
 page,
 [data-theme="mint"],
 [data-theme="cream"],
 [data-theme="inkGreen"],
 [data-theme="apricot"] {
-  --color-bg: #F7F3EA;
-  --color-background: #F7F3EA;
-  --color-bg-warm: #F7EBCF;
-  --color-background-warm: #F7EBCF;
-  --color-card: #FFFCF6;
-  --color-surface: #FFFCF6;
-  --color-card-soft: #F1F4EE;
+  /* Surface */
+  --color-bg-page: #F7F3EA;
+  --color-bg-card: #FFFCF6;
+  --color-bg-soft: #F1F4EE;
+  --color-bg-highlight: #F8F1DF;
+  --color-bg: var(--color-bg-page);
+  --color-background: var(--color-bg-page);
+  --color-bg-warm: var(--color-bg-highlight);
+  --color-background-warm: var(--color-bg-highlight);
+  --color-card: var(--color-bg-card);
+  --color-surface: var(--color-bg-card);
+  --color-card-soft: var(--color-bg-soft);
   --color-card-soft-2: #E8F0EB;
   --color-card-hover: #F3F5F0;
 
+  /* Brand */
   --color-primary: #245B4D;
-  --color-primary-deep: #183F35;
   --color-primary-dark: #183F35;
-  --color-primary-light: #7F9D91;
+  --color-primary-deep: var(--color-primary-dark);
   --color-primary-soft: #E8F0EB;
+  --color-primary-light: #7F9D91;
   --color-growth: #557D6E;
-  --color-accent: #C89B4A;
-  --color-sun: #C89B4A;
+  --color-gold: #C89B4A;
+  --color-gold-soft: #F2E6C8;
+  --color-accent: var(--color-gold);
+  --color-sun: var(--color-gold);
 
+  /* Typography */
   --color-text: #24312D;
   --color-text-main: #24312D;
+  --color-text-body: #4F615B;
   --color-text-secondary: #7C817D;
+  --color-text-disabled: #A9B0AD;
   --color-text-light: #9B9F9B;
-  --color-text-muted: #9B9F9B;
+  --color-text-muted: var(--color-text-light);
   --color-text-inverse: #FFFFFF;
+  --font-page-title: 40rpx;
+  --font-data: 44rpx;
+  --font-card-title: 32rpx;
+  --font-section-title: 30rpx;
+  --font-body: 27rpx;
+  --font-caption: 23rpx;
+  --font-tag: 21rpx;
 
-  --color-border: rgba(103, 94, 77, .16);
-  --color-border-soft: rgba(103, 94, 77, .10);
-  --color-divider: rgba(103, 94, 77, .12);
+  /* Semantic colors */
+  --color-border: rgba(36, 91, 77, .12);
+  --color-border-soft: rgba(36, 91, 77, .08);
+  --color-divider: rgba(36, 91, 77, .08);
   --color-success: #39745F;
-  --color-success-soft: #E8F0EB;
-  --color-warning: #B37D27;
-  --color-warning-soft: #F7EBCF;
+  --color-success-soft: #E7F0EB;
+  --color-warning: #A87025;
+  --color-warning-soft: #F8EDD3;
   --color-info: #587A86;
   --color-info-soft: #EAF0F2;
   --color-danger: #B86152;
   --color-danger-soft: #F8E9E5;
-  --color-danger-light: #F8E9E5;
+  --color-danger-light: var(--color-danger-soft);
+  --color-mask: rgba(25, 35, 31, .46);
 
-  --gradient-card-mint: linear-gradient(135deg, #E8F0EB 0%, #FFFCF6 72%);
-  --gradient-card-soft: linear-gradient(135deg, #F1F4EE 0%, #FFFCF6 68%);
-  --gradient-card-sun: linear-gradient(135deg, #F7EBCF 0%, #FFFCF6 100%);
-  --gradient-progress: linear-gradient(90deg, #7F9D91 0%, #245B4D 100%);
-  --gradient-ring: linear-gradient(135deg, #7F9D91 0%, #245B4D 100%);
-  --gradient-hero: var(--gradient-card-mint);
-  --gradient-gold: linear-gradient(135deg, #F7EBCF, #C89B4A);
-  --gradient-ai: linear-gradient(135deg, #7F9D91, #245B4D);
-
-  --shadow-card: 0 10rpx 28rpx rgba(49, 57, 50, .07);
-  --shadow-card-soft: 0 4rpx 18rpx rgba(49, 57, 50, .05);
-  --shadow-float: 0 16rpx 40rpx rgba(36, 70, 59, .12);
-  --shadow-button: 0 10rpx 24rpx rgba(36, 91, 77, .18);
-  --shadow-button-soft: 0 6rpx 16rpx rgba(36, 91, 77, .12);
-  --shadow-button-primary: 0 12rpx 28rpx rgba(36, 91, 77, .20);
-
-  --radius-card: 28rpx;
-  --radius-card-sm: 24rpx;
+  /* Shape and spacing */
+  --radius-hero: 28rpx;
+  --radius-card-large: 28rpx;
+  --radius-card: 24rpx;
+  --radius-card-small: 18rpx;
+  --radius-card-sm: var(--radius-card);
+  --radius-input: 20rpx;
+  --radius-sheet: 32rpx;
   --radius-pill: 999rpx;
-  --radius-button: 999rpx;
+  --radius-button: var(--radius-pill);
   --radius-tag: 18rpx;
-  --gap-card: 20rpx;
-  --gap-section: 36rpx;
+  --space-page-x: 32rpx;
+  --space-page-top: 24rpx;
+  --space-section: 36rpx;
+  --space-card: 24rpx;
+  --space-card-inner: 28rpx;
+  --gap-card: 22rpx;
+  --gap-section: var(--space-section);
   --size-control-lg: 88rpx;
+  --size-icon-small: 30rpx;
+  --size-icon: 38rpx;
+  --size-icon-emphasis: 52rpx;
   --padding-page: 24rpx 32rpx 160rpx;
 
-  --td-brand-color: #245B4D;
-  --td-brand-color-active: #183F35;
+  /* Only two shared elevation levels: cards and floating layers. */
+  --shadow-card: 0 6rpx 20rpx rgba(49, 57, 50, .055);
+  --shadow-card-soft: 0 3rpx 12rpx rgba(49, 57, 50, .04);
+  --shadow-float: 0 18rpx 48rpx rgba(36, 70, 59, .14);
+  --shadow-button: 0 8rpx 18rpx rgba(36, 91, 77, .14);
+  --shadow-button-soft: var(--shadow-card);
+  --shadow-button-primary: var(--shadow-button);
+
+  /* Restrained decorative gradients. */
+  --gradient-card-mint: linear-gradient(135deg, #E8F0EB 0%, #FFFCF6 72%);
+  --gradient-card-soft: linear-gradient(135deg, #F1F4EE 0%, #FFFCF6 68%);
+  --gradient-card-sun: linear-gradient(135deg, #F8F1DF 0%, #FFFCF6 100%);
+  --gradient-progress: linear-gradient(90deg, #7F9D91 0%, #245B4D 100%);
+  --gradient-ring: var(--gradient-progress);
+  --gradient-hero: var(--gradient-card-mint);
+  --gradient-gold: linear-gradient(135deg, #F8F1DF, #C89B4A);
+  --gradient-ai: linear-gradient(135deg, #7F9D91, #245B4D);
+  --gradient-accent-gold: linear-gradient(145deg, #FFFAF0, #F2E6C8);
+  --gradient-accent-blue: linear-gradient(145deg, #F4F7F8, #EAF0F2);
+  --gradient-accent-purple: linear-gradient(145deg, #F5F3F0, #ECE9E4);
+  --gradient-accent-coral: linear-gradient(145deg, #FFF8F5, #F8E9E5);
+
+  /* TDesign MiniProgram 1.15.2 theme bridge. */
+  --td-brand-color: var(--color-primary);
+  --td-brand-color-active: var(--color-primary-dark);
   --td-brand-color-disabled: #B9C7C0;
-  --td-brand-color-light: #E8F0EB;
-  --td-bg-color-page: #F7F3EA;
-  --td-bg-color-container: #FFFCF6;
-  --td-text-color-primary: #24312D;
-  --td-text-color-secondary: #7C817D;
-  --td-component-border: rgba(103, 94, 77, .16);
-  --td-radius-default: 24rpx;
-  --td-radius-large: 28rpx;
-  --td-button-primary-bg-color: #245B4D;
-  --td-button-primary-active-bg-color: #183F35;
-  --td-button-primary-color: #FFFFFF;
-  --td-button-default-color: #245B4D;
+  --td-brand-color-light: var(--color-primary-soft);
+  --td-brand-color-light-active: #DCE8E1;
+  --td-error-color: var(--color-danger);
+  --td-error-color-active: #984B40;
+  --td-warning-color: var(--color-warning);
+  --td-success-color: var(--color-success);
+  --td-bg-color-page: var(--color-bg-page);
+  --td-bg-color-container: var(--color-bg-card);
+  --td-bg-color-container-active: var(--color-bg-soft);
+  --td-bg-color-component: var(--color-bg-soft);
+  --td-bg-color-component-active: #E6EBE6;
+  --td-bg-color-component-disabled: #ECEEEB;
+  --td-text-color-primary: var(--color-text-main);
+  --td-text-color-secondary: var(--color-text-secondary);
+  --td-text-color-placeholder: var(--color-text-light);
+  --td-text-color-disabled: var(--color-text-disabled);
+  --td-text-color-anti: var(--color-text-inverse);
+  --td-component-border: var(--color-border);
+  --td-radius-default: var(--radius-card-small);
+  --td-radius-large: var(--radius-card);
+
+  --td-button-border-radius: var(--radius-button);
+  --td-button-primary-bg-color: var(--color-primary);
+  --td-button-primary-border-color: var(--color-primary);
+  --td-button-primary-active-bg-color: var(--color-primary-dark);
+  --td-button-primary-active-border-color: var(--color-primary-dark);
+  --td-button-primary-color: var(--color-text-inverse);
+  --td-button-primary-disabled-bg: #B9C7C0;
+  --td-button-primary-disabled-border-color: #B9C7C0;
+  --td-button-default-color: var(--color-primary);
+  --td-button-default-bg-color: var(--color-bg-card);
   --td-button-default-border-color: rgba(36, 91, 77, .22);
-  --td-input-bg-color: #FFFCF6;
-  --td-input-border-color: rgba(103, 94, 77, .16);
-  --td-progress-track-color: #E5E9E4;
-  --td-progress-inner-bg-color: #245B4D;
+  --td-button-default-active-bg-color: var(--color-bg-soft);
+  --td-button-default-active-border-color: rgba(36, 91, 77, .30);
+  --td-button-light-color: var(--color-primary);
+  --td-button-light-bg-color: var(--color-primary-soft);
+  --td-button-light-border-color: var(--color-primary-soft);
 
-  --button-primary-background-color: #245B4D;
-  --button-primary-border-color: #245B4D;
-  --button-primary-color: #FFFFFF;
-  --button-default-background-color: #FFFCF6;
+  --td-input-bg-color: var(--color-bg-card);
+  --td-input-border-color: var(--color-border);
+  --td-input-default-text-color: var(--color-text-main);
+  --td-input-placeholder-text-color: var(--color-text-light);
+  --td-input-disabled-text-color: var(--color-text-disabled);
+  --td-textarea-background-color: var(--color-bg-card);
+  --td-textarea-border-color: var(--color-border);
+  --td-textarea-border-radius: var(--radius-input);
+  --td-textarea-text-color: var(--color-text-main);
+  --td-textarea-placeholder-color: var(--color-text-light);
+  --td-popup-bg-color: var(--color-bg-card);
+  --td-popup-border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+  --td-dialog-border-radius: var(--radius-card-large);
+  --td-dialog-title-color: var(--color-text-main);
+  --td-dialog-content-color: var(--color-text-body);
+  --td-cell-bg-color: var(--color-bg-card);
+  --td-cell-border-color: var(--color-divider);
+  --td-cell-title-color: var(--color-text-main);
+  --td-cell-description-color: var(--color-text-secondary);
+  --td-cell-note-color: var(--color-text-secondary);
+  --td-tag-primary-color: var(--color-primary);
+  --td-tag-primary-light-color: var(--color-primary-soft);
+  --td-tag-success-color: var(--color-success);
+  --td-tag-success-light-color: var(--color-success-soft);
+  --td-tag-warning-color: var(--color-warning);
+  --td-tag-warning-light-color: var(--color-warning-soft);
+  --td-tag-danger-color: var(--color-danger);
+  --td-tag-danger-light-color: var(--color-danger-soft);
+  --td-progress-track-bg-color: #E5E9E4;
+  --td-progress-inner-bg-color: var(--color-primary);
+  --td-progress-inner-bg-color-success: var(--color-success);
+  --td-progress-inner-bg-color-warning: var(--color-warning);
+  --td-progress-inner-bg-color-error: var(--color-danger);
+  --td-loading-color: var(--color-primary);
+  --td-loading-text-color: var(--color-text-secondary);
+
+  /* Backward-compatible aliases used by existing page styles. */
+  --button-primary-background-color: var(--color-primary);
+  --button-primary-border-color: var(--color-primary);
+  --button-primary-color: var(--color-text-inverse);
+  --button-default-background-color: var(--color-bg-card);
   --button-default-border-color: rgba(36, 91, 77, .22);
-  --button-default-color: #245B4D;
-  --button-primary-danger-background-color: #B86152;
-  --button-primary-danger-border-color: #B86152;
-  --button-disabled-opacity: .5;
-
-  --tag-primary-color: #245B4D;
-  --tag-primary-light-color: #E8F0EB;
-  --tag-success-color: #39745F;
-  --tag-success-light-color: #E8F0EB;
-  --progress-stroke-color: #245B4D;
-  --progress-success-color: #39745F;
+  --button-default-color: var(--color-primary);
+  --button-primary-danger-background-color: var(--color-danger);
+  --button-primary-danger-border-color: var(--color-danger);
+  --button-disabled-opacity: .52;
+  --tag-primary-color: var(--color-primary);
+  --tag-primary-light-color: var(--color-primary-soft);
+  --tag-success-color: var(--color-success);
+  --tag-success-light-color: var(--color-success-soft);
+  --progress-stroke-color: var(--color-primary);
+  --progress-success-color: var(--color-success);
   --progress-trail-color: #E5E9E4;
-  --popup-background: #F7F3EA;
-  --popup-color: #24312D;
-  --dialog-background-color: #FFFCF6;
-  --dialog-title-color: #24312D;
-  --dialog-content-color: #7C817D;
-  --input-background-color: #FFFCF6;
-  --input-item-color: #24312D;
-  --input-item-placeholder-color: #9B9F9B;
+  --notice-primary-background-color: var(--color-primary-soft);
+  --notice-primary-color: var(--color-primary-dark);
+  --notice-info-background-color: var(--color-info-soft);
+  --notice-info-text-color: var(--color-info);
+  --steps-finish-bg: var(--color-primary);
+  --steps-default-bg: #D7E4DD;
+  --steps-non-active-bg: #E5E9E4;
+  --steps-title-color: var(--color-text-main);
+  --steps-desc-color: var(--color-text-secondary);
+  --popup-background: var(--color-bg-card);
+  --popup-color: var(--color-text-main);
+  --dialog-background-color: var(--color-bg-card);
+  --dialog-title-color: var(--color-text-main);
+  --dialog-content-color: var(--color-text-body);
+  --input-background-color: var(--color-bg-card);
+  --input-item-color: var(--color-text-main);
+  --input-item-placeholder-color: var(--color-text-light);
+  --radio-background-color: var(--color-primary);
+  --radio-border-color: #C9D8D1;
+  --radio-icon-color: var(--color-primary);
+  --radio-text-color: var(--color-text-main);
+  --checkbox-background-color: var(--color-primary);
+  --checkbox-border-color: #C9D8D1;
+  --checkbox-text-color: var(--color-text-main);
 }
 
 page [data-theme] {
   color: var(--color-text-main);
-  background-color: var(--color-background);
+  background-color: var(--color-bg-page);
 }
 
 page [data-theme] .card,
 page [data-theme] .section-card {
   border-color: var(--color-border);
-  background-color: var(--color-card);
-  box-shadow: var(--shadow-card);
+  background-color: var(--color-bg-card);
 }
 
 page [data-theme] .primary-button {
-  color: #FFFFFF;
+  color: var(--color-text-inverse);
   background: var(--color-primary);
   box-shadow: var(--shadow-button-primary);
 }
@@ -141,7 +253,7 @@ page [data-theme] .primary-button {
 page [data-theme] .secondary-button {
   color: var(--color-primary);
   border-color: var(--color-border);
-  background: var(--color-card);
+  background: var(--color-bg-card);
 }
 
 page [data-theme] .status-chip,

@@ -1,47 +1,348 @@
-.record-layer { position: fixed; z-index: 12000; inset: 0; }
-.record-mask { position: absolute; inset: 0; background: rgba(25,35,31,.46); -webkit-backdrop-filter: blur(7rpx); backdrop-filter: blur(7rpx); }
-.record-panel { position: absolute; right: 0; bottom: 0; left: 0; height: min(86vh, 1280rpx); overflow: hidden; display: flex; flex-direction: column; border-radius: 42rpx 42rpx 0 0; background: #fffcf6; box-shadow: 0 -24rpx 70rpx rgba(26,47,39,.2); animation: record-enter 220ms cubic-bezier(.22,.78,.24,1); }
-.record-panel::before { content: ""; position: absolute; z-index: 0; top: 0; right: 0; width: 430rpx; height: 330rpx; opacity: .14; background: url('/assets/profile/goal-mountain-v2.jpg') center/cover no-repeat; }
-.record-grabber { position: absolute; z-index: 3; top: 20rpx; left: 50%; width: 72rpx; height: 8rpx; border-radius: 8rpx; background: #cfc8ba; transform: translateX(-50%); }
-.record-scroll { position: relative; z-index: 2; min-height: 0; flex: 1; box-sizing: border-box; }
-.record-scroll > view { box-sizing: border-box; }
-.record-head { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; flex: none; padding: 62rpx 42rpx 10rpx; }
-.record-eyebrow { color: #7f9d91; font-size: 19rpx; font-weight: 700; letter-spacing: 3rpx; }
-.record-title { margin-top: 7rpx; color: #24312d; font-size: 40rpx; font-weight: 700; line-height: 54rpx; }
-.record-close { display: flex; align-items: center; justify-content: center; width: 70rpx; height: 70rpx; border-radius: 50%; color: #57645f; background: rgba(238,234,225,.9); }
-.record-field { margin: 26rpx 42rpx 0; }
-.record-label { margin-bottom: 12rpx; color: #485650; font-size: 25rpx; line-height: 36rpx; }
-.record-input-shell, .record-date-shell { display: flex; align-items: center; min-height: 88rpx; box-sizing: border-box; padding: 0 24rpx; border: 1rpx solid rgba(96,111,103,.2); border-radius: 20rpx; color: #48645a; background: rgba(255,255,255,.66); }
-.record-input-shell input { min-width: 0; height: 88rpx; flex: 1; color: #35433e; font-size: 28rpx; }
-.record-date-shell { gap: 17rpx; color: #41695c; }
-.record-date-picker { flex: 1; color: #4f5d58; font-size: 25rpx; }
-.record-time-picker { color: #4f5d58; font-size: 25rpx; }
-.record-minutes-shell { gap: 18rpx; }
-.record-minutes-shell input { flex: 1; }
-.record-minutes-shell text { color: #718079; font-size: 23rpx; }
-.record-segments { display: grid; grid-template-columns: repeat(3,1fr); min-height: 74rpx; box-sizing: border-box; padding: 6rpx; border: 1rpx solid rgba(96,111,103,.18); border-radius: 19rpx; background: rgba(249,247,240,.8); }
-.record-segment { display: flex; align-items: center; justify-content: center; gap: 7rpx; border-radius: 14rpx; color: #8a8d89; font-size: 23rpx; }
-.record-segment.is-active { color: #fff; background: #2f6b5a; box-shadow: 0 7rpx 16rpx rgba(47,107,90,.18); }
-.record-reflection-shell { position: relative; height: 186rpx; padding: 19rpx 22rpx 38rpx; box-sizing: border-box; border: 1rpx solid rgba(96,111,103,.2); border-radius: 20rpx; background: rgba(255,255,255,.62); }
-.record-reflection-shell textarea { width: 100%; height: 125rpx; color: #35433e; font-size: 24rpx; line-height: 36rpx; }
-.record-reflection-shell > text { position: absolute; right: 19rpx; bottom: 12rpx; color: #9a9e99; font-size: 19rpx; }
-.record-ai-note { margin: 30rpx 42rpx 0; padding: 22rpx 24rpx; display: flex; align-items: flex-start; gap: 18rpx; border: 1rpx solid rgba(173,145,88,.18); border-radius: 20rpx; background: linear-gradient(90deg,rgba(247,244,234,.96),rgba(255,252,246,.74)); }
-.record-ai-mark { width: 50rpx; height: 50rpx; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 16rpx; color: #fff; background: #527c6d; font-family: Georgia,serif; font-size: 18rpx; }
-.record-ai-title { color: #31584b; font-size: 23rpx; font-weight: 700; }
-.record-ai-copy { margin-top: 6rpx; color: #6d7772; font-size: 20rpx; line-height: 31rpx; }
-.record-scroll-spacer { height: 28rpx; }
-.record-footer { position: relative; z-index: 3; flex: none; padding: 18rpx 42rpx calc(16rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid rgba(96,111,103,.1); background: rgba(255,252,246,.97); }
-.record-save { height: 82rpx; margin: 0; display: flex; align-items: center; justify-content: center; gap: 14rpx; border: 0; border-radius: 41rpx; color: #fff; background: linear-gradient(90deg,#2f6b5a,#245b4d); font-size: 28rpx; line-height: 82rpx; box-shadow: 0 12rpx 25rpx rgba(36,91,77,.18); }
-.record-save::after { border: 0; }
-.record-save[disabled] { opacity: .48; }
-.record-delete { min-height: 54rpx; padding-top: 18rpx; color: #aa7b31; font-size: 23rpx; line-height: 40rpx; text-align: center; }
-.record-delete.is-disabled { opacity: .45; }
-@keyframes record-enter { from { opacity: .7; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
-@media (max-width:350px) {
+.record-layer {
+  position: fixed;
+  z-index: 12000;
+  inset: 0;
+}
+
+.record-mask {
+  position: absolute;
+  inset: 0;
+  background: var(--color-mask, rgba(25, 35, 31, .46));
+  -webkit-backdrop-filter: blur(5rpx);
+  backdrop-filter: blur(5rpx);
+}
+
+.record-panel {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: min(86vh, 1280rpx);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-sheet, 32rpx) var(--radius-sheet, 32rpx) 0 0;
+  background: var(--color-bg-card, #FFFCF6);
+  box-shadow: var(--shadow-float, 0 18rpx 48rpx rgba(36, 70, 59, .14));
+  animation: record-enter 220ms cubic-bezier(.22, .78, .24, 1);
+}
+
+.record-panel::before {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  width: 420rpx;
+  height: 300rpx;
+  background: url('/assets/profile/goal-mountain-v2.jpg') center/cover no-repeat;
+  content: "";
+  opacity: .09;
+  pointer-events: none;
+}
+
+.record-grabber {
+  position: absolute;
+  z-index: 3;
+  top: 16rpx;
+  left: 50%;
+  width: 64rpx;
+  height: 7rpx;
+  border-radius: 999rpx;
+  background: #D4D0C6;
+  transform: translateX(-50%);
+}
+
+.record-scroll {
+  position: relative;
+  z-index: 2;
+  min-height: 0;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+.record-head {
+  position: relative;
+  z-index: 2;
+  min-height: 132rpx;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 44rpx 40rpx 8rpx;
+}
+
+.record-eyebrow {
+  color: var(--color-primary-light, #7F9D91);
+  font-size: 21rpx;
+  font-weight: 650;
+  letter-spacing: 2rpx;
+}
+
+.record-title {
+  margin-top: 6rpx;
+  color: var(--color-text-main, #24312D);
+  font-size: 38rpx;
+  font-weight: 700;
+  line-height: 52rpx;
+}
+
+.record-close {
+  width: 80rpx;
+  height: 80rpx;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-bg-soft, #F1F4EE);
+  color: var(--color-text-body, #4F615B);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.record-field {
+  margin: 24rpx 40rpx 0;
+}
+
+.record-label {
+  margin-bottom: 12rpx;
+  color: var(--color-text-body, #4F615B);
+  font-size: 25rpx;
+  font-weight: 550;
+  line-height: 36rpx;
+}
+
+.record-input-shell,
+.record-date-shell {
+  min-height: 88rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  border: 1rpx solid var(--color-border, rgba(36, 91, 77, .12));
+  border-radius: var(--radius-input, 20rpx);
+  background: rgba(255, 252, 246, .88);
+  color: var(--color-primary, #245B4D);
+}
+
+.record-title-input,
+.record-minutes-input {
+  min-width: 0;
+  height: 88rpx;
+  flex: 1;
+  color: var(--color-text-main, #24312D);
+  font-size: 28rpx;
+}
+
+.record-date-shell {
+  gap: 16rpx;
+}
+
+.record-date-picker {
+  min-width: 0;
+  flex: 1;
+  color: var(--color-text-body, #4F615B);
+  font-size: 25rpx;
+}
+
+.record-time-picker {
+  color: var(--color-text-body, #4F615B);
+  font-size: 25rpx;
+}
+
+.record-minutes-shell {
+  gap: 18rpx;
+}
+
+.record-minutes-input {
+  flex: 1;
+}
+
+.record-minutes-unit {
+  color: var(--color-text-secondary, #7C817D);
+  font-size: 23rpx;
+}
+
+.record-segments {
+  min-height: 80rpx;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 6rpx;
+  border: 1rpx solid var(--color-border, rgba(36, 91, 77, .12));
+  border-radius: var(--radius-input, 20rpx);
+  background: var(--color-bg-soft, #F1F4EE);
+}
+
+.record-segment {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  border-radius: 15rpx;
+  color: var(--color-text-secondary, #7C817D);
+  font-size: 23rpx;
+  transition: background-color 180ms ease, color 180ms ease, opacity 180ms ease;
+}
+
+.record-segment.is-active {
+  background: var(--color-primary, #245B4D);
+  color: #FFFFFF;
+  box-shadow: 0 4rpx 12rpx rgba(36, 91, 77, .13);
+}
+
+.record-reflection-shell {
+  position: relative;
+  height: 186rpx;
+  padding: 18rpx 22rpx 38rpx;
+  border: 1rpx solid var(--color-border, rgba(36, 91, 77, .12));
+  border-radius: var(--radius-input, 20rpx);
+  background: rgba(255, 252, 246, .88);
+}
+
+.record-reflection-input {
+  width: 100%;
+  height: 126rpx;
+  color: var(--color-text-main, #24312D);
+  font-size: 25rpx;
+  line-height: 37rpx;
+}
+
+.record-reflection-counter {
+  position: absolute;
+  right: 18rpx;
+  bottom: 10rpx;
+  color: var(--color-text-light, #9B9F9B);
+  font-size: 20rpx;
+}
+
+.record-ai-note {
+  margin: 28rpx 40rpx 0;
+  padding: 20rpx 22rpx;
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+  border: 1rpx solid rgba(36, 91, 77, .10);
+  border-radius: var(--radius-card-small, 18rpx);
+  background: var(--gradient-card-soft, linear-gradient(135deg, #F1F4EE, #FFFCF6));
+}
+
+.record-ai-mark {
+  width: 48rpx;
+  height: 48rpx;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14rpx;
+  background: var(--color-primary-light, #7F9D91);
+  color: #FFFFFF;
+  font-size: 18rpx;
+  font-weight: 700;
+}
+
+.record-ai-title {
+  color: var(--color-primary-dark, #183F35);
+  font-size: 23rpx;
+  font-weight: 650;
+}
+
+.record-ai-copy {
+  margin-top: 5rpx;
+  color: var(--color-text-secondary, #7C817D);
+  font-size: 21rpx;
+  line-height: 32rpx;
+}
+
+.record-scroll-spacer {
+  height: 28rpx;
+}
+
+.record-footer {
+  position: relative;
+  z-index: 3;
+  flex: none;
+  padding: 16rpx 40rpx calc(14rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid var(--color-divider, rgba(36, 91, 77, .08));
+  background: rgba(255, 252, 246, .98);
+}
+
+.record-save {
+  height: 88rpx;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  border: 0;
+  border-radius: 999rpx;
+  background: var(--color-primary, #245B4D);
+  color: #FFFFFF;
+  font-size: 28rpx;
+  font-weight: 650;
+  line-height: 88rpx;
+  box-shadow: var(--shadow-button, 0 8rpx 18rpx rgba(36, 91, 77, .14));
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.record-save::after {
+  border: 0;
+}
+
+.record-save.is-disabled {
+  background: #B9C7C0;
+  box-shadow: none;
+  opacity: .66;
+}
+
+.record-delete {
+  min-height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-danger, #B86152);
+  font-size: 23rpx;
+  line-height: 36rpx;
+  text-align: center;
+  transition: opacity 180ms ease;
+}
+
+.record-close.is-pressed,
+.record-segment.is-pressed,
+.record-save.is-pressed,
+.record-delete.is-pressed {
+  opacity: .72;
+}
+
+.record-close.is-pressed,
+.record-save.is-pressed {
+  transform: scale(.985);
+}
+
+.record-delete.is-disabled {
+  opacity: .45;
+}
+
+@keyframes record-enter {
+  from { opacity: .7; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 350px) {
   .record-panel { height: 89vh; }
-  .record-head { padding-right: 30rpx; padding-left: 30rpx; }
+  .record-head { padding-right: 28rpx; padding-left: 28rpx; }
   .record-title { font-size: 36rpx; }
-  .record-field, .record-ai-note { margin-right: 30rpx; margin-left: 30rpx; }
-  .record-footer { padding-right: 30rpx; padding-left: 30rpx; }
+  .record-field,
+  .record-ai-note { margin-right: 28rpx; margin-left: 28rpx; }
+  .record-footer { padding-right: 28rpx; padding-left: 28rpx; }
   .record-label { font-size: 23rpx; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .record-panel,
+  .record-close,
+  .record-segment,
+  .record-save,
+  .record-delete {
+    transition: none;
+    animation: none;
+  }
 }
