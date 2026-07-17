@@ -61,6 +61,11 @@
       <button wx:if="{{analysis.totalCount === 0}}" class="empty-action-button" bindtap="addTodayAction">{{analysis.goalId ? '添加今日行动' : '创建长期目标'}}</button>
     </view>
 
+    <view wx:if="{{aiNotificationAvailable && analysis.goalId}}" class="coach-card notification-optin-card">
+      <view><view class="notification-optin-title">明日建议</view><text>每天中午结合真实行动记录生成；分析失败时不会发送虚构内容。</text></view>
+      <button class="notification-optin-button" disabled="{{notificationAuthorizing}}" bindtap="subscribeAiCoachAdvice">{{notificationAuthorizing ? '正在授权' : '开启明日建议'}}</button>
+    </view>
+
     <view class="coach-card judgement-card">
       <view class="card-eyebrow card-eyebrow--spark">教练判断<view class="eyebrow-spark"></view></view>
       <view class="judgement-title">{{workspace.judgementTitle}}</view>

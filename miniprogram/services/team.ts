@@ -29,7 +29,7 @@ const CACHE_REGISTRY_KEY = "JINBUJU_TEAM_CACHE_KEYS_V3";
 const DEV_MOCK_KEY = "JINBUJU_TEAM_DEV_MOCK_V1";
 const ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 const REQUEST_TIMEOUT = 15000;
-export const MAX_TEAM_MEMBERS = 20;
+export const MAX_TEAM_MEMBERS = 50;
 
 interface CloudEnvelope<T> { success: boolean; data?: T; error?: { code?: string; message?: string } }
 interface LegacyTeamPage {
@@ -47,7 +47,7 @@ function friendlyMessage(code: string, message: string): string {
   if (code === "TEAM_UPGRADE_REQUIRED" || /不支持的操作/.test(message)) return "小队服务正在升级，已切换到兼容模式。";
   if (code === "REQUEST_TIMEOUT") return "小队服务响应较慢，请稍后重试。";
   if (code === "ROOM_NOT_FOUND") return "没有找到这个房间，请检查房间号。";
-  if (code === "TEAM_FULL") return "小队已满 20 人。";
+  if (code === "TEAM_FULL") return "小队已满 50 人。";
   if (code === "TEAM_PERMISSION_DENIED") return "当前操作仅限小队队长。";
   if (code === "NETWORK_ERROR" || code === "TEAM_NETWORK_ERROR") return "网络连接失败，请检查网络后重试。";
   return message || "小队数据暂时无法连接，请稍后重试。";
@@ -133,7 +133,7 @@ function writeCache(value: TeamPageData, userId = accountUserId()): TeamPageData
 function normalizePage(data: TeamPageData): TeamPageData {
   const members = (data.members || []).slice().sort(compareTeamMembers);
   const team = data.team || null;
-  const self = members.find((member) => member.isSelf);
+  const self = data.selfMember || members.find((member) => member.isSelf) || null;
   const pageRuntime = data.runtime ? {
     ...data.runtime,
     capabilities: {
@@ -142,7 +142,7 @@ function normalizePage(data: TeamPageData): TeamPageData {
       canInvite: data.runtime.mode === "live" && (self?.role === "owner" || team?.allowMemberInvite !== false),
     },
   } : undefined;
-  return { ...data, team, members, dailyStats: data.dailyStats || null, runtime: pageRuntime };
+  return { ...data, team, members, selfMember: self, dailyStats: data.dailyStats || null, runtime: pageRuntime };
 }
 
 function legacyMember(raw: Record<string, unknown>, teamId: string): TeamMember {
@@ -176,7 +176,7 @@ function legacyMember(raw: Record<string, unknown>, teamId: string): TeamMember 
 
 function adaptLegacy(data: LegacyTeamPage): TeamPageData {
   const rawTeam = data.team;
-  if (!rawTeam) return { team: null, members: [], dailyStats: null, runtime: runtime("legacy", false, "小队服务待升级，创建与管理功能暂不可用。") };
+  if (!rawTeam) return { team: null, members: [], selfMember: null, dailyStats: null, runtime: runtime("legacy", false, "小队服务待升级，创建与管理功能暂不可用。") };
   const id = String(rawTeam.id || "legacy_team");
   const members = (data.members || []).map((item) => legacyMember(item, id)).sort(compareTeamMembers);
   const team: Team = {
@@ -202,6 +202,7 @@ function adaptLegacy(data: LegacyTeamPage): TeamPageData {
   return {
     team,
     members,
+    selfMember: members.find((member) => member.isSelf) || null,
     dailyStats: {
       teamId: id,
       date: "",
@@ -246,7 +247,7 @@ export function compareTeamMembers(left: TeamMember, right: TeamMember): number 
   return String(left.id).localeCompare(String(right.id));
 }
 
-export function getCachedTeam(): TeamPageData { return readCache() || { team: null, members: [], dailyStats: null, runtime: runtime("cache", true) }; }
+export function getCachedTeam(): TeamPageData { return readCache() || { team: null, members: [], selfMember: null, dailyStats: null, runtime: runtime("cache", true) }; }
 
 /** 仅供开发态 mock 预览；正式页面永远不会读取该 key。 */
 export function persistTeam(team: Team, members: TeamMember[]): TeamPageData {
@@ -289,7 +290,7 @@ export async function updateSelfActivity(input: UpdateSelfActivityInput): Promis
 export async function updateSelfDisplayMode(displayMode: TeamDisplayMode): Promise<TeamPageData> { await requireAction("updateTeamMemberPrivacy"); await call<{ updated: boolean }>("updateTeamMemberPrivacy", { displayMode, taskDetailVisible: displayMode === "public" }); return getMyTeam(); }
 export async function updateSelfTaskDetailVisible(taskDetailVisible: boolean): Promise<TeamPageData> { await requireAction("updateTeamMemberPrivacy"); await call<{ updated: boolean }>("updateTeamMemberPrivacy", { taskDetailVisible }); return getMyTeam(); }
 export function canManageTeam(team: Team | null): boolean { if (!team) return false; return Boolean(readCache()?.members.find((member) => member.isSelf && member.role === "owner")); }
-export async function updateTeamSettings(input: UpdateTeamSettingsInput): Promise<TeamPageData> { const name = input.name.trim().replace(/\s+/g, " "); if (name.length < 2 || name.length > 20) throw createError("INVALID_TEAM_NAME", "小队名称需为 2 至 20 个字符。" ); const slogan = (input.slogan || "").trim().replace(/\s+/g, " ").slice(0, 30); await requireAction("updateTeamSettings"); await call<{ updated: boolean }>("updateTeamSettings", { input: { name, anonymityMode: input.anonymityMode, allowMemberInvite: input.allowMemberInvite, slogan } }); return getMyTeam(); }
+export async function updateTeamSettings(input: UpdateTeamSettingsInput): Promise<TeamPageData> { const name = input.name.trim().replace(/\s+/g, " "); if (name.length < 2 || name.length > 20) throw createError("INVALID_TEAM_NAME", "小队名称需为 2 至 20 个字符。" ); const announcement = (input.announcement ?? input.slogan ?? "").trim().replace(/\s+/g, " ").slice(0, 30); await requireAction("updateTeamSettings"); await call<{ updated: boolean }>("updateTeamSettings", { input: { name, announcement, anonymityMode: input.anonymityMode, allowMemberInvite: input.allowMemberInvite } }); return getMyTeam(); }
 export async function sendEncouragement(input: SendEncouragementInput): Promise<SendEncouragementResult> { await requireAction("sendEncouragement"); return call<SendEncouragementResult>("sendEncouragement", input as unknown as Record<string, unknown>); }
 export async function getTeamActivityFeed(options: TeamPageOptions = {}): Promise<TeamActivityFeedResult> { await requireAction("getTeamActivityFeed"); return call<TeamActivityFeedResult>("getTeamActivityFeed", { page: Math.max(1, Math.floor(options.page || 1)), pageSize: Math.min(20, Math.max(1, Math.floor(options.pageSize || 10))) }); }
 export async function leaveTeam(): Promise<TeamMutationResult> { await requireAction("leaveTeam"); const result = await call<TeamMutationResult>("leaveTeam"); clearTeamCaches(); return result; }

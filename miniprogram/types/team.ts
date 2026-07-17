@@ -93,6 +93,8 @@ export interface TeamDailyStats {
 export interface TeamPageData {
   team: Team | null;
   members: TeamMember[];
+  /** 当前访问者的成员投影；分页列表不包含本人时仍用于权限与 CTA。 */
+  selfMember?: TeamMember | null;
   dailyStats: TeamDailyStats | null;
   runtime?: TeamPageRuntime;
 }

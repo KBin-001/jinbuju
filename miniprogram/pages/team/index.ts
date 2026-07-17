@@ -1,8 +1,11 @@
 import { getActiveGoal } from "../../services/manualGoal";
 import { calculateTodaySummary, getTodayPageTasks, updateTaskStatus } from "../../services/manualTask";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
+import { getTabHeaderLayout } from "../../utils/tabHeader";
+import { isNotificationConfigured } from "../../config/notification";
+import { requestNotificationAuthorization } from "../../services/notification";
+import { canShowNotificationPrompt, recordNotificationPrompt } from "../../utils/notificationPreference";
 import {
-  canManageTeam,
   createTeam,
   dissolveTeam,
   getTeamInviteInfo,
@@ -26,23 +29,14 @@ import {
   TeamDisplayMode,
   TeamMember,
   TeamMemberActionDetail,
+  TeamPageData,
+  TeamPageRuntime,
 } from "../../types/team";
 import { differenceInBusinessDays, getTodayBusinessDate } from "../../utils/date";
 
 type PageStatus = "loading" | "empty" | "ready" | "error";
-
-function getTeamLayout(): { menuTop: number; menuHeight: number } {
-  try {
-    const windowInfo = wx.getWindowInfo();
-    const menu = wx.getMenuButtonBoundingClientRect();
-    return {
-      menuTop: Math.max(windowInfo.statusBarHeight || 0, menu.top || 0),
-      menuHeight: menu.height || 32,
-    };
-  } catch (_) {
-    return { menuTop: 28, menuHeight: 32 };
-  }
-}
+type TeamViewMode = "solo" | "group";
+type ActivityStatus = "idle" | "loading" | "ready" | "empty" | "error" | "unavailable";
 
 interface MemberView extends TeamMember {
   displayName: string;
@@ -80,7 +74,7 @@ interface CompanionRow {
   name: string;
   avatar: string;
   avatarText: string;
-  statusClass: "completed" | "doing" | "pending";
+  statusClass: "completed" | "doing" | "pending" | "missed";
   statusLabel: string;
   actionSummary: string;
   growthMinutes: number;
@@ -167,7 +161,9 @@ function buildActivitySnapshot(): ActivitySnapshot {
   const todayAction = tasks.find((task) => task.status !== "completed") || tasks[0];
   let todayStatus: MemberTodayStatus = "not_started";
 
-  if (summary.totalCount > 0 && summary.completedCount === summary.totalCount) {
+  if (tasks.length > 0 && tasks.every((task) => task.status === "skipped")) {
+    todayStatus = "missed";
+  } else if (summary.totalCount > 0 && summary.completedCount === summary.totalCount) {
     todayStatus = "completed";
   } else if (summary.completedCount > 0 || summary.partialCount > 0) {
     todayStatus = "partial";
@@ -205,7 +201,7 @@ function statusText(status: MemberTodayStatus): string {
   return labels[status];
 }
 
-function toMemberView(member: TeamMember, team: Team | null): MemberView {
+function toMemberView(member: TeamMember, team: Team | null, viewerCanManage = false): MemberView {
   const anonymous = member.displayMode === "anonymous";
   const publicMode = member.displayMode === "public";
   const displayName = anonymous ? (member.anonymousName || "行动伙伴") : member.nickname;
@@ -217,7 +213,7 @@ function toMemberView(member: TeamMember, team: Team | null): MemberView {
       : goalText;
   const canMarkComplete = member.isSelf && member.todayStatus !== "completed";
   const detailAudienceAllowed = team?.actionDetailVisibility === "all_members"
-    || (team?.actionDetailVisibility === "admins_only" && canManageTeam(team));
+    || (team?.actionDetailVisibility === "admins_only" && viewerCanManage);
   const canOpenDetail = member.displayMode !== "anonymous";
 
   return {
@@ -244,7 +240,7 @@ function toMemberView(member: TeamMember, team: Team | null): MemberView {
       ? "匿名成员不会公开行动明细。"
       : team?.actionDetailVisibility === "hidden"
         ? "小队已关闭行动详情展示。"
-        : team?.actionDetailVisibility === "admins_only" && !canManageTeam(team)
+        : team?.actionDetailVisibility === "admins_only" && !viewerCanManage
           ? "行动详情仅对小队管理员可见。"
           : "这位成员暂未开放行动明细。",
   };
@@ -255,9 +251,9 @@ function buildTeamStats(team: Team, dailyStats: TeamDailyStats | null, members: 
   const rawCompletedMembers = dailyStats?.completedMembers
     ?? members.filter((member) => member.todayStatus === "completed").length;
   const completedMembers = Math.max(0, Math.min(totalMembers, rawCompletedMembers));
-  const rawCompletionRate = dailyStats?.completionRate
-    ?? (totalMembers > 0 ? Math.round((completedMembers / totalMembers) * 100) : 0);
-  const todayCompletionRate = Math.max(0, Math.min(100, rawCompletionRate));
+  const todayCompletionRate = totalMembers > 0
+    ? Math.round((completedMembers / totalMembers) * 100)
+    : 0;
   const rawStartedMembers = dailyStats
     ? Math.max(0, dailyStats.completedMembers + dailyStats.partialMembers)
     : members.filter((member) => member.todayStatus === "completed" || member.todayStatus === "partial").length;
@@ -277,12 +273,14 @@ function buildTeamStats(team: Team, dailyStats: TeamDailyStats | null, members: 
 function statusClassOf(status: MemberTodayStatus): CompanionRow["statusClass"] {
   if (status === "completed") return "completed";
   if (status === "partial") return "doing";
+  if (status === "missed") return "missed";
   return "pending";
 }
 
 function statusLabelOf(statusClass: CompanionRow["statusClass"]): string {
   if (statusClass === "completed") return "已完成";
   if (statusClass === "doing") return "进行中";
+  if (statusClass === "missed") return "今日休息";
   return "未开始";
 }
 
@@ -309,14 +307,14 @@ function companionActionSummary(member: MemberView): string {
 }
 
 function buildHeroAvatarSlots(members: MemberView[]): HeroAvatarSlot[] {
-  const slots = members.slice(0, 3).map((member): HeroAvatarSlot => ({
+  const slots = members.slice(0, 4).map((member): HeroAvatarSlot => ({
     id: member.id,
     avatar: member.avatar || "",
     avatarText: member.avatarText,
     isEmpty: false,
   }));
-  if (members.length > 3) {
-    slots.push({ id: "extra", avatar: "", avatarText: `+${members.length - 3}`, isEmpty: false, isExtra: true });
+  if (members.length > 4) {
+    slots.push({ id: "extra", avatar: "", avatarText: `+${members.length - 4}`, isEmpty: false, isExtra: true });
   }
   return slots;
 }
@@ -338,7 +336,7 @@ function buildCompanionRows(members: MemberView[]): CompanionRow[] {
 
     return {
       id: member.id,
-      rank: index + 1,
+      rank: Number(member.rank || index + 1),
       name: member.displayName,
       avatar: member.avatar || "",
       avatarText: member.avatarText,
@@ -378,54 +376,48 @@ function buildSelfActionPrompt(members: MemberView[]): SelfActionPrompt {
   if (details.length === 0) {
     return { text: "今天还没有行动，先添加一小步", buttonText: "添加今日行动", allDone: false };
   }
+  if (self.todayStatus === "missed") {
+    return { text: "今天选择休息，行动记录会如实保留", buttonText: "查看今日安排", allDone: false };
+  }
+  const completedCount = details.filter((detail) => detail.status === "completed").length;
+  const investedMinutes = Math.max(0, Number(self.growthMinutes || 0));
   const remaining = details.filter((detail) => detail.status !== "completed" && detail.status !== "missed").length;
-  if (remaining === 0) {
-    return { text: "今天的行动已完成，保持轻松节奏", buttonText: "查看今日成果", allDone: true };
+  if (self.todayStatus === "completed" || remaining === 0) {
+    return { text: `已完成 ${completedCount} 项 · 投入 ${investedMinutes} 分钟`, buttonText: "查看今日成果", allDone: true };
   }
   if (self.todayStatus === "partial") {
-    return { text: `已经开始，今天还有 ${remaining} 项行动可以继续`, buttonText: "继续我的行动", allDone: false };
+    return { text: `已完成 ${completedCount}/${details.length} 项 · 投入 ${investedMinutes} 分钟`, buttonText: "继续我的行动", allDone: false };
   }
-  return { text: `你今天还有 ${remaining} 项行动可以开始`, buttonText: "开始我的行动", allDone: false };
+  return { text: `已安排 ${details.length} 项 · 尚未开始`, buttonText: "开始我的行动", allDone: false };
 }
 
-function formatMemberUpdateTime(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "刚刚";
-  const now = new Date();
-  if (date.toDateString() === now.toDateString()) {
-    return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-  }
-  return `${date.getMonth() + 1}/${date.getDate()}`;
-}
-
-function buildActivityList(members: MemberView[]): ActivityItem[] {
-  return members
-    .filter((member) => member.todayStatus === "completed" || member.todayStatus === "partial")
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, ACTIVITY_MAX)
-    .map((member) => ({
-      id: `activity_${member.id}`,
-      memberId: member.id,
-      name: member.displayName,
-      avatar: member.avatar || "",
-      avatarText: member.avatarText,
-      actionText: member.todayStatus === "completed" ? "完成了今日行动" : "推进了部分行动",
-      time: formatMemberUpdateTime(member.updatedAt),
-    }));
+function buildSelfRankNote(members: MemberView[]): string {
+  const selfIndex = members.findIndex((member) => member.isSelf);
+  if (selfIndex < 0) return "按自己的节奏行动，每一步都会计入今日榜单";
+  if (selfIndex === 0) return members.length > 1 ? "你暂列第 1，继续保持轻松稳定的节奏" : "今天先从自己的一小步开始";
+  const self = members[selfIndex];
+  const previous = members[selfIndex - 1];
+  const gap = Math.max(0, Number(previous.growthMinutes || 0) - Number(self.growthMinutes || 0));
+  return gap > 0
+    ? `你暂列第 ${self.rank || selfIndex + 1}，再投入 ${gap} 分钟即可追平上一位伙伴`
+    : `你暂列第 ${self.rank || selfIndex + 1}，与上一位伙伴投入相同`;
 }
 
 Page(withAppTheme({
   data: {
-    ...getTeamLayout(),
+    ...getTabHeaderLayout(),
     appTheme: getCurrentThemeId() as string,
     status: "loading" as PageStatus,
     errorMessage: "",
     serviceNotice: "",
+    runtime: null as TeamPageRuntime | null,
     team: null as Team | null,
     members: [] as MemberView[],
+    selfMember: null as MemberView | null,
+    teamViewMode: "solo" as TeamViewMode,
     dailyStats: null as TeamDailyStats | null,
     displayTeamName: TEAM_NAME,
-    displayRoomCode: "2846",
+    displayRoomCode: "------",
     teamDays: 1,
     heroAvatarSlots: [] as HeroAvatarSlot[],
     teamStats: {
@@ -437,12 +429,15 @@ Page(withAppTheme({
     } as TeamStatsView,
     companionRows: [] as CompanionRow[],
     companionExtra: 0,
+    selfRankNote: "按自己的节奏行动，每一步都会计入今日榜单",
     selfActionPrompt: {
       text: "回到今日页，继续自己的节奏",
       buttonText: "去今日行动",
       allDone: false,
     } as SelfActionPrompt,
     activityList: [] as ActivityItem[],
+    activityStatus: "idle" as ActivityStatus,
+    inviteUnavailableText: "",
     /* —— 弹窗与状态 —— */
     roomCodeInput: "",
     inviterMemberId: "",
@@ -458,10 +453,10 @@ Page(withAppTheme({
     savingSettings: false,
     teamAvatar: "",
     teamAvatarText: "队",
-settingsDraft: {
-name: "",
-slogan: "",
-} as TeamSettingsDraft,
+    settingsDraft: {
+      name: "",
+      slogan: "",
+    } as TeamSettingsDraft,
     memberDetailVisible: false,
     selectedMember: null as MemberView | null,
     creating: false,
@@ -469,7 +464,12 @@ slogan: "",
     markingComplete: false,
     encouragingMemberId: "",
     currentScrollTop: 0,
+    teamNotificationAvailable: isNotificationConfigured("team_activity"),
+    teamNotificationPromptVisible: false,
+    notificationAuthorizing: false,
   },
+
+  notificationPromptTimer: null as ReturnType<typeof setTimeout> | null,
 
   onLoad(query: Record<string, string>) {
     const roomCode = String(query.roomCode || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
@@ -484,14 +484,49 @@ slogan: "",
     this.setData({ appTheme: getCurrentThemeId() });
     this.load();
     this.startBusinessDateWatcher();
+    this.scheduleNotificationPrompt();
   },
 
   onHide() {
     this.stopBusinessDateWatcher();
+    this.clearNotificationPromptTimer();
   },
 
   onUnload() {
     this.stopBusinessDateWatcher();
+    this.clearNotificationPromptTimer();
+  },
+
+  scheduleNotificationPrompt() {
+    this.clearNotificationPromptTimer();
+    if (!this.data.teamNotificationAvailable || !canShowNotificationPrompt("team_activity")) return;
+    this.notificationPromptTimer = setTimeout(() => {
+      if (this.data.team && this.data.status === "ready") {
+        this.setData({ teamNotificationPromptVisible: true });
+        recordNotificationPrompt("team_activity");
+      }
+      this.notificationPromptTimer = null;
+    }, 30 * 1000);
+  },
+
+  clearNotificationPromptTimer() {
+    if (!this.notificationPromptTimer) return;
+    clearTimeout(this.notificationPromptTimer);
+    this.notificationPromptTimer = null;
+  },
+
+  async subscribeTeamActivity() {
+    if (this.data.notificationAuthorizing) return;
+    this.setData({ notificationAuthorizing: true });
+    try {
+      const result = await requestNotificationAuthorization("team_activity", "team_join");
+      this.setData({ teamNotificationPromptVisible: result !== "accept" });
+      wx.showToast({ title: result === "accept" ? "小队动态已订阅" : "未获得订阅授权", icon: result === "accept" ? "success" : "none" });
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "订阅未完成", icon: "none" });
+    } finally {
+      this.setData({ notificationAuthorizing: false });
+    }
   },
 
   startBusinessDateWatcher() {
@@ -529,14 +564,13 @@ slogan: "",
   async load() {
     this.setData({ status: this.data.team ? this.data.status : "loading", errorMessage: "" });
     try {
-      const current = await getMyTeam({ pageSize: 20 });
-      this.applyTeamData(current.team, current.members, current.dailyStats);
-      const self = current.members.find((member) => member.isSelf);
+      const current = await getMyTeam({ pageSize: 50 });
+      this.applyTeamData(current);
+      const self = current.selfMember || current.members.find((member) => member.isSelf);
       const owner = current.members.find((member) => member.role === "owner");
       this.setData({
         serviceNotice: current.runtime?.message || "",
         isOwner: self?.role === "owner",
-        canInviteFriends: self?.role === "owner" || Boolean((current.team as (Team & { allowMemberInvite?: boolean }) | null)?.allowMemberInvite),
         teamOwnerName: owner?.nickname || "队长",
         teamJoinedDate: self?.joinedAt
           ? formatTeamDate(self.joinedAt)
@@ -552,12 +586,16 @@ slogan: "",
       if (current.runtime?.capabilities.canMutate) {
         try {
           const synced = await this.syncCurrentActivity();
-          this.applyTeamData(synced.team, synced.members, synced.dailyStats);
+          this.applyTeamData(synced);
         } catch (_) {
           this.setData({ serviceNotice: "今日行动暂未同步，小队首页仍可继续查看。" });
         }
       }
-      if (current.runtime?.capabilities.canReadActivity) await this.loadActivityPreview();
+      if (current.runtime?.capabilities.canReadActivity && this.data.teamViewMode === "group") {
+        await this.loadActivityPreview();
+      } else {
+        this.setData({ activityList: [], activityStatus: current.runtime?.capabilities.canReadActivity ? "idle" : "unavailable" });
+      }
     } catch (error) {
       this.setData({
         status: "error",
@@ -567,10 +605,14 @@ slogan: "",
   },
 
   async loadActivityPreview() {
+    this.setData({ activityStatus: "loading" });
     try {
-      const feed = await getTeamActivityFeed({ page: 1, pageSize: ACTIVITY_MAX });
+      const feed = await getTeamActivityFeed({ page: 1, pageSize: 10 });
+      const valuableEvents = feed.list
+        .filter((item) => ["completed", "joined", "streak", "encouraged"].includes(item.type))
+        .slice(0, ACTIVITY_MAX);
       this.setData({
-        activityList: feed.list.map((item) => ({
+        activityList: valuableEvents.map((item) => ({
           id: item.id,
           memberId: item.memberId,
           name: item.name,
@@ -579,9 +621,11 @@ slogan: "",
           actionText: item.actionText,
           time: item.timeText,
         })),
+        activityStatus: valuableEvents.length ? "ready" : "empty",
       });
     } catch (_) {
-      // 榜单仍可用时不因动态预览失败阻断整个小队页。
+      // 榜单仍可用时不因动态预览失败阻断整个小队页，也不合成重复动态。
+      this.setData({ activityList: [], activityStatus: "error" });
     }
   },
 
@@ -597,14 +641,63 @@ slogan: "",
     });
   },
 
-  applyTeamData(team: Team | null, members: TeamMember[], dailyStats: TeamDailyStats | null) {
-    const memberViews = members.map((member) => toMemberView(member, team));
+  applyTeamData(data: TeamPageData) {
+    const { team, members, dailyStats, runtime } = data;
+    const viewerCanManage = Boolean(runtime?.capabilities.canManage);
+    const memberViews = members.map((member) => toMemberView(member, team, viewerCanManage));
     const companionRows = buildCompanionRows(memberViews);
+    const selfRecord = data.selfMember || members.find((member) => member.isSelf) || null;
+    const selfMember = selfRecord ? toMemberView(selfRecord, team, viewerCanManage) : null;
+    const effectiveMemberCount = Math.max(
+      Number(team?.memberCount || 0),
+      Number(dailyStats?.totalMembers || 0),
+      members.length,
+    );
+    const reportedMemberCounts = [
+      Number(team?.memberCount || 0),
+      Number(dailyStats?.totalMembers || 0),
+      members.length,
+    ].filter((count) => count > 0);
+    const memberDataInconsistent = Boolean(
+      team
+      && (
+        !selfRecord
+        || effectiveMemberCount < 1
+        || new Set(reportedMemberCounts).size > 1
+      )
+    );
+    if (memberDataInconsistent) {
+      this.setData({
+        status: "error",
+        runtime: runtime || null,
+        errorMessage: "小队成员数据暂时不同步，请重新加载。",
+        creating: false,
+        joining: false,
+        markingComplete: false,
+        canInviteFriends: false,
+        settingsCanEditTeam: false,
+      });
+      return;
+    }
+    const teamViewMode: TeamViewMode = effectiveMemberCount === 1 && Boolean(selfMember) ? "solo" : "group";
+    const canInvite = Boolean(
+      team
+      && effectiveMemberCount < Number(team.maxMembers || 50)
+      && runtime?.capabilities.canInvite,
+    );
+    const inviteUnavailableText = effectiveMemberCount >= Number(team?.maxMembers || 50)
+      ? "小队已满"
+      : runtime?.mode !== "live"
+        ? "联网后可邀请"
+        : "队长已关闭成员邀请";
 
     this.setData({
       status: team ? "ready" : "empty",
+      runtime: runtime || null,
       team,
       members: memberViews,
+      selfMember,
+      teamViewMode,
       dailyStats,
       displayTeamName: normalizeTeamDisplayName(team),
       displayRoomCode: displayRoomCode(team?.roomCode),
@@ -614,18 +707,20 @@ slogan: "",
       heroAvatarSlots: buildHeroAvatarSlots(memberViews),
       teamStats: team ? buildTeamStats(team, dailyStats, memberViews) : this.data.teamStats,
       companionRows,
-      companionExtra: Math.max(0, memberViews.length - COMPANION_PREVIEW_MAX),
+      companionExtra: Math.max(0, memberViews.length - new Set(companionRows.map((item) => item.id)).size),
+      selfRankNote: buildSelfRankNote(memberViews),
       selfActionPrompt: buildSelfActionPrompt(memberViews),
-      activityList: buildActivityList(memberViews),
+      activityList: teamViewMode === "solo" ? [] : this.data.activityList,
+      activityStatus: teamViewMode === "solo" ? "idle" : this.data.activityStatus,
       errorMessage: "",
       creating: false,
       joining: false,
       markingComplete: false,
       encouragingMemberId: "",
-      isOwner: members.find((member) => member.isSelf)?.role === "owner",
-      settingsCanEditTeam: members.find((member) => member.isSelf)?.role === "owner",
-      canInviteFriends: members.find((member) => member.isSelf)?.role === "owner"
-        || Boolean((team as (Team & { allowMemberInvite?: boolean }) | null)?.allowMemberInvite),
+      isOwner: selfRecord?.role === "owner",
+      settingsCanEditTeam: Boolean(runtime?.capabilities.canManage && selfRecord?.role === "owner"),
+      canInviteFriends: canInvite,
+      inviteUnavailableText,
     });
   },
 
@@ -644,7 +739,7 @@ slogan: "",
         growthMinutes: snapshot.summary.actualMinutes,
         todayStatus: snapshot.todayStatus,
       });
-      this.applyTeamData(data.team, data.members, data.dailyStats);
+      this.applyTeamData(data);
       wx.showToast({ title: "小队已创建", icon: "success" });
     } catch (error) {
       this.setData({ creating: false });
@@ -682,8 +777,9 @@ slogan: "",
         growthMinutes: snapshot.summary.actualMinutes,
         todayStatus: snapshot.todayStatus,
       });
-      this.applyTeamData(data.team, data.members, data.dailyStats);
-      this.setData({ joinPopupVisible: false, roomCodeInput: "" });
+      this.applyTeamData(data);
+      this.setData({ joinPopupVisible: false, roomCodeInput: "", teamNotificationPromptVisible: this.data.teamNotificationAvailable });
+      if (this.data.teamNotificationAvailable) recordNotificationPrompt("team_activity");
       wx.showToast({ title: "已加入小队", icon: "success" });
     } catch (error) {
       this.setData({ joining: false });
@@ -713,13 +809,9 @@ slogan: "",
         name: this.data.team.name,
         anonymityMode: enabled ? "anonymous" : "public",
         allowMemberInvite: this.data.team.allowMemberInvite,
-        slogan: this.data.team.slogan || "",
+        announcement: this.data.team.announcement || this.data.team.slogan || "",
       });
-      // 乐观更新：云函数可能未返回 slogan，用本地值补上
-      if (data.team && !data.team.slogan && this.data.team.slogan) {
-        data.team = { ...data.team, slogan: this.data.team.slogan };
-      }
-      this.applyTeamData(data.team, data.members, data.dailyStats);
+      this.applyTeamData(data);
       this.setData({ savingSettings: false });
       wx.showToast({ title: enabled ? "匿名模式已开启" : "匿名模式已关闭", icon: "success" });
     } catch (error) {
@@ -784,13 +876,13 @@ slogan: "",
 
   openTeamSettings() {
     const team = this.data.team;
-    const self = this.data.members.find((member) => member.isSelf);
+    const self = this.data.selfMember || this.data.members.find((member) => member.isSelf);
     if (!team || !self) return;
-this.setData({
-settingsVisible: true,
-settingsCanEditTeam: canManageTeam(team),
-settingsDraft: { name: team.name, slogan: team.slogan || "" } as TeamSettingsDraft,
-});
+    this.setData({
+      settingsVisible: true,
+      settingsCanEditTeam: Boolean(this.data.runtime?.capabilities.canManage && self.role === "owner"),
+      settingsDraft: { name: team.name, slogan: team.announcement || team.slogan || "" } as TeamSettingsDraft,
+    });
   },
 
   closeTeamSettings() {
@@ -820,14 +912,10 @@ settingsDraft: { name: team.name, slogan: team.slogan || "" } as TeamSettingsDra
     this.setData({ savingSettings: true });
     try {
       if (this.data.settingsCanEditTeam) {
-        await updateTeamSettings({ name, slogan });
+        await updateTeamSettings({ name, announcement: slogan });
       }
-      const data = await getMyTeam({ pageSize: 20 });
-      // 乐观更新：云函数可能未返回 slogan，用本地保存的值补上
-      if (data.team && !data.team.slogan && slogan) {
-        data.team = { ...data.team, slogan };
-      }
-      this.applyTeamData(data.team, data.members, data.dailyStats);
+      const data = await getMyTeam({ pageSize: 50 });
+      this.applyTeamData(data);
       this.setData({ settingsVisible: false, savingSettings: false });
       wx.showToast({ title: "小队设置已保存", icon: "success" });
     } catch (error) {
@@ -850,7 +938,7 @@ settingsDraft: { name: team.name, slogan: team.slogan || "" } as TeamSettingsDra
         try {
           if (isOwner) await dissolveTeam(); else await leaveTeam();
           this.setData({ settingsVisible: false, teamInfoVisible: false, memberDetailVisible: false, selectedMember: null, savingSettings: false });
-          this.applyTeamData(null, [], null);
+          this.applyTeamData({ team: null, members: [], selfMember: null, dailyStats: null, runtime: this.data.runtime || undefined });
           wx.showToast({ title: isOwner ? "小队已解散" : "已退出小队", icon: "none" });
         } catch (error) {
           this.setData({ savingSettings: false });
@@ -882,7 +970,7 @@ settingsDraft: { name: team.name, slogan: team.slogan || "" } as TeamSettingsDra
         growthMinutes: nextSnapshot.summary.actualMinutes,
         todayStatus: nextSnapshot.todayStatus,
       });
-      this.applyTeamData(data.team, data.members, data.dailyStats);
+      this.applyTeamData(data);
       wx.showToast({ title: "今日行动已完成", icon: "success" });
       wx.nextTick(() => wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 }));
     } catch (error) {
@@ -910,8 +998,8 @@ settingsDraft: { name: team.name, slogan: team.slogan || "" } as TeamSettingsDra
     this.setData({ encouragingMemberId: memberId });
     try {
       await sendEncouragement({ memberId, type });
-      const data = await getMyTeam({ pageSize: 20 });
-      this.applyTeamData(data.team, data.members, data.dailyStats);
+      const data = await getMyTeam({ pageSize: 50 });
+      this.applyTeamData(data);
       wx.showToast({ title: "已送出鼓励", icon: "none" });
       wx.nextTick(() => wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 }));
     } catch (error) {
@@ -936,7 +1024,7 @@ settingsDraft: { name: team.name, slogan: team.slogan || "" } as TeamSettingsDra
           await updateSelfDisplayMode(option.mode);
           await updateSelfTaskDetailVisible(option.detail);
           const data = await this.syncCurrentActivity();
-          this.applyTeamData(data.team, data.members, data.dailyStats);
+          this.applyTeamData(data);
           this.setData({ memberDetailVisible: false, selectedMember: null });
           wx.showToast({ title: "展示方式已更新", icon: "success" });
         } catch (error) {
@@ -964,8 +1052,8 @@ settingsDraft: { name: team.name, slogan: team.slogan || "" } as TeamSettingsDra
     if (!member) return;
     if (member.isSelf) {
       const data = await this.syncCurrentActivity();
-      const memberViews = data.members.map((item) => toMemberView(item, data.team));
-      this.applyTeamData(data.team, data.members, data.dailyStats);
+      const memberViews = data.members.map((item) => toMemberView(item, data.team, Boolean(data.runtime?.capabilities.canManage)));
+      this.applyTeamData(data);
       member = memberViews.find((item) => item.id === memberId) || member;
     }
     if (!member.canOpenDetail) {

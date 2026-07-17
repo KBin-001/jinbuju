@@ -14,6 +14,7 @@ const {
   isValidEncouragementType,
   normalizeRoomCode,
   publicMemberId,
+  resolveMemberTodayStatus,
 } = require("./team-rules");
 
 const db = cloud.database();
@@ -128,7 +129,7 @@ function getTeamRuntimeInfo() {
     buildId: TEAM_BUILD_ID,
     supportedActions: TEAM_SUPPORTED_ACTIONS.slice(),
     maxMembers: MAX_TEAM_MEMBERS,
-    teamSettings: { anonymityModes: ["anonymous", "public"], defaultAnonymityMode: "anonymous", allowMemberInviteDefault: true, editableFields: ["name", "anonymityMode", "allowMemberInvite"] },
+    teamSettings: { anonymityModes: ["anonymous", "public"], defaultAnonymityMode: "anonymous", allowMemberInviteDefault: true, editableFields: ["name", "announcement", "anonymityMode", "allowMemberInvite"] },
   };
 }
 
@@ -143,6 +144,7 @@ async function getMemberProgress(teamId, membership, currentUserId, businessDate
   const completed = visibleTasks.filter((task) => task.status === "completed");
   const partial = visibleTasks.filter((task) => task.status === "partially_completed");
   const eligible = visibleTasks.filter((task) => task.status !== "skipped");
+  const skipped = visibleTasks.filter((task) => task.status === "skipped");
   const growthMinutes = [...completed, ...partial].reduce((sum, task) => sum + Math.max(0, Number(task.actualMinutes || 0)), 0);
   const completionRate = eligible.length ? Math.round(((completed.length + partial.length * 0.5) / eligible.length) * 100) : 0;
   const completedAt = completed.length && completed.length === eligible.length
@@ -161,7 +163,12 @@ async function getMemberProgress(teamId, membership, currentUserId, businessDate
   const displayMode = identity.anonymous ? "anonymous" : "public";
   const anonymous = identity.anonymous;
   const detailsVisible = isSelf || (!anonymous && membership.taskDetailVisible !== false);
-  const status = !eligible.length ? "not_started" : completionRate >= 100 ? "completed" : completionRate > 0 || growthMinutes > 0 ? "partial" : "not_started";
+  const status = resolveMemberTodayStatus({
+    visibleCount: visibleTasks.length,
+    skippedCount: skipped.length,
+    completionRate,
+    growthMinutes,
+  });
   const encouragementId = stableId("encouragement", `${teamId}:${currentUserId}:${membership.userId}:${businessDate}`);
   const encouraged = await db.collection("encouragements").doc(encouragementId).get().catch(() => null);
   const publicId = publicMemberId(teamId, membership.userId);
@@ -194,12 +201,12 @@ async function buildTeamPage(openid, event = {}) {
   const account = await getUser(openid);
   const membership = await membershipFor(account.userId, openid);
   if (!membership) {
-    return { team: null, members: [], dailyStats: null, page: 1, pageSize: Math.min(MAX_TEAM_MEMBERS, Math.max(1, Number(event.pageSize || 20))), total: 0, hasMore: false };
+    return { team: null, members: [], selfMember: null, dailyStats: null, page: 1, pageSize: Math.min(MAX_TEAM_MEMBERS, Math.max(1, Number(event.pageSize || MAX_TEAM_MEMBERS))), total: 0, hasMore: false };
   }
   if (detectMembershipSchema(membership) === 1) fail("TEAM_MIGRATION_REQUIRED", "旧版小队数据需要先完成迁移");
   const teamResult = await db.collection("teams").doc(membership.teamId).get().catch(() => null);
   const team = teamResult && teamResult.data;
-  if (!team || team.status !== "active") return { team: null, members: [], dailyStats: null, page: 1, pageSize: 20, total: 0, hasMore: false };
+  if (!team || team.status !== "active") return { team: null, members: [], selfMember: null, dailyStats: null, page: 1, pageSize: MAX_TEAM_MEMBERS, total: 0, hasMore: false };
   const context = { ...account, membership, team };
   const allMemberships = await list("team_members", { teamId: context.team._id, status: "active" }, MAX_TEAM_MEMBERS);
   const businessDate = formatBusinessDate();
@@ -214,8 +221,9 @@ async function buildTeamPage(openid, event = {}) {
     }
   }
   members.sort(compareRank);
+  members.forEach((member, index) => { member.rank = index + 1; });
   const page = Math.max(1, Math.floor(Number(event.page || 1)));
-  const pageSize = Math.min(MAX_TEAM_MEMBERS, Math.max(1, Math.floor(Number(event.pageSize || 20))));
+  const pageSize = Math.min(MAX_TEAM_MEMBERS, Math.max(1, Math.floor(Number(event.pageSize || MAX_TEAM_MEMBERS))));
   const start = (page - 1) * pageSize;
   const totalGrowthMinutes = members.reduce((sum, member) => sum + member.growthMinutes, 0);
   const completedMembers = members.filter((member) => member.todayStatus === "completed").length;
@@ -233,9 +241,11 @@ async function buildTeamPage(openid, event = {}) {
       description: context.team.announcement || "", status: "active", updatedAt: publicDate(context.team.updatedAt), schemaVersion: Number(context.team.schemaVersion || TEAM_SCHEMA_VERSION),
     },
     members: members.slice(start, start + pageSize),
+    selfMember: members.find((member) => member.isSelf) || null,
     dailyStats: {
       teamId: context.team._id, date: businessDate, totalMembers: members.length, completedMembers, partialMembers,
-      notStartedMembers: members.filter((member) => member.todayStatus === "not_started").length, missedMembers: 0,
+      notStartedMembers: members.filter((member) => member.todayStatus === "not_started").length,
+      missedMembers: members.filter((member) => member.todayStatus === "missed").length,
       totalGrowthMinutes, encouragementCount: members.reduce((sum, member) => sum + member.encouragementCount, 0),
       completionRate: members.length ? Math.round(members.reduce((sum, member) => sum + member.completionRate, 0) / members.length) : 0,
     },
@@ -380,6 +390,13 @@ async function updateTeamSettings(openid, event) {
     if (!["anonymous", "public"].includes(input.anonymityMode)) fail("INVALID_ANONYMITY_MODE", "匿名模式无效");
     changes.anonymityMode = input.anonymityMode;
   }
+  if (Object.prototype.hasOwnProperty.call(input, "announcement") || Object.prototype.hasOwnProperty.call(input, "slogan")) {
+    const announcement = cleanText(
+      Object.prototype.hasOwnProperty.call(input, "announcement") ? input.announcement : input.slogan,
+      30,
+    );
+    changes.announcement = announcement;
+  }
   if (typeof input.allowMemberInvite === "boolean") changes.allowMemberInvite = input.allowMemberInvite;
   await db.collection("teams").doc(context.team._id).update({ data: changes });
   return { updated: true };
@@ -504,4 +521,22 @@ async function reviewTeamJoinRequest(openid, event) {
   return { teamId: context.team._id, joined: Boolean(event.approved) };
 }
 
-module.exports = { ENCOURAGEMENT_TYPES, createTeam, detectMembershipSchema, dissolveTeam, getMyTeam: buildTeamPage, getTeamPage: buildTeamPage, getTeamActivityFeed, getTeamInviteInfo, getTeamRuntimeInfo, joinTeam: joinTeamByRoomCode, joinTeamByRoomCode, leaveTeam, publicMemberId, removeTeamMember, reviewTeamJoinRequest, sendEncouragement, syncTeamActivity, transferTeamOwner, updateTeamMemberPrivacy, updateTeamSettings };
+async function recordManualCompletionEvent(userId, eventId, completedTasks) {
+  const membership = await membershipFor(userId, "");
+  if (!membership || detectMembershipSchema(membership) !== 2 || !Array.isArray(completedTasks) || !completedTasks.length) {
+    return { recorded: false };
+  }
+  const firstTask = completedTasks[0];
+  const businessDate = /^\d{4}-\d{2}-\d{2}$/.test(String(firstTask.currentDate || ""))
+    ? firstTask.currentDate
+    : formatBusinessDate();
+  await recordEvent(membership.teamId, userId, "completed", {
+    businessDate,
+    growthMinutes: completedTasks.reduce((sum, task) => sum + Math.max(0, Number(task.actualMinutes || 0)), 0),
+    actionCount: completedTasks.length,
+    dedupeKey: eventId,
+  });
+  return { recorded: true, teamId: membership.teamId };
+}
+
+module.exports = { ENCOURAGEMENT_TYPES, createTeam, detectMembershipSchema, dissolveTeam, getMyTeam: buildTeamPage, getTeamPage: buildTeamPage, getTeamActivityFeed, getTeamInviteInfo, getTeamRuntimeInfo, joinTeam: joinTeamByRoomCode, joinTeamByRoomCode, leaveTeam, publicMemberId, recordManualCompletionEvent, removeTeamMember, reviewTeamJoinRequest, sendEncouragement, syncTeamActivity, transferTeamOwner, updateTeamMemberPrivacy, updateTeamSettings };

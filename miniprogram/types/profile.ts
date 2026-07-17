@@ -74,8 +74,10 @@ export interface HistoryGoalSummary {
   completedTaskCount: number;
 }
 
+export type CommunityEntryStatus = "preparing" | "ready" | "expired";
+
 export interface CommunityEntry {
-  unlocked: boolean;
+  status: CommunityEntryStatus;
   title: string;
   description: string;
   imageFileId?: string;

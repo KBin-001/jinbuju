@@ -314,7 +314,7 @@ Page(withAppTheme({
   async loadMembers() {
     if (!this.data.rawTeam) this.setData({ status: "loading", errorMessage: "", showCacheNotice: false });
     try {
-      const { team, members, runtime } = await getMyTeam({ pageSize: 20 });
+      const { team, members, runtime } = await getMyTeam({ pageSize: 50 });
       this.applyMembers(team, members, Boolean(runtime?.stale || runtime?.mode === "legacy"));
     } catch (error) {
       const cached = getCachedTeam();

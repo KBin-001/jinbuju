@@ -96,6 +96,28 @@ export function getCommunityEntry(): Promise<CommunityEntry> {
   );
 }
 
+export function resolveCommunityQrUrl(imageFileId: string): Promise<string> {
+  const normalizedFileId = String(imageFileId || "").trim();
+  if (!normalizedFileId.startsWith("cloud://")) {
+    return Promise.reject(createError("COMMUNITY_IMAGE_INVALID", "社群二维码配置无效。"));
+  }
+  if (!wx.cloud || typeof wx.cloud.getTempFileURL !== "function") {
+    return Promise.reject(createError("COMMUNITY_IMAGE_UNAVAILABLE", "当前暂时无法加载社群二维码。"));
+  }
+
+  return wx.cloud.getTempFileURL({ fileList: [normalizedFileId] }).then((result) => {
+    const file = Array.isArray(result.fileList) ? result.fileList[0] : undefined;
+    const tempFileURL = String(file?.tempFileURL || "").trim();
+    if (!file || file.status !== 0 || !tempFileURL) {
+      throw createError("COMMUNITY_IMAGE_UNAVAILABLE", "社群二维码暂时无法加载，请稍后重试。");
+    }
+    return tempFileURL;
+  }).catch((error: unknown) => {
+    if (error instanceof Error && (error as ProfileServiceError).code) throw error;
+    throw createError("COMMUNITY_IMAGE_UNAVAILABLE", "社群二维码暂时无法加载，请稍后重试。");
+  });
+}
+
 export function deleteUserData(
   confirmation: string,
 ): Promise<DeleteUserDataResult> {

@@ -1,11 +1,12 @@
 import { FEATURE_FLAGS } from "../../config/features";
 import { getActiveGoal, getActiveGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
-import { deleteTask, getTask, getTasksByGoal, SaveActionRecordInput, updateActionRecord } from "../../services/manualTask";
+import { getTaskHistoryByGoal } from "../../services/manualTask";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
+import { getTabHeaderLayout } from "../../utils/tabHeader";
 
 type TrendRange = "week" | "month" | "year";
 type HeatLevel = 0 | 1 | 2 | 3 | 4;
@@ -22,16 +23,10 @@ interface OverviewStat {
   unit: string;
 }
 
-interface AiCoachView {
-  periodLabel: string;
-  message: string;
-}
-
 interface GoalOption {
   id: string;
   title: string;
-  progressPercent: number;
-  statusText: string;
+  periodText: string;
   active: boolean;
 }
 
@@ -47,6 +42,9 @@ interface TrendBar {
   isMax: boolean;
   isToday: boolean;
   active: boolean;
+  hasNext: boolean;
+  labelsOverlap: boolean;
+  lineClipPath: string;
   tooltipAlign: "left" | "center" | "right";
 }
 
@@ -54,9 +52,11 @@ interface BarChartData {
   bars: TrendBar[];
   maxLabel: string;
   midLabel: string;
+  lowLabel: string;
   maxValue: number;
   maxActions: number;
   midActions: number;
+  lowActions: number;
   barWidth: number;
   insufficient: boolean;
 }
@@ -64,18 +64,20 @@ interface BarChartData {
 interface TrendSummary {
   totalMinutes: number;
   totalActions: number;
-  avgMinutes: number;
-  streakDays: number;
-  completionRate: number;
-  compareText: string;
-  compareTone: "up" | "down" | "flat";
-  bestInvestLabel: string;
-  adviceText: string;
-  adviceTitle: string;
-  adviceDetail: string;
-  vsYesterdayText: string;
   summaryText: string;
   insufficient: boolean;
+}
+
+interface TrendHighlight {
+  value: number;
+  unit: string;
+  label: string;
+}
+
+interface TrendHighlights {
+  maxMinutes: TrendHighlight;
+  maxActions: TrendHighlight;
+  streak: TrendHighlight;
 }
 
 interface HeatmapDay {
@@ -137,34 +139,11 @@ interface SelectedHeatmapDay {
   hasRecord: boolean;
 }
 
-type MilestoneState = "achieved" | "current" | "locked";
-
-interface MilestoneView {
-  days: number;
-  label: string;
-  state: MilestoneState;
-  statusText: string;
-}
-
-interface RecentRecord {
-  id: string;
-  title: string;
-  statusText: string;
-  minutesText: string;
-}
-
-interface MedalState {
-  achieved: boolean;
-  current: boolean;
-}
-
 const TREND_RANGES: Array<{ key: TrendRange; label: string }> = [
   { key: "week", label: "周" },
   { key: "month", label: "月" },
   { key: "year", label: "年" },
 ];
-
-const MILESTONE_DAYS = [7, 14, 30, 60];
 
 const HEATMAP_CELL_SIZE = 14;
 const HEATMAP_CELL_GAP = 5;
@@ -174,19 +153,6 @@ const HEATMAP_WEEKDAY_WIDTH = 36;
 const WEEK_BAR_WIDTH = 34;
 const MONTH_BAR_WIDTH = 50;
 
-function getProgressLayout(): { menuTop: number; menuHeight: number } {
-  try {
-    const windowInfo = wx.getWindowInfo();
-    const menu = wx.getMenuButtonBoundingClientRect();
-    return {
-      menuTop: Math.max(windowInfo.statusBarHeight || 0, menu.top || 0),
-      menuHeight: menu.height || 32,
-    };
-  } catch (_) {
-    return { menuTop: 28, menuHeight: 32 };
-  }
-}
-
 function toDate(value: string): Date {
   return new Date(`${value}T00:00:00`);
 }
@@ -195,32 +161,12 @@ function shortDate(value?: string): string {
   return value ? value.slice(0, 10) : "";
 }
 
-function completionRate(summary: ProgressSummary | null): number {
-  if (!summary || summary.totalTasks <= 0) return 0;
-  return Math.round((summary.completedTasks / summary.totalTasks) * 100);
-}
-
-function levelLabel(actionDays: number): string {
-  if (actionDays >= 60) return "Lv.5 · 长期主义者";
-  if (actionDays >= 30) return "Lv.4 · 稳定推进者";
-  if (actionDays >= 14) return "Lv.3 · 行动熟手";
-  if (actionDays >= 7) return "Lv.2 · 自律新星";
-  return "Lv.1 · 自律新兵";
-}
-
-function goalStatusText(completedTasks: number, totalTasks: number): string {
-  if (totalTasks <= 0) return "添加行动后开始记录";
-  return `累计完成 ${Math.max(0, completedTasks)} / ${totalTasks} 项行动`;
-}
-
 function goalPeriod(goal: Goal | null): string {
   if (!goal) return "";
   const start = shortDate(goal.startedAt || goal.createdAt);
-  return start ? `目标周期 · ${start} 起` : "目标周期 · 已开始";
-}
-
-function growthConclusionTitle(range: TrendRange): string {
-  return range === "year" ? "年度行动总结" : range === "month" ? "本月行动总结" : "本周行动总结";
+  if (!start) return "持续目标 · 已开始";
+  const [year, month, day] = start.split("-").map(Number);
+  return `持续目标 · ${year}年${month}月${day}日开始`;
 }
 
 function trendPeriodLabel(range: TrendRange, today: string): string {
@@ -241,45 +187,17 @@ function buildTrendRanges(activeKey: TrendRange): TrendRangeOption[] {
   return TREND_RANGES.map((item) => ({ ...item, active: item.key === activeKey }));
 }
 
-function buildAiCoachView(goal: Goal | null, trendRange: TrendRange, trendSummary: TrendSummary): AiCoachView {
-  const periodLabel = trendRange === "month" ? "本月复盘" : trendRange === "year" ? "年度复盘" : "本周复盘";
-  const goalTitle = goal?.title || "当前目标";
-  if (trendSummary.insufficient || trendSummary.totalActions <= 0) {
-    return {
-      periodLabel,
-      message: `先为“${goalTitle}”完成一次小行动，成长记录会从这一步慢慢清晰起来。`,
-    };
-  }
-  if (trendSummary.compareTone === "up") {
-    return {
-      periodLabel,
-      message: `这段时间的行动节奏正在变稳，下一步继续为“${goalTitle}”留出一段专注时间。`,
-    };
-  }
-  if (trendSummary.compareTone === "down") {
-    return {
-      periodLabel,
-      message: `节奏偶尔放慢没关系，先为“${goalTitle}”选一件最容易开始的小事。`,
-    };
-  }
-  return {
-    periodLabel,
-    message: `保持现在的节奏，继续为“${goalTitle}”完成一件清晰、轻量的小事。`,
-  };
+function coachScopeLabel(range: TrendRange): string {
+  return range === "year" ? "今年" : range === "month" ? "本月" : "本周";
 }
 
-function buildGoalOptions(goals: Goal[], activeGoalId: string, today: string): GoalOption[] {
-  return goals.map((goal) => {
-    const summary = getProgressSummary(goal.id, today);
-    const rate = completionRate(summary);
-    return {
-      id: goal.id,
-      title: goal.title,
-      progressPercent: rate,
-      statusText: goalStatusText(summary.completedTasks, summary.totalTasks),
-      active: goal.id === activeGoalId,
-    };
-  });
+function buildGoalOptions(goals: Goal[], activeGoalId: string): GoalOption[] {
+  return goals.map((goal) => ({
+    id: goal.id,
+    title: goal.title,
+    periodText: goalPeriod(goal),
+    active: goal.id === activeGoalId,
+  }));
 }
 
 function niceMaxMinutes(value: number): number {
@@ -297,9 +215,9 @@ function niceMaxMinutes(value: number): number {
 }
 
 function niceMaxActions(value: number): number {
-  if (value <= 4) return 4;
-  if (value <= 8) return 8;
-  return Math.ceil(value / 5) * 5;
+  if (value <= 3) return 3;
+  if (value <= 6) return 6;
+  return Math.ceil(value / 3) * 3;
 }
 
 function formatAxisLabel(minutes: number): string {
@@ -321,10 +239,17 @@ function taskBusinessDate(task: ActionTask): string {
   return task.activityDate || task.currentDate;
 }
 
+function isTrendTask(task: ActionTask): boolean {
+  if (task.deletedAt || task.status === "skipped") return false;
+  if (task.status === "completed" || task.status === "partially_completed") return true;
+  return task.status === "rescheduled"
+    && task.statusBeforeReschedule === "partially_completed"
+    && (task.actualMinutes || 0) > 0;
+}
+
 function inRange(task: ActionTask, start: string, end: string): boolean {
   const date = taskBusinessDate(task);
-  if (task.deletedAt || task.status === "skipped") return false;
-  if (task.status === "rescheduled" && !(task.actualMinutes || 0)) return false;
+  if (!isTrendTask(task)) return false;
   return date >= start && date <= end;
 }
 
@@ -338,72 +263,15 @@ function formatShortDate(date: string): string {
   return `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
 }
 
-function sumRange(tasks: ActionTask[], start: string, end: string): { minutes: number; actions: number; totalActions: number } {
+function sumRange(tasks: ActionTask[], start: string, end: string): { minutes: number; actions: number } {
   let minutes = 0;
   let actions = 0;
-  let totalActions = 0;
   for (const task of tasks) {
     if (!inRange(task, start, end)) continue;
-    totalActions += 1;
     minutes += task.actualMinutes || 0;
     if (task.status === "completed") actions += 1;
   }
-  return { minutes, actions, totalActions };
-}
-
-function compareText(current: number, previous: number, label: string): { text: string; tone: TrendSummary["compareTone"] } {
-  if (previous <= 0 && current <= 0) return { text: `${label}暂无对比`, tone: "flat" };
-  if (previous <= 0) return { text: `${label}新增记录`, tone: "up" };
-  const rate = Math.round(((current - previous) / previous) * 100);
-  if (rate > 0) return { text: `${label} +${rate}%`, tone: "up" };
-  if (rate < 0) return { text: `${label} ${rate}%`, tone: "down" };
-  return { text: `${label} 持平`, tone: "flat" };
-}
-
-function buildAdviceText(todayMinutes: number, avgMinutes: number, range: TrendRange): string {
-  if (todayMinutes <= 0 && avgMinutes <= 0) return "先记录一次投入，趋势线就会开始出现。建议明天保持 30 分钟以上。";
-  if (todayMinutes >= avgMinutes && todayMinutes > 0) {
-    const target = Math.max(45, Math.ceil(todayMinutes / 5) * 5);
-    return `今日已投入 ${todayMinutes} 分钟，达到${range === "week" ? "本周" : "本月"}日均水平。建议明天保持 ${target} 分钟以上。`;
-  }
-  const target = Math.max(45, avgMinutes ? Math.ceil(avgMinutes / 5) * 5 : 45);
-  return `今日投入 ${todayMinutes} 分钟，低于${range === "week" ? "本周" : "本月"}日均 ${avgMinutes} 分钟。建议明天保持 ${target} 分钟以上。`;
-}
-
-/** 将建议拆分为「主句（加粗）」和「补充说明（常规）」两段，供 AI 教练气泡分层展示 */
-function buildAdviceParts(todayMinutes: number, avgMinutes: number, range: TrendRange): { adviceTitle: string; adviceDetail: string } {
-  const rangeLabel = range === "week" ? "本周" : "本月";
-  if (todayMinutes <= 0 && avgMinutes <= 0) {
-    return { adviceTitle: "还没有投入记录", adviceDetail: "先记录一次投入，趋势线就会开始出现。" };
-  }
-  if (todayMinutes >= avgMinutes && todayMinutes > 0) {
-    const target = Math.max(45, Math.ceil(todayMinutes / 5) * 5);
-    return {
-      adviceTitle: `今日投入 ${todayMinutes} 分钟，达到${rangeLabel}平均水平。`,
-      adviceDetail: `建议明天继续保持 ${target} 分钟以上，连续性会更好。`,
-    };
-  }
-  const target = Math.max(45, avgMinutes ? Math.ceil(avgMinutes / 5) * 5 : 45);
-  return {
-    adviceTitle: `今日投入 ${todayMinutes} 分钟，低于${rangeLabel}平均 ${avgMinutes} 分钟。`,
-    adviceDetail: `建议明天保持 ${target} 分钟以上，逐步追回节奏。`,
-  };
-}
-
-/** 对比昨日投入差值文案
- * 传入 periodHasData 用于区分"整个周期无数据"与"今日/昨日恰好无记录"两种场景，
- * 避免本周平均/连续投入有数据时，对比昨日却显示"暂无数据"造成信息不一致。
- */
-function buildVsYesterdayText(todayMinutes: number, yesterdayMinutes: number, periodHasData: boolean = true): string {
-  if (todayMinutes <= 0 && yesterdayMinutes <= 0) {
-    return periodHasData ? "今日暂未记录" : "暂无数据";
-  }
-  if (todayMinutes <= 0) return `-${yesterdayMinutes} 分钟`;
-  if (yesterdayMinutes <= 0) return `+${todayMinutes} 分钟`;
-  const diff = todayMinutes - yesterdayMinutes;
-  if (diff > 0) return `+${diff} 分钟`;
-  if (diff < 0) return `${diff} 分钟`;
-  return "持平";
+  return { minutes, actions };
 }
 
 interface WeekBucket {
@@ -463,19 +331,6 @@ function buildMonthBuckets(today: string): MonthBucket[] {
   return buckets;
 }
 
-function computeStreakDays(taskDates: string[], endDate: string): number {
-  const set = new Set(taskDates);
-  let streak = 0;
-  let cursor = toDate(endDate);
-  while (true) {
-    const dateStr = formatDate(cursor);
-    if (!set.has(dateStr)) break;
-    streak += 1;
-    cursor = addDays(cursor, -1);
-  }
-  return streak;
-}
-
 function buildBarChart(
   bars: Array<{ key: string; label: string; subLabel: string; minutes: number; actions: number; isToday: boolean }>,
   selectedKey: string | undefined,
@@ -483,15 +338,13 @@ function buildBarChart(
 ): BarChartData {
   const maxValue = niceMaxMinutes(Math.max(30, ...bars.map((item) => item.minutes)));
   const maxActions = niceMaxActions(Math.max(1, ...bars.map((item) => item.actions)));
-  const nonZeroCount = bars.filter((item) => item.minutes > 0).length;
+  const nonZeroCount = bars.filter((item) => item.minutes > 0 || item.actions > 0).length;
   const maxMinuteValue = Math.max(...bars.map((item) => item.minutes));
-  const selected = selectedKey && bars.some((item) => item.key === selectedKey)
-    ? selectedKey
-    : [...bars].reverse().find((item) => item.minutes > 0)?.key || bars[bars.length - 1]?.key || "";
+  const selected = selectedKey && bars.some((item) => item.key === selectedKey) ? selectedKey : "";
 
   const trendBars: TrendBar[] = bars.map((item, index) => {
-    const heightPercent = item.minutes <= 0 ? 0 : Math.max(4, (item.minutes / maxValue) * 78);
-    const actionHeightPercent = item.actions <= 0 ? 2 : Math.max(6, (item.actions / maxActions) * 78);
+    const heightPercent = item.minutes <= 0 ? 0 : Math.max(4, (item.minutes / maxValue) * 100);
+    const actionHeightPercent = item.actions <= 0 ? 0 : Math.max(5, (item.actions / maxActions) * 100);
     const tooltipAlign: TrendBar["tooltipAlign"] = index === 0 ? "left" : index === bars.length - 1 ? "right" : "center";
     return {
       key: item.key,
@@ -501,21 +354,39 @@ function buildBarChart(
       actions: item.actions,
       heightPercent,
       actionHeightPercent,
-      tooltipBottomPercent: Math.min(68, heightPercent),
+      tooltipBottomPercent: Math.min(88, heightPercent),
       isMax: item.minutes > 0 && item.minutes === maxMinuteValue,
       isToday: item.isToday,
       active: item.key === selected,
+      hasNext: false,
+      labelsOverlap: item.minutes > 0 && item.actions > 0 && Math.abs(heightPercent - actionHeightPercent) <= 9,
+      lineClipPath: "",
       tooltipAlign,
     };
   });
 
+  for (let index = 0; index < trendBars.length - 1; index += 1) {
+    const current = trendBars[index];
+    const next = trendBars[index + 1];
+    const currentTop = 100 - current.actionHeightPercent;
+    const nextTop = 100 - next.actionHeightPercent;
+    const currentUpper = Math.max(0, currentTop - 1.15);
+    const currentLower = Math.min(100, currentTop + 1.15);
+    const nextUpper = Math.max(0, nextTop - 1.15);
+    const nextLower = Math.min(100, nextTop + 1.15);
+    current.hasNext = true;
+    current.lineClipPath = `polygon(0 ${currentUpper}%,100% ${nextUpper}%,100% ${nextLower}%,0 ${currentLower}%)`;
+  }
+
   return {
     bars: trendBars,
     maxLabel: formatAxisLabel(maxValue),
-    midLabel: formatAxisLabel(Math.round(maxValue / 2)),
+    midLabel: formatAxisLabel(Math.round(maxValue * 2 / 3)),
+    lowLabel: formatAxisLabel(Math.round(maxValue / 3)),
     maxValue,
     maxActions,
-    midActions: Math.round(maxActions / 2),
+    midActions: Math.round(maxActions * 2 / 3),
+    lowActions: Math.round(maxActions / 3),
     barWidth,
     insufficient: nonZeroCount < 1,
   };
@@ -529,27 +400,13 @@ function buildWeekSummary(
   const perDay = buckets.map((bucket) => sumRange(tasks, bucket.start, bucket.end));
   const totalMinutes = perDay.reduce((sum, item) => sum + item.minutes, 0);
   const totalActions = perDay.reduce((sum, item) => sum + item.actions, 0);
-  const totalActionCount = perDay.reduce((sum, item) => sum + item.totalActions, 0);
-  const activeDays = perDay.filter((item) => item.minutes > 0).length;
-  const avgMinutes = activeDays > 0 ? Math.round(totalMinutes / activeDays) : 0;
-  const completionRate = totalActionCount > 0 ? Math.round((totalActions / totalActionCount) * 100) : 0;
-
-  const taskDates = tasks
-    .filter((task) => task.status === "completed" || task.status === "partially_completed")
-    .map(taskBusinessDate);
-  const streakDays = computeStreakDays(taskDates, today);
+  const activeDays = perDay.filter((item) => item.minutes > 0 || item.actions > 0).length;
 
   const todayIndex = buckets.findIndex((bucket) => bucket.key === today);
   const todayMinutes = todayIndex >= 0 ? perDay[todayIndex]?.minutes || 0 : 0;
   const yesterday = formatDate(addDays(toDate(today), -1));
   const yesterdayIndex = buckets.findIndex((bucket) => bucket.key === yesterday);
   const yesterdayMinutes = yesterdayIndex >= 0 ? perDay[yesterdayIndex]?.minutes || 0 : 0;
-  const previousStart = formatDate(addDays(toDate(buckets[0].start), -7));
-  const previousEnd = formatDate(addDays(toDate(buckets[0].start), -1));
-  const compare = compareText(totalMinutes, sumRange(tasks, previousStart, previousEnd).minutes, "较上周");
-  const maxIndex = perDay.reduce((best, item, index) => item.minutes > perDay[best].minutes ? index : best, 0);
-  const bestInvestLabel = perDay[maxIndex]?.minutes > 0 ? buckets[maxIndex].label : "-";
-
   let summaryText: string;
   if (activeDays < 1) {
     summaryText = "完成第一项行动后，今日投入会立即显示在趋势图上。";
@@ -571,15 +428,6 @@ function buildWeekSummary(
   return {
     totalMinutes,
     totalActions,
-    avgMinutes,
-    streakDays,
-    completionRate,
-    compareText: compare.text,
-    compareTone: compare.tone,
-    bestInvestLabel,
-    adviceText: buildAdviceText(todayMinutes, avgMinutes, "week"),
-    ...buildAdviceParts(todayMinutes, avgMinutes, "week"),
-    vsYesterdayText: buildVsYesterdayText(todayMinutes, yesterdayMinutes, activeDays > 0),
     summaryText,
     insufficient: activeDays < 1,
   };
@@ -591,31 +439,11 @@ function buildMonthSummary(
   today: string,
 ): TrendSummary {
   const perWeek = buckets.map((bucket) => bucket.start > today
-    ? { minutes: 0, actions: 0, totalActions: 0 }
+    ? { minutes: 0, actions: 0 }
     : sumRange(tasks, bucket.start, bucket.end > today ? today : bucket.end));
   const totalMinutes = perWeek.reduce((sum, item) => sum + item.minutes, 0);
   const totalActions = perWeek.reduce((sum, item) => sum + item.actions, 0);
-  const totalActionCount = perWeek.reduce((sum, item) => sum + item.totalActions, 0);
-  const activeWeeks = perWeek.filter((item) => item.minutes > 0).length;
-  const completionRate = totalActionCount > 0 ? Math.round((totalActions / totalActionCount) * 100) : 0;
-  const monthStart = buckets[0]?.start || today;
-  const dayCount = Math.max(1, Math.round((toDate(today).getTime() - toDate(monthStart).getTime()) / (24 * 60 * 60 * 1000)) + 1);
-  const avgMinutes = dayCount > 0 ? Math.round(totalMinutes / dayCount) : 0;
-
-  const taskDates = tasks
-    .filter((task) => task.status === "completed" || task.status === "partially_completed")
-    .map(taskBusinessDate);
-  const streakDays = computeStreakDays(taskDates, today);
-  const todayDate = toDate(today);
-  const previousStart = formatDate(new Date(todayDate.getFullYear(), todayDate.getMonth() - 1, 1));
-  const previousEnd = formatDate(new Date(todayDate.getFullYear(), todayDate.getMonth(), 0));
-  const compare = compareText(totalMinutes, sumRange(tasks, previousStart, previousEnd).minutes, "较上月");
-  const maxIndex = perWeek.reduce((best, item, index) => item.minutes > perWeek[best].minutes ? index : best, 0);
-  const bestInvestLabel = perWeek[maxIndex]?.minutes > 0 ? buckets[maxIndex].label : "-";
-
-  const todayMinutes = sumRange(tasks, today, today).minutes;
-  const yesterdayDate = formatDate(addDays(toDate(today), -1));
-  const yesterdayMinutes = sumRange(tasks, yesterdayDate, yesterdayDate).minutes;
+  const activeWeeks = perWeek.filter((item) => item.minutes > 0 || item.actions > 0).length;
 
   let summaryText: string;
   if (activeWeeks < 1) {
@@ -629,15 +457,6 @@ function buildMonthSummary(
   return {
     totalMinutes,
     totalActions,
-    avgMinutes,
-    streakDays,
-    completionRate,
-    compareText: compare.text,
-    compareTone: compare.tone,
-    bestInvestLabel,
-    adviceText: buildAdviceText(totalMinutes, avgMinutes, "month"),
-    ...buildAdviceParts(todayMinutes, avgMinutes, "month"),
-    vsYesterdayText: buildVsYesterdayText(todayMinutes, yesterdayMinutes, activeWeeks > 0),
     summaryText,
     insufficient: activeWeeks < 1,
   };
@@ -657,8 +476,7 @@ function buildYearHeatmap(
   const dayMap = new Map<string, { minutes: number; actions: number }>();
   for (const task of tasks) {
     const businessDate = taskBusinessDate(task);
-    if (!businessDate.startsWith(String(year)) || task.deletedAt || task.status === "skipped") continue;
-    if (task.status === "rescheduled" && !(task.actualMinutes || 0)) continue;
+    if (!businessDate.startsWith(String(year)) || !isTrendTask(task)) continue;
     const entry = dayMap.get(businessDate) || { minutes: 0, actions: 0 };
     entry.minutes += task.actualMinutes || 0;
     if (task.status === "completed") entry.actions += 1;
@@ -727,8 +545,7 @@ function buildYearSummary(year: number, today: string, tasks: ActionTask[]): Yea
 
   for (const task of tasks) {
     const businessDate = taskBusinessDate(task);
-    if (!businessDate.startsWith(String(year)) || task.deletedAt || task.status === "skipped") continue;
-    if (task.status === "rescheduled" && !(task.actualMinutes || 0)) continue;
+    if (!businessDate.startsWith(String(year)) || !isTrendTask(task)) continue;
     const minutes = task.actualMinutes || 0;
     if (minutes > 0 && !activeDates.includes(businessDate)) {
       activeDates.push(businessDate);
@@ -771,8 +588,7 @@ function buildYearHighlights(year: number, tasks: ActionTask[]): YearHighlights 
 
   for (const task of tasks) {
     const businessDate = taskBusinessDate(task);
-    if (!businessDate.startsWith(String(year)) || task.deletedAt || task.status === "skipped") continue;
-    if (task.status === "rescheduled" && !(task.actualMinutes || 0)) continue;
+    if (!businessDate.startsWith(String(year)) || !isTrendTask(task)) continue;
     const entry = dayMap.get(businessDate) || { minutes: 0, actions: 0 };
     entry.minutes += task.actualMinutes || 0;
     if (task.status === "completed") entry.actions += 1;
@@ -835,59 +651,92 @@ function buildYearHighlights(year: number, tasks: ActionTask[]): YearHighlights 
 function buildOverview(summary: ProgressSummary | null): OverviewStat[] {
   const completed = summary?.completedTasks || 0;
   return [
-    { label: "坚持天数", value: String(summary?.totalActionDays || 0), unit: "天" },
-    { label: "完成项数", value: String(completed), unit: "项" },
+    { label: "行动天数", value: String(summary?.totalActionDays || 0), unit: "天" },
+    { label: "完成行动", value: String(completed), unit: "项" },
     { label: "累计投入", value: String(summary?.totalActualMinutes || 0), unit: "分钟" },
   ];
 }
 
-function buildMilestones(actionDays: number): { milestones: MilestoneView[]; nextText: string; medalState: MedalState } {
-  const nextTarget = MILESTONE_DAYS.find((days) => actionDays < days);
-  const milestones = MILESTONE_DAYS.map((days) => {
-    const state: MilestoneState = actionDays >= days ? "achieved" : days === nextTarget ? "current" : "locked";
-    return {
-      days,
-      label: `${days} 天`,
-      state,
-      statusText: state === "achieved" ? "已达成" : state === "current" ? "进行中" : "未达成",
-    };
-  });
+function emptyTrendHighlights(): TrendHighlights {
   return {
-    milestones,
-    nextText: nextTarget ? `距离下个里程碑还差 ${nextTarget - actionDays} 天` : "60 天里程碑已达成",
-    medalState: { achieved: !nextTarget, current: Boolean(nextTarget) },
+    maxMinutes: { value: 0, unit: "分钟", label: "暂无记录" },
+    maxActions: { value: 0, unit: "项", label: "暂无记录" },
+    streak: { value: 0, unit: "天", label: "尚未连续" },
   };
 }
 
-function buildRecentRecords(tasks: ActionTask[]): RecentRecord[] {
-  return tasks
-    .filter((task) => task.status === "completed" && !task.deletedAt)
-    .sort((left, right) => String(right.completedAt || right.updatedAt).localeCompare(String(left.completedAt || left.updatedAt)))
-    .slice(0, 3)
-    .map((task) => ({
-      id: task.id,
-      title: task.title,
-      statusText: task.status === "completed" ? "已完成" : "完成一部分",
-      minutesText: (task.actualMinutes || 0) > 0 ? `实际 ${task.actualMinutes} 分钟` : "未记录实际投入",
-    }));
+function highlightBucketLabel(range: TrendRange, bar?: TrendBar): string {
+  if (!bar) return "暂无记录";
+  if (bar.isToday) return "今天";
+  return range === "week" ? `周${bar.label}` : bar.label;
 }
 
-function buildPendingRecords(tasks: ActionTask[], today: string): RecentRecord[] {
-  return tasks
-    .filter((task) => (task.status === "pending" || task.status === "partially_completed") && task.currentDate <= today && !task.deletedAt)
-    .sort((left, right) => right.currentDate.localeCompare(left.currentDate) || right.updatedAt.localeCompare(left.updatedAt))
-    .slice(0, 3)
-    .map((task) => ({
-      id: task.id,
-      title: task.title,
-      statusText: task.status === "partially_completed" || task.currentDate < today ? "待继续" : "待开始",
-      minutesText: `预计 ${task.estimatedMinutes} 分钟`,
-    }));
+function weekdayLabel(date: string): string {
+  return ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][toDate(date).getDay()];
+}
+
+function buildTrendHighlights(
+  range: TrendRange,
+  bars: TrendBar[],
+  tasks: ActionTask[],
+  start: string,
+  end: string,
+): TrendHighlights {
+  const maxMinutesBar = bars.reduce<TrendBar | undefined>((best, item) => item.minutes > (best?.minutes || 0) ? item : best, undefined);
+  const maxActionsBar = bars.reduce<TrendBar | undefined>((best, item) => item.actions > (best?.actions || 0) ? item : best, undefined);
+  const completedDates = Array.from(new Set(tasks
+    .filter((task) => task.status === "completed" && inRange(task, start, end))
+    .map(taskBusinessDate)))
+    .sort();
+
+  let bestStart = "";
+  let bestEnd = "";
+  let bestDays = 0;
+  let runStart = "";
+  let previous = "";
+  let runDays = 0;
+  for (const date of completedDates) {
+    if (previous && formatDate(addDays(toDate(previous), 1)) === date) {
+      runDays += 1;
+    } else {
+      runStart = date;
+      runDays = 1;
+    }
+    if (runDays > bestDays) {
+      bestDays = runDays;
+      bestStart = runStart;
+      bestEnd = date;
+    }
+    previous = date;
+  }
+
+  const streakLabel = bestDays <= 0
+    ? "尚未连续"
+    : bestDays === 1
+      ? (range === "week" ? weekdayLabel(bestStart) : formatMonthDay(bestStart))
+      : range === "week"
+        ? `${weekdayLabel(bestStart)}—${weekdayLabel(bestEnd)}`
+        : `${formatMonthDay(bestStart)}—${formatMonthDay(bestEnd)}`;
+
+  return {
+    maxMinutes: {
+      value: maxMinutesBar?.minutes || 0,
+      unit: "分钟",
+      label: highlightBucketLabel(range, maxMinutesBar),
+    },
+    maxActions: {
+      value: maxActionsBar?.actions || 0,
+      unit: "项",
+      label: highlightBucketLabel(range, maxActionsBar),
+    },
+    streak: { value: bestDays, unit: "天", label: streakLabel },
+  };
 }
 
 interface TrendViewData {
   barChart: BarChartData;
   trendSummary: TrendSummary;
+  trendHighlights: TrendHighlights;
   heatmapWeeks: HeatmapWeek[];
   heatmapMonthLabels: HeatmapMonthLabel[];
   yearSummary: YearSummary;
@@ -906,7 +755,7 @@ function buildTrendView(
   if (range === "week") {
     const buckets = buildWeekBuckets(today);
     const bars = buckets.map((bucket) => {
-      const data = sumRange(tasks, bucket.start, bucket.end);
+      const data = bucket.start > today ? { minutes: 0, actions: 0 } : sumRange(tasks, bucket.start, bucket.end);
       return {
         key: bucket.key,
         label: bucket.label,
@@ -916,9 +765,11 @@ function buildTrendView(
         isToday: bucket.isToday,
       };
     });
+    const barChart = buildBarChart(bars, selectedBarKey, WEEK_BAR_WIDTH);
     return {
-      barChart: buildBarChart(bars, selectedBarKey, WEEK_BAR_WIDTH),
+      barChart,
       trendSummary: buildWeekSummary(buckets, tasks, today),
+      trendHighlights: buildTrendHighlights("week", barChart.bars, tasks, buckets[0].start, today),
       heatmapWeeks: [],
       heatmapMonthLabels: [],
       yearSummary: { checkinDays: 0, totalMinutes: 0, maxStreakDays: 0, summaryText: "", insufficient: false },
@@ -929,7 +780,9 @@ function buildTrendView(
   if (range === "month") {
     const buckets = buildMonthBuckets(today);
     const bars = buckets.map((bucket) => {
-      const data = sumRange(tasks, bucket.start, bucket.end);
+      const data = bucket.start > today
+        ? { minutes: 0, actions: 0 }
+        : sumRange(tasks, bucket.start, bucket.end > today ? today : bucket.end);
       return {
         key: bucket.key,
         label: bucket.label,
@@ -939,9 +792,11 @@ function buildTrendView(
         isToday: false,
       };
     });
+    const barChart = buildBarChart(bars, selectedBarKey, MONTH_BAR_WIDTH);
     return {
-      barChart: buildBarChart(bars, selectedBarKey, MONTH_BAR_WIDTH),
+      barChart,
       trendSummary: buildMonthSummary(buckets, tasks, today),
+      trendHighlights: buildTrendHighlights("month", barChart.bars, tasks, buckets[0].start, today),
       heatmapWeeks: [],
       heatmapMonthLabels: [],
       yearSummary: { checkinDays: 0, totalMinutes: 0, maxStreakDays: 0, summaryText: "", insufficient: false },
@@ -951,8 +806,9 @@ function buildTrendView(
 
   const { weeks, monthLabels } = buildYearHeatmap(year, today, tasks, selectedHeatDate);
   return {
-    barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, maxActions: 0, midActions: 0, barWidth: 0, insufficient: false },
-    trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, completionRate: 0, compareText: "", compareTone: "flat", bestInvestLabel: "-", adviceText: "", adviceTitle: "", adviceDetail: "", vsYesterdayText: "暂无数据", summaryText: "", insufficient: false },
+    barChart: { bars: [], maxLabel: "", midLabel: "", lowLabel: "", maxValue: 0, maxActions: 0, midActions: 0, lowActions: 0, barWidth: 0, insufficient: false },
+    trendSummary: { totalMinutes: 0, totalActions: 0, summaryText: "", insufficient: false },
+    trendHighlights: emptyTrendHighlights(),
     heatmapWeeks: weeks,
     heatmapMonthLabels: monthLabels,
     yearSummary: buildYearSummary(year, today, tasks),
@@ -960,9 +816,15 @@ function buildTrendView(
   };
 }
 
+function trendHasData(range: TrendRange, trendView: TrendViewData): boolean {
+  return range === "year"
+    ? !trendView.yearSummary.insufficient
+    : !trendView.trendSummary.insufficient;
+}
+
 Page(withAppTheme({
   data: {
-    ...getProgressLayout(),
+    ...getTabHeaderLayout(),
     appTheme: getCurrentThemeId() as string,
     status: "loading",
     errorMessage: "",
@@ -971,56 +833,44 @@ Page(withAppTheme({
     canSwitchGoal: false,
     goalPickerVisible: false,
     completionDotsEnabled: FEATURE_FLAGS.ENABLE_TREND_LINE,
-    summary: null as ProgressSummary | null,
-    levelLabel: "Lv.1 · 自律新兵",
-    levelNumber: "Lv.1",
-    levelName: "自律新兵",
     goalPeriod: "",
-    goalStatusText: "添加行动后开始记录",
-    goalProgressPercent: 0,
     overviewStats: [] as OverviewStat[],
-    growthConclusionTitle: "本周行动总结",
-    coachStatus: "idle" as "idle" | "loading" | "ready" | "error",
-    coachSummary: "",
-    coachNextStep: "",
     trendRange: "week" as TrendRange,
     trendPeriodLabel: "",
     trendRanges: buildTrendRanges("week"),
-    aiCoach: { periodLabel: "本周复盘", message: "先完成一次小行动，让成长记录从今天开始。" } as AiCoachView,
-    barChart: { bars: [], maxLabel: "", midLabel: "", maxValue: 0, maxActions: 0, midActions: 0, barWidth: WEEK_BAR_WIDTH, insufficient: false } as BarChartData,
-    trendSummary: { totalMinutes: 0, totalActions: 0, avgMinutes: 0, streakDays: 0, completionRate: 0, compareText: "", compareTone: "flat", bestInvestLabel: "-", adviceText: "", adviceTitle: "", adviceDetail: "", vsYesterdayText: "暂无数据", summaryText: "", insufficient: false } as TrendSummary,
+    coachScopeLabel: "本周",
+    barChart: { bars: [], maxLabel: "", midLabel: "", lowLabel: "", maxValue: 0, maxActions: 0, midActions: 0, lowActions: 0, barWidth: WEEK_BAR_WIDTH, insufficient: false } as BarChartData,
+    trendSummary: { totalMinutes: 0, totalActions: 0, summaryText: "", insufficient: false } as TrendSummary,
+    trendHighlights: emptyTrendHighlights() as TrendHighlights,
     selectedTrendItem: null as TrendBar | null,
     heatmapWeeks: [] as HeatmapWeek[],
     heatmapMonthLabels: [] as HeatmapMonthLabel[],
     yearSummary: { checkinDays: 0, totalMinutes: 0, maxStreakDays: 0, summaryText: "", insufficient: false } as YearSummary,
     yearHighlights: { maxDay: null, maxStreak: null, maxMonth: null } as YearHighlights,
     selectedHeatmapDay: null as SelectedHeatmapDay | null,
-    milestones: [] as MilestoneView[],
-    nextMilestoneText: "距离下个里程碑还差 7 天",
-    medalState: { achieved: false, current: true } as MedalState,
-    recentRecords: [] as RecentRecord[],
-    pendingRecords: [] as RecentRecord[],
-    latestRecord: null as RecentRecord | null,
-    hasRecentRecords: false,
-    hasPendingRecords: false,
+    growthRecordSummary: "还没有真实行动记录",
+    hasAnyTask: false,
     hasActionData: false,
-    recordEditorVisible: false,
-    editingRecordId: "",
-    recordEditorTask: null as ActionTask | null,
-    savingRecord: false,
-    deletingRecord: false,
+    hasTrendData: false,
   },
   focusGoalHandler: null as null | (() => void),
+  manualSyncHandler: null as null | (() => void),
 
   onLoad() {
     this.focusGoalHandler = () => this.load();
+    this.manualSyncHandler = () => this.load();
     on("goal:focus:update", this.focusGoalHandler);
+    on("manual:sync", this.manualSyncHandler);
   },
 
   onUnload() {
     if (this.focusGoalHandler) {
       off("goal:focus:update", this.focusGoalHandler);
       this.focusGoalHandler = null;
+    }
+    if (this.manualSyncHandler) {
+      off("manual:sync", this.manualSyncHandler);
+      this.manualSyncHandler = null;
     }
   },
 
@@ -1037,55 +887,41 @@ Page(withAppTheme({
       const goal = getActiveGoal();
       const activeGoals = getActiveGoals();
       const summary = goal ? getProgressSummary(goal.id, today) : null;
-      const allTasks = goal ? getTasksByGoal(goal.id) : [];
-      const rate = completionRate(summary);
+      const allTasks = goal ? getTaskHistoryByGoal(goal.id) : [];
       const trendView = buildTrendView(this.data.trendRange, allTasks, today);
-      const milestoneResult = buildMilestones(summary?.totalActionDays || 0);
 
-      const recentRecords = buildRecentRecords(allTasks);
-      const pendingRecords = buildPendingRecords(allTasks, today);
-      const hasActionData = allTasks.some((task) => !task.deletedAt && task.status !== "skipped" && (
+      const hasAnyTask = allTasks.some((task) => task.status !== "skipped" && task.status !== "rescheduled");
+      const hasActionData = allTasks.some((task) => task.status !== "skipped" && (
         task.status === "completed"
         || task.status === "partially_completed"
-        || (task.actualMinutes || 0) > 0
+        || (task.status === "rescheduled" && task.statusBeforeReschedule === "partially_completed" && (task.actualMinutes || 0) > 0)
       ));
-      const currentLevelLabel = levelLabel(summary?.totalActionDays || 0);
-      const [levelNumber, levelName] = currentLevelLabel.split(" · ");
       this.setData({
         status: "ready",
         goal,
-        goalOptions: buildGoalOptions(activeGoals, goal?.id || "", today),
+        goalOptions: buildGoalOptions(activeGoals, goal?.id || ""),
         canSwitchGoal: activeGoals.length > 1,
         goalPickerVisible: false,
-        summary,
-        levelLabel: currentLevelLabel,
-        levelNumber,
-        levelName,
         goalPeriod: goalPeriod(goal),
-        goalStatusText: goalStatusText(summary?.completedTasks || 0, summary?.totalTasks || 0),
-        goalProgressPercent: rate,
         overviewStats: buildOverview(summary),
-        growthConclusionTitle: growthConclusionTitle(this.data.trendRange),
         trendRanges: buildTrendRanges(this.data.trendRange),
         trendPeriodLabel: trendPeriodLabel(this.data.trendRange, today),
-        aiCoach: buildAiCoachView(goal, this.data.trendRange, trendView.trendSummary),
+        coachScopeLabel: coachScopeLabel(this.data.trendRange),
         barChart: trendView.barChart,
         trendSummary: trendView.trendSummary,
+        trendHighlights: trendView.trendHighlights,
         selectedTrendItem: trendView.barChart.bars.find((bar) => bar.active) || null,
         heatmapWeeks: trendView.heatmapWeeks,
         heatmapMonthLabels: trendView.heatmapMonthLabels,
         yearSummary: trendView.yearSummary,
         yearHighlights: trendView.yearHighlights,
         selectedHeatmapDay: null,
-        milestones: milestoneResult.milestones,
-        nextMilestoneText: milestoneResult.nextText,
-        medalState: milestoneResult.medalState,
-        recentRecords,
-        pendingRecords,
-        latestRecord: recentRecords[0] || null,
-        hasRecentRecords: recentRecords.length > 0,
-        hasPendingRecords: pendingRecords.length > 0,
+        growthRecordSummary: summary && (summary.completedTasks > 0 || summary.totalActualMinutes > 0)
+          ? `完成 ${summary.completedTasks} 项 · 投入 ${summary.totalActualMinutes} 分钟 · 行动 ${summary.totalActionDays} 天`
+          : "还没有真实行动记录，完成后会在这里沉淀",
+        hasAnyTask,
         hasActionData,
+        hasTrendData: trendHasData(this.data.trendRange, trendView),
       });
     } catch (error) {
       this.setData({
@@ -1114,62 +950,14 @@ Page(withAppTheme({
     wx.navigateTo({ url: `/pages/action-edit/index?goalId=${encodeURIComponent(goalId)}&date=${getTodayBusinessDate()}` });
   },
 
-  openActionRecords() {
+  goToday() {
+    wx.switchTab({ url: "/pages/index/index" });
+  },
+
+  openGrowthRecords() {
     const goalId = this.data.goal?.id;
     if (!goalId) return;
-    wx.navigateTo({ url: `/pages/action-records/index?goalId=${encodeURIComponent(goalId)}` });
-  },
-
-  openAction(event: { currentTarget: { dataset: { id?: string } } }) {
-    const taskId = String(event.currentTarget.dataset.id || "");
-    if (!taskId) return;
-    const task = getTask(taskId);
-    if (task?.status === "completed" || task?.status === "partially_completed") {
-      this.setData({ recordEditorVisible: true, editingRecordId: task.id, recordEditorTask: task, savingRecord: false, deletingRecord: false });
-      return;
-    }
-    wx.navigateTo({ url: `/pages/action-edit/index?id=${encodeURIComponent(taskId)}` });
-  },
-
-  closeRecordEditor() {
-    if (!this.data.savingRecord && !this.data.deletingRecord) this.setData({ recordEditorVisible: false, recordEditorTask: null, editingRecordId: "" });
-  },
-
-  saveRecordEditor(event: CustomEvent<Omit<SaveActionRecordInput, "taskId">>) {
-    if (this.data.savingRecord || !this.data.editingRecordId) return;
-    this.setData({ savingRecord: true });
-    try {
-      updateActionRecord({ taskId: this.data.editingRecordId, ...event.detail });
-      this.setData({ recordEditorVisible: false, recordEditorTask: null, editingRecordId: "", savingRecord: false });
-      this.load();
-      wx.showToast({ title: "记录已更新", icon: "success" });
-    } catch (error) {
-      this.setData({ savingRecord: false });
-      wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
-    }
-  },
-
-  deleteRecordEditor() {
-    if (this.data.savingRecord || this.data.deletingRecord || !this.data.editingRecordId) return;
-    wx.showModal({
-      title: "删除行动记录？",
-      content: "删除后会同步影响今日统计、目标下的行动统计和历史复盘，且无法恢复。",
-      confirmText: "删除",
-      confirmColor: "#9B4B45",
-      success: (result) => {
-        if (!result.confirm) return;
-        this.setData({ deletingRecord: true });
-        try {
-          deleteTask(this.data.editingRecordId);
-          this.setData({ recordEditorVisible: false, recordEditorTask: null, editingRecordId: "", deletingRecord: false });
-          this.load();
-          wx.showToast({ title: "记录已删除", icon: "success" });
-        } catch (error) {
-          this.setData({ deletingRecord: false });
-          wx.showToast({ title: error instanceof Error ? error.message : "删除失败", icon: "none" });
-        }
-      },
-    });
+    wx.navigateTo({ url: `/pages/growth-records/index?from=progress&goalId=${encodeURIComponent(goalId)}` });
   },
 
   openGoalPicker() {
@@ -1191,9 +979,8 @@ Page(withAppTheme({
       return;
     }
     try {
-      setCurrentGoal(id);
       this.setData({ goalPickerVisible: false, trendRange: "week", trendRanges: buildTrendRanges("week") });
-      this.load();
+      setCurrentGoal(id);
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "目标切换失败", icon: "none" });
     }
@@ -1203,26 +990,28 @@ Page(withAppTheme({
     const range = event.currentTarget.dataset.key || "week";
     if (range === this.data.trendRange) return;
     const today = getTodayBusinessDate();
-    const tasks = this.data.goal ? getTasksByGoal(this.data.goal.id) : [];
+    const tasks = this.data.goal ? getTaskHistoryByGoal(this.data.goal.id) : [];
     const trendView = buildTrendView(range, tasks, today);
     this.setData({
       trendRange: range,
       trendRanges: buildTrendRanges(range),
       trendPeriodLabel: trendPeriodLabel(range, today),
-      aiCoach: buildAiCoachView(this.data.goal, range, trendView.trendSummary),
-      growthConclusionTitle: growthConclusionTitle(range),
+      coachScopeLabel: coachScopeLabel(range),
       barChart: trendView.barChart,
       trendSummary: trendView.trendSummary,
+      trendHighlights: trendView.trendHighlights,
       heatmapWeeks: trendView.heatmapWeeks,
       heatmapMonthLabels: trendView.heatmapMonthLabels,
       yearSummary: trendView.yearSummary,
       yearHighlights: trendView.yearHighlights,
+      hasTrendData: trendHasData(range, trendView),
       selectedTrendItem: null,
       selectedHeatmapDay: null,
     });
   },
 
   openAiCoach() {
+    if (!this.data.hasTrendData) return;
     const goalId = this.data.goal?.id || "";
     const scope = this.data.trendRange === "year" ? "overall" : this.data.trendRange;
     const query = [`scope=${scope}`];
@@ -1233,7 +1022,7 @@ Page(withAppTheme({
   onBarTap(event: { currentTarget: { dataset: { key?: string } } }) {
     const key = String(event.currentTarget.dataset.key || "");
     const today = getTodayBusinessDate();
-    const tasks = this.data.goal ? getTasksByGoal(this.data.goal.id) : [];
+    const tasks = this.data.goal ? getTaskHistoryByGoal(this.data.goal.id) : [];
     const currentKey = this.data.selectedTrendItem?.key;
     const nextKey = currentKey === key ? undefined : key;
     const trendView = buildTrendView(this.data.trendRange, tasks, today, nextKey);
@@ -1256,7 +1045,7 @@ Page(withAppTheme({
     const date = String(event.currentTarget.dataset.date || "");
     if (!date) return;
     const today = getTodayBusinessDate();
-    const tasks = this.data.goal ? getTasksByGoal(this.data.goal.id) : [];
+    const tasks = this.data.goal ? getTaskHistoryByGoal(this.data.goal.id) : [];
     const year = toDate(today).getFullYear();
     const current = this.data.selectedHeatmapDay;
     const nextDate = current && current.date === date ? undefined : date;

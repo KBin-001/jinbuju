@@ -8,7 +8,7 @@ require.extensions[".ts"] = (module, filename) => {
   }).outputText, filename);
 };
 
-const { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask } = require("../utils/taskStatus.ts");
+const { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask, sortTodayTasksIncompleteFirst } = require("../utils/taskStatus.ts");
 const { getTodayBusinessDate } = require("../utils/date.ts");
 const today = "2026-06-21";
 
@@ -32,5 +32,18 @@ const groups = groupTodayTasks([
   { currentDate: "2026-06-22", status: "pending" },
 ], today);
 assert.deepEqual(groups.map((group) => [group.key, group.tasks.length]), [["today", 1], ["continue", 1]]);
+
+const originalTasks = [
+  { id: "done-first", status: "completed" },
+  { id: "pending", status: "pending" },
+  { id: "done-second", status: "completed" },
+  { id: "partial", status: "partially_completed" },
+];
+assert.deepEqual(
+  sortTodayTasksIncompleteFirst(originalTasks).map((task) => task.id),
+  ["pending", "partial", "done-first", "done-second"],
+  "未完成行动应保持在前，已完成行动应稳定移动到最后",
+);
+assert.deepEqual(originalTasks.map((task) => task.id), ["done-first", "pending", "done-second", "partial"], "排序不应修改原数组");
 
 console.log("task status tests passed");

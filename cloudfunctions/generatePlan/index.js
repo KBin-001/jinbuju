@@ -93,10 +93,21 @@ const {
   deleteCloudAccount,
   getDataOverview,
   importLegacyProfile,
+  resolveAccount,
   unbindPhone,
   updateCloudProfile,
 } = require("./account");
 const { getConsentStatus, recordConsent, withdrawConsent } = require("./privacy");
+const {
+  getPreference: getNotificationPreference,
+  listInAppMessages,
+  readInAppMessage,
+  runScheduled: runNotificationScheduled,
+  subscribe: subscribeNotification,
+  unsubscribe: unsubscribeNotification,
+  updatePreference: updateNotificationPreference,
+} = require("./notification");
+const { assertEventContentSafe } = require("./content-security");
 const COACH_RUNTIME_VERSION = "coach-actions-2026-07-07.3";
 
 function success(data) {
@@ -172,6 +183,8 @@ function failure(error) {
     "CONFIRMATION_REQUIRED",
     "ACCOUNT_DELETE_FAILED",
     "CONSENT_INVALID",
+    "CONTENT_SECURITY_REJECTED",
+    "CONTENT_SECURITY_UNAVAILABLE",
     "STAGE_ALREADY_EXISTS",
     "STAGE_GENERATION_IN_PROGRESS",
     "STAGE_GENERATION_LIMIT_REACHED",
@@ -212,6 +225,9 @@ function failure(error) {
     "PROGRESS_CONTEXT_NOT_FOUND",
     "PROGRESS_SNAPSHOT_INVALID",
     "PROGRESS_SNAPSHOT_TOO_LARGE",
+    "NOTIFICATION_INVALID",
+    "NOTIFICATION_NOT_CONFIGURED",
+    "NOTIFICATION_NOT_FOUND",
   ];
   const code = allowedCodes.includes(error.code) ? error.code : "INTERNAL_ERROR";
   if (code === "INTERNAL_ERROR") {
@@ -282,6 +298,8 @@ function failure(error) {
     CONFIRMATION_REQUIRED: error.message,
     ACCOUNT_DELETE_FAILED: error.message,
     CONSENT_INVALID: error.message,
+    CONTENT_SECURITY_REJECTED: "内容未通过安全检测，请修改后重试。",
+    CONTENT_SECURITY_UNAVAILABLE: "内容安全检测暂不可用，请稍后重试。",
     STAGE_ALREADY_EXISTS: error.message,
     STAGE_GENERATION_IN_PROGRESS: error.message,
     STAGE_GENERATION_LIMIT_REACHED: error.message,
@@ -322,6 +340,9 @@ function failure(error) {
     PROGRESS_CONTEXT_NOT_FOUND: error.message,
     PROGRESS_SNAPSHOT_INVALID: error.message,
     PROGRESS_SNAPSHOT_TOO_LARGE: error.message,
+    NOTIFICATION_INVALID: error.message,
+    NOTIFICATION_NOT_CONFIGURED: error.message,
+    NOTIFICATION_NOT_FOUND: error.message,
     INTERNAL_ERROR: "服务暂时不可用，请稍后重试。",
   };
   return {
@@ -511,11 +532,22 @@ exports.main = async (event) => {
   console.info("generatePlan request", { action, requestId });
   try {
     const context = cloud.getWXContext();
+    if (action === "notification.runScheduled") {
+      if (context.SOURCE !== "wx_cloud_call") {
+        const error = new Error("Scheduled notification calls must originate from CloudBase.");
+        error.code = "UNAUTHORIZED";
+        throw error;
+      }
+      await ensureCollections();
+      return success(await runNotificationScheduled());
+    }
     if (!context.OPENID) {
       const error = new Error("Missing OPENID");
       error.code = "UNAUTHORIZED";
       throw error;
     }
+
+    await assertEventContentSafe(context.OPENID, action, event || {});
 
     if (action === "getCoachRuntimeInfo") {
       console.info("generatePlan success", { action, requestId, durationMs: Date.now() - requestStartedAt });
@@ -540,6 +572,28 @@ exports.main = async (event) => {
     if (event.action === "recordConsent") return success(await recordConsent(context.OPENID, event));
     if (event.action === "withdrawConsent") return success(await withdrawConsent(context.OPENID, event));
     if (event.action === "deleteCloudAccount") return success(await deleteCloudAccount(context.OPENID, event));
+    if (event.action === "notification.subscribe") {
+      const account = await resolveAccount(context.OPENID, true);
+      return success(await subscribeNotification(context.OPENID, account.userId, event));
+    }
+    if (event.action === "notification.preference") {
+      const account = await resolveAccount(context.OPENID, true);
+      return success(await getNotificationPreference(context.OPENID, account.userId));
+    }
+    if (event.action === "notification.updatePreference") {
+      const account = await resolveAccount(context.OPENID, true);
+      return success(await updateNotificationPreference(context.OPENID, account.userId, event));
+    }
+    if (event.action === "notification.unsubscribe") {
+      const account = await resolveAccount(context.OPENID, true);
+      return success(await unsubscribeNotification(context.OPENID, account.userId, event));
+    }
+    if (event.action === "notification.inApp.list") {
+      return success(await listInAppMessages(context.OPENID, event));
+    }
+    if (event.action === "notification.inApp.read") {
+      return success(await readInAppMessage(context.OPENID, event));
+    }
 
     if (event.action === "generate") {
       return await generate(event, context.OPENID);

@@ -49,6 +49,56 @@ button[disabled] {
   background: transparent;
 }
 
+/* 四个主 Tab 共用的顶部标题区：安全区、胶囊基线与 Header 底边保持一致。 */
+.tab-header {
+  position: relative;
+  z-index: 1;
+  width: auto;
+  overflow: hidden;
+}
+
+.tab-header__background,
+.tab-header__veil {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tab-header__background {
+  display: block;
+  opacity: .68;
+}
+
+.tab-header__veil {
+  background: linear-gradient(180deg, rgba(247, 243, 234, .06), rgba(247, 243, 234, .26) 58%, var(--color-bg-page, #F7F3EA) 100%);
+}
+
+.tab-header__nav {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: content-box;
+  padding-right: 190rpx;
+  padding-left: 190rpx;
+}
+
+.tab-header__title {
+  overflow: hidden;
+  color: var(--color-primary, #245B4D);
+  font-family: "Songti SC", "STSong", SimSun, serif;
+  font-size: 40rpx;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 5rpx;
+  text-overflow: ellipsis;
+  text-shadow: 0 2rpx 8rpx rgba(255, 253, 247, .68);
+  white-space: nowrap;
+}
+
 .page-header {
   margin-bottom: 28rpx;
 }

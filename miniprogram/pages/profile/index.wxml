@@ -1,19 +1,19 @@
 <view class="profile-page" data-theme="{{currentThemeId}}">
-  <view class="profile-hero">
-    <image class="profile-hero__background" src="/assets/profile/profile-header-mist-v2.jpg" mode="aspectFill" />
-    <view class="profile-hero__veil"></view>
-    <view class="profile-nav" style="padding-top: {{menuTop}}px; height: {{menuHeight}}px;"><text class="profile-nav__title">我的</text></view>
+  <view class="profile-top">
+    <image class="profile-top__background" src="/assets/profile/profile-header-mist-v2.jpg" mode="aspectFill" aria-hidden="true" />
+    <view class="profile-top__veil"></view>
+    <view class="profile-hero tab-header" style="height: {{headerHeight}}px;">
+      <view class="profile-nav tab-header__nav" style="padding-top: {{menuTop}}px; height: {{menuHeight}}px;"><text class="profile-nav__title tab-header__title">我的</text></view>
+    </view>
     <view class="profile-identity">
       <view class="profile-avatar"><image wx:if="{{displayAvatarUrl}}" class="profile-avatar__image" src="{{displayAvatarUrl}}" mode="aspectFill" binderror="useDefaultAvatar" /><image wx:else class="profile-avatar__image profile-avatar__image--default" src="/images/icons/avatar.png" mode="aspectFit" /></view>
       <view class="profile-identity__copy">
         <text class="profile-user-name">{{displayName}}</text>
-        <text class="profile-display-id">{{displayId || '正在建立展示标识'}}</text>
-        <view class="profile-statuses">
-          <view class="profile-status {{syncTone === 'warning' ? 'profile-status--warning' : ''}}" data-key="sync" bindtap="openToolboxItem"><t-icon name="cloud" size="24rpx" /><text>{{syncTitle}}</text></view>
-          <view class="profile-status profile-status--plain" data-key="account" bindtap="openToolboxItem"><t-icon name="user" size="24rpx" /><text>{{cloudAccount && cloudAccount.phoneBound ? '手机已绑定' : '手机可选绑定'}}</text></view>
-        </view>
-        <view class="profile-edit-line" bindtap="openProfileEditor" hover-class="is-pressed" aria-role="button" aria-label="编辑个人资料"><t-icon name="edit" size="26rpx" /><text>编辑资料</text></view>
+        <text wx:if="{{displayId}}" class="profile-display-id">{{displayId}}</text>
+        <text wx:else class="profile-display-id">账号状态待联网确认</text>
+        <view class="profile-sync-line profile-sync-line--{{syncTone}}"><t-icon name="{{syncTone === 'success' ? 'check-circle-filled' : 'cloud'}}" size="25rpx" /><text>{{syncTitle}}</text></view>
       </view>
+      <view class="profile-edit-line {{!accountAvailable ? 'is-disabled' : ''}}" bindtap="openProfileEditor" hover-class="is-pressed" aria-role="button" aria-label="编辑个人资料"><text>编辑</text><t-icon name="chevron-right" size="31rpx" /></view>
     </view>
   </view>
 
@@ -22,56 +22,52 @@
     <view wx:elif="{{status === 'error'}}" class="paper-card profile-state-card"><t-icon name="info-circle" size="58rpx" /><text class="profile-state-title">个人档案暂时没有加载出来</text><text class="profile-state-copy">{{errorMessage}}</text><t-button class="profile-retry-button" bindtap="retry">重新加载</t-button></view>
 
     <block wx:else>
-      <view class="paper-card journey-card">
-        <view class="journey-copy">
-          <text class="journey-title">账户概览</text>
-          <view class="journey-days"><text>已加入</text><text class="journey-days__value">{{joinedDays}}</text><text>天</text></view>
-          <text class="journey-note">{{displayId || '展示标识建立中'}}</text>
-        </view>
-        <view class="journey-account">
-          <view class="journey-account__status {{syncTone === 'warning' ? 'journey-account__status--warning' : ''}}"><t-icon name="cloud" size="30rpx" /><text>{{syncTitle}}</text></view>
-          <view class="journey-account__action" data-key="account" bindtap="openToolboxItem" hover-class="is-pressed"><text>账号与安全</text><t-icon name="chevron-right" size="28rpx" /></view>
-        </view>
+      <view wx:if="{{showSyncNotice}}" class="sync-notice">
+        <t-icon name="cloud" size="28rpx" />
+        <text>{{syncNoticeText}}</text>
+        <view class="sync-notice__retry" bindtap="retry" hover-class="is-pressed">重试</view>
       </view>
 
-      <view class="paper-card goal-card">
+      <view wx:if="{{currentGoal}}" class="paper-card goal-card">
         <image class="goal-card__background" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" /><view class="goal-card__veil"></view>
-        <view wx:if="{{currentGoal}}" class="goal-card__content">
-          <view class="goal-card__head"><text class="section-kicker">当前目标</text><view class="goal-manage" catchtap="manageGoals" hover-class="is-pressed" aria-role="button" aria-label="管理目标">管理<t-icon name="chevron-right" size="28rpx" /></view></view>
-          <text class="goal-title">{{currentGoal.title}}</text>
-          <text class="goal-persisted">{{currentGoal.continuityText}}</text>
+        <view class="goal-card__content">
+          <view class="goal-card__icon"><view class="goal-target-symbol"><view></view></view></view>
+          <view class="goal-card__main"><text class="section-kicker">当前目标</text><text class="goal-title">{{currentGoal.title}}</text><text class="goal-persisted">{{currentGoal.continuityText}}</text></view>
+          <view class="goal-manage" catchtap="manageGoals" hover-class="is-pressed" aria-role="button" aria-label="管理目标"><text>管理</text><t-icon name="chevron-right" size="31rpx" /></view>
         </view>
-        <view wx:else class="goal-empty"><text class="section-kicker">当前目标</text><text class="goal-empty__title">还没有进行中的目标</text><text class="goal-empty__copy">从今天能完成的一小步开始。</text><view class="goal-empty__button" bindtap="createGoal">添加目标</view></view>
+      </view>
+      <view wx:else class="paper-card goal-card goal-empty"><view class="goal-card__icon"><view class="goal-target-symbol"><view></view></view></view><view class="goal-empty__main"><text class="section-kicker">当前目标</text><text class="goal-empty__title">还没有进行中的目标</text><text class="goal-empty__copy">从今天能完成的一小步开始。</text></view><view class="goal-empty__button" bindtap="createGoal" hover-class="is-pressed">添加目标</view>
       </view>
 
-      <view class="paper-card growth-card">
-        <view class="growth-head" bindtap="viewAllStats" hover-class="is-pressed"><view><text class="section-title">本周与累计</text><text class="growth-joined">来自真实行动记录</text></view><view class="growth-link">查看进度<t-icon name="chevron-right" size="28rpx" /></view></view>
-        <view class="growth-grid">
-          <view class="growth-item"><text class="growth-value">{{stats.streakDays}}</text><text class="growth-label">连续行动天数</text></view>
-          <view class="growth-item"><text class="growth-value">{{stats.completedActions}}</text><text class="growth-label">完成行动</text></view>
-          <view class="growth-item"><text class="growth-value">{{stats.totalMinutes}}</text><text class="growth-label">累计投入分钟</text></view>
-        </view>
-        <view class="weekly-line">本周行动 {{weeklySummary.actionDays}} 天 · 完成 {{weeklySummary.completedActions}} 次 · 投入 {{weeklySummary.actualMinutes}} 分钟</view>
+      <view class="paper-card growth-card" bindtap="viewAllStats" hover-class="is-pressed" aria-role="button" aria-label="查看成长记录">
+        <view class="growth-icon"><view class="growth-chart-symbol"><view></view><view></view><view></view></view></view><view class="growth-copy"><text class="section-title">成长记录</text><text class="growth-summary">{{growth.completedActions}} 次行动 · {{growth.totalMinutes}} 分钟 · 连续 {{growth.currentStreakDays}} 天</text></view><t-icon name="chevron-right" size="33rpx" />
       </view>
 
-      <view class="paper-card collection-card">
-        <view class="collection-head" data-key="badges" bindtap="openToolboxItem" aria-role="button" aria-label="查看全部成长收藏"><view><text class="section-title">成长收藏</text><text class="collection-summary">已收藏 {{achievementSummary}} 枚</text></view><view class="collection-all">查看全部<t-icon name="chevron-right" size="28rpx" /></view></view>
-        <view class="collection-grid">
-          <view wx:for="{{achievementPreviews}}" wx:key="id" class="collection-item {{item.unlocked ? 'is-unlocked' : 'is-locked'}} tier-{{item.tier}}" data-id="{{item.id}}" bindtap="openAchievementPreview" aria-role="button" aria-label="{{item.ariaLabel}}">
-            <view class="collection-badge"><view class="collection-badge__ring"></view><image src="{{item.icon}}" mode="aspectFit" lazy-load /><view class="collection-state"><t-icon name="{{item.unlocked ? 'check-circle-filled' : 'lock-on'}}" size="22rpx" /></view></view><text class="collection-title">{{item.title}}</text><text class="collection-date">{{item.dateLabel}}</text>
+      <view class="paper-card community-card" bindtap="openGrowthCommunity" hover-class="is-pressed" aria-role="button" aria-label="进入成长社区">
+        <image class="community-card__path" src="/assets/profile/community-path.svg" mode="aspectFill" aria-hidden="true" />
+        <view class="community-card__veil"></view>
+        <view class="community-card__content">
+          <view class="community-card__icon"><t-icon name="usergroup-add" size="38rpx" /></view>
+          <view class="community-card__copy">
+            <view class="community-card__title-row"><text class="community-card__title">成长社区</text><text class="community-card__badge">内测</text></view>
+            <text class="community-card__description">找到同频伙伴，一起持续行动</text>
+            <text class="community-card__benefits">每日交流 · 每周复盘 · 目标互助</text>
           </view>
+          <view class="community-card__action"><text>进入社区</text><t-icon name="chevron-right" size="30rpx" /></view>
         </view>
       </view>
 
       <view class="paper-card manage-card">
-        <view class="manage-head"><text class="section-title">常用管理</text><text class="manage-sync-note">最近同步 {{syncLabel}}</text></view>
-        <view class="manage-grid">
-          <view class="manage-item" data-key="goals" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><t-icon name="flag" size="36rpx" /></view><view><text>目标管理</text><text>进行中与切换</text></view></view>
-          <view class="manage-item" data-key="history" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><t-icon name="time" size="36rpx" /></view><view><text>历史目标</text><text>归档与最近删除</text></view></view>
-          <view class="manage-item" data-key="sync" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><t-icon name="cloud" size="36rpx" /></view><view><text>数据与同步</text><text>状态、恢复与缓存</text></view></view>
-          <view class="manage-item" data-key="account" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><t-icon name="user" size="36rpx" /></view><view><text>账号与安全</text><text>手机号与注销入口</text></view></view>
+        <view class="manage-head"><text class="section-title">管理与设置</text></view>
+        <view class="manage-list">
+          <view class="manage-row" data-key="goals" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><t-icon name="flag" size="36rpx" /></view><view class="manage-copy"><text>目标管理</text><text>进行中与切换</text></view><text class="manage-value">{{activeGoalCount}} 个</text><t-icon name="chevron-right" size="33rpx" /></view>
+          <view class="manage-row" data-key="history" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><t-icon name="time" size="36rpx" /></view><view class="manage-copy"><text>历史目标</text><text>归档与最近删除</text></view><t-icon name="chevron-right" size="33rpx" /></view>
+          <view class="manage-row" data-key="badges" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><view class="manage-star-symbol"></view></view><view class="manage-copy"><text>成长收藏</text><text>阶段行动留下的纪念</text></view><text class="manage-value">{{achievementSummary}}</text><t-icon name="chevron-right" size="33rpx" /></view>
+          <view class="manage-row" data-key="sync" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><t-icon name="cloud" size="36rpx" /></view><view class="manage-copy"><text>云端数据与同步</text><text>最近成功 {{syncLabel}}</text></view><text class="manage-value manage-value--pill manage-value--{{syncTone}}">{{syncTitle}}</text><t-icon name="chevron-right" size="33rpx" /></view>
+          <view class="manage-row" data-key="account" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><t-icon name="user" size="36rpx" /></view><view class="manage-copy"><text>账号与安全</text><text>手机号、数据与注销</text></view><text class="manage-value {{phoneStatusText === '未绑定' ? 'manage-value--warning' : ''}}">{{phoneStatusText}}</text><t-icon name="chevron-right" size="33rpx" /></view>
+          <view class="manage-row" data-key="privacy" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><t-icon name="lock-on" size="36rpx" /></view><view class="manage-copy"><text>隐私与协议</text><text>授权、信息清单与协议</text></view><t-icon name="chevron-right" size="33rpx" /></view>
+          <view class="manage-row" data-key="about" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><t-icon name="help-circle" size="36rpx" /></view><view class="manage-copy"><text>帮助与关于</text><text>产品说明与问题反馈</text></view><t-icon name="chevron-right" size="33rpx" /></view>
         </view>
-        <view class="manage-footer"><view data-key="privacy" bindtap="openToolboxItem">隐私与协议</view><view data-key="about" bindtap="openToolboxItem">帮助与关于</view></view>
       </view>
     </block>
   </view>
@@ -87,6 +83,54 @@
         <view class="profile-setting-row"><view><text class="profile-label">在小队中使用该资料</text><text class="profile-helper">匿名模式下仍会隐藏头像和名称。</text></view><t-switch value="{{profileDraftUseInTeam}}" color="#245B4D" bindchange="toggleProfileUseInTeam" /></view>
       </view>
       <view class="sheet-actions"><t-button class="sheet-cancel" disabled="{{profileSaving}}" bindtap="closeProfileEditor">取消</t-button><t-button class="sheet-save" loading="{{profileSaving}}" disabled="{{profileSaving}}" bindtap="saveProfileEditor">保存</t-button></view>
+    </view>
+  </view>
+
+  <view wx:if="{{communitySheetVisible}}" class="community-sheet-layer" catchtouchmove="noop">
+    <view class="community-sheet-mask" catchtap="closeGrowthCommunity"></view>
+    <view class="community-sheet-panel" catchtap="noop">
+      <view class="community-sheet-handle"></view>
+      <view class="community-sheet-head">
+        <view class="community-sheet-heading"><text class="community-sheet-kicker">成长社区</text><text class="community-sheet-title">{{communityTitle}}</text></view>
+        <view class="community-sheet-close" catchtap="closeGrowthCommunity" hover-class="is-pressed" aria-role="button" aria-label="关闭成长社区"><t-icon name="close" size="34rpx" /></view>
+      </view>
+
+      <view wx:if="{{communitySheetStatus === 'loading'}}" class="community-sheet-state">
+        <view class="community-state-symbol"><t-loading size="46rpx" theme="circular" /></view>
+        <text class="community-state-title">正在读取社区入口</text>
+        <text class="community-state-copy">请稍候，马上为你确认最新二维码。</text>
+      </view>
+
+      <view wx:elif="{{communitySheetStatus === 'preparing'}}" class="community-sheet-state">
+        <view class="community-state-symbol"><t-icon name="qrcode" size="48rpx" /></view>
+        <text class="community-state-title">社区入口正在准备</text>
+        <text class="community-state-copy">{{communityDescription}}</text>
+        <view wx:if="{{!communityBusy}}" class="community-state-action community-state-action--outline" bindtap="retryGrowthCommunity" hover-class="is-pressed">重新检查</view>
+      </view>
+
+      <view wx:elif="{{communitySheetStatus === 'ready'}}" class="community-sheet-ready">
+        <text class="community-ready-copy">{{communityDescription}}</text>
+        <view class="community-qr-frame" bindtap="previewGrowthCommunityQr" hover-class="is-pressed" aria-role="button" aria-label="预览社区二维码">
+          <image class="community-qr-image" src="{{communityQrUrl}}" mode="aspectFit" show-menu-by-longpress="{{true}}" binderror="handleGrowthCommunityQrError" />
+        </view>
+        <text class="community-qr-tip">点击放大，或长按二维码识别</text>
+      </view>
+
+      <view wx:elif="{{communitySheetStatus === 'expired'}}" class="community-sheet-state">
+        <view class="community-state-symbol community-state-symbol--warning"><t-icon name="time" size="48rpx" /></view>
+        <text class="community-state-title">二维码已经过期</text>
+        <text class="community-state-copy">刷新后会重新获取当前可用的社区入口。</text>
+        <view class="community-state-action" bindtap="retryGrowthCommunity" hover-class="is-pressed">刷新二维码</view>
+      </view>
+
+      <view wx:else class="community-sheet-state">
+        <view class="community-state-symbol community-state-symbol--warning"><t-icon name="error-circle" size="48rpx" /></view>
+        <text class="community-state-title">社区入口暂时无法打开</text>
+        <text class="community-state-copy">{{communityErrorMessage || '请检查网络后重试。'}}</text>
+        <view class="community-state-action" bindtap="retryGrowthCommunity" hover-class="is-pressed">重新加载</view>
+      </view>
+
+      <view class="community-privacy-note"><t-icon name="info-circle" size="27rpx" /><text>二维码仅用于加入成长交流社群。加入后遵循微信社群规则；进步局不会读取群聊记录或通讯录，也不会自动上传你的目标和行动记录。</text></view>
     </view>
   </view>
 </view>

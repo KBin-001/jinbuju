@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const cloud = require("wx-server-sdk");
 const { stableId } = require("./repository");
 const { POLICY_VERSIONS } = require("./legal-constants");
+const { assertSafeAvatar } = require("./content-security");
 
 const db = cloud.database();
 
@@ -90,9 +91,15 @@ async function updateCloudProfile(openid, event) {
   const input = event && event.profile || {};
   const nickname = String(input.nickname || "").trim().slice(0, 16);
   if (!nickname) throw accountError("PROFILE_INVALID", "请输入展示名称。");
+  const avatarUrl = String(input.avatarUrl || "").slice(0, 500);
+  if (avatarUrl.startsWith("cloud://")) {
+    await assertSafeAvatar(openid, avatarUrl, { expectedPath: `user-avatars/${resolved.userId}/` });
+  } else if (avatarUrl && avatarUrl !== String(resolved.user.avatarUrl || "")) {
+    throw accountError("PROFILE_INVALID", "头像来源无效，请重新选择。");
+  }
   const data = {
     nickname,
-    avatarUrl: String(input.avatarUrl || "").slice(0, 500),
+    avatarUrl,
     profileSource: input.profileSource === "wechat" ? "wechat" : "custom",
     useProfileInTeam: input.useProfileInTeam !== false,
     profileUpdatedAt: new Date().toISOString(),
@@ -159,7 +166,15 @@ async function importLegacyProfile(openid, event) {
   if (profile && typeof profile === "object") {
     const nickname = String(profile.nickname || "").trim().slice(0, 16);
     if (nickname) data.nickname = nickname;
-    data.avatarUrl = String(profile.avatarUrl || "").slice(0, 500);
+    const avatarUrl = String(profile.avatarUrl || "").slice(0, 500);
+    if (avatarUrl.startsWith("cloud://")) {
+      await assertSafeAvatar(openid, avatarUrl, { expectedPath: `user-avatars/${resolved.userId}/` });
+      data.avatarUrl = avatarUrl;
+    } else if (/^https:\/\/(thirdwx\.qlogo\.cn|wx\.qlogo\.cn)\//i.test(avatarUrl)) {
+      data.avatarUrl = avatarUrl;
+    } else {
+      data.avatarUrl = "";
+    }
     data.profileSource = profile.profileSource === "wechat" ? "wechat" : "custom";
     data.useProfileInTeam = profile.useProfileInTeam !== false;
   }
@@ -172,14 +187,14 @@ const OWNED_COLLECTIONS = [
   "stage_generation_requests", "goal_analysis_drafts", "stage_preview_versions", "progress_ai_snapshots",
   "manual_goals", "manual_tasks", "manual_checkins", "manual_archived_goals", "achievement_unlocks",
   "spark_checkins", "coach_action_proposals", "team_members", "team_user_memberships", "team_member_daily", "team_events", "team_join_requests",
-  "user_consents",
+  "user_consents", "subscription_ledger", "notification_preference", "notification_sent_log", "in_app_messages",
 ];
 
 const BUSINESS_COLLECTIONS = [
   "goals", "plans", "tasks", "checkins", "stage_reviews", "stage_previews", "plan_generation_requests",
   "stage_generation_requests", "goal_analysis_drafts", "stage_preview_versions", "progress_ai_snapshots",
   "manual_goals", "manual_tasks", "manual_checkins", "manual_archived_goals", "achievement_unlocks",
-  "spark_checkins", "coach_action_proposals",
+  "spark_checkins", "coach_action_proposals", "subscription_ledger", "notification_preference", "notification_sent_log", "in_app_messages",
 ];
 
 async function removeOwnedRecords(name, openid, userId) {

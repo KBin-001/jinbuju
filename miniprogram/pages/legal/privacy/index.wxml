@@ -1,6 +1,6 @@
 <view class="page legal-page" data-theme="{{appTheme}}">
   <view class="legal-title">进步局隐私政策</view>
-  <view class="legal-meta">版本：privacy-1.0-rc.1 · 发布状态：候选稿</view>
+  <view class="legal-meta">版本：privacy-1.1-rc.1 · 发布状态：候选稿</view>
   <view class="legal-notice">上线前必须补充运营主体、联系渠道、发布日期、生效日期和数据保存期限，并按实际云环境与 AI 模型配置完成法律审核。候选稿不能冒充已生效正式政策。</view>
   <view class="legal-section"><view class="legal-heading">1. 我们处理哪些信息</view><view class="legal-copy">为建立微信小程序账号，我们使用微信提供的用户身份标识，但不会向你或小队成员展示 OpenID。你主动设置时，我们处理昵称、头像和个人简介；你主动点击手机号授权按钮时，服务端使用一次性凭证获取手机号并只展示脱敏状态。拒绝绑定手机号不影响目标、行动、进度等核心功能。</view></view>
   <view class="legal-section"><view class="legal-heading">2. 目标与成长数据</view><view class="legal-copy">我们处理你创建的目标、每日行动、预计与实际投入、完成状态、复盘、成长收藏和 AI 教练问答所需的真实摘要，用于展示今日计划、统计趋势、历史目标和个性化建议。AI 不会替你虚构行动记录。</view></view>
@@ -10,4 +10,5 @@
   <view class="legal-section"><view class="legal-heading">6. 你的选择与权利</view><view class="legal-copy">你可以在“我的”中更正资料、查看历史目标、解除手机号绑定、撤回可选授权、清除设备缓存、删除成长数据或申请注销账号。清除缓存、删除成长数据和注销账号影响范围不同；永久删除前需要再次确认，失败时不会显示为成功。</view></view>
   <view class="legal-section"><view class="legal-heading">7. 协议记录与更新</view><view class="legal-copy">我们记录你主动同意的协议类型、版本、时间和来源，不默认勾选。重大更新应再次展示并取得主动同意。撤回可选的手机号处理同意不会影响不依赖手机号的核心功能。</view></view>
   <view class="legal-section"><view class="legal-heading">8. 未成年人和联系我们</view><view class="legal-copy">本产品面向年轻用户，但尚未完成针对未成年人的年龄识别、监护人同意和专门个人信息规则。上线前必须明确目标用户年龄范围并补全对应机制。当前可通过“关于进步局”中的微信反馈入口提交数据与隐私问题；正式运营主体与其他联系方式待上线前补充。</view></view>
+  <view class="legal-section"><view class="legal-heading">9. 订阅通知</view><view class="legal-copy">每日行动提醒、AI 教练建议和小队动态仅在你主动点击微信订阅授权后开启。我们记录通知场景、授权结果、授权时间和与你微信身份对应的 OpenID，用于核验一次性额度、去重、限流和投递；不会读取聊天记录、位置或通讯录。你可以在“隐私与授权”中逐项关闭，关闭后未消费额度会失效；微信侧总开关需在微信授权管理中修改。消费或过期账本、发送日志和站内消息默认保留 30 天，仍有效的一次性额度最长保留 7 天。</view></view>
 </view>

@@ -38,6 +38,8 @@ const {
   validateCreateStagePreviewInput,
   validateOptimizedPlan,
 } = require("./stage-v2");
+const { TEMPLATES: NOTIFICATION_TEMPLATES, SCENES: NOTIFICATION_SCENES } = require("./notification-config");
+const { AUTH_RESULTS, RETRYABLE_CODES, assertRequestObject, buildTemplateData, shanghaiParts, validateRequestId: validateNotificationRequestId } = require("./notification");
 
 const persistedStageAction = mapStageActionToTaskFields(
   {
@@ -709,5 +711,42 @@ const normalizedRestDayPlan = validateStagePlan(
   videoEditingReviewInput,
 );
 assert.strictEqual(normalizedRestDayPlan.days[3].actions.length, 0);
+
+assert.deepStrictEqual(Array.from(AUTH_RESULTS).sort(), ["accept", "ban", "filter", "reject"]);
+assert.deepStrictEqual(Array.from(RETRYABLE_CODES).sort((a, b) => a - b), [-1, 45009]);
+assert.strictEqual(NOTIFICATION_TEMPLATES[NOTIFICATION_SCENES.DAILY_ACTION].enabled, false);
+assert.strictEqual(NOTIFICATION_TEMPLATES[NOTIFICATION_SCENES.AI_COACH].configured, false);
+assert.strictEqual(NOTIFICATION_TEMPLATES[NOTIFICATION_SCENES.TEAM_ACTIVITY].templateId, "");
+assert.deepStrictEqual(
+  buildTemplateData(
+    { dataKeys: { date: "date1", hint: "thing2" }, maxLengths: { date: 10, hint: 5 } },
+    { date: "2026-07-17", hint: "  保持真实行动记录  " },
+  ),
+  { date1: { value: "2026-07-17" }, thing2: { value: "保持真实行" } },
+);
+assert.throws(() => buildTemplateData(
+  { dataKeys: { hint: "thing1" }, maxLengths: { hint: 20 } },
+  { hint: "" },
+), (error) => error.code === "NOTIFICATION_INVALID");
+assert.deepStrictEqual(
+  buildTemplateData(
+    { dataKeys: { count: "number1", completedAt: "time2" }, maxLengths: { count: 10, completedAt: 10 } },
+    { count: "3", completedAt: "08:05" },
+  ),
+  { number1: { value: "3" }, time2: { value: "08:05" } },
+);
+assert.throws(
+  () => buildTemplateData({ dataKeys: { count: "number1" }, maxLengths: { count: 10 } }, { count: "3 项" }),
+  (error) => error.code === "NOTIFICATION_INVALID",
+);
+assert.strictEqual(validateNotificationRequestId("n1:2026-07-17:user_abc"), "n1:2026-07-17:user_abc");
+assert.throws(() => validateNotificationRequestId("bad id"), (error) => error.code === "NOTIFICATION_INVALID");
+assert.doesNotThrow(() => assertRequestObject({ action: "notification.preference" }, "request"));
+assert.doesNotThrow(() => assertRequestObject(
+  { action: "notification.updatePreference", scene: "daily_action_reminder", enabled: true, userInfo: { openId: "platform-injected" }, ignored: true },
+  "request",
+));
+assert.throws(() => assertRequestObject(null, "request"), (error) => error.code === "NOTIFICATION_INVALID");
+assert.deepStrictEqual(shanghaiParts(new Date("2026-07-17T00:00:00.000Z")), { date: "2026-07-17", hour: 8, minute: 0 });
 
 console.log("generatePlan tests passed");

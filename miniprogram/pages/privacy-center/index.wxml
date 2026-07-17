@@ -23,6 +23,34 @@
       <view class="info-item"><t-icon name="flag" size="34rpx" /><view><view>目标、行动、投入与复盘</view><text>用于今日计划、进度统计、历史目标和 AI 建议</text></view></view>
       <view class="info-item"><t-icon name="user" size="34rpx" /><view><view>小队关系与公开行动摘要</view><text>用于成员身份、行动榜与轻量鼓励</text></view></view>
       <view class="info-item"><t-icon name="info-circle" size="34rpx" /><view><view>手机号（可选）</view><text>仅在用户主动授权并确认用途后绑定</text></view></view>
+      <view class="info-item"><t-icon name="notification" size="34rpx" /><view><view>通知授权记录与微信身份</view><text>仅用于投递你主动订阅的行动、教练和小队提醒</text></view></view>
+    </view>
+
+    <view class="card notification-card">
+      <view class="notification-heading">
+        <view><view class="section-title">订阅通知</view><text>每次微信订阅授权仅产生一次可用额度</text></view>
+        <view bindtap="openWechatNotificationSettings" class="setting-link">管理微信授权</view>
+      </view>
+      <view wx:if="{{notificationLoading}}" class="notification-loading"><t-loading size="36rpx" theme="circular" /><text>正在读取通知状态</text></view>
+      <view wx:elif="{{!notificationPreference}}" class="notification-load-error"><text>{{notificationErrorMessage || '通知状态暂时没有加载出来'}}</text><button bindtap="loadNotificationSettings">重试</button></view>
+      <block wx:elif="{{notificationPreference}}">
+        <view wx:if="{{!wechatNotificationMainSwitch}}" class="notification-warning">微信订阅消息总开关已关闭，开启场景偏好后仍需到微信授权管理中恢复。</view>
+        <view class="notification-row">
+          <view><view>每日行动提醒</view><text>{{notificationPreference.scenes.daily_action_reminder.configured ? (notificationPreference.scenes.daily_action_reminder.needsAuthorization ? '待续订 · 前往今日页授权' : '剩余 ' + notificationPreference.scenes.daily_action_reminder.remainingQuota + ' 次') : '模板审核中，暂不可开启'}}</text></view>
+          <t-switch data-scene="daily_action_reminder" value="{{notificationPreference.scenes.daily_action_reminder.enabled}}" loading="{{notificationSavingScene === 'daily_action_reminder'}}" bindchange="onNotificationChange" />
+        </view>
+        <view class="notification-row">
+          <view><view>AI 教练建议</view><text>{{notificationPreference.scenes.ai_coach_advice.configured ? (notificationPreference.scenes.ai_coach_advice.needsAuthorization ? '待续订 · 前往教练页授权' : '剩余 ' + notificationPreference.scenes.ai_coach_advice.remainingQuota + ' 次') : '模板审核中，暂不可开启'}}</text></view>
+          <t-switch data-scene="ai_coach_advice" value="{{notificationPreference.scenes.ai_coach_advice.enabled}}" loading="{{notificationSavingScene === 'ai_coach_advice'}}" bindchange="onNotificationChange" />
+        </view>
+        <view class="notification-row">
+          <view><view>小队动态</view><text>{{notificationPreference.scenes.team_activity.configured ? (notificationPreference.scenes.team_activity.needsAuthorization ? '待续订 · 前往小队页授权' : '剩余 ' + notificationPreference.scenes.team_activity.remainingQuota + ' 次') : '模板审核中，暂不可开启'}}</text></view>
+          <t-switch data-scene="team_activity" value="{{notificationPreference.scenes.team_activity.enabled}}" loading="{{notificationSavingScene === 'team_activity'}}" bindchange="onNotificationChange" />
+        </view>
+      </block>
+      <view wx:if="{{notificationPreference && notificationErrorMessage}}" class="error-message">{{notificationErrorMessage}}</view>
+      <view class="notification-note">关闭仅停止本服务并使未消费额度失效，不会修改微信侧的系统设置。发送失败时，仅在偏好仍开启且符合规则时生成站内提醒。</view>
+      <view class="notification-explain-link" bindtap="openPrivacy">了解通知服务与数据保留说明</view>
     </view>
 
     <view class="card list-card">

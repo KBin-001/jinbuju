@@ -103,7 +103,7 @@
           <view class="member-rank">{{memberIndex + 1}}</view>
           <view class="member-avatar avatar-grad {{item.avatarClass}}">
             <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" data-index="{{memberIndex}}" binderror="onMemberAvatarError" />
-            <image wx:else src="/images/avatar.png" mode="aspectFill" />
+            <image wx:else src="/images/icons/avatar.png" mode="aspectFill" />
           </view>
 
           <view class="member-main">
@@ -160,7 +160,7 @@
         <view class="detail-profile">
           <view class="detail-avatar avatar-grad {{selectedDetail.avatarClass}}">
             <image wx:if="{{selectedDetail.avatar}}" src="{{selectedDetail.avatar}}" mode="aspectFill" binderror="onDetailAvatarError" />
-            <image wx:else src="/images/avatar.png" mode="aspectFill" />
+            <image wx:else src="/images/icons/avatar.png" mode="aspectFill" />
           </view>
           <view class="detail-profile-main">
             <view class="detail-name-row">

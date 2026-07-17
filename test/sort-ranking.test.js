@@ -1,10 +1,16 @@
 const assert = require("assert");
-const { compareRank, MAX_TEAM_MEMBERS } = require("../cloudfunctions/generatePlan/team-rules");
+const { compareRank, MAX_TEAM_MEMBERS, resolveMemberTodayStatus } = require("../cloudfunctions/generatePlan/team-rules");
 const { formatBusinessDate } = require("../cloudfunctions/generatePlan/date");
 
-assert.strictEqual(MAX_TEAM_MEMBERS, 20, "小队人数的云端唯一规则应为 20 人");
-assert.strictEqual(Array.from({ length: 20 }).length, MAX_TEAM_MEMBERS);
-assert.strictEqual(MAX_TEAM_MEMBERS + 1, 21, "第 21 人必须进入 TEAM_FULL 分支");
+assert.strictEqual(MAX_TEAM_MEMBERS, 50, "小队人数的云端唯一规则应为 50 人");
+assert.strictEqual(Array.from({ length: 50 }).length, MAX_TEAM_MEMBERS);
+assert.strictEqual(MAX_TEAM_MEMBERS + 1, 51, "第 51 人必须进入 TEAM_FULL 分支");
+
+assert.strictEqual(resolveMemberTodayStatus({ visibleCount: 0, skippedCount: 0, completionRate: 0, growthMinutes: 0 }), "not_started");
+assert.strictEqual(resolveMemberTodayStatus({ visibleCount: 2, skippedCount: 2, completionRate: 0, growthMinutes: 0 }), "missed",
+  "全部跳过必须保留为今日休息，不能降级成未开始");
+assert.strictEqual(resolveMemberTodayStatus({ visibleCount: 2, skippedCount: 0, completionRate: 50, growthMinutes: 20 }), "partial");
+assert.strictEqual(resolveMemberTodayStatus({ visibleCount: 2, skippedCount: 0, completionRate: 100, growthMinutes: 40 }), "completed");
 
 const members = [
   { id: "m4", growthMinutes: 70, completedAt: "2026-07-11T10:00:00.000Z" },
@@ -24,4 +30,4 @@ assert.strictEqual(formatBusinessDate(new Date("2026-07-11T15:59:59.999Z")), "20
 assert.strictEqual(formatBusinessDate(new Date("2026-07-11T16:00:00.000Z")), "2026-07-12",
   "上海零点必须切换到新的每日榜单分区");
 
-console.log("Team 20 人边界、今日分钟榜单、稳定平局与上海跨日测试通过");
+console.log("Team 50 人边界、missed 语义、今日分钟榜单、稳定平局与上海跨日测试通过");

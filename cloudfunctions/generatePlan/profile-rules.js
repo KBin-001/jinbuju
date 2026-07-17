@@ -52,6 +52,10 @@ const USER_OWNED_COLLECTIONS = [
   "manual_tasks",
   "manual_checkins",
   "coach_action_proposals",
+  "subscription_ledger",
+  "notification_preference",
+  "notification_sent_log",
+  "in_app_messages",
 ];
 
 function clamp(value, minimum, maximum) {

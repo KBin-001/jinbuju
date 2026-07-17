@@ -1,3 +1,10 @@
 {
-  "permissions": {}
+  "permissions": {
+    "openapi": [
+      "phonenumber.getPhoneNumber",
+      "security.imgSecCheck",
+      "security.msgSecCheck",
+      "subscribeMessage.send"
+    ]
+  }
 }

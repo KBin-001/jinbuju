@@ -13,7 +13,8 @@ const settings = template.slice(settingsStart, settingsEnd);
 
 assert.match(settings, /小队名称/);
 assert.match(settings, /maxlength="20"/);
-assert.match(settings, /保存名称/);
+assert.match(settings, /保存设置/);
+assert.match(settings, /小队宣传语/);
 assert.match(settings, /成员管理/);
 assert.match(settings, /匿名模式/);
 assert.match(settings, /解散小队/);
@@ -30,9 +31,9 @@ assert.match(page, /name\.length < 2|trim\(\)\.length < 2/,
 const saveStart = page.indexOf("async saveTeamSettings()");
 const saveEnd = page.indexOf("confirmLeaveOrDissolve()", saveStart);
 const saveHandler = page.slice(saveStart, saveEnd);
-assert.match(saveHandler, /updateTeamSettings\s*\(\s*\{\s*name\s*\}/,
-  "设置保存必须且只应向云端提交小队名称");
-for (const forbiddenKey of ["announcement", "avatar", "visibility", "joinMode", "allowAnonymous", "actionDetailVisibility"]) {
+assert.match(saveHandler, /updateTeamSettings\s*\(\s*\{\s*name,\s*announcement:\s*slogan\s*\}/,
+  "设置保存必须向云端提交名称与宣传语，而不是只做本地乐观展示");
+for (const forbiddenKey of ["avatar", "visibility", "joinMode", "allowAnonymous", "actionDetailVisibility"]) {
   assert(!saveHandler.includes(`${forbiddenKey}:`), `设置保存不应提交 ${forbiddenKey}`);
 }
 

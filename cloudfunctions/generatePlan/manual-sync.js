@@ -1,6 +1,8 @@
 const cloud = require("wx-server-sdk");
 const { stableId } = require("./repository");
 const { resolveAccount } = require("./account");
+const { notifyTeamActionCompleted } = require("./notification");
+const { recordManualCompletionEvent } = require("./team");
 
 const db = cloud.database();
 const COLLECTIONS = {
@@ -131,14 +133,23 @@ async function prepareCollectionMerge(openid, collection, rawItems, kind) {
   const current = await listOwned(collection, openid);
   const merged = new Map(current.map((item) => [item.id, item]));
   const changes = [];
+  const completedTransitions = [];
   for (const item of incoming) {
     const existing = merged.get(item.id);
     if (shouldReplace(existing, item)) {
       merged.set(item.id, item);
       changes.push(item);
+      if (
+        collection === COLLECTIONS.tasks &&
+        !item.deletedAt &&
+        item.status === "completed" &&
+        existing && existing.status !== "completed"
+      ) {
+        completedTransitions.push({ before: existing || null, after: item });
+      }
     }
   }
-  return { items: Array.from(merged.values()), changes };
+  return { items: Array.from(merged.values()), changes, completedTransitions };
 }
 
 async function persistCollectionChanges(openid, userId, collection, changes) {
@@ -194,6 +205,30 @@ async function syncManualData(openid, event) {
     userSyncData.migrationVersion = 1;
   }
   await db.collection("users").doc(account.userId).update({ data: userSyncData });
+  if (taskMerge.completedTransitions.length) {
+    const completedTasks = taskMerge.completedTransitions.map((transition) => transition.after);
+    const eventId = stableId(
+      "team_completion",
+      `${account.userId}:${completedTasks.map((task) => task.id).sort().join(",")}:${completedTasks.map((task) => task.updatedAt).sort().join(",")}`,
+    );
+    await recordManualCompletionEvent(account.userId, eventId, completedTasks).catch((error) => {
+      console.error("team completion event hook failed", {
+        code: String(error && (error.code || error.errCode) || "UNKNOWN").slice(0, 80),
+        eventIdSuffix: eventId.slice(-8),
+      });
+    });
+    await notifyTeamActionCompleted({
+      openid,
+      userId: account.userId,
+      eventId,
+      completedTasks,
+    }).catch((error) => {
+      console.error("team notification hook failed", {
+        code: String(error && (error.code || error.errCode) || "UNKNOWN").slice(0, 80),
+        eventIdSuffix: eventId.slice(-8),
+      });
+    });
+  }
   return {
     version: 1,
     activeGoalId: goals.some((item) => item.id === store.activeGoalId) ? store.activeGoalId : goals.find((item) => item.status === "active")?.id,

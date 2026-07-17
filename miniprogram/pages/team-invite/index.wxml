@@ -8,7 +8,7 @@
       <view class="invite-avatar" wx:for="{{avatars}}" wx:key="id" wx:for-index="avatarIndex">
         <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" data-index="{{avatarIndex}}" binderror="onAvatarError" />
         <text wx:elif="{{item.extraText}}">{{item.extraText}}</text>
-        <image wx:else src="/images/avatar.png" mode="aspectFill" />
+        <image wx:else src="/images/icons/avatar.png" mode="aspectFill" />
       </view>
       <text>{{memberCapacityText}}</text>
     </view>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 152" fill="none">
+  <path d="M12 112C54 83 88 91 123 68C158 45 190 57 225 41C263 24 304 29 348 13" stroke="#AFC3B9" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M12 128C59 113 92 123 137 105C185 85 217 96 259 72C289 55 318 54 348 42" stroke="#7F9D91" stroke-opacity=".72" stroke-width="3" stroke-linecap="round"/>
+  <path d="M76 105L118 66L143 88L188 43L236 91L275 57L329 111" stroke="#B9CAC1" stroke-opacity=".62" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="77" cy="105" r="5" fill="#EEF4F0" stroke="#7F9D91" stroke-width="2"/>
+  <circle cx="188" cy="43" r="5" fill="#EEF4F0" stroke="#7F9D91" stroke-width="2"/>
+  <circle cx="275" cy="57" r="5" fill="#EEF4F0" stroke="#7F9D91" stroke-width="2"/>
+  <path d="M207 123C235 109 277 110 311 121" stroke="#9DB5AA" stroke-opacity=".54" stroke-width="2" stroke-linecap="round"/>
+  <g stroke="#6F9082" stroke-linecap="round" stroke-linejoin="round" opacity=".46">
+    <circle cx="292" cy="93" r="4.5" fill="#DCE8E1" stroke-width="2"/>
+    <path d="M292 99V116M292 105L285 111M292 105L300 111M292 116L286 127M292 116L299 127" stroke-width="2.4"/>
+    <circle cx="315" cy="88" r="4" fill="#DCE8E1" stroke-width="2"/>
+    <path d="M315 94V110M315 100L309 106M315 100L321 106M315 110L310 121M315 110L321 121" stroke-width="2.2"/>
+  </g>
+</svg>

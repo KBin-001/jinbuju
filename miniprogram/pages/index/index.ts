@@ -5,10 +5,13 @@ import { getLocalUserProfile } from "../../services/profile";
 import { analyzeProgress, prepareProgressCoach } from "../../services/progressCoach";
 import { getCurrentThemeId, withAppTheme } from "../../services/theme";
 import { syncManualData } from "../../services/manualSync";
+import { InAppMessage, listInAppMessages, readInAppMessage, requestNotificationAuthorization } from "../../services/notification";
+import { isNotificationConfigured } from "../../config/notification";
 import { ActionIssueReason, ActionTask, ActionTaskStatus, Goal, TodaySummary } from "../../types/manual";
 import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate, getTimeGreeting } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
-import { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask } from "../../utils/taskStatus";
+import { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask, sortTodayTasksIncompleteFirst } from "../../utils/taskStatus";
+import { getTabHeaderLayout } from "../../utils/tabHeader";
 
 const REASONS: Array<{ label: string; value: ActionIssueReason }> = [{ label: "时间不够", value: "not_enough_time" }, { label: "难度太高", value: "too_difficult" }, { label: "缺少资源", value: "resource_unavailable" }, { label: "身体或状态不适", value: "physical_condition" }, { label: "临时有事", value: "temporary_event" }, { label: "任务不符合实际", value: "not_practical" }, { label: "其他", value: "other" }];
 const DURATION_OPTIONS = [
@@ -23,7 +26,7 @@ const DURATION_OPTIONS = [
   { label: "240 分钟", value: 240 },
 ];
 const DEFAULT_QUICK_ADD_MINUTE_INDEX = DURATION_OPTIONS.findIndex((option) => option.value === 30);
-const QUICK_DURATION_VALUES = new Set([30, 45, 60, 90]);
+const QUICK_DURATION_VALUES = new Set([30, 45, 60, 90, 120]);
 const QUICK_DURATION_OPTIONS = DURATION_OPTIONS
   .map((option, sourceIndex) => ({ ...option, sourceIndex }))
   .filter((option) => QUICK_DURATION_VALUES.has(option.value));
@@ -37,16 +40,6 @@ interface StatsRhythmBar { key: string; height: number; active: boolean; }
 interface WeekDayView { label: string; date: string; day: string; isToday: boolean; isSelected: boolean; isCurrentMonth: boolean; }
 interface CalendarDayView extends WeekDayView { hasAction: boolean; isCompleted: boolean; }
 interface CalendarView { title: string; days: CalendarDayView[]; }
-
-function getTodayLayout(): { menuTop: number; menuHeight: number } {
-  try {
-    const windowInfo = wx.getWindowInfo();
-    const menu = wx.getMenuButtonBoundingClientRect();
-    return { menuTop: Math.max(windowInfo.statusBarHeight || 0, menu.top || 0), menuHeight: menu.height || 32 };
-  } catch (_) {
-    return { menuTop: 28, menuHeight: 32 };
-  }
-}
 
 function monthDayLabel(value: string): string {
   const date = new Date(`${value}T00:00:00`);
@@ -248,7 +241,7 @@ function toViewTask(task: ActionTask, selectedDate: string, businessToday = getT
 
 Page(withAppTheme({
   data: {
-    ...getTodayLayout(),
+    ...getTabHeaderLayout(),
     appTheme: getCurrentThemeId() as string,
     status: "loading",
     errorMessage: "",
@@ -260,6 +253,7 @@ Page(withAppTheme({
     visibleTasks: [] as ViewTask[],
     summary: emptySummary(),
     completionPercent: 0,
+    flowRemainingPercent: 100,
     focusPercent: 0,
     remainingCount: 0,
     statsRhythmBars: buildStatsRhythmBars([]) as StatsRhythmBar[],
@@ -311,7 +305,11 @@ Page(withAppTheme({
       goalProgress: 0,
       minutes: 0,
       streak: 0,
+      allDone: false,
     },
+    dailyActionNotificationAvailable: isNotificationConfigured("daily_action_reminder") && new Date().getHours() < 22,
+    notificationAuthorizing: false,
+    inAppMessage: null as InAppMessage | null,
   },
   profileHandler: null as null | (() => void),
   focusGoalHandler: null as null | (() => void),
@@ -348,6 +346,31 @@ Page(withAppTheme({
     this.load();
     // 再后台同步云端数据，完成后刷新一次
     syncManualData().catch(() => undefined).then(() => this.load());
+    this.loadInAppMessage();
+  },
+  async loadInAppMessage() {
+    try {
+      const result = await listInAppMessages(1);
+      this.setData({ inAppMessage: result.list[0] || null });
+    } catch (_error) {
+      this.setData({ inAppMessage: null });
+    }
+  },
+  async openInAppMessage() {
+    const message = this.data.inAppMessage;
+    if (!message) return;
+    this.setData({ inAppMessage: null });
+    try {
+      await readInAppMessage(message.id);
+    } catch (_error) {
+      this.setData({ inAppMessage: message });
+      wx.showToast({ title: "消息状态更新失败，请重试", icon: "none" });
+      return;
+    }
+    if (!/^\/pages\/[A-Za-z0-9_/-]+(?:\?[A-Za-z0-9_=&%.-]+)?$/.test(message.page)) return;
+    const tabPages = new Set(["/pages/index/index", "/pages/plan/index", "/pages/team/index", "/pages/profile/index"]);
+    if (tabPages.has(message.page)) wx.switchTab({ url: message.page });
+    else wx.navigateTo({ url: message.page });
   },
   load() {
     // 已有数据时不闪 loading，保持旧内容可见，后台静默刷新
@@ -359,7 +382,7 @@ Page(withAppTheme({
       const sourceTasks = goal ? getTodayPageTasks(goal.id, selectedDate, today) : [];
       const selectedTasks = sourceTasks.filter((task) => task.currentDate === selectedDate);
       const taskGroups = groupTodayTasks(sourceTasks, selectedDate).map((group) => ({ ...group, tasks: group.tasks.map((task) => toViewTask(task, selectedDate, today)) }));
-      const tasks = taskGroups.reduce<ViewTask[]>((all, group) => all.concat(group.tasks), []);
+      const tasks = sortTodayTasksIncompleteFirst(taskGroups.reduce<ViewTask[]>((all, group) => all.concat(group.tasks), []));
       const summary = calculateTodaySummary(selectedTasks);
       const progress = goal ? getProgressSummary(goal.id, selectedDate) : null;
       const mood = todayMood(summary);
@@ -381,6 +404,7 @@ Page(withAppTheme({
         visibleTasks,
         summary,
         completionPercent: completionPercent(summary),
+        flowRemainingPercent: 100 - completionPercent(summary),
         focusPercent: focusPercent(summary),
         remainingCount: remainingCount(summary),
         statsRhythmBars: buildStatsRhythmBars(selectedTasks),
@@ -589,7 +613,7 @@ Page(withAppTheme({
   applyTaskPatch(updatedTask: ViewTask, prevScrollTop: number) {
     const today = getTodayBusinessDate();
     const selectedDate = this.data.selectedDate || today;
-    const tasks = this.data.tasks.map((item) => (item.id === updatedTask.id ? updatedTask : item));
+    const tasks = sortTodayTasksIncompleteFirst<ViewTask>(this.data.tasks.map((item) => (item.id === updatedTask.id ? updatedTask : item)));
     const taskGroups = this.data.taskGroups.map((group) => ({ ...group, tasks: group.tasks.map((item) => (item.id === updatedTask.id ? updatedTask : item)) }));
     const todayTasks = tasks.filter((item) => item.currentDate === selectedDate);
     const summary = calculateTodaySummary(todayTasks);
@@ -602,6 +626,7 @@ Page(withAppTheme({
       visibleTasks,
       summary,
       completionPercent: completionPercent(summary),
+      flowRemainingPercent: 100 - completionPercent(summary),
       focusPercent: focusPercent(summary),
       remainingCount: remainingCount(summary),
       statsRhythmBars: buildStatsRhythmBars(todayTasks),
@@ -633,12 +658,14 @@ Page(withAppTheme({
     this.setData({
       completionSheetRendered: true,
       completionSheetVisible: false,
+      dailyActionNotificationAvailable: isNotificationConfigured("daily_action_reminder") && new Date().getHours() < 22,
       completionSheetData: {
         done: summary.completedCount,
         total: summary.totalCount,
         goalProgress,
         minutes: summary.actualMinutes,
         streak: progress.currentStreakDays,
+        allDone: summary.totalCount > 0 && summary.unfinishedCount === 0 && summary.partialCount === 0,
       },
     });
     wx.nextTick(() => this.setData({ completionSheetVisible: true }));
@@ -658,6 +685,21 @@ Page(withAppTheme({
       url: "/pages/share-card/index",
       fail: () => wx.showToast({ title: "分享卡打开失败", icon: "none" }),
     });
+  },
+  async subscribeDailyActionReminder() {
+    if (this.data.notificationAuthorizing) return;
+    this.setData({ notificationAuthorizing: true });
+    try {
+      const result = await requestNotificationAuthorization("daily_action_reminder", "today_completion");
+      wx.showToast({
+        title: result === "accept" ? "明日提醒已订阅" : "未获得订阅授权",
+        icon: result === "accept" ? "success" : "none",
+      });
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "订阅未完成", icon: "none" });
+    } finally {
+      this.setData({ notificationAuthorizing: false });
+    }
   },
   toggleTaskDone(event: { currentTarget: { dataset: { id?: string } } }) {
     const id = String(event.currentTarget.dataset.id || "");

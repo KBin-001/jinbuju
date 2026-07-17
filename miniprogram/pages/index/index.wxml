@@ -1,18 +1,22 @@
 <view class="page today-page" data-theme="{{appTheme}}">
-  <view class="today-hero">
-    <image class="today-hero__background" src="/assets/today-hero-mountain-v2.jpg" mode="aspectFill" />
-    <view class="today-hero__veil"></view>
-    <view class="today-nav" style="padding-top: {{menuTop}}px; height: {{menuHeight}}px;"><text>今日</text></view>
+  <view class="today-hero tab-header" style="height: {{headerHeight}}px;">
+    <image class="today-hero__background tab-header__background" src="/assets/today-hero-mountain-v2.jpg" mode="aspectFill" />
+    <view class="today-hero__veil tab-header__veil"></view>
+    <view class="today-nav tab-header__nav" style="padding-top: {{menuTop}}px; height: {{menuHeight}}px;"><text class="tab-header__title">今日</text></view>
+  </view>
 
-    <view wx:if="{{status === 'ready'}}" class="today-profile-row">
-      <image wx:if="{{displayAvatarUrl}}" class="today-avatar" src="{{displayAvatarUrl}}" mode="aspectFill" binderror="useDefaultAvatar" />
-      <image wx:else class="today-avatar" src="/images/icons/avatar.png" mode="aspectFit" />
-      <view class="today-greeting-copy"><text class="today-greeting">{{greetingText}}，{{displayName}}</text><text class="today-subtitle">{{greetingSubtitle}}</text></view>
-      <view class="action-streak" aria-label="连续行动天数">
-        <view class="action-streak__value">{{currentStreakDays}}<text>天</text></view>
-        <view class="action-streak__label">连续行动</view>
-      </view>
+  <view wx:if="{{status === 'ready'}}" class="today-profile-row">
+    <image wx:if="{{displayAvatarUrl}}" class="today-avatar" src="{{displayAvatarUrl}}" mode="aspectFill" binderror="useDefaultAvatar" />
+    <image wx:else class="today-avatar" src="/images/icons/avatar.png" mode="aspectFit" />
+    <view class="today-greeting-copy"><text class="today-greeting">{{greetingText}}，{{displayName}}</text><text class="today-subtitle">{{greetingSubtitle}}</text></view>
+    <view class="action-streak" aria-label="连续行动天数">
+      <view class="action-streak__value">{{currentStreakDays}}<text>天</text></view>
+      <view class="action-streak__label">连续行动</view>
     </view>
+  </view>
+
+  <view wx:if="{{inAppMessage}}" class="today-notification" bindtap="openInAppMessage" role="button">
+    <t-notice-bar prefix-icon="notification" content="{{inAppMessage.title + ' · ' + inAppMessage.body}}" />
   </view>
 
   <view wx:if="{{status === 'loading'}}" class="paper-card state-card">
@@ -83,7 +87,7 @@
             <view class="task-copy">
               <view class="task-title-line"><view class="task-title">{{task.displayTitle}}</view></view>
               <view class="task-meta"><text>预计 {{task.estimatedMinutes}} 分钟</text><text wx:if="{{task.actualMinutes}}" class="task-meta-actual">实际 {{task.actualMinutes}} 分钟</text></view>
-              <view class="task-status-line"><text class="task-status task-status--{{task.statusTone}}">{{task.statusLabel}}</text><text class="task-more" data-id="{{task.id}}" catchtap="openTask">更多操作</text></view>
+              <view class="task-status-line"><text class="task-status task-status--{{task.statusTone}}">{{task.statusLabel}}</text></view>
             </view>
             <view class="task-tail-check {{task.status === 'completed' ? 'is-done' : ''}} {{!task.canComplete ? 'is-disabled' : ''}}" data-id="{{task.id}}" catchtap="toggleTaskDone" aria-label="{{task.status === 'completed' ? '取消完成' : '标记完成'}}">
               <t-icon wx:if="{{task.status === 'completed'}}" name="check" />
@@ -113,13 +117,18 @@
             </view>
           </view>
           <view class="stats-column stats-column--progress">
-            <view class="stats-label"><view class="stats-icon stats-icon--solid stats-icon--mountain"><view class="stats-icon-mountain"></view></view><text>今日进度</text></view>
+            <view class="stats-label"><view class="stats-icon stats-icon--flow"><view class="stats-icon-flow-line"></view></view><text>今日进度</text></view>
             <view class="stats-value stats-value--progress">{{completionPercent}}<text class="stats-value-unit stats-value-unit--percent">%</text></view>
-            <view class="stats-mountain-track">
-              <view class="stats-mountain-fill" style="width: {{completionPercent}}%;"></view>
+            <view class="stats-flow-track" aria-label="今日进度 {{completionPercent}}%">
+              <image class="stats-flow-image stats-flow-image--base" src="/assets/today-progress-river.svg" mode="scaleToFill" />
+              <view class="stats-flow-active" style="clip-path: inset(0 {{flowRemainingPercent}}% 0 0);">
+                <view class="stats-flow-canvas">
+                  <image class="stats-flow-image stats-flow-image--active" src="/assets/today-progress-river.svg" mode="scaleToFill" />
+                </view>
+              </view>
             </view>
-            <view class="stats-achievement-pill">
-              {{completionPercent === 100 && summary.totalCount > 0 ? '目标达成' : (remainingCount > 0 ? '还差 ' + remainingCount + ' 项' : '尚未开始')}}
+            <view class="stats-achievement-pill {{completionPercent === 100 && summary.totalCount > 0 ? 'is-complete' : ''}}">
+              {{completionPercent === 100 && summary.totalCount > 0 ? '今日达成' : (remainingCount > 0 ? '还差 ' + remainingCount + ' 项' : '等待启程')}}
             </view>
           </view>
         </view>
@@ -205,7 +214,7 @@
         </view>
         <view class="quick-duration-chips">
           <view wx:for="{{quickDurationPrimaryOptions}}" wx:key="value" class="quick-duration-chip {{quickAddMinuteIndex === item.sourceIndex ? 'is-selected' : ''}}" data-index="{{item.sourceIndex}}" catchtap="selectQuickDurationChip">{{item.value}} 分钟</view>
-          <view class="quick-duration-chip {{quickAddMinutes !== 30 && quickAddMinutes !== 45 && quickAddMinutes !== 60 && quickAddMinutes !== 90 ? 'is-selected' : ''}}" catchtap="openCustomDuration">{{quickAddMinutes !== 30 && quickAddMinutes !== 45 && quickAddMinutes !== 60 && quickAddMinutes !== 90 ? quickAddMinutes + ' 分钟' : '更多时长'}}</view>
+          <view class="quick-duration-chip {{quickAddMinutes !== 30 && quickAddMinutes !== 45 && quickAddMinutes !== 60 && quickAddMinutes !== 90 && quickAddMinutes !== 120 ? 'is-selected' : ''}}" catchtap="openCustomDuration">{{quickAddMinutes !== 30 && quickAddMinutes !== 45 && quickAddMinutes !== 60 && quickAddMinutes !== 90 && quickAddMinutes !== 120 ? quickAddMinutes + ' 分钟' : '更多时长'}}</view>
         </view>
       </view>
 
@@ -298,6 +307,7 @@
           <text class="completion-arrow">→</text>
         </t-button>
       </view>
+      <t-button wx:if="{{dailyActionNotificationAvailable && completionSheetData.allDone}}" class="completion-reminder-button" loading="{{notificationAuthorizing}}" disabled="{{notificationAuthorizing}}" catchtap="subscribeDailyActionReminder">提醒我明天</t-button>
     </view>
   </view>
 </view>

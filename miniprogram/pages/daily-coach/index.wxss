@@ -62,6 +62,11 @@ button::after { border: 0; }
 .empty-action-button { min-width: 220rpx; height: 70rpx; margin-top: 22rpx; padding: 0 28rpx; border-radius: 35rpx; color: #fff; background: var(--color-primary); font-size: 23rpx; font-weight: 650; }
 
 .judgement-card { position: relative; overflow: hidden; }
+.notification-optin-card { display: flex; align-items: center; justify-content: space-between; gap: 22rpx; }
+.notification-optin-card > view { min-width: 0; flex: 1; }
+.notification-optin-title { color: var(--color-primary); font-size: 27rpx; font-weight: 680; }
+.notification-optin-card text { display: block; margin-top: 7rpx; color: var(--color-text-secondary); font-size: 21rpx; line-height: 31rpx; }
+.notification-optin-button { min-width: 178rpx; height: 64rpx; padding: 0 20rpx; border-radius: 32rpx; color: #fff; background: var(--color-primary); font-size: 21rpx; }
 .judgement-card::after { position: absolute; top: 18rpx; right: 28rpx; color: rgba(36,91,77,.055); font-family: Georgia, serif; font-size: 120rpx; line-height: 1; content: "”"; }
 .judgement-title { position: relative; z-index: 1; margin-top: 22rpx; color: #173E35; font-size: 34rpx; font-weight: 720; line-height: 48rpx; }
 .evidence-list { margin-top: 26rpx; overflow: hidden; border: 1rpx solid rgba(103,94,77,.12); border-radius: 24rpx; background: rgba(255,255,253,.58); }

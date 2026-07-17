@@ -329,11 +329,11 @@ Page(withAppTheme({
         });
       })
       .catch((error: Error) => {
-        clearTodayCheckinDraft();
         const serviceError = error as CheckinServiceError;
         const code = serviceError.code || "";
 
         if (code === "CHECKIN_ALREADY_EXISTS") {
+          clearTodayCheckinDraft();
           this.setData({
             status: "error",
             submitting: false,

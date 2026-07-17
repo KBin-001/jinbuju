@@ -119,6 +119,21 @@ export interface TodayTaskGroupEntry<T extends DisplayStatusTask> {
 }
 
 /**
+ * 今日行动列表优先展示未完成任务，已完成任务稳定地移动到末尾。
+ * 同一完成状态内保留原始顺序，避免刷新后任务位置无故跳动。
+ */
+export function sortTodayTasksIncompleteFirst<T extends DisplayStatusTask>(tasks: T[]): T[] {
+  return tasks
+    .map((task, index) => ({ task, index }))
+    .sort((left, right) => {
+      const leftCompleted = left.task.status === "completed" ? 1 : 0;
+      const rightCompleted = right.task.status === "completed" ? 1 : 0;
+      return leftCompleted - rightCompleted || left.index - right.index;
+    })
+    .map(({ task }) => task);
+}
+
+/**
  * 将任务分为「今日行动」和「待继续」两组。
  *
  * 规则：

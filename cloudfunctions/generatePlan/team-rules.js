@@ -6,10 +6,10 @@ const ENCOURAGEMENT_TYPES = [
   "continue_tomorrow",
   "stay_together",
 ];
-const MAX_TEAM_MEMBERS = 20;
+const MAX_TEAM_MEMBERS = 50;
 const TEAM_CONTRACT_VERSION = 2;
 const TEAM_SCHEMA_VERSION = 2;
-const TEAM_BUILD_ID = "team-cloud-2026-07-12.2";
+const TEAM_BUILD_ID = "team-cloud-2026-07-16.1";
 const TEAM_SUPPORTED_ACTIONS = [
   "getTeamRuntimeInfo", "getTeamInviteInfo", "getMyTeam", "getTeamPage", "createTeam", "joinTeam", "joinTeamByRoomCode",
   "getTeamActivityFeed", "updateTeamSettings", "updateTeamMemberPrivacy", "reviewTeamJoinRequest",
@@ -45,6 +45,14 @@ function compareRank(left, right) {
   return String(left.id).localeCompare(String(right.id));
 }
 
+function resolveMemberTodayStatus({ visibleCount, skippedCount, completionRate, growthMinutes }) {
+  if (!visibleCount) return "not_started";
+  if (skippedCount === visibleCount) return "missed";
+  if (completionRate >= 100) return "completed";
+  if (completionRate > 0 || growthMinutes > 0) return "partial";
+  return "not_started";
+}
+
 function normalizeRoomCode(value) {
   const code = String(value || "").trim().toUpperCase().replace(/\s+/g, "");
   return ROOM_CODE_PATTERN.test(code) ? code : "";
@@ -63,4 +71,5 @@ module.exports = {
   isValidEncouragementType,
   normalizeRoomCode,
   publicMemberId,
+  resolveMemberTodayStatus,
 };

@@ -3,7 +3,6 @@ const { businessDateDiff, formatBusinessDate } = require("./date");
 const {
   USER_OWNED_COLLECTIONS,
   buildBadges,
-  isCommunityUnlocked,
 } = require("./profile-rules");
 const { stableId } = require("./repository");
 
@@ -37,10 +36,10 @@ async function getMany(collectionName, where, limit = 1000) {
 async function getCommunityConfig() {
   const result = await db
     .collection("community_config")
-    .doc("default")
-    .get()
-    .catch(() => null);
-  return (result && result.data) || null;
+    .where({ _id: "default" })
+    .limit(1)
+    .get();
+  return (result.data && result.data[0]) || null;
 }
 
 function toDate(value) {
@@ -59,6 +58,36 @@ function toBusinessDate(value) {
 function createdTimestamp(value) {
   const date = toDate(value);
   return date ? date.getTime() : 0;
+}
+
+function buildCommunityEntry(config) {
+  const preparing = {
+    status: "preparing",
+    title: "成长社区",
+    description: "社区二维码正在准备中，稍后再来看看。",
+  };
+  if (!config || config.status !== "active") return preparing;
+
+  const imageFileId = String(config.imageFileId || "").trim();
+  if (!imageFileId.startsWith("cloud://")) return preparing;
+
+  const expiresAt = toDate(config.expiresAt);
+  if (expiresAt && expiresAt.getTime() <= Date.now()) {
+    return {
+      status: "expired",
+      title: String(config.title || "成长社区"),
+      description: "当前社区二维码已过期，更新后可继续加入。",
+      expiresAt: expiresAt.toISOString(),
+    };
+  }
+
+  return {
+    status: "ready",
+    title: String(config.title || "加入成长社区"),
+    description: String(config.description || "长按识别二维码，和同行者一起稳步行动。"),
+    imageFileId,
+    expiresAt: expiresAt ? expiresAt.toISOString() : "",
+  };
 }
 
 function calculateJoinedDays(user) {
@@ -170,16 +199,6 @@ async function buildProfile(openid) {
         ).length,
       };
     });
-  const communityUnlocked = isCommunityUnlocked({
-    hasCurrentGoal: Boolean(currentGoal),
-    totalCheckinDays,
-    longestStreak,
-  }, communityConfig || {});
-  const minimumStreakDays = Math.max(
-    Number((communityConfig && communityConfig.minimumStreakDays) || 3),
-    0,
-  );
-
   return {
     businessDate,
     user: {
@@ -224,11 +243,7 @@ async function buildProfile(openid) {
       unlockDates,
     ),
     recentGoals: endedGoals,
-    community: {
-      unlocked: true,
-      title: "加入微信陪跑群",
-      description: "扫码加入陪跑群，一起稳步行动。",
-    },
+    community: buildCommunityEntry(communityConfig),
   };
 }
 
@@ -236,28 +251,9 @@ async function getProfileData(openid) {
   return buildProfile(openid);
 }
 
-async function getCommunityEntry(openid) {
-  const profile = await buildProfile(openid);
-  if (!profile.community.unlocked) {
-    fail("COMMUNITY_LOCKED", profile.community.description);
-  }
-
+async function getCommunityEntry() {
   const config = await getCommunityConfig();
-  if (!config || config.status !== "active") {
-    fail("COMMUNITY_CONFIG_NOT_FOUND", "社群入口暂未配置，请稍后再来看看。");
-  }
-  const expiresAt = toDate(config.expiresAt);
-  if (expiresAt && expiresAt.getTime() <= Date.now()) {
-    fail("COMMUNITY_CONFIG_NOT_FOUND", "当前社群入口已过期，请稍后再来看看。");
-  }
-
-  return {
-    unlocked: true,
-    title: String(config.title || "加入微信陪跑群"),
-    description: String(config.description || "扫码加入陪跑群，一起稳步行动。"),
-    imageFileId: String(config.imageFileId || ""),
-    expiresAt: expiresAt ? expiresAt.toISOString() : "",
-  };
+  return buildCommunityEntry(config);
 }
 
 async function removeMembership(membership) {

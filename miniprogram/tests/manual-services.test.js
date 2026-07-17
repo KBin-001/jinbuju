@@ -28,7 +28,7 @@ const {
   softDeleteArchivedGoal,
 } = require("../services/manualGoal.ts");
 const { readManualStore } = require("../services/manualStore.ts");
-const { createTask, deleteTask, getTask, getTasksByDate, getTodayPageTasks, rescheduleTask, updateActionRecord, updateTaskStatus } = require("../services/manualTask.ts");
+const { createTask, deleteTask, getTask, getTaskHistoryByGoal, getTasksByDate, getTodayPageTasks, rescheduleTask, updateActionRecord, updateTaskStatus } = require("../services/manualTask.ts");
 const { getProgressSummary, recordDailyCheckin } = require("../services/manualStats.ts");
 
 const today = "2026-06-21";
@@ -93,6 +93,9 @@ const carriedPartial = createTask({ goalId: cetGoal.id, title: "完成一部分"
 updateTaskStatus(carriedPartial.id, "partially_completed", 15, "not_enough_time");
 rescheduleTask(carriedPartial.id, today);
 assert.equal(getProgressSummary(cetGoal.id, today).totalActualMinutes, 15);
+const cetHistory = getTaskHistoryByGoal(cetGoal.id);
+assert.equal(cetHistory.some((task) => task.id === carriedPartial.id && task.status === "rescheduled" && task.actualMinutes === 15), true);
+assert.equal(cetHistory.some((task) => task.id === deleted.id), false);
 
 const archivedGoal = endGoal(blogGoal.id);
 assert.equal(archivedGoal.id, blogGoal.id);
@@ -119,5 +122,31 @@ assert.equal(getRecentlyDeletedGoals().some((goal) => goal.id === cetGoal.id), f
 const purgedSnapshot = readManualStore().archivedGoals.find((goal) => goal.id === cetGoal.id);
 assert.equal(Boolean(purgedSnapshot.purgedAt), true);
 assert.equal(purgedSnapshot.actions.length, 0);
+
+const metricGoal = createGoal({ title: "统计口径验证", category: "custom" });
+const metricTasks = [
+  { date: "2026-06-20", minutes: 5 },
+  { date: "2026-06-20", minutes: 5 },
+  { date: today, minutes: 5 },
+  { date: today, minutes: 5 },
+  { date: today, minutes: 10 },
+].map((item, index) => createTask({
+  goalId: metricGoal.id,
+  title: `统计行动${index + 1}`,
+  currentDate: item.date,
+  estimatedMinutes: 30,
+}));
+metricTasks.forEach((task, index) => updateActionRecord({
+  taskId: task.id,
+  title: task.title,
+  businessDate: index < 2 ? "2026-06-20" : today,
+  time: "18:00",
+  actualMinutes: [5, 5, 5, 5, 10][index],
+  status: "completed",
+}));
+const metricSummary = getProgressSummary(metricGoal.id, today);
+assert.equal(metricSummary.totalActionDays, 2);
+assert.equal(metricSummary.completedTasks, 5);
+assert.equal(metricSummary.totalActualMinutes, 30);
 
 console.log("manual service tests passed");

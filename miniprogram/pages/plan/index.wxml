@@ -1,9 +1,9 @@
 <view class="page progress-page" data-theme="{{appTheme}}">
-  <view class="landscape-header" aria-hidden="true">
-    <image src="/assets/progress-mountain-path-v2.jpg" mode="aspectFill" />
-    <view class="landscape-header__veil"></view>
+  <view class="landscape-header tab-header" style="height: {{headerHeight}}px;">
+    <image class="tab-header__background" src="/assets/progress-mountain-path-v2.jpg" mode="aspectFill" aria-hidden="true" />
+    <view class="landscape-header__veil tab-header__veil"></view>
+    <view class="progress-nav tab-header__nav" style="padding-top: {{menuTop}}px; height: {{menuHeight}}px;"><text class="tab-header__title">进度</text></view>
   </view>
-  <view class="progress-nav" style="padding-top: {{menuTop}}px; height: {{menuHeight}}px;"><text>进度</text></view>
 
   <view wx:if="{{status === 'loading'}}" class="state-card surface-card">
     <t-loading theme="circular" size="48rpx" color="#245B4D" />
@@ -14,7 +14,7 @@
   <view wx:elif="{{status === 'error'}}" class="state-card surface-card">
     <view class="state-symbol"><t-icon name="info-circle" size="44rpx" /></view>
     <view class="state-title">进度暂时没有加载出来</view>
-    <view class="state-description">{{errorMessage || '请检查网络后重试。'}}</view>
+    <view class="state-description">{{errorMessage || '成长记录读取失败，请重试。'}}</view>
     <t-button class="state-action" theme="primary" shape="round" bindtap="retry">重新加载</t-button>
   </view>
 
@@ -37,65 +37,20 @@
         </view>
       </view>
       <view class="goal-title">{{goal.title}}</view>
-      <view class="goal-meta">
-        <text>{{goalStatusText}}</text>
-        <text wx:if="{{goalPeriod}}">{{goalPeriod}}</text>
-      </view>
-      <view wx:if="{{hasActionData}}" class="goal-progress-head">
-        <text>累计行动完成率</text>
-        <text class="goal-progress-value">{{goalProgressPercent}}%</text>
-      </view>
-      <view wx:if="{{hasActionData}}" class="goal-progress-track" aria-label="累计行动完成率 {{goalProgressPercent}}%">
-        <view class="goal-progress-fill" style="width: {{goalProgressPercent}}%;"></view>
-      </view>
-      <view class="hero-guidance">{{hasActionData ? '这里只统计已记录行动，不代表目标总体完成度。' : '先完成一小步，成长档案会从今天开始。'}}</view>
+      <view wx:if="{{goalPeriod}}" class="goal-meta"><text>{{goalPeriod}}</text></view>
     </view>
 
-    <view wx:if="{{!hasActionData}}" class="first-action-card surface-card">
-      <view class="first-action-mark"><t-icon name="flag" size="42rpx" /></view>
-      <view class="first-action-content">
-        <view class="section-title">已经了解你的目标</view>
-        <view class="section-description">添加第一条行动后，进度会开始记录。</view>
-      </view>
-      <t-button class="first-action-button" theme="primary" shape="round" bindtap="addTodayAction">添加今日行动</t-button>
-    </view>
-
-    <view wx:if="{{hasActionData}}" class="growth-stats surface-card">
-      <view wx:for="{{overviewStats}}" wx:key="label" class="growth-stat">
-        <view class="growth-stat-value">{{item.value}}<text>{{item.unit}}</text></view>
-        <view class="growth-stat-label">{{item.label}}</view>
-      </view>
-    </view>
-
-    <view class="coach-card surface-card" bindtap="openAiCoach" hover-class="tap-pressed">
-      <image class="coach-landscape" src="/assets/ai-coach-shanshui-v1.jpg" mode="aspectFill" aria-hidden="true" />
-      <view class="coach-landscape__veil"></view>
-      <view class="coach-copy">
-        <view class="coach-title-row"><view class="coach-icon"><t-icon name="chat" size="34rpx" /></view><view><view class="coach-period">{{aiCoach.periodLabel}}</view><view class="section-title">成长教练</view></view></view>
-        <view class="coach-message">{{hasActionData ? aiCoach.message : '还没有足够行动记录，完成一次行动后再分析节奏。'}}</view>
-        <view class="coach-note">当前为数据观察，进入后可以和 AI 教练聊聊</view>
-      </view>
-      <view class="coach-action"><text>和教练聊聊</text><t-icon name="chevron-right" size="32rpx" /></view>
-    </view>
-
-    <view wx:if="{{!hasActionData}}" class="growth-start-card surface-card">
-      <image class="growth-start-landscape" src="/assets/progress-mountain-path-v2.jpg" mode="aspectFill" />
-      <view class="growth-start-veil"></view>
-      <view class="growth-start-content">
-        <view class="growth-start-eyebrow">你的成长路径</view>
-        <view class="growth-start-title">第一步，会让远山有了方向</view>
-        <view class="growth-start-copy">这里不会用空数字催促你。完成一次真实行动后，投入、节奏和 AI 洞察会沿着这条山路逐渐展开。</view>
-        <view class="growth-path">
-          <view class="growth-path-item is-current"><view class="growth-path-dot"></view><text>记录行动</text></view>
-          <view class="growth-path-line"></view>
-          <view class="growth-path-item"><view class="growth-path-dot"></view><text>看见节奏</text></view>
-          <view class="growth-path-line"></view>
-          <view class="growth-path-item"><view class="growth-path-dot"></view><text>获得洞察</text></view>
+    <view class="growth-stats surface-card" aria-label="当前目标累计统计">
+      <view class="growth-stats-head">当前目标累计</view>
+      <view class="growth-stats-row">
+        <view wx:for="{{overviewStats}}" wx:key="label" class="growth-stat">
+          <view class="growth-stat-value">{{item.value}}<text>{{item.unit}}</text></view>
+          <view class="growth-stat-label">{{item.label}}</view>
         </view>
       </view>
     </view>
 
-    <view wx:if="{{hasActionData}}" class="trend-card surface-card">
+    <view class="trend-card surface-card">
       <view class="section-head">
         <view>
           <view class="section-title">行动趋势</view>
@@ -107,36 +62,52 @@
       </view>
 
       <block wx:if="{{trendRange !== 'year'}}">
-        <view wx:if="{{trendSummary.insufficient}}" class="trend-empty">{{trendSummary.summaryText}}</view>
+        <view wx:if="{{trendSummary.insufficient}}" class="trend-empty">
+          <view>{{trendSummary.summaryText}}</view>
+          <view wx:if="{{!hasAnyTask}}" class="trend-empty-action" bindtap="addTodayAction">添加今日行动</view>
+          <view wx:else class="trend-empty-action" bindtap="goToday">去今日页开始行动</view>
+        </view>
         <block wx:else>
           <view class="trend-summary-line">
-            <view><text class="trend-number">{{trendSummary.totalMinutes}}</text><text> 分钟投入</text></view>
-            <view><text class="trend-number">{{trendSummary.totalActions}}</text><text> 项完成</text></view>
+            <view class="trend-summary-metric"><text class="trend-number">{{trendSummary.totalMinutes}}</text><text class="trend-summary-unit">分钟投入</text></view>
+            <view class="trend-summary-divider"></view>
+            <view class="trend-summary-metric"><text class="trend-number">{{trendSummary.totalActions}}</text><text class="trend-summary-unit">项完成</text></view>
           </view>
           <view class="chart-legends">
-            <view class="chart-legend"><view class="legend-swatch"></view><text>投入时间（柱）</text></view>
-            <view wx:if="{{completionDotsEnabled}}" class="chart-legend"><view class="legend-point"></view><text>完成行动（点）</text></view>
+            <view class="chart-legend"><view class="legend-swatch"></view><text>投入时间（分钟）</text></view>
+            <view wx:if="{{completionDotsEnabled}}" class="chart-legend"><view class="legend-line"><view></view></view><text>完成行动（项）</text></view>
           </view>
           <view class="bar-chart" bindtap="onChartBackdropTap">
-            <view class="bar-axis"><text>{{barChart.maxLabel}}</text><text>{{barChart.midLabel}}</text><text>0</text></view>
+            <view class="bar-axis"><text>{{barChart.maxLabel}}</text><text>{{barChart.midLabel}}</text><text>{{barChart.lowLabel}}</text><text>0</text></view>
             <view class="bar-area">
-              <view class="bar-grid"><view></view><view></view><view></view></view>
+              <view class="bar-grid"><view></view><view></view><view></view><view></view></view>
               <view class="bar-columns">
                 <view wx:for="{{barChart.bars}}" wx:key="key" class="bar-column" data-key="{{item.key}}" catchtap="onBarTap">
                   <view wx:if="{{item.active}}" class="bar-tooltip tooltip-{{item.tooltipAlign}}" style="bottom: calc({{item.tooltipBottomPercent}}% + 12rpx);"><text>{{item.minutes}} 分钟</text><text>{{item.actions}} 项完成</text></view>
-                  <view wx:if="{{completionDotsEnabled}}" class="completion-point {{item.actions > 0 ? 'has-value' : ''}} {{item.active ? 'is-active' : ''}}" style="bottom: {{item.actionHeightPercent}}%;"><text wx:if="{{item.actions > 0}}">{{item.actions}}</text></view>
+                  <view wx:if="{{completionDotsEnabled && item.hasNext}}" class="completion-segment" style="-webkit-clip-path: {{item.lineClipPath}}; clip-path: {{item.lineClipPath}};"></view>
+                  <view wx:if="{{completionDotsEnabled}}" class="completion-point {{item.actions > 0 ? 'has-value' : ''}} {{item.active ? 'is-active' : ''}} {{item.labelsOverlap ? 'labels-overlap' : ''}} label-shift-{{item.tooltipAlign}}" style="bottom: {{item.actionHeightPercent}}%;"><text>{{item.actions}}</text></view>
+                  <text wx:if="{{item.minutes > 0}}" class="bar-minute-label {{item.labelsOverlap ? 'labels-overlap' : ''}} label-shift-{{item.tooltipAlign}}" style="bottom: calc({{item.heightPercent}}% + 7rpx);">{{item.minutes}}</text>
                   <view class="bar-fill {{item.isToday ? 'is-today' : ''}}" style="width: {{barChart.barWidth}}rpx; height: {{item.heightPercent}}%;"></view>
                 </view>
               </view>
             </view>
+            <view wx:if="{{completionDotsEnabled}}" class="action-axis"><text>{{barChart.maxActions}}</text><text>{{barChart.midActions}}</text><text>{{barChart.lowActions}}</text><text>0</text></view>
           </view>
-          <view class="bar-labels"><text wx:for="{{barChart.bars}}" wx:key="key">{{item.label}}</text></view>
-          <view class="trend-insight">{{trendSummary.summaryText}}</view>
+          <view class="bar-labels {{completionDotsEnabled ? 'has-right-axis' : ''}}"><view wx:for="{{barChart.bars}}" wx:key="key" class="bar-label-item"><text class="{{item.isToday ? 'is-today' : ''}}">{{item.label}}</text><text wx:if="{{item.subLabel}}" class="bar-sub-label">{{item.subLabel}}</text></view></view>
+          <view class="trend-highlights">
+            <view class="trend-highlight"><view class="trend-highlight-title"><t-icon name="chart-line" size="25rpx" /><text>最高投入</text></view><view class="trend-highlight-value">{{trendHighlights.maxMinutes.value}}<text>{{trendHighlights.maxMinutes.unit}}</text></view><view class="trend-highlight-label">{{trendHighlights.maxMinutes.label}}</view></view>
+            <view class="trend-highlight"><view class="trend-highlight-title"><t-icon name="check-circle" size="25rpx" /><text>最高完成</text></view><view class="trend-highlight-value">{{trendHighlights.maxActions.value}}<text>{{trendHighlights.maxActions.unit}}</text></view><view class="trend-highlight-label">{{trendHighlights.maxActions.label}}</view></view>
+            <view class="trend-highlight"><view class="trend-highlight-title"><t-icon name="calendar" size="25rpx" /><text>连续完成</text></view><view class="trend-highlight-value">{{trendHighlights.streak.value}}<text>{{trendHighlights.streak.unit}}</text></view><view class="trend-highlight-label">{{trendHighlights.streak.label}}</view></view>
+          </view>
         </block>
       </block>
 
       <block wx:else>
-        <view wx:if="{{yearSummary.insufficient}}" class="trend-empty">{{yearSummary.summaryText}}</view>
+        <view wx:if="{{yearSummary.insufficient}}" class="trend-empty">
+          <view>{{yearSummary.summaryText}}</view>
+          <view wx:if="{{!hasAnyTask}}" class="trend-empty-action" bindtap="addTodayAction">添加今日行动</view>
+          <view wx:else class="trend-empty-action" bindtap="goToday">去今日页开始行动</view>
+        </view>
         <block wx:else>
           <view class="year-stats">
             <view><text>{{yearSummary.checkinDays}}</text><text>行动天数</text></view>
@@ -164,24 +135,19 @@
       <view class="history-link" bindtap="openHistoryReview"><text>查看历史记录</text><t-icon name="chevron-right" size="30rpx" /></view>
     </view>
 
-    <view wx:if="{{goal}}" class="records-card surface-card">
-      <view class="records-heading"><view class="section-title">最近行动</view><view class="records-all" bindtap="openActionRecords" hover-class="tap-pressed">查看全部<t-icon name="chevron-right" size="28rpx" /></view></view>
-      <view wx:if="{{!hasRecentRecords && !hasPendingRecords}}" class="records-empty"><text>还没有可展示的行动记录</text><view bindtap="addTodayAction">添加今日行动</view></view>
-      <view wx:if="{{hasRecentRecords}}" class="record-group">
-        <view class="record-group-title">最近完成</view>
-        <view wx:for="{{recentRecords}}" wx:key="id" class="record-row" data-id="{{item.id}}" bindtap="openAction" hover-class="tap-pressed">
-          <view class="record-status is-done"><t-icon name="check" size="24rpx" /></view>
-          <view class="record-main"><view class="record-title">{{item.title}}</view><view class="record-meta">{{item.statusText}} · {{item.minutesText}}</view></view><t-icon name="chevron-right" size="28rpx" color="#9AA19D" />
-        </view>
+    <view wx:if="{{hasTrendData}}" class="coach-card surface-card" bindtap="openAiCoach" hover-class="tap-pressed">
+      <view class="coach-icon"><t-icon name="chat" size="32rpx" /></view>
+      <view class="coach-copy">
+        <view class="coach-title-row"><view class="section-title">{{coachScopeLabel}}复盘</view><view class="coach-period">真实行动记录</view></view>
+        <view class="coach-message">{{trendRange === 'year' ? yearSummary.summaryText : trendSummary.summaryText}}</view>
       </view>
-      <view wx:if="{{hasPendingRecords}}" class="record-group pending-group">
-        <view class="record-group-title">待继续行动</view>
-        <view wx:for="{{pendingRecords}}" wx:key="id" class="record-row" data-id="{{item.id}}" bindtap="openAction" hover-class="tap-pressed">
-          <view class="record-status"></view>
-          <view class="record-main"><view class="record-title">{{item.title}}</view><view class="record-meta">{{item.statusText}} · {{item.minutesText}}</view></view><t-icon name="chevron-right" size="28rpx" color="#9AA19D" />
-        </view>
-        <view class="continue-action" bindtap="addTodayAction">添加今日行动</view>
-      </view>
+      <view class="coach-action"><text>查看完整分析</text><t-icon name="chevron-right" size="28rpx" /></view>
+    </view>
+
+    <view wx:if="{{goal}}" class="growth-record-entry surface-card" bindtap="openGrowthRecords" hover-class="tap-pressed" aria-role="button" aria-label="查看完整成长记录">
+      <view class="growth-record-icon"><view class="growth-record-bars"><view></view><view></view><view></view></view></view>
+      <view class="growth-record-copy"><view class="section-title">成长记录</view><view class="growth-record-summary">{{growthRecordSummary}}</view></view>
+      <view class="growth-record-action"><text>查看全部</text><t-icon name="chevron-right" size="30rpx" /></view>
     </view>
   </block>
 
@@ -189,15 +155,14 @@
     <view class="goal-picker-mask" catchtap="closeGoalPicker"></view>
     <view class="goal-picker-panel" catchtap="noop">
       <view class="goal-picker-grabber"></view>
-      <view class="goal-picker-header"><view><view class="picker-label">当前目标</view><view class="picker-title">选择要查看的目标</view></view><view class="picker-close" catchtap="closeGoalPicker"><t-icon name="close" size="34rpx" /></view></view>
-      <view class="goal-picker-list">
-        <view wx:for="{{goalOptions}}" wx:key="id" class="goal-option {{item.active ? 'is-active' : ''}}" data-id="{{item.id}}" catchtap="switchGoal">
-          <view class="goal-option-main"><view class="goal-option-title">{{item.title}}</view><view class="goal-option-meta"><text>{{item.statusText}}</text><text>行动完成率 {{item.progressPercent}}%</text></view><view class="goal-option-track"><view class="goal-option-fill" style="width: {{item.progressPercent}}%;"></view></view></view>
-          <view class="goal-option-action">{{item.active ? '当前' : '切换'}}</view>
+      <view class="goal-picker-header"><view><view class="picker-label">目标视图</view><view class="picker-title">切换当前目标</view></view><view class="picker-close" catchtap="closeGoalPicker" aria-role="button" aria-label="关闭目标选择"><t-icon name="close" size="38rpx" /></view></view>
+      <scroll-view scroll-y enhanced show-scrollbar="{{false}}" class="goal-picker-list">
+        <view wx:for="{{goalOptions}}" wx:key="id" class="goal-option {{item.active ? 'is-active' : ''}}" data-id="{{item.id}}" catchtap="switchGoal" aria-role="button" aria-label="{{item.active ? '当前目标' : '切换到'}}{{item.title}}">
+          <view class="goal-option-main"><view class="goal-option-title">{{item.title}}</view><view class="goal-option-meta"><text>{{item.periodText}}</text></view></view>
+          <view class="goal-option-action {{item.active ? 'is-current' : ''}}"><text>{{item.active ? '当前' : '切换'}}</text><t-icon name="{{item.active ? 'check-circle' : 'chevron-right'}}" size="28rpx" /></view>
         </view>
-      </view>
+      </scroll-view>
     </view>
   </view>
 
-  <action-record-editor visible="{{recordEditorVisible}}" task="{{recordEditorTask}}" saving="{{savingRecord}}" deleting="{{deletingRecord}}" bind:close="closeRecordEditor" bind:save="saveRecordEditor" bind:delete="deleteRecordEditor" />
 </view>

@@ -30,6 +30,10 @@ const REQUIRED_COLLECTIONS = [
   "account_bindings",
   "user_consents",
   "account_operations",
+  "subscription_ledger",
+  "notification_preference",
+  "notification_sent_log",
+  "in_app_messages",
 ];
 let collectionsReady = false;
 

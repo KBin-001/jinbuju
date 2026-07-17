@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "成长记录",
+  "navigationStyle": "custom",
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#F7F3EA",
+  "usingComponents": {
+    "action-record-editor": "/components/action-record-editor/index"
+  }
+}

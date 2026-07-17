@@ -21,8 +21,8 @@ for (const publicField of ["displayTeamName", "displayRoomCode", "team.memberCou
 }
 
 // 动态权限：队长可管理，成员保留只读信息与退出路径。
-assert.match(homeWxml, /wx:if="{{isOwner}}"[^>]*hero-settings[^>]*bindtap="openTeamSettings"[\s\S]*wx:else[^>]*hero-settings[^>]*bindtap="openTeamInfo"/,
-  "队长应看到设置，普通成员应在同一位置看到只读小队信息");
+assert.match(homeWxml, /wx:if="{{settingsCanEditTeam}}"[^>]*hero-settings[^>]*bindtap="openTeamSettings"[\s\S]*wx:else[^>]*hero-settings[^>]*bindtap="openTeamInfo"/,
+  "只有当前 live runtime 允许管理时显示设置，其他状态显示只读信息");
 assert.match(homeWxml, /wx:if="{{!isOwner}}"[^>]*class="self-detail-action self-detail-action--danger"[^>]*bindtap="confirmLeaveOrDissolve"/,
   "普通成员必须可从自己的资料退出小队");
 assert.match(homeTs, /if \(isOwner\) await dissolveTeam\(\); else await leaveTeam\(\);/,
@@ -45,17 +45,27 @@ assert.match(types, /allowMemberInvite\??:\s*boolean/,
   "Team 类型缺少 allowMemberInvite");
 assert.match(cloud, /allowMemberInvite/,
   "云端响应必须返回成员邀请策略");
-assert.match(homeTs, /role\s*===\s*["']owner["'][\s\S]{0,200}allowMemberInvite|allowMemberInvite[\s\S]{0,200}role\s*===\s*["']owner["']/,
-  "邀请可见性必须由 owner 优先与 allowMemberInvite 共同计算");
+assert.match(homeTs, /runtime\?\.capabilities\.canInvite/,
+  "邀请可见性必须使用当前 runtime 计算后的能力");
 assert.match(homeWxml, /wx:if="{{canInviteFriends[^}]*}}"[^>]*hero-invite[^>]*bindtap="inviteFriends"/,
   "邀请入口必须使用动态权限而非对所有成员常驻");
 
 // 顶部价值层级：真实同行进度与个人行动优先，房间号仅保留轻量复制入口。
-for (const field of ["teamStats.completedMembers", "teamStats.totalMembers", "teamStats.todayCompletionRate", "teamStats.startedMembers", "selfActionPrompt.text", "selfActionPrompt.buttonText"]) {
+for (const field of ["teamStats.completedMembers", "teamStats.totalMembers", "teamStats.totalGrowthMinutes", "teamStats.startedMembers", "selfActionPrompt.text", "selfActionPrompt.buttonText"]) {
   assert(homeWxml.includes(`{{${field}}}`), `今日同行面板缺少真实字段 ${field}`);
 }
-assert.match(homeWxml, /class="hero-primary[^>]*bindtap="goToday"/,
-  "顶部主按钮必须回到用户自己的今日行动");
+assert.match(homeWxml, /wx:if="{{teamViewMode === 'solo'}}"[\s\S]*class="hero-primary[^>]*bindtap="goToday"/,
+  "单人态必须保留回到今日行动的真实 CTA");
+assert.match(homeWxml, /wx:if="{{teamViewMode === 'group'}}"[^>]*class="companion-card[\s\S]*class="self-prompt-button"[^>]*bindtap="goToday"/,
+  "多人态必须只在榜单下保留一个今日行动 CTA");
+assert.match(homeWxml, /wx:if="{{teamViewMode === 'group'}}"[^>]*class="activity-card/,
+  "单人态不得展示没有队友价值的榜单与动态");
+assert.doesNotMatch(homeTs, /function buildActivityList/,
+  "首页动态不得从榜单成员状态合成");
+assert.match(types, /selfMember\??:\s*TeamMember\s*\|\s*null/,
+  "分页响应必须独立返回当前访问者成员投影");
+assert.match(cloud, /selfMember:\s*members\.find\(\(member\) => member\.isSelf\)/,
+  "云端分页必须独立返回 selfMember，避免本人不在当前页时丢失权限");
 assert.doesNotMatch(homeWxml, /class="room-landscape/,
   "房间号不应继续占用独立大卡片");
 assert.match(homeTs, /startedMembers[\s\S]{0,300}todayStatus === "completed"[\s\S]{0,120}todayStatus === "partial"|todayStatus === "completed"[\s\S]{0,120}todayStatus === "partial"[\s\S]{0,300}startedMembers/,

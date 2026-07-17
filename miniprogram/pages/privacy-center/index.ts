@@ -1,4 +1,13 @@
 import { ConsentStatus, getConsentStatus, recordConsents, withdrawConsent } from "../../services/privacy";
+import {
+  getNotificationPreference,
+  getWechatSubscriptionSetting,
+  NotificationPreference,
+  openWechatNotificationSettings,
+  requestNotificationAuthorization,
+  updateNotificationPreference,
+} from "../../services/notification";
+import { NotificationScene, NOTIFICATION_DEFINITIONS } from "../../config/notification";
 import { withAppTheme } from "../../services/theme";
 
 Page(withAppTheme({
@@ -8,9 +17,14 @@ Page(withAppTheme({
     consentChecked: false,
     status: null as ConsentStatus | null,
     errorMessage: "",
+    notificationLoading: true,
+    notificationErrorMessage: "",
+    notificationSavingScene: "" as NotificationScene | "",
+    notificationPreference: null as NotificationPreference | null,
+    wechatNotificationMainSwitch: true,
   },
 
-  onShow() { this.load(); },
+  onShow() { this.load(); this.loadNotificationSettings(); },
 
   async load() {
     this.setData({ loading: true, errorMessage: "" });
@@ -21,6 +35,63 @@ Page(withAppTheme({
       this.setData({ loading: false, errorMessage: error instanceof Error ? error.message : "隐私设置加载失败" });
     }
   },
+
+  async loadNotificationSettings() {
+    this.setData({ notificationLoading: true, notificationErrorMessage: "" });
+    try {
+      const [preference, setting] = await Promise.all([
+        getNotificationPreference(),
+        getWechatSubscriptionSetting(),
+      ]);
+      this.setData({
+        notificationLoading: false,
+        notificationPreference: preference,
+        wechatNotificationMainSwitch: setting.mainSwitch,
+        notificationErrorMessage: "",
+      });
+    } catch (error) {
+      this.setData({
+        notificationLoading: false,
+        notificationErrorMessage: error instanceof Error ? error.message : "通知设置加载失败，请重试。",
+      });
+    }
+  },
+
+  async onNotificationChange(event: { currentTarget?: { dataset?: { scene?: NotificationScene } }; detail?: { value?: boolean } | boolean }) {
+    const scene = event.currentTarget?.dataset?.scene;
+    if (!scene || this.data.notificationSavingScene) return;
+    const rawDetail = event.detail;
+    const enabled = typeof rawDetail === "boolean" ? rawDetail : Boolean(rawDetail?.value);
+    const current = this.data.notificationPreference?.scenes[scene];
+    if (enabled && !current?.configured) {
+      wx.showToast({ title: "通知模板审核完成后开放", icon: "none" });
+      return;
+    }
+    this.setData({ notificationSavingScene: scene, notificationErrorMessage: "" });
+    try {
+      if (enabled) {
+        const authorizationResult = await requestNotificationAuthorization(scene, "privacy_center");
+        await this.loadNotificationSettings();
+        this.setData({ notificationSavingScene: "" });
+        wx.showToast({
+          title: authorizationResult === "accept" ? "已获得一次提醒额度" : "未获得订阅授权",
+          icon: authorizationResult === "accept" ? "success" : "none",
+        });
+        return;
+      }
+      await updateNotificationPreference(scene, false);
+      await this.loadNotificationSettings();
+      this.setData({ notificationSavingScene: "" });
+      wx.showToast({ title: "已关闭并清除未用额度", icon: "success" });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "通知设置保存失败，请重试。";
+      this.setData({ notificationSavingScene: "" });
+      await this.loadNotificationSettings();
+      this.setData({ notificationErrorMessage: message });
+    }
+  },
+
+  openWechatNotificationSettings() { openWechatNotificationSettings(); },
 
   onConsentChange(event: { detail?: { value?: string[] } }) {
     this.setData({ consentChecked: Array.isArray(event.detail?.value) && event.detail!.value!.includes("agree") });

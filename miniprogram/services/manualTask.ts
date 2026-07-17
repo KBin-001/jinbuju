@@ -34,6 +34,22 @@ export function getTasksByGoal(goalId: string): ActionTask[] {
     .sort((a, b) => b.currentDate.localeCompare(a.currentDate) || b.createdAt.localeCompare(a.createdAt));
 }
 
+/**
+ * 返回目标下用于统计和趋势分析的完整行动历史。
+ *
+ * 与页面列表使用的 getTasksByGoal 不同，这里保留“完成一部分后顺延”的原行动，
+ * 使已经发生的实际投入仍能落在原业务日期，避免累计统计与趋势图口径不一致。
+ */
+export function getTaskHistoryByGoal(goalId: string): ActionTask[] {
+  return readManualStore().tasks
+    .filter((task) => task.goalId === goalId && !task.deletedAt)
+    .sort((a, b) => {
+      const leftDate = a.activityDate || a.currentDate;
+      const rightDate = b.activityDate || b.currentDate;
+      return rightDate.localeCompare(leftDate) || b.createdAt.localeCompare(a.createdAt);
+    });
+}
+
 export function updateTask(input: SaveTaskInput): ActionTask {
   validate(input);
   const store = readManualStore();

@@ -4,6 +4,8 @@ import { executeCoachAction } from "../../services/manualSync";
 import { getProgressSummary } from "../../services/manualStats";
 import { getCurrentThemeId } from "../../services/theme";
 import { getTodayBusinessDate } from "../../utils/date";
+import { isNotificationConfigured } from "../../config/notification";
+import { requestNotificationAuthorization } from "../../services/notification";
 import { CoachActionProposal, CoachRange, ProgressCoachChatMessage } from "../../types/progressCoach";
 
 interface DailyChatMessage extends ProgressCoachChatMessage {
@@ -148,6 +150,7 @@ Page({
     appTheme: getCurrentThemeId(), ...getNavigationMetrics(), status: "loading" as "loading" | "ready" | "error", errorMessage: "",
     requestedDate: "", requestedGoalId: "", analysis: EMPTY_ANALYSIS, workspace: EMPTY_WORKSPACE,
     question: "", messages: [] as DailyChatMessage[], asking: false, chatError: "", failedQuestion: "", executingProposalId: "",
+    aiNotificationAvailable: isNotificationConfigured("ai_coach_advice"), notificationAuthorizing: false,
   },
 
   onLoad(query: Record<string, string>) {
@@ -185,6 +188,18 @@ Page({
       return;
     }
     wx.navigateTo({ url: `/pages/action-edit/index?goalId=${encodeURIComponent(this.data.analysis.goalId)}&date=${encodeURIComponent(this.data.analysis.date || getTodayBusinessDate())}` });
+  },
+  async subscribeAiCoachAdvice() {
+    if (this.data.notificationAuthorizing) return;
+    this.setData({ notificationAuthorizing: true });
+    try {
+      const result = await requestNotificationAuthorization("ai_coach_advice", "daily_coach");
+      wx.showToast({ title: result === "accept" ? "明日建议已订阅" : "未获得订阅授权", icon: result === "accept" ? "success" : "none" });
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "订阅未完成", icon: "none" });
+    } finally {
+      this.setData({ notificationAuthorizing: false });
+    }
   },
   selectSection(event: { currentTarget: { dataset: { section?: string } } }) {
     const section = String(event.currentTarget.dataset.section || "review");
