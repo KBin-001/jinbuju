@@ -1,7 +1,10 @@
 import { ManualDataStore } from "../types/manual";
-import { CoachActionResult, CoachActionStatusResult } from "../types/progressCoach";
+import { CoachActionProposal, CoachActionResult, CoachActionStatusResult } from "../types/progressCoach";
 import { emit } from "../utils/eventBus";
+import { buildReminderAt } from "../utils/actionReminder";
 import { readManualStore, writeManualStore } from "./manualStore";
+import { updateTaskReminder } from "./manualTask";
+import { requestNotificationAuthorizationWithReceipt, upsertTaskReminder } from "./notification";
 import { CloudRequestError, createCloudRequestId, logCloudRequest } from "../utils/cloudRequest";
 import { markSyncFailed, markSyncing } from "./syncStatus";
 
@@ -33,7 +36,7 @@ function call<T>(data: Record<string, unknown>, timeout = 20000): Promise<T> {
   });
 }
 
-const EXPECTED_COACH_RUNTIME_VERSION = "coach-actions-2026-07-07.3";
+const EXPECTED_COACH_RUNTIME_VERSION = "coach-unified-2026-07-19.10";
 let verifiedRuntime: Promise<void> | undefined;
 
 export function verifyCoachRuntime(): Promise<void> {
@@ -129,6 +132,15 @@ export async function executeCoachAction(proposalId: string): Promise<CoachActio
       if (status.status === "expired") {
         throw Object.assign(new Error("操作确认已过期，请重新告诉 AI。"), { code: "COACH_ACTION_EXPIRED" });
       }
+      if (status.status === "pending") {
+        try {
+          return cacheCoachActionResult(await call<CoachActionResult>({ action: "executeCoachAction", proposalId }));
+        } catch (retryError) {
+          const retryStatus = await getCoachActionStatus(proposalId).catch(() => null);
+          if (retryStatus?.status === "executed" && retryStatus.result) return cacheCoachActionResult(retryStatus.result);
+          throw retryError;
+        }
+      }
     } catch (statusError) {
       if ((statusError as CloudRequestError)?.code === "COACH_ACTION_EXPIRED") throw statusError;
       console.error("[coach action] status check failed", {
@@ -137,5 +149,52 @@ export async function executeCoachAction(proposalId: string): Promise<CoachActio
       });
     }
     throw error;
+  }
+}
+
+export type CoachReminderOutcome = "not_requested" | "scheduled" | "rejected" | "failed" | "invalid";
+
+export interface CoachProposalExecutionResult {
+  action: CoachActionResult;
+  reminder: CoachReminderOutcome;
+  reminderMessage?: string;
+}
+
+export async function executeCoachProposal(proposal: CoachActionProposal): Promise<CoachProposalExecutionResult> {
+  const proposalId = String(proposal.id || "");
+  if (!proposalId) throw Object.assign(new Error("操作确认信息无效。"), { code: "COACH_ACTION_INVALID" });
+  const wantsReminder = proposal.type === "create_task" && Boolean(proposal.reminderTime && proposal.currentDate);
+  let remindAt = "";
+  let reminderValidationMessage = "";
+  let authorizationPromise: ReturnType<typeof requestNotificationAuthorizationWithReceipt> | null = null;
+  if (wantsReminder) {
+    try {
+      remindAt = buildReminderAt(String(proposal.currentDate), String(proposal.reminderTime));
+      // This invocation must stay before the first await so WeChat regards it
+      // as part of the user's confirm-button gesture.
+      authorizationPromise = requestNotificationAuthorizationWithReceipt("daily_action_reminder", "task_reminder");
+    } catch (error) {
+      reminderValidationMessage = error instanceof Error ? error.message : "提醒时间无效";
+    }
+  }
+
+  let receipt: Awaited<ReturnType<typeof requestNotificationAuthorizationWithReceipt>> | null = null;
+  if (authorizationPromise) {
+    try { receipt = await authorizationPromise; } catch (_error) { receipt = null; }
+  }
+  const action = await executeCoachAction(proposalId);
+  if (!wantsReminder) return { action, reminder: "not_requested" };
+  if (!remindAt) return { action, reminder: "invalid", reminderMessage: reminderValidationMessage || "提醒时间无效" };
+  if (!receipt || receipt.result !== "accept") return { action, reminder: "rejected", reminderMessage: "微信提醒授权未开启" };
+
+  try {
+    await upsertTaskReminder({ taskId: action.task.id, remindAt, authorizationRequestId: receipt.requestId });
+    updateTaskReminder(action.task.id, { time: String(proposal.reminderTime), remindAt, status: "scheduled" });
+    await syncManualData();
+    return { action, reminder: "scheduled" };
+  } catch (error) {
+    updateTaskReminder(action.task.id, { time: String(proposal.reminderTime), remindAt, status: "failed" });
+    await syncManualData().catch(() => undefined);
+    return { action, reminder: "failed", reminderMessage: error instanceof Error ? error.message : "提醒设置失败" };
   }
 }

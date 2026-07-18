@@ -1,30 +1,22 @@
 import { getActiveGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
-import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTaskStatus } from "../../services/manualTask";
+import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTaskReminder, updateTaskStatus } from "../../services/manualTask";
 import { getLocalUserProfile } from "../../services/profile";
 import { analyzeProgress, prepareProgressCoach } from "../../services/progressCoach";
-import { getCurrentThemeId, withAppTheme } from "../../services/theme";
+import { getCurrentThemeId, MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
 import { syncManualData } from "../../services/manualSync";
-import { InAppMessage, listInAppMessages, readInAppMessage, requestNotificationAuthorization } from "../../services/notification";
+import { InAppMessage, listInAppMessages, readInAppMessage, requestNotificationAuthorization, requestNotificationAuthorizationWithReceipt, upsertTaskReminder } from "../../services/notification";
 import { isNotificationConfigured } from "../../config/notification";
 import { ActionIssueReason, ActionTask, ActionTaskStatus, Goal, TodaySummary } from "../../types/manual";
 import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate, getTimeGreeting } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
 import { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask, sortTodayTasksIncompleteFirst } from "../../utils/taskStatus";
 import { getTabHeaderLayout } from "../../utils/tabHeader";
+import { buildReminderAt, nextReminderTime, normalizeReminderTime, reminderDateRange } from "../../utils/actionReminder";
+import { ACTION_DURATION_OPTIONS } from "../../config/action";
 
 const REASONS: Array<{ label: string; value: ActionIssueReason }> = [{ label: "时间不够", value: "not_enough_time" }, { label: "难度太高", value: "too_difficult" }, { label: "缺少资源", value: "resource_unavailable" }, { label: "身体或状态不适", value: "physical_condition" }, { label: "临时有事", value: "temporary_event" }, { label: "任务不符合实际", value: "not_practical" }, { label: "其他", value: "other" }];
-const DURATION_OPTIONS = [
-  { label: "15 分钟", value: 15 },
-  { label: "25 分钟", value: 25 },
-  { label: "30 分钟", value: 30 },
-  { label: "45 分钟", value: 45 },
-  { label: "60 分钟", value: 60 },
-  { label: "90 分钟", value: 90 },
-  { label: "120 分钟", value: 120 },
-  { label: "180 分钟", value: 180 },
-  { label: "240 分钟", value: 240 },
-];
+const DURATION_OPTIONS = ACTION_DURATION_OPTIONS;
 const DEFAULT_QUICK_ADD_MINUTE_INDEX = DURATION_OPTIONS.findIndex((option) => option.value === 30);
 const QUICK_DURATION_VALUES = new Set([30, 45, 60, 90, 120]);
 const QUICK_DURATION_OPTIONS = DURATION_OPTIONS
@@ -222,6 +214,13 @@ function taskIconType(task: ActionTask): ViewTask["actionIconType"] {
   if (/背|单词|词汇|记忆/.test(copy)) return "book";
   return "note";
 }
+function taskSubtext(task: ActionTask): string {
+  const base = task.description || `学习 ${task.estimatedMinutes} 分钟`;
+  if (task.reminder?.status === "scheduled") return `${base} · ${formatDisplayDate(task.currentDate)} ${task.reminder.time} 提醒`;
+  if (task.reminder?.status === "failed") return `${base} · 提醒未开启`;
+  return base;
+}
+
 function toViewTask(task: ActionTask, selectedDate: string, businessToday = getTodayBusinessDate()): ViewTask {
   const displayStatus = getActionTaskDisplayStatus(task, selectedDate);
   const displayTitle = displayTaskTitle(task);
@@ -233,7 +232,7 @@ function toViewTask(task: ActionTask, selectedDate: string, businessToday = getT
     rescheduled: isCarryOverTask(task),
     dateLabel: task.currentDate === selectedDate ? "今天" : formatDisplayDate(task.currentDate),
     partialHint: displayStatus.badge === "待继续",
-    actionSubtext: task.description || `学习 ${task.estimatedMinutes} 分钟`,
+    actionSubtext: taskSubtext(task),
     actionIconType: taskIconType(task),
     canComplete: task.currentDate <= businessToday && task.status !== "rescheduled",
   };
@@ -289,6 +288,10 @@ Page(withAppTheme({
     quickAddVisible: false,
     quickAddTitle: "",
     quickAddMinutes: 30,
+    quickAddDate: getTodayBusinessDate(),
+    quickAddDateEnd: reminderDateRange().end,
+    quickAddReminderEnabled: false,
+    quickAddReminderTime: nextReminderTime(),
     quickDurationOptions: DURATION_OPTIONS,
     quickDurationPrimaryOptions: QUICK_DURATION_OPTIONS,
     quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX,
@@ -296,7 +299,6 @@ Page(withAppTheme({
     quickAddSubmitting: false,
     quickAddTouchStartY: 0,
     quickAddTouchDeltaY: 0,
-    currentScrollTop: 0,
     completionSheetRendered: false,
     completionSheetVisible: false,
     completionSheetData: {
@@ -316,8 +318,9 @@ Page(withAppTheme({
   completionSheetTimer: null as ReturnType<typeof setTimeout> | null,
   coachRequestKey: "",
   coachRequestGeneration: 0,
+  scrollTopCache: 0,
   onPageScroll(event: { scrollTop: number }) {
-    this.setData({ currentScrollTop: event.scrollTop });
+    this.scrollTopCache = event.scrollTop;
   },
   onLoad() {
     this.profileHandler = () => this.load();
@@ -468,7 +471,8 @@ Page(withAppTheme({
   selectWeekDate(event: { currentTarget: { dataset: { date?: string } } }) {
     const selectedDate = String(event.currentTarget.dataset.date || "");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate) || selectedDate === this.data.selectedDate) return;
-    this.setData({ selectedDate, calendarMonth: monthStart(selectedDate), actionListExpanded: false, currentScrollTop: 0 });
+    this.scrollTopCache = 0;
+    this.setData({ selectedDate, calendarMonth: monthStart(selectedDate), actionListExpanded: false });
     this.load();
   },
   openCalendar() {
@@ -492,12 +496,14 @@ Page(withAppTheme({
   selectCalendarDate(event: { currentTarget: { dataset: { date?: string } } }) {
     const selectedDate = String(event.currentTarget.dataset.date || "");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) return;
-    this.setData({ selectedDate, calendarMonth: monthStart(selectedDate), calendarVisible: false, actionListExpanded: false, weekOffset: 0, currentScrollTop: 0 });
+    this.scrollTopCache = 0;
+    this.setData({ selectedDate, calendarMonth: monthStart(selectedDate), calendarVisible: false, actionListExpanded: false, weekOffset: 0 });
     this.load();
   },
   jumpTodayFromCalendar() {
     const selectedDate = getTodayBusinessDate();
-    this.setData({ selectedDate, calendarMonth: monthStart(selectedDate), calendarVisible: false, actionListExpanded: false, weekOffset: 0, currentScrollTop: 0 });
+    this.scrollTopCache = 0;
+    this.setData({ selectedDate, calendarMonth: monthStart(selectedDate), calendarVisible: false, actionListExpanded: false, weekOffset: 0 });
     this.load();
   },
   goCreateGoal() { if (this.data.navigating) return; this.setData({ navigating: true }); wx.navigateTo({ url: "/pages/goal-create/index", fail: () => this.setData({ navigating: false }) }); },
@@ -519,7 +525,8 @@ Page(withAppTheme({
   },
   addTask() {
     if (!this.data.goal) { this.goCreateGoal(); return; }
-    this.setData({ quickAddVisible: true, quickAddTitle: "", quickAddMinutes: 30, quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX, quickDurationVisible: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
+    const range = reminderDateRange();
+    this.setData({ quickAddVisible: true, quickAddTitle: "", quickAddMinutes: 30, quickAddDate: range.start, quickAddDateEnd: range.end, quickAddReminderEnabled: false, quickAddReminderTime: nextReminderTime(), quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX, quickDurationVisible: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
   },
   closeQuickAdd() {
     if (this.data.quickAddSubmitting) return;
@@ -529,6 +536,19 @@ Page(withAppTheme({
   },
   noop() {},
   inputQuickAddTitle(event: { detail: { value?: string } }) { this.setData({ quickAddTitle: String(event.detail.value || "").slice(0, 40) }); },
+  changeQuickAddDate(event: { detail: { value?: string } }) {
+    this.setData({ quickAddDate: String(event.detail.value || getTodayBusinessDate()) });
+  },
+  toggleQuickAddReminder(event: { detail: { value?: boolean } }) {
+    this.setData({ quickAddReminderEnabled: Boolean(event.detail.value) });
+  },
+  changeQuickAddReminderTime(event: { detail: { value?: string } }) {
+    try {
+      this.setData({ quickAddReminderTime: normalizeReminderTime(String(event.detail.value || "")) });
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "提醒时间无效", icon: "none" });
+    }
+  },
   openDurationPicker() {
     if (this.data.quickAddSubmitting) return;
     this.setData({ quickDurationVisible: true });
@@ -557,7 +577,7 @@ Page(withAppTheme({
       placeholderText: "请输入 5～240 分钟",
       cancelText: "取消",
       confirmText: "确定",
-      confirmColor: "#245B4D",
+      confirmColor: MODAL_CONFIRM_COLORS.confirm,
       success: (result) => {
         if (!result.confirm) return;
         const minutes = Number(String(result.content || "").trim());
@@ -584,20 +604,53 @@ Page(withAppTheme({
     if (this.data.quickAddTouchDeltaY > 80) { this.closeQuickAdd(); return; }
     this.setData({ quickAddTouchDeltaY: 0 });
   },
-  saveQuickAdd() {
+  async saveQuickAdd() {
     if (this.data.quickAddSubmitting) return;
     const goal = this.data.goal;
     if (!goal) { this.goCreateGoal(); return; }
+    let remindAt = "";
+    if (this.data.quickAddReminderEnabled) {
+      try {
+        remindAt = buildReminderAt(this.data.quickAddDate, this.data.quickAddReminderTime);
+      } catch (error) {
+        wx.showToast({ title: error instanceof Error ? error.message : "提醒时间无效", icon: "none" });
+        return;
+      }
+    }
     this.setData({ quickAddSubmitting: true });
     try {
-      createTask({
+      let receipt: Awaited<ReturnType<typeof requestNotificationAuthorizationWithReceipt>> | null = null;
+      if (this.data.quickAddReminderEnabled) {
+        try {
+          receipt = await requestNotificationAuthorizationWithReceipt("daily_action_reminder", "task_reminder");
+        } catch (_error) {
+          receipt = null;
+        }
+      }
+      const accepted = receipt?.result === "accept";
+      const task = createTask({
         goalId: goal.id,
         title: this.data.quickAddTitle,
         estimatedMinutes: Number(this.data.quickAddMinutes || 30),
-        currentDate: getTodayBusinessDate(),
+        currentDate: this.data.quickAddDate,
+        reminder: accepted ? { time: this.data.quickAddReminderTime, remindAt, status: "pending_authorization" } : undefined,
       });
-      wx.showToast({ title: "行动已添加", icon: "success" });
-      this.setData({ quickAddVisible: false, quickAddTitle: "", quickAddMinutes: 30, quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX, quickDurationVisible: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
+      let reminderScheduled = false;
+      if (accepted && receipt) {
+        try {
+          await syncManualData();
+          await upsertTaskReminder({ taskId: task.id, remindAt, authorizationRequestId: receipt.requestId });
+          updateTaskReminder(task.id, { time: this.data.quickAddReminderTime, remindAt, status: "scheduled" });
+          reminderScheduled = true;
+        } catch (_error) {
+          updateTaskReminder(task.id, { time: this.data.quickAddReminderTime, remindAt, status: "failed" });
+        }
+      }
+      const toastTitle = !this.data.quickAddReminderEnabled
+        ? "行动已添加"
+        : reminderScheduled ? "行动与提醒已设置" : "行动已保存，提醒未开启";
+      wx.showToast({ title: toastTitle, icon: reminderScheduled || !this.data.quickAddReminderEnabled ? "success" : "none" });
+      this.setData({ quickAddVisible: false, quickAddTitle: "", quickAddMinutes: 30, quickAddReminderEnabled: false, quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX, quickDurationVisible: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
       this.load();
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
@@ -713,7 +766,7 @@ Page(withAppTheme({
       this.completeTask(task);
       return;
     }
-    const prevScrollTop = this.data.currentScrollTop;
+    const prevScrollTop = this.scrollTopCache;
     try {
       const today = getTodayBusinessDate();
       const nextStatus: ActionTaskStatus = task.issueReason ? "partially_completed" : "pending";
@@ -731,7 +784,7 @@ Page(withAppTheme({
   },
   completeTask(task: ViewTask) {
     try {
-      updateTaskStatus(task.id, "completed", task.actualMinutes ?? 0);
+      updateTaskStatus(task.id, "completed");
       wx.vibrateShort({ type: "light" });
       wx.showToast({ title: "已完成", icon: "success" });
       this.load();
@@ -745,5 +798,5 @@ Page(withAppTheme({
   },
   chooseReason(task: ViewTask, status: "partially_completed" | "skipped") { wx.showActionSheet({ itemList: REASONS.map((item) => item.label), success: ({ tapIndex }) => { const reason = REASONS[tapIndex]?.value; if (!reason) return; if (status === "partially_completed") this.askActual(task, status, reason); else { try { updateTaskStatus(task.id, status, task.actualMinutes, reason); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" }); } } } }); },
   reschedule(task: ViewTask) { try { rescheduleTask(task.id); wx.showToast({ title: "已顺延到明天", icon: "success" }); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "顺延失败", icon: "none" }); } },
-  remove(task: ViewTask) { wx.showModal({ title: "删除行动？", content: `“${task.title}”删除后无法恢复。`, confirmColor: "#9B4B45", success: (result) => { if (!result.confirm) return; try { deleteTask(task.id); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "删除失败", icon: "none" }); } } }); },
+  remove(task: ViewTask) { wx.showModal({ title: "删除行动？", content: `“${task.title}”删除后无法恢复。`, confirmColor: MODAL_CONFIRM_COLORS.danger, success: (result) => { if (!result.confirm) return; try { deleteTask(task.id); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "删除失败", icon: "none" }); } } }); },
 }));

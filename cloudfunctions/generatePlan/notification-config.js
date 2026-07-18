@@ -44,7 +44,7 @@ const TEMPLATES = Object.freeze({
       hint: "NOTIFICATION_N1_KEY_HINT",
     },
     page: "pages/index/index",
-    dailyLimit: 1,
+    dailyLimit: 4,
     maxLengths: { date: 20, actionCount: 20, goalName: 20, hint: 20 },
     title: "今日行动提醒",
   }),

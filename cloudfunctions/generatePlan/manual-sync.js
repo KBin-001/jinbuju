@@ -1,7 +1,7 @@
 const cloud = require("wx-server-sdk");
 const { stableId } = require("./repository");
 const { resolveAccount } = require("./account");
-const { notifyTeamActionCompleted } = require("./notification");
+const { cancelTaskReminderById, notifyTeamActionCompleted } = require("./notification");
 const { recordManualCompletionEvent } = require("./team");
 
 const db = cloud.database();
@@ -68,6 +68,13 @@ function cleanRecord(raw, kind) {
     if (!Number.isInteger(raw.estimatedMinutes) || raw.estimatedMinutes < 5 || raw.estimatedMinutes > 240) throw createError("MANUAL_SYNC_INVALID", "行动预计时间无效。");
     if (raw.actualMinutes !== undefined && (!Number.isInteger(raw.actualMinutes) || raw.actualMinutes < 0 || raw.actualMinutes > 480)) throw createError("MANUAL_SYNC_INVALID", "行动实际时间无效。");
     if (raw.reflection !== undefined && (typeof raw.reflection !== "string" || raw.reflection.length > 200)) throw createError("MANUAL_SYNC_INVALID", "行动感受记录无效。");
+    if (raw.reminder !== undefined) {
+      const reminder = raw.reminder;
+      if (!reminder || typeof reminder !== "object" || !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(reminder.time || ""))
+        || !validIso(reminder.remindAt) || !["pending_authorization", "scheduled", "sent", "cancelled", "expired", "failed"].includes(reminder.status)) {
+        throw createError("MANUAL_SYNC_INVALID", "行动提醒数据无效。");
+      }
+    }
   }
   if (kind === "打卡" && (typeof raw.goalId !== "string" || !raw.goalId || !validBusinessDate(raw.businessDate))) {
     throw createError("MANUAL_SYNC_INVALID", "打卡数据无效。");
@@ -205,6 +212,18 @@ async function syncManualData(openid, event) {
     userSyncData.migrationVersion = 1;
   }
   await db.collection("users").doc(account.userId).update({ data: userSyncData });
+  const cancelledReminderTasks = taskMerge.changes.filter((task) => (
+    task.deletedAt ||
+    ["completed", "skipped", "rescheduled"].includes(task.status)
+  ));
+  await Promise.all(cancelledReminderTasks.map((task) => (
+    cancelTaskReminderById(openid, account.userId, task.id, "cancelled").catch((error) => {
+      console.error("task reminder cancel hook failed", {
+        code: String(error && (error.code || error.errCode) || "UNKNOWN").slice(0, 80),
+        taskIdSuffix: String(task.id || "").slice(-8),
+      });
+    })
+  )));
   if (taskMerge.completedTransitions.length) {
     const completedTasks = taskMerge.completedTransitions.map((transition) => transition.after);
     const eventId = stableId(
@@ -257,6 +276,7 @@ async function createCoachProposal(openid, input) {
         taskTitle: input.taskTitle || input.title || "",
         title: input.title || "",
         estimatedMinutes: input.estimatedMinutes || 0,
+        reminderTime: input.reminderTime || "",
         actualMinutes: input.actualMinutes || 0,
         currentDate: input.currentDate,
         completedAt: input.completedAt || "",
@@ -274,20 +294,98 @@ async function createCoachProposal(openid, input) {
     status: "pending",
     summary: input.type === "complete_task"
       ? `完成${input.taskTitle} · 实际 ${input.actualMinutes} 分钟 · ${input.completedAt.slice(11, 16)}`
-      : `新增${input.title} · 预计 ${input.estimatedMinutes} 分钟 · ${input.currentDate}`,
+      : `新增${input.title} · 预计 ${input.estimatedMinutes} 分钟 · ${input.currentDate}${input.reminderTime ? ` · ${input.reminderTime} 提醒` : ""}`,
     taskId: input.taskId || undefined,
     taskTitle: input.taskTitle || undefined,
     actualMinutes: input.actualMinutes || undefined,
     completedAt: input.completedAt || undefined,
     title: input.title || undefined,
     estimatedMinutes: input.estimatedMinutes || undefined,
+    reminderTime: input.reminderTime || undefined,
     currentDate: input.currentDate,
     expiresAt: new Date(now + 10 * 60 * 1000).toISOString(),
   };
 }
 
+function executedProposalData(proposal, actionResult) {
+  const data = {
+    ...proposal,
+    status: "executed",
+    executedAt: db.serverDate(),
+    result: actionResult,
+  };
+  delete data._id;
+  return data;
+}
+
+async function recoverExistingCreatedTask(openid, proposalId, proposal, event) {
+  const taskId = `task_ai_${proposalId.slice(-20)}`;
+  const taskDocId = stableId(COLLECTIONS.tasks, `${openid}:${taskId}`);
+  const taskRef = db.collection(COLLECTIONS.tasks).doc(taskDocId);
+  const existing = await taskRef.get().catch(() => null);
+  if (!existing || !existing.data) return null;
+  if (existing.data._openid !== openid) throw createError("COACH_ACTION_CONFLICT", "行动归属校验失败。");
+  const account = await resolveAccount(openid, true);
+  if (existing.data.userId !== account.userId) {
+    await taskRef.update({ data: { userId: account.userId, serverUpdatedAt: db.serverDate() } });
+  }
+  const task = publicRecord({ ...existing.data, userId: account.userId });
+  const actionResult = { proposalId, type: proposal.type, status: "executed", task, reminderTime: proposal.reminderTime || undefined };
+  await db.collection(COLLECTIONS.proposals).doc(proposalId).set({ data: executedProposalData(proposal, actionResult) }).catch((error) => {
+    // The task is the business source of truth. A deterministic task id makes
+    // this partial-success state safe to report and reconcile on later reads.
+    console.error("coach proposal commit deferred", {
+      requestId: String(event && event.requestId || "").slice(0, 100),
+      code: error && error.code || "INTERNAL_ERROR",
+      proposalIdSuffix: proposalId.slice(-8),
+    });
+  });
+  logAction("create_reconciled", event, { type: proposal.type, proposalIdSuffix: proposalId.slice(-8) });
+  return actionResult;
+}
+
+async function reconcileCreateCoachAction(openid, proposalId, event) {
+  const proposalRef = db.collection(COLLECTIONS.proposals).doc(proposalId);
+  const found = await proposalRef.get().catch(() => null);
+  const proposal = found && found.data;
+  if (!proposal || proposal._openid !== openid) throw createError("COACH_ACTION_NOT_FOUND", "操作不存在或无权执行。");
+  if (proposal.status === "executed" && proposal.result) return proposal.result;
+  if (proposal.type !== "create_task") throw createError("COACH_ACTION_INVALID", "当前操作无法自动恢复。");
+  const recovered = await recoverExistingCreatedTask(openid, proposalId, proposal, event);
+  if (recovered) return recovered;
+  if (proposal.status !== "pending" || proposal.expiresAtMs < Date.now()) throw createError("COACH_ACTION_EXPIRED", "操作确认已过期，请重新告诉 AI。");
+  const goalDocId = stableId(COLLECTIONS.goals, `${openid}:${proposal.goalId}`);
+  const goalResult = await db.collection(COLLECTIONS.goals).doc(goalDocId).get().catch(() => null);
+  const goal = goalResult && goalResult.data;
+  if (!goal || goal._openid !== openid || goal.id !== proposal.goalId || goal.status !== "active") {
+    throw createError("COACH_ACTION_CONFLICT", "当前目标已变化，请重新确认。");
+  }
+  const taskId = `task_ai_${proposalId.slice(-20)}`;
+  const taskDocId = stableId(COLLECTIONS.tasks, `${openid}:${taskId}`);
+  const now = new Date().toISOString();
+  const account = await resolveAccount(openid, true);
+  const storedTask = {
+    id: taskId, goalId: proposal.goalId, title: proposal.title, plannedDate: proposal.currentDate,
+    currentDate: proposal.currentDate, estimatedMinutes: proposal.estimatedMinutes, status: "pending",
+    source: "ai", userId: account.userId, createdAt: now, updatedAt: now,
+  };
+  await db.collection(COLLECTIONS.tasks).doc(taskDocId).set({ data: { ...storedTask, _openid: openid, serverUpdatedAt: db.serverDate() } });
+  const task = publicRecord(storedTask);
+  const actionResult = { proposalId, type: proposal.type, status: "executed", task, reminderTime: proposal.reminderTime || undefined };
+  await proposalRef.set({ data: executedProposalData(proposal, actionResult) }).catch((error) => {
+    console.error("coach proposal commit deferred", {
+      requestId: String(event && event.requestId || "").slice(0, 100),
+      code: error && error.code || "INTERNAL_ERROR",
+      proposalIdSuffix: proposalId.slice(-8),
+    });
+  });
+  logAction("create_reconciled", event, { type: proposal.type, proposalIdSuffix: proposalId.slice(-8) });
+  return actionResult;
+}
+
 async function executeCoachAction(openid, event) {
   await ensureManualCollections();
+  const account = await resolveAccount(openid, true);
   const proposalId = String(event && event.proposalId || "");
   if (!proposalId) throw createError("COACH_ACTION_INVALID", "操作确认信息无效。");
   let stage = "transaction_begin";
@@ -305,9 +403,10 @@ async function executeCoachAction(openid, event) {
       let reconciled = false;
       if (proposal.type === "complete_task") {
         stage = "task_validation";
-        const query = await transaction.collection(COLLECTIONS.tasks).where({ _openid: openid, id: proposal.taskId }).limit(1).get();
-        const current = query.data && query.data[0];
-        if (!current) throw createError("COACH_ACTION_CONFLICT", "行动已不存在，请刷新后重试。");
+        const taskDocId = stableId(COLLECTIONS.tasks, `${openid}:${proposal.taskId}`);
+        const currentResult = await transaction.collection(COLLECTIONS.tasks).doc(taskDocId).get().catch(() => null);
+        const current = currentResult && currentResult.data;
+        if (!current || current._openid !== openid || current.id !== proposal.taskId) throw createError("COACH_ACTION_CONFLICT", "行动已不存在，请刷新后重试。");
         if (current.status === "completed") {
           task = publicRecord(current);
           reconciled = true;
@@ -320,7 +419,7 @@ async function executeCoachAction(openid, event) {
             status: "completed", actualMinutes: proposal.actualMinutes, completedAt: proposal.completedAt,
             updatedAt: new Date().toISOString(), serverUpdatedAt: db.serverDate(),
           };
-          await transaction.collection(COLLECTIONS.tasks).doc(current._id).update({ data: changes });
+          await transaction.collection(COLLECTIONS.tasks).doc(taskDocId).update({ data: changes });
           task = { ...publicRecord(current), status: changes.status, actualMinutes: changes.actualMinutes, completedAt: changes.completedAt, updatedAt: changes.updatedAt };
         }
       } else if (proposal.type === "create_task") {
@@ -329,28 +428,34 @@ async function executeCoachAction(openid, event) {
         const existing = await transaction.collection(COLLECTIONS.tasks).doc(docId).get().catch(() => null);
         if (existing && existing.data) {
           if (existing.data._openid !== openid) throw createError("COACH_ACTION_CONFLICT", "行动归属校验失败。");
-          task = publicRecord(existing.data);
+          if (existing.data.userId !== account.userId) {
+            await transaction.collection(COLLECTIONS.tasks).doc(docId).update({ data: { userId: account.userId, serverUpdatedAt: db.serverDate() } });
+          }
+          task = publicRecord({ ...existing.data, userId: account.userId });
           reconciled = true;
         } else {
           if (proposal.expiresAtMs < Date.now()) throw createError("COACH_ACTION_EXPIRED", "操作确认已过期，请重新告诉 AI。");
           stage = "goal_validation";
-          const goal = await transaction.collection(COLLECTIONS.goals).where({ _openid: openid, id: proposal.goalId, status: "active" }).limit(1).get();
-          if (!goal.data || !goal.data.length) throw createError("COACH_ACTION_CONFLICT", "当前目标已变化，请重新确认。");
+          const goalDocId = stableId(COLLECTIONS.goals, `${openid}:${proposal.goalId}`);
+          const goalResult = await transaction.collection(COLLECTIONS.goals).doc(goalDocId).get().catch(() => null);
+          const goal = goalResult && goalResult.data;
+          if (!goal || goal._openid !== openid || goal.id !== proposal.goalId || goal.status !== "active") throw createError("COACH_ACTION_CONFLICT", "当前目标已变化，请重新确认。");
           stage = "task_write";
           const now = new Date().toISOString();
-          task = {
+          const storedTask = {
             id: taskId, goalId: proposal.goalId, title: proposal.title, plannedDate: proposal.currentDate,
             currentDate: proposal.currentDate, estimatedMinutes: proposal.estimatedMinutes, status: "pending",
-            source: "ai", createdAt: now, updatedAt: now,
+            source: "ai", userId: account.userId, createdAt: now, updatedAt: now,
           };
-          await transaction.collection(COLLECTIONS.tasks).doc(docId).set({ data: { ...task, _openid: openid, serverUpdatedAt: db.serverDate() } });
+          await transaction.collection(COLLECTIONS.tasks).doc(docId).set({ data: { ...storedTask, _openid: openid, serverUpdatedAt: db.serverDate() } });
+          task = publicRecord(storedTask);
         }
       } else throw createError("COACH_ACTION_INVALID", "暂不支持此操作。");
 
       if (reconciled) logAction("task_reconciled", event, { type: proposal.type });
-      const actionResult = { proposalId, type: proposal.type, status: "executed", task };
+      const actionResult = { proposalId, type: proposal.type, status: "executed", task, reminderTime: proposal.reminderTime || undefined };
       stage = "proposal_commit";
-      await ref.update({ data: { status: "executed", executedAt: db.serverDate(), result: actionResult } });
+      await ref.set({ data: executedProposalData(proposal, actionResult) });
       return actionResult;
     });
     stage = "transaction_committed";
@@ -364,6 +469,20 @@ async function executeCoachAction(openid, event) {
       message: error && error.message ? String(error.message).slice(0, 160) : "",
       proposalIdSuffix: proposalId.slice(-8),
     });
+    if (!String(error && error.code || "").startsWith("COACH_ACTION_")) {
+      try {
+        logAction("create_reconcile_begin", event, { proposalIdSuffix: proposalId.slice(-8) });
+        return await reconcileCreateCoachAction(openid, proposalId, event);
+      } catch (reconcileError) {
+        console.error("coach action reconcile failed", {
+          requestId: String(event && event.requestId || "").slice(0, 100),
+          code: reconcileError && reconcileError.code || "INTERNAL_ERROR",
+          message: reconcileError && reconcileError.message ? String(reconcileError.message).slice(0, 160) : "",
+          proposalIdSuffix: proposalId.slice(-8),
+        });
+        throw reconcileError;
+      }
+    }
     throw error;
   }
 }
@@ -375,11 +494,21 @@ async function getCoachActionStatus(openid, event) {
   const found = await db.collection(COLLECTIONS.proposals).doc(proposalId).get().catch(() => null);
   const proposal = found && found.data;
   if (!proposal || proposal._openid !== openid) throw createError("COACH_ACTION_NOT_FOUND", "操作不存在或无权查看。");
-  const status = proposal.status === "executed" && proposal.result
+  let status = proposal.status === "executed" && proposal.result
     ? "executed"
     : proposal.expiresAtMs < Date.now() ? "expired" : "pending";
+  let result = status === "executed" ? proposal.result : undefined;
+  if (proposal.type === "create_task" && status !== "executed") {
+    try {
+      result = await recoverExistingCreatedTask(openid, proposalId, proposal, event);
+      if (result) status = "executed";
+    } catch (error) {
+      if (String(error && error.code || "").startsWith("COACH_ACTION_") && error.code !== "COACH_ACTION_EXPIRED") throw error;
+      logAction("status_reconcile_deferred", event, { code: error && error.code || "INTERNAL_ERROR", proposalIdSuffix: proposalId.slice(-8) });
+    }
+  }
   logAction("status_checked", event, { status, proposalIdSuffix: proposalId.slice(-8) });
-  return { proposalId, type: proposal.type, status, result: status === "executed" ? proposal.result : undefined };
+  return { proposalId, type: proposal.type, status, result: status === "executed" ? result : undefined };
 }
 
-module.exports = { createCoachProposal, executeCoachAction, getCoachActionStatus, syncManualData };
+module.exports = { createCoachProposal, executeCoachAction, getCoachActionStatus, reconcileCreateCoachAction, recoverExistingCreatedTask, syncManualData };

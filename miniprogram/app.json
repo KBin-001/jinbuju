@@ -53,6 +53,7 @@
     "t-notice-bar": "tdesign-miniprogram/notice-bar/notice-bar",
     "t-popup": "tdesign-miniprogram/popup/popup",
     "t-progress": "tdesign-miniprogram/progress/progress",
+    "coach-chat": "/components/coach-chat/index",
     "t-radio": "tdesign-miniprogram/radio/radio",
     "t-radio-group": "tdesign-miniprogram/radio-group/radio-group",
     "t-switch": "tdesign-miniprogram/switch/switch",

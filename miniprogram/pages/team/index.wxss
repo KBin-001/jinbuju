@@ -583,6 +583,7 @@
 .owner-setting-row { min-height: 82rpx; display: flex; align-items: center; justify-content: space-between; gap: 18rpx; border-top: 1rpx solid rgba(103,94,77,.12); color: #34443e; font-size: 24rpx; }
 .owner-setting-row > view { display: flex; flex-direction: column; }
 .owner-setting-help { margin-top: 5rpx; color: #8b8f8b; font-size: 20rpx; }
+.owner-setting-row .setting-row-value { align-items: center; flex-direction: row; gap: 5rpx; flex: none; color: #245b4d; font-size: 21rpx; }
 .owner-setting-row--danger { color: #a65049; }
 .settings-footer-button.is-disabled { opacity: .45; pointer-events: none; }
 
@@ -593,7 +594,7 @@
 .team-info-row { min-height: 76rpx; display: flex; align-items: center; justify-content: space-between; gap: 28rpx; border-top: 1rpx solid rgba(103,94,77,.12); font-size: 23rpx; }
 .team-info-row > text:first-child { color: #7c817d; }
 .team-info-row > text:last-child { max-width: 390rpx; color: #34443e; text-align: right; }
-
-.self-detail-actions { margin: 22rpx 0; border-top: 1rpx solid rgba(103,94,77,.14); }
-.self-detail-action { min-height: 76rpx; display: flex; align-items: center; justify-content: center; color: #245b4d; font-size: 24rpx; }
-.self-detail-action--danger { color: #a65049; border-top: 1rpx solid rgba(103,94,77,.10); }
+.team-info-row--action { min-height: 96rpx; }
+.team-info-row--action > view:first-child { min-width: 0; display: flex; flex: 1; flex-direction: column; }
+.team-info-row--action > .setting-row-value { display: flex; align-items: center; gap: 5rpx; flex: none; color: #245b4d; font-size: 21rpx; }
+.team-info-help { max-width: 360rpx; margin-top: 5rpx; overflow: hidden; color: #8b8f8b; font-size: 19rpx; line-height: 28rpx; text-overflow: ellipsis; white-space: nowrap; }

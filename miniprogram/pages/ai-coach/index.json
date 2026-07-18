@@ -1,6 +1,6 @@
 {
   "navigationStyle": "custom",
-  "navigationBarTitleText": "AI 进度教练",
+  "navigationBarTitleText": "AI 成长教练",
   "enablePullDownRefresh": false,
   "backgroundColor": "#F7F3EA",
   "usingComponents": {

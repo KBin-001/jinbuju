@@ -8,13 +8,15 @@ import {
   updateNotificationPreference,
 } from "../../services/notification";
 import { NotificationScene, NOTIFICATION_DEFINITIONS } from "../../config/notification";
-import { withAppTheme } from "../../services/theme";
+import { MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
+import { FEATURE_FLAGS } from "../../config/features";
 
 Page(withAppTheme({
   data: {
     loading: true,
     saving: false,
     consentChecked: false,
+    agreementsAccepted: false,
     status: null as ConsentStatus | null,
     errorMessage: "",
     notificationLoading: true,
@@ -22,6 +24,7 @@ Page(withAppTheme({
     notificationSavingScene: "" as NotificationScene | "",
     notificationPreference: null as NotificationPreference | null,
     wechatNotificationMainSwitch: true,
+    phoneBindingEnabled: FEATURE_FLAGS.ENABLE_PHONE_BINDING,
   },
 
   onShow() { this.load(); this.loadNotificationSettings(); },
@@ -30,7 +33,11 @@ Page(withAppTheme({
     this.setData({ loading: true, errorMessage: "" });
     try {
       const status = await getConsentStatus();
-      this.setData({ loading: false, status });
+      this.setData({
+        loading: false,
+        status,
+        agreementsAccepted: Boolean(status.consents.privacy.agreed && status.consents.terms.agreed),
+      });
     } catch (error) {
       this.setData({ loading: false, errorMessage: error instanceof Error ? error.message : "隐私设置加载失败" });
     }
@@ -102,7 +109,12 @@ Page(withAppTheme({
     this.setData({ saving: true, errorMessage: "" });
     try {
       const status = await recordConsents(["privacy", "terms"], "settings");
-      this.setData({ saving: false, status, consentChecked: false });
+      this.setData({
+        saving: false,
+        status,
+        consentChecked: false,
+        agreementsAccepted: Boolean(status.consents.privacy.agreed && status.consents.terms.agreed),
+      });
       wx.showToast({ title: "同意记录已保存", icon: "success" });
     } catch (error) {
       this.setData({ saving: false, errorMessage: error instanceof Error ? error.message : "保存失败" });
@@ -110,13 +122,13 @@ Page(withAppTheme({
   },
 
   withdrawOptionalConsent() {
-    if (this.data.saving) return;
+    if (!FEATURE_FLAGS.ENABLE_PHONE_BINDING || this.data.saving) return;
     wx.showModal({
       title: "撤回手机号处理同意？",
       content: "撤回后不会自动删除已绑定手机号。请先到“账号与安全”解除绑定，目标与行动功能不受影响。",
       cancelText: "取消",
       confirmText: "撤回同意",
-      confirmColor: "#B86152",
+      confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: async (result) => {
         if (!result.confirm) return;
         this.setData({ saving: true });

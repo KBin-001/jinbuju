@@ -109,6 +109,14 @@ async function updateCloudProfile(openid, event) {
   return publicProfile({ ...resolved.user, ...data });
 }
 
+async function validateAvatarUpload(openid, event) {
+  const resolved = await resolveAccount(openid, true);
+  const fileId = String(event && event.fileId || "").slice(0, 500);
+  if (!fileId) throw accountError("PROFILE_INVALID", "头像文件无效，请重新选择。");
+  await assertSafeAvatar(openid, fileId, { expectedPath: `user-avatars/${resolved.userId}/` });
+  return { fileId };
+}
+
 async function bindPhone(openid, event) {
   const code = String(event && event.code || "");
   if (!code) throw accountError("PHONE_CODE_INVALID", "手机号授权已失效，请重新授权。");
@@ -186,15 +194,15 @@ const OWNED_COLLECTIONS = [
   "goals", "plans", "tasks", "checkins", "stage_reviews", "stage_previews", "plan_generation_requests",
   "stage_generation_requests", "goal_analysis_drafts", "stage_preview_versions", "progress_ai_snapshots",
   "manual_goals", "manual_tasks", "manual_checkins", "manual_archived_goals", "achievement_unlocks",
-  "spark_checkins", "coach_action_proposals", "team_members", "team_user_memberships", "team_member_daily", "team_events", "team_join_requests",
-  "user_consents", "subscription_ledger", "notification_preference", "notification_sent_log", "in_app_messages",
+  "spark_checkins", "coach_action_proposals", "coach_conversations", "coach_messages", "team_members", "team_user_memberships", "team_member_daily", "team_events", "team_join_requests",
+  "user_consents", "subscription_ledger", "notification_preference", "notification_sent_log", "in_app_messages", "task_reminders",
 ];
 
 const BUSINESS_COLLECTIONS = [
   "goals", "plans", "tasks", "checkins", "stage_reviews", "stage_previews", "plan_generation_requests",
   "stage_generation_requests", "goal_analysis_drafts", "stage_preview_versions", "progress_ai_snapshots",
   "manual_goals", "manual_tasks", "manual_checkins", "manual_archived_goals", "achievement_unlocks",
-  "spark_checkins", "coach_action_proposals", "subscription_ledger", "notification_preference", "notification_sent_log", "in_app_messages",
+  "spark_checkins", "coach_action_proposals", "coach_conversations", "coach_messages", "subscription_ledger", "notification_preference", "notification_sent_log", "in_app_messages", "task_reminders",
 ];
 
 async function removeOwnedRecords(name, openid, userId) {
@@ -210,19 +218,21 @@ async function countOwned(name, openid) {
 
 async function getDataOverview(openid) {
   const resolved = await resolveAccount(openid, true);
-  const [activeGoals, historicalGoals, actions, checkins, achievements] = await Promise.all([
+  const [activeGoals, historicalGoals, actions, checkins, achievements, coachConversations, coachMessages] = await Promise.all([
     db.collection("manual_goals").where({ _openid: openid, status: "active" }).count().then((result) => Number(result.total || 0)),
     countOwned("manual_archived_goals", openid),
     countOwned("manual_tasks", openid),
     countOwned("manual_checkins", openid),
     countOwned("achievement_unlocks", openid),
+    countOwned("coach_conversations", openid),
+    countOwned("coach_messages", openid),
   ]);
   return {
     accountStatus: resolved.user.status || "active",
     profileUpdatedAt: String(resolved.user.profileUpdatedAt || resolved.user.updatedAt || ""),
     lastSuccessfulAt: String(resolved.user.lastManualSyncAt || ""),
     migrationVersion: Math.max(0, Number(resolved.user.migrationVersion || 0)),
-    counts: { activeGoals, historicalGoals, actions, checkins, achievements },
+    counts: { activeGoals, historicalGoals, actions, checkins, achievements, coachConversations, coachMessages },
   };
 }
 
@@ -325,5 +335,6 @@ module.exports = {
   importLegacyProfile,
   resolveAccount,
   updateCloudProfile,
+  validateAvatarUpload,
   unbindPhone,
 };

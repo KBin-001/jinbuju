@@ -61,11 +61,6 @@
       <button wx:if="{{analysis.totalCount === 0}}" class="empty-action-button" bindtap="addTodayAction">{{analysis.goalId ? '添加今日行动' : '创建长期目标'}}</button>
     </view>
 
-    <view wx:if="{{aiNotificationAvailable && analysis.goalId}}" class="coach-card notification-optin-card">
-      <view><view class="notification-optin-title">明日建议</view><text>每天中午结合真实行动记录生成；分析失败时不会发送虚构内容。</text></view>
-      <button class="notification-optin-button" disabled="{{notificationAuthorizing}}" bindtap="subscribeAiCoachAdvice">{{notificationAuthorizing ? '正在授权' : '开启明日建议'}}</button>
-    </view>
-
     <view class="coach-card judgement-card">
       <view class="card-eyebrow card-eyebrow--spark">教练判断<view class="eyebrow-spark"></view></view>
       <view class="judgement-title">{{workspace.judgementTitle}}</view>
@@ -78,39 +73,7 @@
     </view>
 
     <view class="coach-card chat-card">
-      <view class="chat-heading">继续和教练聊聊</view>
-      <view class="quick-list">
-        <view class="quick-question" data-question="为什么这样判断？" bindtap="chooseSuggestion" role="button">为什么这样判断？</view>
-        <view class="quick-question" data-question="帮我调整明天计划" bindtap="chooseSuggestion" role="button">帮我调整明天计划</view>
-        <view class="quick-question" data-question="分析最近一周" data-scope="week" bindtap="chooseSuggestion" role="button">分析最近一周</view>
-      </view>
-
-      <view wx:if="{{messages.length}}" class="recent-messages">
-        <view wx:for="{{messages}}" wx:key="id" class="message message--{{item.role}}">
-          <view wx:if="{{item.role === 'user'}}" class="message-user">{{item.content}}</view>
-          <view wx:else class="message-coach">
-            <view class="message-mark"><view></view></view>
-            <view class="message-body">
-              <view class="message-answer">{{item.mode === 'direct' ? item.content : item.summary}}</view>
-              <view wx:if="{{item.advice}}" class="message-advice">{{item.advice}}</view>
-              <view wx:if="{{item.showFull}}" class="message-full">{{item.content}}</view>
-              <button wx:if="{{item.canExpand}}" class="message-toggle" data-id="{{item.id}}" bindtap="toggleFullReply">{{item.showFull ? '收起完整回复' : '展开完整回复'}}</button>
-              <view wx:if="{{item.actionProposal && item.actionProposal.id}}" class="proposal-card">
-                <view class="proposal-title">{{item.actionProposal.summary}}</view>
-                <button wx:if="{{item.actionProposal.status === 'pending'}}" class="proposal-confirm {{executingProposalId ? 'is-disabled' : ''}}" disabled="{{executingProposalId !== ''}}" data-proposal-id="{{item.actionProposal.id}}" bindtap="confirmCoachAction">{{executingProposalId === item.actionProposal.id ? '正在执行' : '确认执行'}}</button>
-                <view wx:else class="proposal-done">已执行并同步到行动记录</view>
-              </view>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <view wx:if="{{asking}}" class="thinking-row"><view class="thinking-orb"></view><text>正在结合真实记录思考</text></view>
-      <view wx:if="{{chatError}}" class="chat-error"><text>{{chatError}}</text><button bindtap="retryLastQuestion">重新发送</button></view>
-      <view class="chat-input-row">
-        <input class="chat-input" value="{{question}}" maxlength="120" disabled="{{asking}}" placeholder="和教练说说你的情况……" placeholder-class="chat-placeholder" bindinput="inputQuestion" confirm-type="send" bindconfirm="sendQuestion" />
-        <view class="send-button {{asking || !question ? 'is-disabled' : ''}}" bindtap="sendQuestion" role="button" aria-label="发送"><t-icon name="send" size="34rpx" /></view>
-      </view>
+      <coach-chat title="继续问教练" user-avatar-url="{{userAvatarUrl}}" messages="{{messages}}" quick-questions="{{quickQuestions}}" asking="{{asking}}" error-message="{{chatError}}" executing-proposal-id="{{executingProposalId}}" bindsend="handleChatSend" bindretry="retryLastQuestion" bindconfirmproposal="confirmCoachAction"></coach-chat>
     </view>
   </view>
 

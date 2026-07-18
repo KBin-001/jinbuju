@@ -6,6 +6,12 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const json = (file) => JSON.parse(read(file));
 const rules = require("../cloudfunctions/generatePlan/team-rules");
 
+assert.equal(rules.ROOM_CODE_PATTERN.test("2486"), true, "新建小队房间号必须为 4 位数字");
+assert.equal(rules.ROOM_CODE_PATTERN.test("248"), false, "新建小队房间号不能少于 4 位");
+assert.equal(rules.ROOM_CODE_PATTERN.test("TQLR23"), false, "新建小队房间号不能再使用字母数字混合格式");
+assert.equal(rules.normalizeRoomCode("2486"), "2486", "4 位数字房间号应可加入");
+assert.equal(rules.normalizeRoomCode("TQLR23"), "TQLR23", "已有 6 位房间号应继续兼容");
+
 const requiredRuntimeActions = [
   "getTeamRuntimeInfo", "getMyTeam", "getTeamPage", "createTeam", "joinTeamByRoomCode",
   "getTeamActivityFeed", "updateTeamSettings", "updateTeamMemberPrivacy", "removeTeamMember",

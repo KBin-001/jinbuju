@@ -19,7 +19,6 @@ const {
 
 const db = cloud.database();
 const command = db.command;
-const ROOM_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const TEAM_COLLECTIONS = ["teams", "team_members", "team_user_memberships", "team_room_codes", "team_member_daily", "team_events", "team_join_requests", "encouragements"];
 let collectionsReady;
 
@@ -53,6 +52,8 @@ function publicIdentity(team, membership, user, currentUserId) {
   const canShowAvatar = isSelf || (canShowName && memberMode === "public");
   return {
     isSelf,
+    memberMode,
+    profileAllowed,
     anonymous: !canShowName,
     name: canShowName ? cleanText(user.nickname || "行动伙伴", 20) : anonymousNameFor(team._id, membership.userId),
     avatar: canShowAvatar ? String(user.avatarUrl || "") : "",
@@ -101,7 +102,7 @@ async function requireMembership(openid) {
   return { ...account, membership, team };
 }
 function assertOwner(context) { if (context.membership.role !== "owner") fail("TEAM_PERMISSION_DENIED", "只有队长可以执行此操作"); }
-function randomRoomCode() { let code = ""; for (let i = 0; i < 6; i += 1) code += ROOM_ALPHABET[crypto.randomInt(ROOM_ALPHABET.length)]; return code; }
+function randomRoomCode() { return String(crypto.randomInt(0, 10000)).padStart(4, "0"); }
 async function uniqueRoomCode() {
   for (let index = 0; index < 12; index += 1) {
     const code = randomRoomCode();
@@ -183,6 +184,8 @@ async function getMemberProgress(teamId, membership, currentUserId, businessDate
   if (persistDaily) await db.collection("team_member_daily").doc(dailyDocId(teamId, membership.userId, businessDate)).set({ data: daily });
   return {
     id: publicId, userId: publicId, teamId, role: membership.role || "member", displayMode,
+    selfDisplayMode: isSelf ? identity.memberMode : undefined,
+    profileAllowedInTeam: isSelf ? identity.profileAllowed : undefined,
     nickname: identity.name,
     anonymousName: anonymousNameFor(teamId, membership.userId), avatar: identity.avatar,
     goalTitle: anonymous ? "正在稳步行动" : cleanText(goals[0] && goals[0].title || "正在建立目标", 30),

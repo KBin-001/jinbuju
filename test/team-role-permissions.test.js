@@ -23,8 +23,14 @@ for (const publicField of ["displayTeamName", "displayRoomCode", "team.memberCou
 // 动态权限：队长可管理，成员保留只读信息与退出路径。
 assert.match(homeWxml, /wx:if="{{settingsCanEditTeam}}"[^>]*hero-settings[^>]*bindtap="openTeamSettings"[\s\S]*wx:else[^>]*hero-settings[^>]*bindtap="openTeamInfo"/,
   "只有当前 live runtime 允许管理时显示设置，其他状态显示只读信息");
-assert.match(homeWxml, /wx:if="{{!isOwner}}"[^>]*class="self-detail-action self-detail-action--danger"[^>]*bindtap="confirmLeaveOrDissolve"/,
-  "普通成员必须可从自己的资料退出小队");
+assert.match(homeWxml, /class="team-info-row team-info-row--action"[^>]*bindtap="openSelfPrivacyOptions"/,
+  "普通成员必须能从小队信息中调整自己的展示方式");
+assert.match(homeWxml, /class="owner-setting-row owner-setting-row--profile"[^>]*bindtap="openSelfPrivacyOptions"/,
+  "队长必须能从小队设置中调整自己的展示方式");
+assert.doesNotMatch(homeWxml, /self-detail-action[^>]*bindtap="openSelfPrivacyOptions"/,
+  "展示方式入口不应继续隐藏在头像详情中");
+assert.match(homeWxml, /settings-footer-button settings-footer-button--danger[^>]*bindtap="confirmLeaveOrDissolve"/,
+  "普通成员必须可从小队信息页退出小队");
 assert.match(homeTs, /if \(isOwner\) await dissolveTeam\(\); else await leaveTeam\(\);/,
   "危险操作必须按 owner/member 角色分流");
 assert.match(cloud, /if \(membership\.role === "owner"\) fail\("OWNER_TRANSFER_REQUIRED"/,
@@ -83,6 +89,10 @@ assert.match(cloud, /avatar:\s*canShowAvatar\s*\?[^:]+:\s*""/,
 const activityHandler = cloud.slice(cloud.indexOf("async function getTeamActivityFeed"), cloud.indexOf("async function removeMemberRecord"));
 assert.match(cloud, /memberMode\s*!==\s*"anonymous"/,
   "个人匿名选择必须参与服务端隐私裁决");
+assert.match(cloud, /selfDisplayMode:\s*isSelf\s*\?\s*identity\.memberMode\s*:\s*undefined/,
+  "服务端必须仅向本人返回真实展示偏好");
+assert.match(cloud, /profileAllowedInTeam:\s*isSelf\s*\?\s*identity\.profileAllowed\s*:\s*undefined/,
+  "服务端必须仅向本人返回小队资料授权状态");
 assert.match(activityHandler, /publicIdentity\s*\(\s*context\.team/,
   "动态流必须与排行榜共用服务端匿名投影");
 assert.doesNotMatch(cloud, /return\s*\{[^}]*openid/i,

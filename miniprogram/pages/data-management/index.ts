@@ -2,7 +2,7 @@ import { clearCloudBusinessData, deleteCloudAccount } from "../../services/accou
 import { clearLocalCachesAndRestore } from "../../services/dataSync";
 import { clearManualStore } from "../../services/manualStore";
 import { ProfileServiceError } from "../../services/profile";
-import { getCurrentThemeId, withAppTheme } from "../../services/theme";
+import { getCurrentThemeId, MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
 
 type DangerMode = "" | "business" | "account";
 
@@ -68,7 +68,7 @@ Page(withAppTheme({
         ? "账号资料、绑定关系和成长数据将永久删除；如你是小队队长，需要先转让或解散小队。"
         : "目标、行动、复盘和成长收藏将永久删除。账号资料、手机号绑定、协议记录和小队关系保留。",
       confirmText: "继续",
-      confirmColor: "#9B554D",
+      confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: (result) => {
         if (result.confirm) this.setData({ dangerMode: mode, confirmation: "", errorMessage: "" });
       },

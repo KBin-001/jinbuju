@@ -22,7 +22,8 @@ assert(page.includes("analyzeProgress(goal.id, \"day\""), "今日页未在后台
 assert(!template.includes("value-strip"), "首页不应保留重复价值卡");
 assert(!template.includes("reference-coach-title"), "首页不应保留重复 AI 教练标题");
 assert(!template.includes("ai-coach-shanshui-v1.jpg"), "今日建议不应继续使用已清理的强背景图");
-assert(template.includes("coachStatus === 'ready'") && template.includes("coachStatus === 'loading'") && template.includes("coachStatus === 'error'"), "今日建议必须区分 AI 成功、加载和失败回退状态");
+assert(template.includes("coachStatus === 'loading'") && template.includes("coachStatus === 'error'") && template.includes("proactiveInsight.title"), "今日建议必须区分 AI 成功、加载和失败回退状态");
+assert(template.includes("AI 成长教练 · 今日") && template.includes("查看完整建议与对话"), "今日入口标题和 CTA 必须与成长教练会话统一");
 assert(!template.includes("today-coach-watercolor-v2.jpg"), "今日建议不应引用已清理的旧插画");
 assert(template.includes("stats-grid") && template.includes("stats-column--done") && template.includes("stats-column--minutes"), "已完成和今日投入两栏必须保留原结构");
 assert(template.includes("stats-value--done") && template.includes("stats-mini-bars"), "已完成和今日投入原有数据表达不得被改写");

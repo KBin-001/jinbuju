@@ -77,6 +77,8 @@ const minuteOptions = [15, 45, 120, 180, 360];
 assert.ok(USER_OWNED_COLLECTIONS.includes("goal_analysis_drafts"));
 assert.ok(USER_OWNED_COLLECTIONS.includes("stage_preview_versions"));
 assert.ok(USER_OWNED_COLLECTIONS.includes("progress_ai_snapshots"));
+assert.ok(USER_OWNED_COLLECTIONS.includes("coach_conversations"));
+assert.ok(USER_OWNED_COLLECTIONS.includes("coach_messages"));
 
 for (const category of categories) {
   for (const weeklyDays of weeklyDaysOptions) {

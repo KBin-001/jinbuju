@@ -1,13 +1,175 @@
 <view class="page legal-page" data-theme="{{appTheme}}">
-  <view class="legal-title">进步局用户协议</view>
-  <view class="legal-meta">版本：terms-1.0-rc.1 · 发布状态：候选稿</view>
-  <view class="legal-notice">上线前必须补充运营主体、联系渠道、发布日期、生效日期、责任边界和争议解决条款，并完成专业法律审核。</view>
-  <view class="legal-section"><view class="legal-heading">1. 服务内容</view><view class="legal-copy">进步局提供目标管理、每日行动、投入记录、成长趋势、小队同行和 AI 教练。功能以当前小程序实际开放范围为准，部分能力可能因网络、云服务或版本更新暂时不可用。</view></view>
-  <view class="legal-section"><view class="legal-heading">2. 微信身份与账号</view><view class="legal-copy">本产品使用微信身份建立账号，不提供虚构的账号密码体系。你应在自己的微信环境中使用服务并妥善管理设备。手机号绑定为可选能力，只有确实需要时才由你主动触发。</view></view>
-  <view class="legal-section"><view class="legal-heading">3. 使用规则</view><view class="legal-copy">你不得访问或篡改他人数据、绕过身份与权限校验、操纵小队榜单、批量滥用 AI 服务，或上传违法、侵权及危害系统安全的内容。小队鼓励功能用于轻量陪伴，不作为聊天或骚扰工具。</view></view>
-  <view class="legal-section"><view class="legal-heading">4. AI 内容说明</view><view class="legal-copy">AI 教练基于你真实记录提供分析、提醒和下一步建议，可能存在不完整或不准确之处。AI 输出不构成医疗、法律、投资、就业录用或其他专业结论；重要决定应由你结合实际情况判断。</view></view>
-  <view class="legal-section"><view class="legal-heading">5. 数据与内容</view><view class="legal-copy">你保留自己输入内容依法享有的权利，并授权我们在提供同步、统计、复盘、分享和 AI 建议所必需的范围内处理。隐私与数据处理规则以当前版本《隐私政策》为准。</view></view>
-  <view class="legal-section"><view class="legal-heading">6. 目标删除和账号注销</view><view class="legal-copy">历史目标支持归档、移到最近删除、恢复和彻底删除。删除全部成长数据会保留账号、协议记录和小队关系；注销账号会删除账号及归属数据。队长需先转让或解散小队，危险操作均需二次确认。</view></view>
-  <view class="legal-section"><view class="legal-heading">7. 服务变更与协议更新</view><view class="legal-copy">为安全、合规或产品改进，我们可能调整服务。重大协议更新应明确提示并重新取得主动同意，不以默认勾选或仅继续使用代替必要确认。</view></view>
-  <view class="legal-section"><view class="legal-heading">8. 反馈与未完成条款</view><view class="legal-copy">当前可通过“关于进步局”的微信反馈入口提交问题。运营主体、有效联系方式、法律适用和争议解决条款尚待上线前确认，因此本候选稿不能替代正式发布版本。</view></view>
+  <view class="legal-header">
+    <view class="legal-title">进步局用户协议</view>
+    <view class="legal-subtitle">本协议约定你与进步局之间关于使用本微信小程序服务的权利与义务，请仔细阅读。</view>
+    <view class="legal-meta">
+      <view class="legal-meta-row">
+        <text class="legal-meta-label">版本</text>
+        <text class="legal-meta-value">{{version}}</text>
+        <text class="legal-meta-divider"></text>
+        <text class="legal-meta-label">生效日期</text>
+        <text class="legal-meta-value">{{effectiveDate}}</text>
+      </view>
+      <view class="legal-meta-row">
+        <text class="legal-meta-label">更新日期</text>
+        <text class="legal-meta-value">{{updatedAt}}</text>
+        <text class="legal-meta-divider"></text>
+        <text class="legal-meta-label">运营主体</text>
+        <text class="legal-meta-value">{{operator}}</text>
+      </view>
+    </view>
+    <view wx:if="{{showPendingNotice}}" class="legal-notice">
+      <text class="legal-notice-title">待补充字段提示</text>
+      本协议当前为可发布版本，但运营主体、有效联系方式、法律适用与争议解决条款仍为占位内容，正式提交审核与上线前必须替换为真实信息并完成专业法律审核。
+    </view>
+  </view>
+
+  <view class="legal-toc">
+    <view class="legal-toc-title">目录</view>
+    <view class="legal-toc-list">
+      <view class="legal-toc-item">一、协议的接受</view>
+      <view class="legal-toc-item">二、服务说明</view>
+      <view class="legal-toc-item">三、账号与登录</view>
+      <view class="legal-toc-item">四、用户行为规范</view>
+      <view class="legal-toc-item">五、内容与知识产权</view>
+      <view class="legal-toc-item">六、AI 服务声明</view>
+      <view class="legal-toc-item">七、数据与隐私</view>
+      <view class="legal-toc-item">八、付费与商业化</view>
+      <view class="legal-toc-item">九、服务变更与终止</view>
+      <view class="legal-toc-item">十、免责声明</view>
+      <view class="legal-toc-item">十一、协议变更</view>
+      <view class="legal-toc-item">十二、法律适用与争议</view>
+      <view class="legal-toc-item">十三、联系方式</view>
+    </view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">一</text>协议的接受</view>
+    <view class="legal-copy">本协议是你与「进步局」运营方（以下简称"我们"）之间就使用本微信小程序及相关服务所订立的协议。请你在使用本服务前完整阅读本协议与《隐私政策》，尤其是以加粗或下划线标识的条款。</view>
+    <view class="legal-copy">当你勾选"我已阅读并同意《用户协议》《隐私政策》"并点击"开始创建目标"或类似按钮时，即视为你已充分理解并接受本协议全部条款，本协议即对你产生效力。如你不同意任何条款，请停止使用本服务。</view>
+    <view class="legal-copy">本服务是目标与行动记录工具，不设置年龄准入限制。使用者应根据自身情况合理安排目标、行动与投入时间。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">二</text>服务说明</view>
+    <view class="legal-copy">「进步局」是一款帮助你把长期目标拆解为每日行动并持续坚持的微信小程序，主要功能包括：</view>
+    <view class="legal-list">
+      <view class="legal-list-item">目标管理：创建、编辑、归档与终止长期目标，并保留历史记录；</view>
+      <view class="legal-list-item">每日行动：安排今天的具体行动、记录预计与实际投入、查看完成状态；</view>
+      <view class="legal-list-item">进度与复盘：查看目标进度、累计投入、周/月/年复盘与成长趋势；</view>
+      <view class="legal-list-item">小队同行：通过房间号加入小队、查看成员行动榜与轻量鼓励；</view>
+      <view class="legal-list-item">AI 教练：基于你真实记录的目标与行动摘要，提供分析、提醒与下一步建议；</view>
+      <view class="legal-list-item">订阅通知：在你主动订阅后，投递每日行动提醒、AI 教练建议与小队动态。</view>
+    </view>
+    <view class="legal-copy">功能以本小程序当前实际开放范围为准。我们可能因网络、云服务、版本更新或合规要求暂时调整或下线部分能力，并将通过小程序内公告、提示或本协议更新等方式告知你。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">三</text>账号与登录</view>
+    <view class="legal-copy">本服务使用微信身份建立账号，不提供独立的账号密码体系。你应在自己的微信环境中使用本服务，并妥善管理你的微信账号与登录设备。因你的微信账号或设备管理不当造成的损失，由你自行承担。</view>
+    <view class="legal-copy">手机号绑定为可选能力，仅在你确实需要时由你主动触发。绑定后可用于账号安全核验；解除绑定不影响目标、行动、进度等核心功能的使用。</view>
+    <view class="legal-copy">我们有权根据法律法规、平台规则或风险防控需要，对你的账号采取限制、暂停或注销等措施，并依法告知你。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">四</text>用户行为规范</view>
+    <view class="legal-copy">你应在法律法规和本协议允许的范围内使用本服务，并保证不从事以下行为：</view>
+    <view class="legal-list">
+      <view class="legal-list-item">访问、获取、篡改、删除他人数据，或绕过身份与权限校验；</view>
+      <view class="legal-list-item">通过自动化脚本、模拟器、外挂或其他技术手段批量操作、操纵小队榜单或滥用 AI 服务；</view>
+      <view class="legal-list-item">上传、传播违法、侵权、虚假、骚扰、危害国家安全或系统安全的内容；</view>
+      <view class="legal-list-item">冒用他人身份，或在「关于进步局 → 通过微信提交反馈」中填写完整手机号、OpenID 或其他敏感凭证；</view>
+      <view class="legal-list-item">将小队鼓励功能用于骚扰、广告、商业招揽或其他与产品定位无关的用途；</view>
+      <view class="legal-list-item">以任何方式破坏或干扰本服务、腾讯云开发、微信开放平台及第三方服务的正常运行。</view>
+    </view>
+    <view class="legal-copy">我们有权对你的行为进行必要的安全审计。如发现违规，我们可采取警告、限制功能、暂停或注销账号等措施，并保留依法追究责任的权利。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">五</text>内容与知识产权</view>
+    <view class="legal-copy">你通过本服务输入的目标、行动、复盘、个人资料等内容（以下简称"用户内容"）依法享有的权利归你所有。你授权我们在提供同步、统计、复盘、分享、AI 建议与小队展示所必需的范围内处理你的用户内容。</view>
+    <view class="legal-copy">你保证你对用户内容享有合法权利，且用户内容不侵犯任何第三方的合法权益。因用户内容引起的纠纷或损失，由你自行承担。</view>
+    <view class="legal-copy">本服务的视觉设计、文案、图标、商标、代码、文档等知识产权归我们或相关权利人所有，未经书面授权不得复制、转载、修改、传播或用于其他商业用途。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">六</text>AI 服务声明</view>
+    <view class="legal-copy">本服务中的 AI 教练基于你真实记录的目标、行动、投入时间与复盘摘要提供分析、提醒与下一步建议。AI 输出可能存在不完整、不准确或不适用的情况。</view>
+    <view class="legal-list">
+      <view class="legal-list-item">AI 输出不构成医疗、心理、法律、投资、就业录用或其他专业建议；</view>
+      <view class="legal-list-item">重要决定应由你结合实际情况判断，不应仅依据 AI 输出作出；</view>
+      <view class="legal-list-item">我们不会替你虚构行动记录或编造未发生的进度数据；</view>
+      <view class="legal-list-item">我们仅发送完成分析所必需的目标与行动摘要，不会发送完整聊天记录或与本次分析无关的个人数据。</view>
+    </view>
+    <view class="legal-copy">如你认为 AI 输出存在明显错误或不当内容，可通过「关于进步局 → 通过微信提交反馈」告知我们。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">七</text>数据与隐私</view>
+    <view class="legal-copy">我们处理你个人信息的方式以《进步局隐私政策》为准。本协议与《隐私政策》共同构成我们之间关于本服务的完整约定。如本协议与《隐私政策》存在冲突，涉及个人信息处理的以《隐私政策》为准。</view>
+    <view class="legal-copy">历史目标支持归档、移到「最近删除」、恢复与彻底删除。删除全部成长数据会保留账号、协议记录与小队关系；注销账号会删除账号及归属数据。队长需先转让或解散小队，所有危险操作均需二次确认。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">八</text>付费与商业化</view>
+    <view class="legal-copy">本服务当前为免费产品。如未来引入付费功能、会员服务或增值服务，我们将在小程序内显著位置公示价格、服务内容、退费规则与有效期限，并另行取得你的确认。在未明确公示前，我们不会以任何名义向你收费。</view>
+    <view class="legal-copy">如涉及微信支付，支付能力由财付通提供，相关支付行为受《微信支付服务协议》及微信支付规则约束。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">九</text>服务变更与终止</view>
+    <view class="legal-copy">为安全、合规、技术演进或产品改进，我们可能调整、暂停或终止本服务的全部或部分功能。如发生重大变更，我们将通过小程序内公告或本协议更新等方式提前告知你。</view>
+    <view class="legal-copy">你可以随时停止使用本服务，或通过「我的 → 隐私与授权」申请注销账号。账号注销后，你将无法登录本服务，账号及归属数据将按《隐私政策》的保留期限处理。</view>
+    <view class="legal-copy">如你违反本协议或法律法规，我们有权限制、暂停或终止向你提供服务，并依法保留相关证据。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">十</text>免责声明</view>
+    <view class="legal-copy">在法律法规允许的范围内，我们就以下情形不承担或减轻责任：</view>
+    <view class="legal-list">
+      <view class="legal-list-item">因网络故障、设备问题、第三方服务（如微信开放平台、腾讯云开发）不可用或不可抗力导致的服务中断或数据损失；</view>
+      <view class="legal-list-item">因你未及时备份、错误操作、未妥善管理微信账号或设备导致的损失；</view>
+      <view class="legal-list-item">因你违反本协议或法律法规导致的后果；</view>
+      <view class="legal-list-item">AI 输出内容的不准确性或不适用性，以及你据此作出的判断与决定；</view>
+      <view class="legal-list-item">其他方通过本服务接入的第三方服务（如微信支付）引发的纠纷。</view>
+    </view>
+    <view class="legal-copy">本服务不保证所有功能在所有设备、网络与微信版本下均持续可用，亦不对未发生的成果作出承诺。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">十一</text>协议变更</view>
+    <view class="legal-copy">本协议可能因业务调整、法律法规变化或安全需要而更新。我们将通过小程序内显著位置提示重大变更，并视情况要求你重新主动同意。本协议顶部"版本"与"生效日期"字段即为最新版本标识。</view>
+    <view class="legal-copy">我们不会以默认勾选或仅继续使用代替必要的确认。如你不同意更新后的协议，可停止使用本服务或申请注销账号。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">十二</text>法律适用与争议解决</view>
+    <view class="legal-copy">本协议的订立、生效、解释与争议解决均适用中华人民共和国大陆地区法律（不含香港特别行政区、澳门特别行政区与台湾地区法律）。</view>
+    <view class="legal-copy">如你与本服务之间因本协议或本服务发生争议，双方应首先友好协商解决；协商不成的，任何一方均可向本协议载明的运营主体住所地有管辖权的人民法院提起诉讼。</view>
+    <view class="legal-copy">运营主体住所地与具体管辖法院，将在正式上线前根据运营主体注册信息在「联系我们」中同步公示。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">十三</text>联系方式</view>
+    <view class="legal-copy">如你对本协议有任何疑问、建议或投诉，可通过以下方式联系我们。</view>
+    <view class="legal-contact">
+      <view class="legal-contact-row">
+        <text class="legal-contact-label">运营主体</text>
+        <text class="legal-contact-value">{{operator}}</text>
+      </view>
+      <view class="legal-contact-row">
+        <text class="legal-contact-label">联系邮箱</text>
+        <view style="display:flex;align-items:center;">
+          <text class="legal-contact-value">{{contactEmail}}</text>
+          <view class="legal-contact-copy" bindtap="copyEmail">复制</view>
+        </view>
+      </view>
+      <view class="legal-contact-row">
+        <text class="legal-contact-label">小程序内反馈</text>
+        <text class="legal-contact-value">「关于进步局 → 通过微信提交反馈」</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="legal-footnote">本协议由进步局产品团队制定并维护，最后更新于 {{updatedAt}}。</view>
 </view>

@@ -1,6 +1,6 @@
 import { readManualStore } from "./manualStore";
 import { addDays, formatDate, getTodayBusinessDate } from "../utils/date";
-import { CoachRange, ProgressCoachAnalysis, ProgressCoachAnswer, ProgressCoachChatMessage } from "../types/progressCoach";
+import { CoachConversation, CoachRange, ProgressCoachAnalysis, ProgressCoachAnswer, ProgressCoachChatMessage } from "../types/progressCoach";
 import { syncManualData, verifyCoachRuntime } from "./manualSync";
 import { CloudRequestError, createCloudRequestId, logCloudRequest } from "../utils/cloudRequest";
 
@@ -205,15 +205,42 @@ export async function askProgressCoach(
   history: ProgressCoachChatMessage[],
   analysisDate = getTodayBusinessDate(),
   messageSentAt = new Date().toISOString(),
+  conversationId?: string,
 ): Promise<ProgressCoachAnswer> {
-  await prepareProgressCoach(scope, goalId, false, analysisDate);
+  // Chat context is rebuilt from user-owned cloud data on every request. Keep
+  // the local-to-cloud sync, but do not require the legacy structured snapshot:
+  // users with only archived/history data must still be able to talk to coach.
+  await verifyCoachRuntime();
+  await syncManualData();
   return callProgressCoach<ProgressCoachAnswer>({
     action: "askProgressCoach",
     scope,
     goalId: scope === "overall" ? undefined : goalId,
-    question: question.trim(),
-    history: history.slice(-12),
+    question,
+    history: history.slice(-20),
     analysisDate,
     messageSentAt,
+    conversationId: conversationId || undefined,
   });
+}
+
+/**
+ * Reads one already-known page session. Entry pages intentionally never call
+ * this method, so returning to a coach page always starts with an empty chat.
+ */
+export async function getCoachConversation(conversationId: string, limit = 50): Promise<CoachConversation> {
+  if (!conversationId) return { conversationId: "", messages: [], hasMore: false };
+  try {
+    return await callProgressCoach<CoachConversation>({
+      action: "getCoachConversation",
+      conversationId,
+      limit: Math.max(1, Math.min(50, Math.round(limit))),
+    }, 12000);
+  } catch (rawError) {
+    const error = rawError as Error & { code?: string };
+    if (["FUNCTION_NOT_FOUND", "UNKNOWN_ACTION", "INVALID_ACTION", "NOT_IMPLEMENTED"].includes(String(error.code || ""))) {
+      return { conversationId: "", messages: [], hasMore: false };
+    }
+    throw error;
+  }
 }

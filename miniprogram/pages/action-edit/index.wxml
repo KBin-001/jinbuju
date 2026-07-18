@@ -31,9 +31,19 @@
       </view>
       <view class="field field-gap">
         <view class="field-label">安排日期</view>
-        <picker mode="date" value="{{currentDate}}" bindchange="changeDate">
+        <picker mode="date" value="{{currentDate}}" start="{{todayDate}}" end="{{dateEnd}}" bindchange="changeDate">
           <view class="date-picker"><text>{{currentDate}}</text><text class="date-arrow">选择日期</text></view>
         </picker>
+      </view>
+      <view class="field field-gap reminder-switch-row">
+        <view><view class="field-label">提醒我</view><view class="hint">每条微信提醒需要一次授权</view></view>
+        <switch color="#245B4D" checked="{{reminderEnabled}}" bindchange="toggleReminder" />
+      </view>
+      <view wx:if="{{reminderEnabled}}" class="field reminder-time-field">
+        <picker mode="time" value="{{reminderTime}}" bindchange="changeReminderTime">
+          <view class="date-picker"><text>{{reminderTime}}</text><text class="date-arrow">5 分钟粒度</text></view>
+        </picker>
+        <view class="hint">{{hadScheduledReminder ? '未发送提醒改期不需要重新授权。' : '保存时会弹出微信一次性订阅授权。'}}</view>
       </view>
     </view>
     <view wx:if="{{validationMessage}}" class="validation-message">{{validationMessage}}</view>

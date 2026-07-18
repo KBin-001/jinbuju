@@ -21,6 +21,14 @@ export interface Goal {
 export type ActionTaskStatus = "pending" | "completed" | "partially_completed" | "skipped" | "rescheduled";
 export type ActionIssueReason = "not_enough_time" | "too_difficult" | "resource_unavailable" | "physical_condition" | "temporary_event" | "not_practical" | "other";
 
+export type ActionReminderStatus = "pending_authorization" | "scheduled" | "sent" | "cancelled" | "expired" | "failed";
+
+export interface ActionReminder {
+  time: string;
+  remindAt: string;
+  status: ActionReminderStatus;
+}
+
 export interface ActionTask {
   id: string;
   goalId: string;
@@ -49,6 +57,8 @@ export interface ActionTask {
   statusBeforeReschedule?: "pending" | "partially_completed" | "skipped";
   /** 实际发生行动的业务日期，用于稳定统计。 */
   activityDate?: string;
+  /** 用户主动设置的微信一次性订阅提醒摘要；云端 task_reminders 是投递状态真相。 */
+  reminder?: ActionReminder;
 }
 
 export interface DailyCheckin {

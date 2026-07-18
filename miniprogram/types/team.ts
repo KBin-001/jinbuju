@@ -47,6 +47,10 @@ export interface TeamMember {
   teamId: string;
   role?: TeamMemberRole;
   displayMode: TeamDisplayMode;
+  /** 仅本人响应返回：成员主动选择的展示方式。 */
+  selfDisplayMode?: TeamDisplayMode;
+  /** 仅本人响应返回：是否允许在小队中使用个人资料。 */
+  profileAllowedInTeam?: boolean;
   nickname: string;
   anonymousName?: string;
   avatar?: string;

@@ -28,6 +28,7 @@
 - `notification_preference`
 - `notification_sent_log`
 - `in_app_messages`
+- `task_reminders`
 
 建议建立以下复合索引：
 
@@ -38,13 +39,16 @@
 - `notification_sent_log`：`_openid + scene + actorUserId + status + sentAt`
 - `notification_sent_log`：`templateId + configVersion + terminalConfigError`
 - `in_app_messages`：`_openid + status + expireAt + createdAt`
+- `task_reminders`：`status + remindAt`
+- `task_reminders`：`_openid + taskId`
+- `task_reminders`：`status + retentionExpireAt`
 
 客户端不得直接访问这些集合；所有身份归属均由 `generatePlan` 从可信微信上下文取得。通知不再设置用户灰度门槛，用户只需在业务页面主动触发微信订阅授权；`grayEnabled` 仅为兼容旧数据保留，不参与发送判断。
 
 ## 3. 云函数部署顺序
 
 1. 上传并部署 `generatePlan`，确认 `subscribeMessage.send` 云调用权限生效。
-2. 上传并部署 `notificationScheduler`，只保留一个 Cron：`0 0 8,12 * * * *`（UTC+8）。
+2. 上传并部署 `notificationScheduler`，只保留一个 Cron：`0 */5 * * * * *`（UTC+8），每 5 分钟扫描单项行动提醒，同时在 08:00/12:00 继续执行原每日汇总和 AI 建议。
 3. 在体验版使用测试用户验证 N1 08:00、N2 12:00 与 N3 状态转换。
 4. 核验模板跳转页、匿名小队文案、静默期站内消息以及 `developer/trial/formal` 切换后再扩大灰度。
 

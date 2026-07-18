@@ -1,0 +1,67 @@
+@import "../../styles/theme.wxss";
+
+.coach-chat { min-height: 112rpx; padding-bottom: calc(156rpx + env(safe-area-inset-bottom)); }
+.coach-chat__title { color: #234C3F; font-size: 27rpx; font-weight: 700; }
+.coach-chat__subtitle { margin-top: 7rpx; color: #7C817D; font-size: 21rpx; line-height: 31rpx; }
+.coach-chat__quick-list { width: 100%; margin-top: 18rpx; white-space: nowrap; }
+.coach-chat__quick { display: inline-flex; box-sizing: border-box; min-width: 190rpx; min-height: 68rpx; margin-right: 10rpx; padding: 8rpx 20rpx; align-items: center; justify-content: center; border: 1rpx solid var(--color-border-soft); border-radius: var(--radius-pill); color: var(--color-primary); background: var(--color-card-soft); font-size: 22rpx; line-height: 31rpx; white-space: normal; }
+.coach-chat__messages { margin-top: 22rpx; padding-top: 4rpx; border-top: 1rpx solid rgba(103,94,77,.10); }
+.coach-chat__message { margin-top: 22rpx; }
+.coach-chat__user-row { display: flex; gap: 12rpx; align-items: flex-end; justify-content: flex-end; }
+.coach-chat__avatar { width: 50rpx; height: 50rpx; flex: none; border: 2rpx solid rgba(255,255,255,.9); border-radius: 50%; background: #EEF1ED; box-shadow: 0 3rpx 10rpx rgba(34,63,53,.12); }
+.coach-chat__user-text { max-width: 74%; padding: 16rpx 22rpx; border-radius: 22rpx 22rpx 5rpx 22rpx; color: #FFF; background: linear-gradient(145deg,#326D59,#245B4D); font-size: 23rpx; line-height: 35rpx; white-space: pre-wrap; overflow-wrap: anywhere; }
+.coach-chat__assistant { display: flex; gap: 13rpx; align-items: flex-start; }
+.coach-chat__mark { display: flex; width: 40rpx; height: 40rpx; flex: none; align-items: center; justify-content: center; border-radius: 50%; background: var(--color-primary-soft); }
+.coach-chat__mark-core { width: 12rpx; height: 12rpx; transform: rotate(45deg); border-radius: 2rpx; background: var(--color-primary); }
+.coach-chat__assistant-body { min-width: 0; flex: 1; padding: 18rpx; border: 1rpx solid rgba(36,91,77,.10); border-radius: 6rpx 22rpx 22rpx 22rpx; background: rgba(255,255,253,.88); box-shadow: 0 6rpx 20rpx rgba(49,70,61,.05); }
+.coach-chat__assistant-body--clarification { border-color: rgba(181,122,55,.18); background: rgba(255,250,238,.94); }
+.coach-chat__answer { color: #41584F; font-size: 23rpx; line-height: 37rpx; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+.coach-chat__eyebrow { display: flex; gap: 9rpx; align-items: center; color: #356B59; font-size: 20rpx; font-weight: 650; }
+.coach-chat__eyebrow-mark { width: 11rpx; height: 11rpx; transform: rotate(45deg); border-radius: 2rpx; background: #3E806A; }
+.coach-chat__response-title { margin-top: 12rpx; color: #244A3E; font-size: 26rpx; font-weight: 750; line-height: 36rpx; }
+.coach-chat__response-summary { margin-top: 8rpx; color: #53665F; font-size: 22rpx; line-height: 35rpx; white-space: pre-wrap; overflow-wrap: anywhere; }
+.coach-chat__metrics { display: flex; margin-top: 17rpx; padding: 17rpx 8rpx; border: 1rpx solid rgba(36,91,77,.10); border-radius: 18rpx; background: rgba(248,250,246,.88); }
+.coach-chat__metric { position: relative; box-sizing: border-box; width: 33.333%; min-width: 0; padding: 0 10rpx; text-align: center; }
+.coach-chat__metric + .coach-chat__metric { border-left: 1rpx solid rgba(52,83,72,.10); }
+.coach-chat__metric-value { color: #2E725D; font-size: 29rpx; font-weight: 750; line-height: 38rpx; white-space: nowrap; }
+.coach-chat__metric-unit { margin-left: 4rpx; color: #789087; font-size: 16rpx; font-weight: 500; }
+.coach-chat__metric-label { margin-top: 2rpx; overflow: hidden; color: #7B857F; font-size: 18rpx; line-height: 27rpx; text-overflow: ellipsis; white-space: nowrap; }
+.coach-chat__metric-track { height: 5rpx; margin-top: 10rpx; overflow: hidden; border-radius: 4rpx; background: rgba(36,91,77,.10); }
+.coach-chat__metric-fill { height: 100%; border-radius: 4rpx; background: linear-gradient(90deg,#3B8069,#77A392); }
+.coach-chat__sections { margin-top: 16rpx; overflow: hidden; border: 1rpx solid rgba(36,91,77,.09); border-radius: 18rpx; background: rgba(252,251,247,.92); }
+.coach-chat__section { display: flex; gap: 13rpx; padding: 16rpx; align-items: flex-start; }
+.coach-chat__section + .coach-chat__section { border-top: 1rpx solid rgba(77,91,84,.09); }
+.coach-chat__section-index { display: flex; width: 38rpx; height: 38rpx; flex: none; align-items: center; justify-content: center; border-radius: 50%; color: #356C5A; background: #E9F0EB; font-size: 17rpx; font-weight: 700; }
+.coach-chat__section-copy { min-width: 0; flex: 1; }
+.coach-chat__section-title { color: #334C43; font-size: 22rpx; font-weight: 700; line-height: 31rpx; }
+.coach-chat__section-detail { margin-top: 3rpx; color: #78817D; font-size: 19rpx; line-height: 29rpx; }
+.coach-chat__priorities { margin-top: 16rpx; overflow: hidden; border: 1rpx solid rgba(36,91,77,.09); border-radius: 18rpx; background: rgba(252,251,247,.94); }
+.coach-chat__priority { display: flex; gap: 12rpx; min-height: 74rpx; padding: 14rpx; align-items: center; }
+.coach-chat__priority + .coach-chat__priority { border-top: 1rpx solid rgba(77,91,84,.09); }
+.coach-chat__priority-tag { box-sizing: border-box; min-width: 94rpx; padding: 6rpx 10rpx; border-radius: 15rpx; font-size: 17rpx; line-height: 24rpx; text-align: center; }
+.coach-chat__priority-tag--warning { color: #A55D46; background: #FCEBE5; }
+.coach-chat__priority-tag--positive { color: #9A722E; background: #FAF0D8; }
+.coach-chat__priority-tag--neutral { color: #4E775F; background: #E9F1E7; }
+.coach-chat__priority-tag--success { color: #31705B; background: #E4F1EA; }
+.coach-chat__priority-copy { min-width: 0; flex: 1; }
+.coach-chat__priority-title { overflow: hidden; color: #354B43; font-size: 21rpx; font-weight: 700; line-height: 30rpx; text-overflow: ellipsis; white-space: nowrap; }
+.coach-chat__priority-detail { margin-top: 3rpx; color: #808783; font-size: 18rpx; line-height: 26rpx; }
+.coach-chat__proposal { margin-top: 14rpx; padding: 16rpx; border-radius: 15rpx; color: #705522; background: var(--color-warning-soft); font-size: 21rpx; line-height: 33rpx; }
+.coach-chat__proposal-button { display: flex; box-sizing: border-box; min-width: 150rpx; height: 56rpx; margin-top: 12rpx; padding: 0 20rpx; align-items: center; justify-content: center; border-radius: 28rpx; color: #FFF; background: var(--color-primary); font-size: 22rpx; }
+.coach-chat__proposal-reminder { display: flex; gap: 7rpx; margin-top: 8rpx; align-items: center; color: #725A2C; font-size: 20rpx; }
+.coach-chat__proposal-button.is-disabled { opacity: .45; }
+.coach-chat__proposal-done { margin-top: 9rpx; color: var(--color-success); font-weight: 650; }
+.coach-chat__thinking { display: flex; gap: 12rpx; margin-top: 18rpx; align-items: center; color: #718078; font-size: 21rpx; }
+.coach-chat__spinner { width: 18rpx; height: 18rpx; border: 2rpx solid rgba(36,91,77,.2); border-top-color: var(--color-primary); border-radius: 50%; animation: coach-chat-spin .9s linear infinite; }
+.coach-chat__error { display: flex; gap: 16rpx; margin-top: 17rpx; padding: 15rpx 17rpx; align-items: center; justify-content: space-between; border-radius: 15rpx; color: #775A25; background: var(--color-warning-soft); font-size: 21rpx; }
+.coach-chat__error-copy { min-width: 0; flex: 1; }
+.coach-chat__error-retry { flex: none; color: var(--color-primary); font-size: 21rpx; font-weight: 650; }
+.coach-chat__input-dock { position: fixed; right: 24rpx; bottom: calc(14rpx + env(safe-area-inset-bottom)); left: 24rpx; z-index: 80; box-sizing: border-box; padding: 10rpx 12rpx 8rpx; border: 1rpx solid rgba(36,91,77,.12); border-radius: 28rpx; background: rgba(255,252,246,.97); box-shadow: 0 12rpx 36rpx rgba(43,66,57,.14); }
+.coach-chat__input-bar { display: flex; gap: 10rpx; min-height: 76rpx; padding: 7rpx 7rpx 7rpx 20rpx; align-items: flex-end; border: 1rpx solid rgba(36,91,77,.16); border-radius: 24rpx; background: #FFFDF8; }
+.coach-chat__input { box-sizing: border-box; width: 0; min-width: 0; min-height: 60rpx; max-height: 168rpx; padding: 11rpx 0 8rpx; flex: 1; color: var(--color-text-main); font-size: 24rpx; line-height: 36rpx; }
+.coach-chat__placeholder { color: #99A39E; }
+.coach-chat__send { display: flex; box-sizing: border-box; width: 62rpx; height: 62rpx; flex: none; align-items: center; justify-content: center; border-radius: 20rpx; color: var(--color-text-inverse); background: var(--color-primary); }
+.coach-chat__send.is-disabled { opacity: .45; }
+.coach-chat__input-note { padding: 8rpx 8rpx 0; color: #8B918D; font-size: 18rpx; line-height: 26rpx; text-align: center; }
+@keyframes coach-chat-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .coach-chat__spinner { animation: none; } }

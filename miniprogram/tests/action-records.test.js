@@ -23,10 +23,12 @@ assert.match(planSource, /openGrowthRecords\(\)/, "进度页必须提供独立�
 assert.match(planSource, /pages\/growth-records\/index\?from=progress&goalId=/, "进度页应保留当前目标上下文进入成长记录页");
 
 const quickAdd = fs.readFileSync(path.join(root, "pages/index/index.wxml"), "utf8");
+const durationConfig = fs.readFileSync(path.join(root, "config/action.ts"), "utf8");
 assert.doesNotMatch(quickAdd, /补充说明/, "今日行动快捷添加不应展示补充说明");
 for (const minutes of [30, 45, 60, 90, 120, 240]) {
-  assert.match(todaySource, new RegExp(`value:\\s*${minutes}`), `预计投入必须兼容 ${minutes} 分钟`);
+  assert.match(durationConfig, new RegExp(`(?:^|[\\s,\\[])${minutes}(?:[\\s,\\]])`), `预计投入必须兼容 ${minutes} 分钟`);
 }
+assert.match(todaySource, /ACTION_DURATION_OPTIONS/, "今日页应使用统一时长配置");
 assert.match(todaySource, /QUICK_DURATION_VALUES = new Set\(\[30, 45, 60, 90, 120\]\)/, "120 分钟必须显示在快捷时长网格中");
 assert.match(quickAdd, /quickAddMinutes !== 120/, "选择 120 分钟后不应误高亮更多时长");
 assert.match(quickAdd, /更多时长/, "快捷添加必须保留更多时长入口");

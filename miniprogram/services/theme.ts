@@ -21,6 +21,12 @@ const THEME_SWITCHING_ENABLED = FEATURE_FLAGS.ENABLE_THEME_SWITCHING;
 
 export type ThemeId = "mint" | "cream" | "inkGreen" | "apricot";
 
+/** wx.showModal 语义色，避免各页面自行定义相同操作的颜色。 */
+export const MODAL_CONFIRM_COLORS = {
+  confirm: "#245B4D",
+  danger: "#B54A43",
+} as const;
+
 export interface ThemePreset {
   id: ThemeId;
   name: string;

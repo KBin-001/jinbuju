@@ -3,7 +3,12 @@ import { createCloudRequestId } from "../utils/cloudRequest";
 import { recordNotificationPrompt } from "../utils/notificationPreference";
 
 export type NotificationAuthorizationResult = "accept" | "reject" | "ban" | "filter";
-export type NotificationClientScene = "today_completion" | "daily_coach" | "team_join" | "privacy_center";
+export type NotificationClientScene = "today_completion" | "task_reminder" | "daily_coach" | "team_join" | "privacy_center";
+
+export interface NotificationAuthorizationReceipt {
+  result: NotificationAuthorizationResult;
+  requestId: string;
+}
 
 export interface NotificationScenePreference {
   enabled: boolean;
@@ -92,6 +97,13 @@ export async function requestNotificationAuthorization(
   scene: NotificationScene,
   clientScene: NotificationClientScene,
 ): Promise<NotificationAuthorizationResult> {
+  return (await requestNotificationAuthorizationWithReceipt(scene, clientScene)).result;
+}
+
+export async function requestNotificationAuthorizationWithReceipt(
+  scene: NotificationScene,
+  clientScene: NotificationClientScene,
+): Promise<NotificationAuthorizationReceipt> {
   const definition = NOTIFICATION_DEFINITIONS[scene];
   if (!isNotificationConfigured(scene)) {
     throw Object.assign(new Error("通知模板尚未完成审核，当前不会发起微信授权。"), { code: "NOTIFICATION_NOT_CONFIGURED" });
@@ -109,10 +121,19 @@ export async function requestNotificationAuthorization(
   if (!["accept", "reject", "ban", "filter"].includes(authorizationResult)) {
     throw Object.assign(new Error("微信返回了无法识别的授权状态。"), { code: "SUBSCRIBE_RESULT_INVALID" });
   }
+  const requestId = createCloudRequestId("notification_subscribe");
   await call("notification.subscribe", {
-    requestId: createCloudRequestId("notification_subscribe"),
+    requestId,
     clientScene,
     results: [{ scene, templateId: definition.templateId, result: authorizationResult }],
   });
-  return authorizationResult;
+  return { result: authorizationResult, requestId };
+}
+
+export function upsertTaskReminder(input: { taskId: string; remindAt: string; authorizationRequestId?: string }): Promise<{ status: string; remindAt: string }> {
+  return call("notification.taskReminder.upsert", { requestId: createCloudRequestId("task_reminder_upsert"), ...input });
+}
+
+export function cancelTaskReminder(taskId: string): Promise<{ status: string }> {
+  return call("notification.taskReminder.cancel", { requestId: createCloudRequestId("task_reminder_cancel"), taskId });
 }

@@ -1,5 +1,5 @@
 import { canManageTeam, dissolveTeam, getCachedTeam, getMyTeam, removeTeamMember, sendEncouragement, transferTeamOwner } from "../../services/team";
-import { getCurrentThemeId, withAppTheme } from "../../services/theme";
+import { getCurrentThemeId, MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
 import {
   EncouragementType,
   MemberTodayStatus,
@@ -472,7 +472,7 @@ Page(withAppTheme({
       title: "移出小队？",
       content: `移出“${detail.name}”后，对方需要重新使用房间号加入。`,
       confirmText: "确认移出",
-      confirmColor: "#A65049",
+      confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: async ({ confirm }) => {
         if (!confirm) return;
         this.setData({ managingMember: true });
@@ -519,7 +519,7 @@ Page(withAppTheme({
       title: "解散小队？",
       content: "解散后所有成员都将退出，个人行动记录不会删除。此操作不可撤销。",
       confirmText: "确认解散",
-      confirmColor: "#A65049",
+      confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: async ({ confirm }) => {
         if (!confirm) return;
         this.setData({ managingMember: true });

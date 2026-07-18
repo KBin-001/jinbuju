@@ -2,6 +2,8 @@ const cloud = require("wx-server-sdk");
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
+const { isTrustedSchedulerSource } = require("./scheduler-auth");
+
 const { generateText } = require("./ai");
 const { submitCheckin, getCheckinStatus } = require("./checkin");
 const { formatBusinessDate } = require("./date");
@@ -81,9 +83,9 @@ const {
 } = require("./stage-v2");
 const {
   analyzeProgress,
-  askProgressCoach,
   prepareProgressCoach,
 } = require("./progress-coach");
+const { askProgressCoach, getCoachConversation } = require("./coach-conversation");
 const { executeCoachAction, getCoachActionStatus, syncManualData } = require("./manual-sync");
 const {
   bindPhone,
@@ -96,6 +98,7 @@ const {
   resolveAccount,
   unbindPhone,
   updateCloudProfile,
+  validateAvatarUpload,
 } = require("./account");
 const { getConsentStatus, recordConsent, withdrawConsent } = require("./privacy");
 const {
@@ -104,11 +107,13 @@ const {
   readInAppMessage,
   runScheduled: runNotificationScheduled,
   subscribe: subscribeNotification,
+  cancelTaskReminder,
   unsubscribe: unsubscribeNotification,
   updatePreference: updateNotificationPreference,
+  upsertTaskReminder,
 } = require("./notification");
 const { assertEventContentSafe } = require("./content-security");
-const COACH_RUNTIME_VERSION = "coach-actions-2026-07-07.3";
+const COACH_RUNTIME_VERSION = "coach-unified-2026-07-19.10";
 
 function success(data) {
   return { success: true, data };
@@ -225,7 +230,12 @@ function failure(error) {
     "PROGRESS_CONTEXT_NOT_FOUND",
     "PROGRESS_SNAPSHOT_INVALID",
     "PROGRESS_SNAPSHOT_TOO_LARGE",
+    "COACH_ACTION_INVALID",
+    "COACH_ACTION_NOT_FOUND",
+    "COACH_ACTION_EXPIRED",
+    "COACH_ACTION_CONFLICT",
     "NOTIFICATION_INVALID",
+    "NOTIFICATION_LIMITED",
     "NOTIFICATION_NOT_CONFIGURED",
     "NOTIFICATION_NOT_FOUND",
   ];
@@ -340,6 +350,10 @@ function failure(error) {
     PROGRESS_CONTEXT_NOT_FOUND: error.message,
     PROGRESS_SNAPSHOT_INVALID: error.message,
     PROGRESS_SNAPSHOT_TOO_LARGE: error.message,
+    COACH_ACTION_INVALID: error.message,
+    COACH_ACTION_NOT_FOUND: error.message,
+    COACH_ACTION_EXPIRED: error.message,
+    COACH_ACTION_CONFLICT: error.message,
     NOTIFICATION_INVALID: error.message,
     NOTIFICATION_NOT_CONFIGURED: error.message,
     NOTIFICATION_NOT_FOUND: error.message,
@@ -533,7 +547,7 @@ exports.main = async (event) => {
   try {
     const context = cloud.getWXContext();
     if (action === "notification.runScheduled") {
-      if (context.SOURCE !== "wx_cloud_call") {
+      if (!isTrustedSchedulerSource(context.SOURCE)) {
         const error = new Error("Scheduled notification calls must originate from CloudBase.");
         error.code = "UNAUTHORIZED";
         throw error;
@@ -562,6 +576,7 @@ exports.main = async (event) => {
 
     if (event.action === "bootstrapAccount") return success(await bootstrapAccount(context.OPENID));
     if (event.action === "updateCloudProfile") return success(await updateCloudProfile(context.OPENID, event));
+    if (event.action === "validateAvatarUpload") return success(await validateAvatarUpload(context.OPENID, event));
     if (event.action === "bindPhone") return success(await bindPhone(context.OPENID, event));
     if (event.action === "unbindPhone") return success(await unbindPhone(context.OPENID));
     if (event.action === "importLegacyProfile") return success(await importLegacyProfile(context.OPENID, event));
@@ -593,6 +608,14 @@ exports.main = async (event) => {
     }
     if (event.action === "notification.inApp.read") {
       return success(await readInAppMessage(context.OPENID, event));
+    }
+    if (event.action === "notification.taskReminder.upsert") {
+      const account = await resolveAccount(context.OPENID, true);
+      return success(await upsertTaskReminder(context.OPENID, account.userId, event));
+    }
+    if (event.action === "notification.taskReminder.cancel") {
+      const account = await resolveAccount(context.OPENID, true);
+      return success(await cancelTaskReminder(context.OPENID, account.userId, event));
     }
 
     if (event.action === "generate") {
@@ -760,6 +783,11 @@ exports.main = async (event) => {
     }
     if (event.action === "askProgressCoach") {
       const data = await askProgressCoach(context.OPENID, event);
+      console.info("generatePlan success", { action, requestId, durationMs: Date.now() - requestStartedAt });
+      return success(data);
+    }
+    if (event.action === "getCoachConversation") {
+      const data = await getCoachConversation(context.OPENID, event);
       console.info("generatePlan success", { action, requestId, durationMs: Date.now() - requestStartedAt });
       return success(data);
     }

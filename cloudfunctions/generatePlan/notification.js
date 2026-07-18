@@ -15,7 +15,10 @@ const command = db.command;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const LEDGER_TTL_MS = 7 * DAY_MS;
 const RETENTION_MS = 30 * DAY_MS;
-const CLIENT_SCENES = new Set(["today_completion", "daily_coach", "team_join", "team_page", "privacy_center"]);
+const TASK_REMINDER_LEAD_MS = 10 * 60 * 1000;
+const TASK_REMINDER_LATE_MS = 15 * 60 * 1000;
+const TASK_REMINDER_DAILY_LIMIT = 3;
+const CLIENT_SCENES = new Set(["today_completion", "daily_coach", "team_join", "team_page", "privacy_center", "task_reminder"]);
 const AUTH_RESULTS = new Set(["accept", "reject", "ban", "filter"]);
 const RETRYABLE_CODES = new Set([-1, 45009]);
 const TERMINAL_TEMPLATE_CODES = new Set([40037, 41030, 47003]);
@@ -83,6 +86,53 @@ function validateScene(value) {
   return scene;
 }
 
+function validateTaskId(value) {
+  const taskId = String(value || "").trim();
+  if (!/^[A-Za-z0-9_-]{3,100}$/.test(taskId)) fail("NOTIFICATION_INVALID", "task id invalid");
+  return taskId;
+}
+
+function reminderDocId(openid, taskId) {
+  return stableId("task_reminder", `${openid}:${taskId}`);
+}
+
+function taskDocId(openid, taskId) {
+  return stableId("manual_tasks", `${openid}:${taskId}`);
+}
+
+function goalDocId(openid, goalId) {
+  return stableId("manual_goals", `${openid}:${goalId}`);
+}
+
+function reminderRequestId(openid, taskId, remindAt) {
+  return stableId("task_reminder_delivery", `${openid}:${taskId}:${remindAt}`);
+}
+
+function validateReminderAt(value, now = new Date()) {
+  const raw = String(value || "").trim();
+  const remindAt = new Date(raw);
+  if (!raw || Number.isNaN(remindAt.getTime())) fail("NOTIFICATION_INVALID", "remindAt invalid");
+  if (remindAt.getTime() < now.getTime() + TASK_REMINDER_LEAD_MS) fail("NOTIFICATION_INVALID", "remindAt too early");
+  if (remindAt.getTime() > now.getTime() + LEDGER_TTL_MS) fail("NOTIFICATION_INVALID", "remindAt exceeds quota ttl");
+  const parts = shanghaiParts(remindAt);
+  if (parts.minute % 5 !== 0) fail("NOTIFICATION_INVALID", "remindAt must use five minute granularity");
+  return {
+    remindAt,
+    businessDate: parts.date,
+    time: `${String(parts.hour).padStart(2, "0")}:${String(parts.minute).padStart(2, "0")}`,
+  };
+}
+
+async function getManualTask(openid, taskId) {
+  const found = await db.collection("manual_tasks").doc(taskDocId(openid, taskId)).get().catch(() => null);
+  return found && found.data || null;
+}
+
+async function getManualGoal(openid, goalId) {
+  const found = await db.collection("manual_goals").doc(goalDocId(openid, goalId)).get().catch(() => null);
+  return found && found.data || null;
+}
+
 function preferenceId(userId) {
   return stableId("notification_preference", userId);
 }
@@ -130,7 +180,7 @@ async function countActiveQuota(openid, scene, templateId, now = new Date()) {
     _openid: openid,
     scene,
     templateId,
-    status: "active",
+    status: command.in(["active", "scheduled"]),
     quota: command.gt(0),
     expireAt: command.gt(now),
   }).count();
@@ -214,9 +264,14 @@ async function getPreference(openid, userId) {
 }
 
 async function expireSceneLedgers(openid, scene) {
-  await db.collection("subscription_ledger").where({ _openid: openid, scene, status: "active" }).update({
+  await db.collection("subscription_ledger").where({ _openid: openid, scene, status: command.in(["active", "scheduled"]) }).update({
     data: { status: "expired", quota: 0, reservationId: "", reservedAt: null, retentionExpireAt: new Date(Date.now() + RETENTION_MS), updatedAt: db.serverDate() },
   });
+  if (scene === SCENES.DAILY_ACTION) {
+    await db.collection("task_reminders").where({ _openid: openid, status: command.in(["scheduled", "sending"]) }).update({
+      data: { status: "cancelled", cancelledAt: db.serverDate(), retentionExpireAt: new Date(Date.now() + RETENTION_MS), updatedAt: db.serverDate() },
+    }).catch(() => undefined);
+  }
 }
 
 async function unsubscribe(openid, userId, event) {
@@ -294,6 +349,133 @@ async function readInAppMessage(openid, event) {
   return { messageId, read: true };
 }
 
+async function releaseTaskReminderLedger(ledgerId, reminderId, now = new Date()) {
+  if (!ledgerId) return;
+  await db.runTransaction(async (transaction) => {
+    const ref = transaction.collection("subscription_ledger").doc(ledgerId);
+    const found = await ref.get().catch(() => null);
+    const ledger = found && found.data;
+    if (!ledger || ledger.reminderId !== reminderId || ledger.status !== "scheduled") return;
+    const expired = Date.parse(publicDate(ledger.expireAt)) <= now.getTime();
+    await ref.update({
+      data: expired
+        ? { status: "expired", quota: 0, reservationId: "", reservedAt: null, retentionExpireAt: new Date(now.getTime() + RETENTION_MS), updatedAt: db.serverDate() }
+        : { status: "active", quota: 1, reminderId: "", reservationId: "", reservedAt: null, updatedAt: db.serverDate() },
+    });
+  });
+}
+
+async function cancelTaskReminderById(openid, userId, taskId, nextStatus = "cancelled") {
+  const reminderId = reminderDocId(openid, taskId);
+  const found = await db.collection("task_reminders").doc(reminderId).get().catch(() => null);
+  const reminder = found && found.data;
+  if (!reminder || reminder._openid !== openid || (userId && reminder.userId !== userId)) return { status: "not_found" };
+  if (["sent", "cancelled", "expired"].includes(reminder.status)) return { status: reminder.status };
+  await releaseTaskReminderLedger(reminder.ledgerId, reminderId);
+  await db.collection("task_reminders").doc(reminderId).update({
+    data: {
+      status: nextStatus,
+      cancelledAt: nextStatus === "cancelled" ? db.serverDate() : reminder.cancelledAt || null,
+      expiredAt: nextStatus === "expired" ? db.serverDate() : reminder.expiredAt || null,
+      retentionExpireAt: new Date(Date.now() + RETENTION_MS),
+      updatedAt: db.serverDate(),
+    },
+  });
+  return { status: nextStatus };
+}
+
+async function reserveTaskReminderLedger(openid, userId, scene, authorizationRequestId, reminderId, remindAt) {
+  const config = getTemplate(scene);
+  if (!config || !config.configured || !config.enabled) fail("NOTIFICATION_NOT_CONFIGURED", "notification template not configured");
+  const ledgerId = stableId("subscription_ledger", `${openid}:${scene}:${authorizationRequestId}`);
+  const found = await db.collection("subscription_ledger").doc(ledgerId).get().catch(() => null);
+  const ledger = found && found.data;
+  if (!ledger || ledger._openid !== openid || ledger.userId !== userId || ledger.scene !== scene || ledger.templateId !== config.templateId) {
+    fail("NOTIFICATION_INVALID", "authorization quota not found");
+  }
+  const expiresAt = Date.parse(publicDate(ledger.expireAt));
+  if (ledger.status !== "active" || Number(ledger.quota || 0) < 1 || !Number.isFinite(expiresAt) || expiresAt <= remindAt.getTime()) {
+    fail("NOTIFICATION_INVALID", "authorization quota unavailable");
+  }
+  await db.collection("subscription_ledger").doc(ledgerId).update({
+    data: { status: "scheduled", reminderId, reservationId: "", reservedAt: null, updatedAt: db.serverDate() },
+  });
+  return ledgerId;
+}
+
+async function upsertTaskReminder(openid, userId, event) {
+  assertRequestObject(event, "task reminder request");
+  validateRequestId(event && event.requestId);
+  const taskId = validateTaskId(event && event.taskId);
+  const { remindAt, businessDate, time } = validateReminderAt(event && event.remindAt);
+  const task = await getManualTask(openid, taskId);
+  if (!task || task._openid !== openid || task.deletedAt) fail("NOTIFICATION_NOT_FOUND", "task not found");
+  if (task.userId !== userId) {
+    if (task.source !== "ai" || task.userId) fail("NOTIFICATION_NOT_FOUND", "task not found");
+    await db.collection("manual_tasks").doc(taskDocId(openid, taskId)).update({
+      data: { userId, serverUpdatedAt: db.serverDate() },
+    });
+    task.userId = userId;
+  }
+  if (!["pending", "partially_completed"].includes(task.status)) fail("NOTIFICATION_INVALID", "task is not remindable");
+  if (task.currentDate !== businessDate) fail("NOTIFICATION_INVALID", "reminder date must match task date");
+  const preference = await preferenceAllows(openid, userId, SCENES.DAILY_ACTION);
+  if (!preference.allowed) fail("NOTIFICATION_INVALID", "notification preference disabled");
+
+  const reminderId = reminderDocId(openid, taskId);
+  const sameDay = await db.collection("task_reminders").where({
+    _openid: openid,
+    businessDate,
+    status: command.in(["scheduled", "sending"]),
+  }).limit(10).get();
+  const activeSameDay = (sameDay.data || []).filter((item) => item._id !== reminderId);
+  if (activeSameDay.length >= TASK_REMINDER_DAILY_LIMIT) fail("NOTIFICATION_LIMITED", "daily task reminder limit reached");
+
+  const existingResult = await db.collection("task_reminders").doc(reminderId).get().catch(() => null);
+  const existing = existingResult && existingResult.data;
+  let ledgerId = existing && existing.status === "scheduled" ? String(existing.ledgerId || "") : "";
+  if (ledgerId) {
+    const ledgerResult = await db.collection("subscription_ledger").doc(ledgerId).get().catch(() => null);
+    const ledger = ledgerResult && ledgerResult.data;
+    const expiresAt = Date.parse(publicDate(ledger && ledger.expireAt));
+    if (!ledger || ledger.status !== "scheduled" || ledger.reminderId !== reminderId || !Number.isFinite(expiresAt) || expiresAt <= remindAt.getTime()) {
+      ledgerId = "";
+    }
+  }
+  if (!ledgerId) {
+    const authorizationRequestId = validateRequestId(event && event.authorizationRequestId);
+    ledgerId = await reserveTaskReminderLedger(openid, userId, SCENES.DAILY_ACTION, authorizationRequestId, reminderId, remindAt);
+  }
+
+  const data = {
+    _openid: openid,
+    userId,
+    taskId,
+    goalId: task.goalId,
+    businessDate,
+    remindAt,
+    time,
+    timezone: "Asia/Shanghai",
+    status: "scheduled",
+    ledgerId,
+    requestId: reminderRequestId(openid, taskId, remindAt.toISOString()),
+    createdAt: existing && existing.createdAt || db.serverDate(),
+    sentAt: null,
+    cancelledAt: null,
+    expiredAt: null,
+    retentionExpireAt: null,
+    updatedAt: db.serverDate(),
+  };
+  await db.collection("task_reminders").doc(reminderId).set({ data });
+  return { status: "scheduled", remindAt: remindAt.toISOString(), businessDate, time };
+}
+
+async function cancelTaskReminder(openid, userId, event) {
+  assertRequestObject(event, "task reminder cancel request");
+  validateRequestId(event && event.requestId);
+  return cancelTaskReminderById(openid, userId, validateTaskId(event && event.taskId), "cancelled");
+}
+
 async function preferenceAllows(openid, userId, scene) {
   const record = await getPreferenceRecord(openid, userId, false);
   if (!record) return { allowed: false, reason: "preference_disabled" };
@@ -317,6 +499,7 @@ async function writeSentLog(openid, userId, input) {
       errmsg: cleanText(input.errmsg, 200) || null,
       requestId: input.requestId,
       actorUserId: input.actorUserId || "",
+      deliveryType: input.deliveryType || "scene",
       attemptCount: Number(input.attemptCount || 0),
       configVersion: CONFIG_VERSION,
       terminalConfigError: Boolean(input.terminalConfigError),
@@ -355,6 +538,7 @@ async function claimDelivery(openid, userId, input, now = new Date()) {
       errmsg: null,
       requestId: input.requestId,
       actorUserId: input.actorUserId || "",
+      deliveryType: input.deliveryType || "scene",
       attemptCount: 0,
       configVersion: CONFIG_VERSION,
       terminalConfigError: false,
@@ -366,7 +550,7 @@ async function claimDelivery(openid, userId, input, now = new Date()) {
   });
 }
 
-async function withinLimits(openid, scene, config, actorUserId, now = new Date()) {
+async function withinLimits(openid, scene, config, actorUserId, now = new Date(), deliveryType = "scene") {
   const dayStart = startOfShanghaiDay(now);
   const deliveredStatuses = command.in(["success", "failed"]);
   const [sceneCount, globalCount, recentCount] = await Promise.all([
@@ -376,6 +560,15 @@ async function withinLimits(openid, scene, config, actorUserId, now = new Date()
   ]);
   if (Number(sceneCount.total || 0) >= config.dailyLimit) return false;
   if (Number(globalCount.total || 0) >= 7 || Number(recentCount.total || 0) >= 2) return false;
+  if (deliveryType === "task_reminder") {
+    const taskReminderCount = await db.collection("notification_sent_log").where({
+      _openid: openid,
+      deliveryType: "task_reminder",
+      status: deliveredStatuses,
+      sentAt: command.gte(dayStart),
+    }).count();
+    if (Number(taskReminderCount.total || 0) >= TASK_REMINDER_DAILY_LIMIT) return false;
+  }
   if (scene === SCENES.TEAM_ACTIVITY && actorUserId) {
     const actorCount = await db.collection("notification_sent_log").where({
       _openid: openid,
@@ -398,7 +591,24 @@ async function templateCircuitOpen(config) {
   return Boolean(result.data && result.data.length);
 }
 
-async function reserveLedger(openid, scene, templateId, requestId, now = new Date()) {
+async function reserveLedger(openid, scene, templateId, requestId, now = new Date(), options = {}) {
+  if (options.ledgerId) {
+    const reserved = await db.runTransaction(async (transaction) => {
+      const ref = transaction.collection("subscription_ledger").doc(options.ledgerId);
+      const found = await ref.get().catch(() => null);
+      const current = found && found.data;
+      const expiresAt = Date.parse(publicDate(current && current.expireAt));
+      const staleReservation = current && current.reservedAt
+        && Date.parse(publicDate(current.reservedAt)) < now.getTime() - 5 * 60 * 1000;
+      if (!current || current._openid !== openid || current.scene !== scene || current.templateId !== templateId) return false;
+      if (current.status !== "scheduled" || current.reminderId !== options.reminderId || Number(current.quota || 0) < 1) return false;
+      if (!Number.isFinite(expiresAt) || expiresAt <= now.getTime()) return false;
+      if (current.reservationId && !staleReservation) return false;
+      await ref.update({ data: { reservationId: requestId, reservedAt: db.serverDate(), updatedAt: db.serverDate() } });
+      return true;
+    });
+    return reserved ? options.ledgerId : "";
+  }
   const candidates = await db.collection("subscription_ledger").where({
     _openid: openid,
     scene,
@@ -501,14 +711,18 @@ async function sendNotification(input) {
   const preference = await preferenceAllows(input.openid, input.userId, scene);
   if (!preference.allowed) return { sent: false, reason: preference.reason };
   if (await templateCircuitOpen(config)) return { sent: false, reason: "template_circuit_open" };
-  if (!await withinLimits(input.openid, scene, config, input.actorUserId)) return { sent: false, reason: "rate_limited" };
-  const ledgerId = await reserveLedger(input.openid, scene, config.templateId, requestId);
+  if (!await withinLimits(input.openid, scene, config, input.actorUserId, new Date(), input.deliveryType || "scene")) return { sent: false, reason: "rate_limited" };
+  const ledgerId = await reserveLedger(input.openid, scene, config.templateId, requestId, new Date(), {
+    ledgerId: input.ledgerId,
+    reminderId: input.reminderId,
+  });
   if (!ledgerId) return { sent: false, reason: "no_quota" };
   const claimed = await claimDelivery(input.openid, input.userId, {
     scene,
     templateId: config.templateId,
     requestId,
     actorUserId: input.actorUserId,
+    deliveryType: input.deliveryType || "scene",
   });
   if (!claimed) {
     await finishLedger(ledgerId, requestId, false, false);
@@ -527,6 +741,7 @@ async function sendNotification(input) {
       requestId,
       actorUserId: input.actorUserId,
       attemptCount,
+      deliveryType: input.deliveryType || "scene",
     });
     return { sent: true };
   } catch (error) {
@@ -544,6 +759,7 @@ async function sendNotification(input) {
       actorUserId: input.actorUserId,
       attemptCount,
       terminalConfigError: TERMINAL_TEMPLATE_CODES.has(errcode),
+      deliveryType: input.deliveryType || "scene",
     });
     const fallbackPreference = input.inApp
       ? await preferenceAllows(input.openid, input.userId, scene)
@@ -696,21 +912,123 @@ async function dispatchAiCoach(now = new Date()) {
   return { scene: SCENES.AI_COACH, total: subscribers.length, completed: results.length };
 }
 
+async function claimTaskReminder(reminder, now = new Date()) {
+  return db.runTransaction(async (transaction) => {
+    const ref = transaction.collection("task_reminders").doc(reminder._id);
+    const found = await ref.get().catch(() => null);
+    const current = found && found.data;
+    if (!current || current.status !== "scheduled") return null;
+    const dueTime = Date.parse(publicDate(current.remindAt));
+    if (!Number.isFinite(dueTime) || dueTime > now.getTime()) return null;
+    await ref.update({ data: { status: "sending", claimedAt: db.serverDate(), updatedAt: db.serverDate() } });
+    return { _id: reminder._id, ...current };
+  });
+}
+
+async function expireClaimedTaskReminder(reminder, now = new Date()) {
+  await releaseTaskReminderLedger(reminder.ledgerId, reminder._id, now);
+  await db.collection("task_reminders").doc(reminder._id).update({
+    data: { status: "expired", expiredAt: db.serverDate(), retentionExpireAt: new Date(now.getTime() + RETENTION_MS), updatedAt: db.serverDate() },
+  });
+}
+
+async function failClaimedTaskReminder(reminder) {
+  await releaseTaskReminderLedger(reminder.ledgerId, reminder._id);
+  await db.collection("task_reminders").doc(reminder._id).update({
+    data: { status: "failed", failedAt: db.serverDate(), retentionExpireAt: new Date(Date.now() + RETENTION_MS), updatedAt: db.serverDate() },
+  });
+}
+
+async function markTaskReminderSent(reminder) {
+  await db.collection("task_reminders").doc(reminder._id).update({
+    data: { status: "sent", sentAt: db.serverDate(), retentionExpireAt: new Date(Date.now() + RETENTION_MS), updatedAt: db.serverDate() },
+  });
+}
+
+async function dispatchTaskReminder(reminder, now = new Date()) {
+  const remindAtTime = Date.parse(publicDate(reminder.remindAt));
+  if (!Number.isFinite(remindAtTime) || remindAtTime < now.getTime() - TASK_REMINDER_LATE_MS) {
+    await expireClaimedTaskReminder(reminder, now);
+    return { sent: false, reason: "expired" };
+  }
+  const task = await getManualTask(reminder._openid, reminder.taskId);
+  if (!task || task.deletedAt || !["pending", "partially_completed"].includes(task.status) || task.currentDate !== reminder.businessDate) {
+    await cancelTaskReminderById(reminder._openid, reminder.userId, reminder.taskId, "cancelled");
+    return { sent: false, reason: "task_not_remindable" };
+  }
+  const goal = await getManualGoal(reminder._openid, task.goalId);
+  if (!goal || goal.status !== "active") {
+    await cancelTaskReminderById(reminder._openid, reminder.userId, reminder.taskId, "cancelled");
+    return { sent: false, reason: "goal_inactive" };
+  }
+  const result = await sendNotification({
+    openid: reminder._openid,
+    userId: reminder.userId,
+    scene: SCENES.DAILY_ACTION,
+    requestId: reminder.requestId,
+    page: "/pages/index/index",
+    payload: {
+      date: reminder.businessDate,
+      actionCount: task.title,
+      goalName: goal.title,
+      hint: `${reminder.time || "00:00"} 开始这项行动`,
+    },
+    inApp: {
+      title: "行动提醒",
+      body: cleanText(task.title, 40),
+      page: "/pages/index/index",
+      sourceEventId: reminder._id,
+    },
+    deliveryType: "task_reminder",
+    ledgerId: reminder.ledgerId,
+    reminderId: reminder._id,
+  });
+  if (result.sent) {
+    await markTaskReminderSent(reminder);
+  } else if (["no_quota", "rate_limited", "preference_disabled", "template_circuit_open", "not_configured", "send_failed"].includes(result.reason)) {
+    await failClaimedTaskReminder(reminder);
+  }
+  return result;
+}
+
+async function dispatchTaskReminders(now = new Date()) {
+  const due = await db.collection("task_reminders").where({
+    status: "scheduled",
+    remindAt: command.lte(now),
+  }).orderBy("remindAt", "asc").limit(100).get();
+  const results = [];
+  for (const item of due.data || []) {
+    const reminder = await claimTaskReminder(item, now);
+    if (!reminder) continue;
+    try {
+      results.push(await dispatchTaskReminder(reminder, now));
+    } catch (error) {
+      await failClaimedTaskReminder(reminder).catch(() => undefined);
+      results.push({ sent: false, reason: "dispatch_failed", code: error && (error.code || error.errCode) || "UNKNOWN" });
+    }
+  }
+  return { scene: "task_reminder", total: due.data ? due.data.length : 0, completed: results.length, sent: results.filter((item) => item.sent).length };
+}
+
 async function cleanupNotificationData(now = new Date()) {
   await Promise.all([
-    db.collection("subscription_ledger").where({ status: "active", expireAt: command.lte(now) }).update({ data: { status: "expired", quota: 0, reservationId: "", reservedAt: null, retentionExpireAt: new Date(now.getTime() + RETENTION_MS), updatedAt: db.serverDate() } }),
+    db.collection("subscription_ledger").where({ status: command.in(["active", "scheduled"]), expireAt: command.lte(now) }).update({ data: { status: "expired", quota: 0, reservationId: "", reservedAt: null, retentionExpireAt: new Date(now.getTime() + RETENTION_MS), updatedAt: db.serverDate() } }),
     db.collection("subscription_ledger").where({ status: command.in(["consumed", "expired"]), retentionExpireAt: command.lte(now) }).remove(),
     db.collection("notification_sent_log").where({ sentAt: command.lte(new Date(now.getTime() - RETENTION_MS)) }).remove(),
     db.collection("in_app_messages").where({ expireAt: command.lte(now) }).remove(),
+    db.collection("task_reminders").where({ status: "sending", claimedAt: command.lte(new Date(now.getTime() - 10 * 60 * 1000)) }).update({ data: { status: "scheduled", updatedAt: db.serverDate() } }),
+    db.collection("task_reminders").where({ status: command.in(["sent", "cancelled", "expired", "failed"]), retentionExpireAt: command.lte(now) }).remove(),
   ]).catch((error) => console.warn("notification cleanup failed", { code: error && (error.code || error.errCode) }));
 }
 
 async function runScheduled(now = new Date()) {
-  const { hour } = shanghaiParts(now);
+  const { hour, minute } = shanghaiParts(now);
   await cleanupNotificationData(now);
-  if (hour === 8) return dispatchDailyActions(now);
-  if (hour === 12) return dispatchAiCoach(now);
-  return { skipped: true, reason: "not_due" };
+  const taskReminders = await dispatchTaskReminders(now);
+  const scheduled = [taskReminders];
+  if (hour === 8 && minute === 0) scheduled.push(await dispatchDailyActions(now));
+  if (hour === 12 && minute === 0) scheduled.push(await dispatchAiCoach(now));
+  return { completed: scheduled };
 }
 
 function anonymousName(teamId, userId) {
@@ -791,9 +1109,12 @@ module.exports = {
   assertRequestObject,
   buildTemplateData,
   cleanupNotificationData,
+  cancelTaskReminder,
+  cancelTaskReminderById,
   createInAppMessage,
   dispatchAiCoach,
   dispatchDailyActions,
+  dispatchTaskReminders,
   getPreference,
   listInAppMessages,
   notifyTeamActionCompleted,
@@ -804,5 +1125,6 @@ module.exports = {
   subscribe,
   unsubscribe,
   updatePreference,
+  upsertTaskReminder,
   validateRequestId,
 };

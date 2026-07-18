@@ -66,9 +66,9 @@
         <view class="hero-community-row">
           <view class="hero-avatar-stack">
             <view wx:for="{{heroAvatarSlots}}" wx:key="id" wx:for-index="avatarIndex" class="hero-avatar {{item.isExtra ? 'hero-avatar--extra' : ''}}">
-              <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" data-index="{{avatarIndex}}" binderror="onHeroAvatarError" />
+              <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" lazy-load data-index="{{avatarIndex}}" binderror="onHeroAvatarError" />
               <text wx:elif="{{item.isExtra}}">{{item.avatarText}}</text>
-              <image wx:else src="/images/icons/avatar.png" mode="aspectFill" />
+              <image wx:else src="/images/icons/avatar.png" mode="aspectFill" lazy-load />
             </view>
           </view>
           <view wx:if="{{canInviteFriends && team.memberCount < team.maxMembers}}" class="hero-invite" bindtap="inviteFriends" hover-class="hero-invite--pressed">
@@ -85,8 +85,8 @@
         <view class="solo-member-line">
           <view class="hero-avatar-stack">
             <view wx:for="{{heroAvatarSlots}}" wx:key="id" wx:for-index="avatarIndex" class="hero-avatar">
-              <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" data-index="{{avatarIndex}}" binderror="onHeroAvatarError" />
-              <image wx:else src="/images/icons/avatar.png" mode="aspectFill" />
+              <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" lazy-load data-index="{{avatarIndex}}" binderror="onHeroAvatarError" />
+              <image wx:else src="/images/icons/avatar.png" mode="aspectFill" lazy-load />
             </view>
           </view>
           <text>当前 {{team.memberCount}}/{{team.maxMembers}} 人</text>
@@ -129,8 +129,8 @@
           </view>
 
           <view class="companion-avatar">
-            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" data-index="{{memberIndex}}" binderror="onCompanionAvatarError" />
-            <image wx:else src="/images/icons/avatar.png" mode="aspectFill" />
+            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" lazy-load data-index="{{memberIndex}}" binderror="onCompanionAvatarError" />
+            <image wx:else src="/images/icons/avatar.png" mode="aspectFill" lazy-load />
           </view>
 
           <view class="companion-main">
@@ -181,8 +181,8 @@
         >
           <view class="activity-line"><view class="activity-dot"></view></view>
           <view class="activity-avatar">
-            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" data-index="{{activityIndex}}" binderror="onActivityAvatarError" />
-            <image wx:else src="/images/icons/avatar.png" mode="aspectFill" />
+            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" lazy-load data-index="{{activityIndex}}" binderror="onActivityAvatarError" />
+            <image wx:else src="/images/icons/avatar.png" mode="aspectFill" lazy-load />
           </view>
           <view class="activity-copy"><text>{{item.name}}</text>{{item.actionText}}</view>
           <view class="activity-time">{{item.time}}</view>
@@ -202,8 +202,8 @@
       <view class="popup-handle"></view>
       <view class="popup-eyebrow">加入小队</view>
       <view class="popup-title">输入房间号加入</view>
-      <view class="popup-copy">输入伙伴分享的 6 位房间号，一起开始今天的行动。</view>
-      <t-input class="room-input" maxlength="6" value="{{roomCodeInput}}" placeholder="例如 TQLR01" bindchange="inputRoomCode" />
+      <view class="popup-copy">输入伙伴分享的 4 位数字房间号，一起开始今天的行动。</view>
+      <t-input class="room-input" maxlength="6" value="{{roomCodeInput}}" placeholder="例如 2486" bindchange="inputRoomCode" />
       <view class="popup-actions">
         <view class="popup-button popup-button--ghost" bindtap="closeJoinPopup">取消</view>
         <view class="popup-button popup-button--solid" bindtap="submitJoinRoom">{{joining ? '加入中' : '加入小队'}}</view>
@@ -228,6 +228,10 @@
         <view class="setting-label settings-slogan-label">小队宣传语</view>
         <t-input class="settings-input" maxlength="30" value="{{settingsDraft.slogan}}" placeholder="例如：每天进步一点点" disabled="{{!settingsCanEditTeam}}" bindchange="inputTeamSlogan" />
         <view class="settings-count">{{settingsDraft.slogan.length}} / 30</view>
+        <view class="owner-setting-row owner-setting-row--profile" bindtap="openSelfPrivacyOptions" hover-class="is-pressed">
+          <view><text>我的展示方式</text><text class="owner-setting-help">{{selfVisibilityHelp}}</text></view>
+          <view class="setting-row-value"><text>{{updatingSelfDisplay ? '更新中' : selfVisibilityLabel}}</text><t-icon name="chevron-right" size="29rpx" /></view>
+        </view>
         <view class="owner-setting-row" bindtap="openMemberManagement"><text>成员管理</text><text>›</text></view>
         <view class="owner-setting-row"><view><text>匿名模式</text><text class="owner-setting-help">成员将{{team.anonymityMode === 'anonymous' ? '匿名展示' : '按资料权限展示'}}</text></view><t-switch value="{{team.anonymityMode === 'anonymous'}}" bindchange="toggleTeamAnonymousMode" /></view>
         <view class="owner-setting-row owner-setting-row--danger" bindtap="confirmLeaveOrDissolve"><text>解散小队</text><text>›</text></view>
@@ -252,6 +256,10 @@
         <view class="team-info-row"><text>小队人数</text><text>{{team.memberCount}}/{{team.maxMembers}}人</text></view>
         <view class="team-info-row"><text>加入规则</text><text>{{teamRuleText}}</text></view>
         <view class="team-info-row"><text>匿名状态</text><text>{{team.anonymityMode === 'anonymous' ? '匿名模式' : '公开模式'}}</text></view>
+        <view wx:if="{{runtime && runtime.capabilities.canMutate}}" class="team-info-row team-info-row--action" bindtap="openSelfPrivacyOptions" hover-class="is-pressed">
+          <view><text>我的展示方式</text><text class="team-info-help">{{selfVisibilityHelp}}</text></view>
+          <view class="setting-row-value"><text>{{updatingSelfDisplay ? '更新中' : selfVisibilityLabel}}</text><t-icon name="chevron-right" size="29rpx" /></view>
+        </view>
       </scroll-view>
       <view class="settings-footer"><view wx:if="{{runtime && runtime.capabilities.canMutate}}" class="settings-footer-button settings-footer-button--danger" bindtap="confirmLeaveOrDissolve">{{isOwner ? '解散小队' : '退出小队'}}</view><view class="settings-footer-button settings-footer-button--ghost" bindtap="closeTeamInfo">关闭</view></view>
     </view>
@@ -263,8 +271,8 @@
       <view class="popup-handle"></view>
       <view wx:if="{{selectedMember}}" class="member-detail-head">
         <view class="member-detail-avatar">
-          <image wx:if="{{selectedMember.avatar}}" class="avatar-img" src="{{selectedMember.avatar}}" mode="aspectFill" binderror="onSelectedMemberAvatarError" />
-          <image wx:else src="/images/icons/avatar.png" mode="aspectFill" />
+          <image wx:if="{{selectedMember.avatar}}" class="avatar-img" src="{{selectedMember.avatar}}" mode="aspectFill" lazy-load binderror="onSelectedMemberAvatarError" />
+          <image wx:else src="/images/icons/avatar.png" mode="aspectFill" lazy-load />
         </view>
         <view class="member-detail-main">
           <view class="popup-title">{{selectedMember.displayName}}</view>
@@ -283,10 +291,6 @@
         </view>
       </view>
       <view wx:elif="{{selectedMember}}" class="detail-private-card"><view class="detail-section-title">行动明细未开放</view><view class="popup-copy">{{selectedMember.detailHiddenText}}</view></view>
-      <view wx:if="{{selectedMember && selectedMember.isSelf && runtime && runtime.capabilities.canMutate}}" class="self-detail-actions">
-        <view class="self-detail-action" bindtap="openSelfPrivacyOptions">调整我的展示方式</view>
-        <view wx:if="{{!isOwner}}" class="self-detail-action self-detail-action--danger" bindtap="confirmLeaveOrDissolve">退出小队</view>
-      </view>
       <view class="popup-button popup-button--solid popup-button--full" bindtap="closeMemberDetail">知道了</view>
     </view>
   </view>

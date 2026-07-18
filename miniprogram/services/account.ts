@@ -7,6 +7,8 @@ import { hydrateSyncRuntime, markSyncCached, resetSyncRuntime } from "./syncStat
 
 const LEGACY_PROFILE_KEY = "JINBUJU_USER_DISPLAY_PROFILE_V1";
 const ACCOUNT_CACHE_KEY = "JINBUJU_ACCOUNT_CACHE_V1";
+const AVATAR_SIZE_LIMIT = 2 * 1024 * 1024;
+const AVATAR_EXTENSIONS = new Set(["jpg", "jpeg", "png"]);
 let runtime: AccountRuntimeState | null = null;
 let bootPromise: Promise<AccountRuntimeState> | null = null;
 
@@ -75,17 +77,58 @@ function readLegacyProfile(): UserDisplayProfile | null {
   };
 }
 
+function avatarExtension(localPath: string): string {
+  const pathname = String(localPath || "").split(/[?#]/)[0];
+  const extension = /\.([a-zA-Z0-9]+)$/.exec(pathname)?.[1]?.toLowerCase() || "";
+  if (!AVATAR_EXTENSIONS.has(extension)) {
+    throw Object.assign(new Error("头像仅支持 JPG 或 PNG 图片。"), { code: "AVATAR_TYPE_INVALID" });
+  }
+  return extension;
+}
+
+function getLocalFileSize(filePath: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const getFileInfo = (wx as any).getFileInfo;
+    if (typeof getFileInfo !== "function") {
+      reject(Object.assign(new Error("当前微信版本无法校验头像文件，请升级微信后重试。"), { code: "AVATAR_CHECK_UNAVAILABLE" }));
+      return;
+    }
+    getFileInfo({
+      filePath,
+      success: (result: { size?: number }) => resolve(Number(result.size || 0)),
+      fail: () => reject(Object.assign(new Error("无法读取头像文件，请重新选择。"), { code: "AVATAR_FILE_INVALID" })),
+    });
+  });
+}
+
+async function uploadCheckedAvatar(localPath: string, userId: string): Promise<string> {
+  const extension = avatarExtension(localPath);
+  const size = await getLocalFileSize(localPath);
+  if (!Number.isFinite(size) || size <= 0) {
+    throw Object.assign(new Error("头像文件无效，请重新选择。"), { code: "AVATAR_FILE_INVALID" });
+  }
+  if (size > AVATAR_SIZE_LIMIT) {
+    throw Object.assign(new Error("头像不能超过 2MB，请压缩后重试。"), { code: "AVATAR_SIZE_EXCEEDED" });
+  }
+  const cloudPath = `user-avatars/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${extension}`;
+  const uploaded = await wx.cloud.uploadFile({ cloudPath, filePath: localPath });
+  const fileId = String(uploaded.fileID || "");
+  if (!fileId) throw Object.assign(new Error("头像上传失败，请重试。"), { code: "AVATAR_UPLOAD_FAILED" });
+  try {
+    const checked = await call<{ fileId: string }>("validateAvatarUpload", { fileId }, 30000);
+    return String(checked.fileId || fileId);
+  } catch (error) {
+    await wx.cloud.deleteFile({ fileList: [fileId] }).catch(() => undefined);
+    throw error;
+  }
+}
+
 async function migrateLegacy(base: AccountBootstrapResult): Promise<ManualDataStore | undefined> {
   const legacyStore = readLegacyManualStore();
   const legacyProfile = readLegacyProfile();
   if (legacyProfile?.avatarUrl && !legacyProfile.avatarUrl.startsWith("cloud://") && !legacyProfile.avatarUrl.startsWith("https://")) {
     try {
-      const extension = /\.([a-zA-Z0-9]+)$/.exec(legacyProfile.avatarUrl)?.[1] || "jpg";
-      const uploaded = await wx.cloud.uploadFile({
-        cloudPath: `user-avatars/${base.account.userId}/legacy-${Date.now()}.${extension}`,
-        filePath: legacyProfile.avatarUrl,
-      });
-      legacyProfile.avatarUrl = String(uploaded.fileID || "");
+      legacyProfile.avatarUrl = await uploadCheckedAvatar(legacyProfile.avatarUrl, base.account.userId);
     } catch (_) {
       legacyProfile.avatarUrl = "";
     }
@@ -144,10 +187,7 @@ export async function updateCloudProfile(profile: Omit<CloudUserProfile, "update
 
 export async function uploadProfileAvatar(localPath: string): Promise<string> {
   const state = await bootstrapAccount();
-  const extension = /\.([a-zA-Z0-9]+)$/.exec(localPath)?.[1] || "jpg";
-  const cloudPath = `user-avatars/${state.account.userId}/${Date.now()}.${extension}`;
-  const result = await wx.cloud.uploadFile({ cloudPath, filePath: localPath });
-  return String(result.fileID || "");
+  return uploadCheckedAvatar(localPath, state.account.userId);
 }
 
 export async function bindAccountPhone(code: string): Promise<CloudAccount> {

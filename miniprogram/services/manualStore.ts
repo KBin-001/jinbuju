@@ -63,7 +63,19 @@ function normalizeStore(value: Partial<ManualDataStore>): ManualDataStore {
     version: 1,
     activeGoalId: typeof value.activeGoalId === "string" ? value.activeGoalId : undefined,
     goals,
-    tasks: Array.isArray(value.tasks) ? (value.tasks as ActionTask[]).map((task) => ({ ...task, goalId: task.goalId || fallbackGoalId })) : [],
+    tasks: Array.isArray(value.tasks) ? (value.tasks as ActionTask[]).map((task) => {
+      const estimatedMinutes = Number(task.estimatedMinutes);
+      const actualMinutes = Number(task.actualMinutes);
+      const shouldUseEstimatedMinutes = task.status === "completed"
+        && (!Number.isInteger(actualMinutes) || actualMinutes <= 0)
+        && Number.isInteger(estimatedMinutes)
+        && estimatedMinutes > 0;
+      return {
+        ...task,
+        goalId: task.goalId || fallbackGoalId,
+        actualMinutes: shouldUseEstimatedMinutes ? estimatedMinutes : task.actualMinutes,
+      };
+    }) : [],
     checkins: Array.isArray(value.checkins) ? value.checkins as DailyCheckin[] : [],
     archivedGoals: Array.isArray(value.archivedGoals)
       ? (value.archivedGoals as ArchivedGoal[]).map((goal) => ({

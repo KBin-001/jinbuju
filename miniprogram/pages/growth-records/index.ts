@@ -2,7 +2,7 @@ import { buildProfileGrowthSummary } from "../../services/profileGrowth";
 import { readManualStore } from "../../services/manualStore";
 import { deleteTask, getTask, SaveActionRecordInput, updateActionRecord } from "../../services/manualTask";
 import { syncManualData } from "../../services/manualSync";
-import { withAppTheme } from "../../services/theme";
+import { MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
 import { ActionTask, ArchivedGoal, Goal, ManualDataStore } from "../../types/manual";
 import { getTodayBusinessDate } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
@@ -340,7 +340,7 @@ Page(withAppTheme({
       title: "删除成长记录？",
       content: "删除后会同步影响今日数据、目标进度和历史复盘，且无法恢复。",
       confirmText: "删除",
-      confirmColor: "#9B4B45",
+      confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: (result) => {
         if (!result.confirm) return;
         this.setData({ deletingRecord: true });

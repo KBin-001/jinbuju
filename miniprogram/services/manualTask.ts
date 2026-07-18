@@ -1,8 +1,9 @@
 import { addBusinessDays, getTodayBusinessDate, isValidBusinessDate } from "../utils/date";
-import { ActionIssueReason, ActionTask, ActionTaskStatus, TodaySummary } from "../types/manual";
+import { ActionIssueReason, ActionReminder, ActionTask, ActionTaskStatus, TodaySummary } from "../types/manual";
+import { buildReminderAt } from "../utils/actionReminder";
 import { createLocalId, readManualStore, writeManualStore } from "./manualStore";
 
-export interface SaveTaskInput { id?: string; goalId: string; title: string; description?: string; currentDate: string; estimatedMinutes: number; }
+export interface SaveTaskInput { id?: string; goalId: string; title: string; description?: string; currentDate: string; estimatedMinutes: number; reminder?: ActionReminder | null; }
 export interface SaveActionRecordInput { taskId: string; title: string; businessDate: string; time: string; actualMinutes: number; status: "completed" | "partially_completed" | "pending"; reflection?: string; }
 
 function validate(input: SaveTaskInput): void {
@@ -18,7 +19,7 @@ export function createTask(input: SaveTaskInput): ActionTask {
   const store = readManualStore();
   if (!store.goals.some((goal) => goal.id === input.goalId && goal.status === "active")) throw new Error("当前目标不存在");
   const now = new Date().toISOString();
-  const task: ActionTask = { id: createLocalId("task"), goalId: input.goalId, title: input.title.trim(), description: input.description?.trim() || undefined, plannedDate: input.currentDate, currentDate: input.currentDate, estimatedMinutes: input.estimatedMinutes, status: "pending", source: "manual", createdAt: now, updatedAt: now };
+  const task: ActionTask = { id: createLocalId("task"), goalId: input.goalId, title: input.title.trim(), description: input.description?.trim() || undefined, plannedDate: input.currentDate, currentDate: input.currentDate, estimatedMinutes: input.estimatedMinutes, reminder: input.reminder || undefined, status: "pending", source: "manual", createdAt: now, updatedAt: now };
   store.tasks.push(task);
   writeManualStore(store);
   return task;
@@ -26,6 +27,16 @@ export function createTask(input: SaveTaskInput): ActionTask {
 
 export function getTask(taskId: string): ActionTask | null {
   return readManualStore().tasks.find((task) => task.id === taskId && !task.deletedAt) || null;
+}
+
+export function updateTaskReminder(taskId: string, reminder: ActionReminder): ActionTask {
+  const store = readManualStore();
+  const task = store.tasks.find((item) => item.id === taskId && !item.deletedAt);
+  if (!task) throw new Error("行动不存在");
+  task.reminder = reminder;
+  task.updatedAt = new Date().toISOString();
+  writeManualStore(store);
+  return task;
 }
 
 export function getTasksByGoal(goalId: string): ActionTask[] {
@@ -56,8 +67,14 @@ export function updateTask(input: SaveTaskInput): ActionTask {
   const task = store.tasks.find((item) => item.id === input.id && item.goalId === input.goalId && !item.deletedAt);
   if (!task) throw new Error("行动不存在");
   if (!store.goals.some((goal) => goal.id === task.goalId && goal.status === "active")) throw new Error("目标已结束，不能修改行动");
+  const previousDate = task.currentDate;
   task.title = input.title.trim(); task.description = input.description?.trim() || undefined;
   task.currentDate = input.currentDate; task.estimatedMinutes = input.estimatedMinutes;
+  if (input.reminder === null) task.reminder = undefined;
+  else if (input.reminder) task.reminder = input.reminder;
+  else if (task.reminder && task.reminder.status === "scheduled" && previousDate !== input.currentDate) {
+    task.reminder = { ...task.reminder, remindAt: buildReminderAt(input.currentDate, task.reminder.time) };
+  }
   task.updatedAt = new Date().toISOString();
   writeManualStore(store);
   return task;
@@ -89,12 +106,15 @@ export function updateTaskStatus(taskId: string, status: ActionTaskStatus, actua
   const validStatuses: ActionTaskStatus[] = ["pending", "completed", "partially_completed", "skipped", "rescheduled"];
   if (!validStatuses.includes(status)) throw new Error("行动状态无效");
   if (status === "rescheduled") throw new Error("请使用顺延操作");
-  const nextActualMinutes = actualMinutes === undefined ? task.actualMinutes : actualMinutes;
+  const recordedActualMinutes = Number.isInteger(task.actualMinutes) && Number(task.actualMinutes) > 0
+    ? task.actualMinutes
+    : undefined;
+  const nextActualMinutes = actualMinutes === undefined
+    ? (status === "completed" ? recordedActualMinutes ?? task.estimatedMinutes : task.actualMinutes)
+    : actualMinutes;
   if (status === "completed" || status === "partially_completed") {
     if (!Number.isInteger(nextActualMinutes)) throw new Error("实际时间请输入整数分钟");
-    // 完成动作可以先只记录完成事实，实际投入由历史记录补充；部分完成仍必须有真实投入。
-    const minimumMinutes = status === "completed" ? 0 : 1;
-    if ((nextActualMinutes as number) < minimumMinutes || (nextActualMinutes as number) > 480) throw new Error("实际时间应在 0～480 分钟之间");
+    if ((nextActualMinutes as number) < 1 || (nextActualMinutes as number) > 480) throw new Error("实际时间应在 1～480 分钟之间");
   }
   const now = new Date().toISOString();
   task.status = status;
@@ -103,6 +123,9 @@ export function updateTaskStatus(taskId: string, status: ActionTaskStatus, actua
   task.activityDate = status === "completed" || status === "partially_completed" ? getTodayBusinessDate() : undefined;
   task.updatedAt = now;
   task.completedAt = status === "completed" ? now : undefined;
+  if (["completed", "skipped"].includes(status) && task.reminder && task.reminder.status === "scheduled") {
+    task.reminder = { ...task.reminder, status: "cancelled" };
+  }
   writeManualStore(store);
   return task;
 }
@@ -157,6 +180,7 @@ export function rescheduleTask(taskId: string, businessToday = getTodayBusinessD
     rescheduledAt: undefined,
     rescheduledToTaskId: undefined,
     statusBeforeReschedule: undefined,
+    reminder: undefined,
     createdAt: now,
     updatedAt: now,
   };
@@ -165,6 +189,7 @@ export function rescheduleTask(taskId: string, businessToday = getTodayBusinessD
   task.rescheduledAt = now;
   task.rescheduledToTaskId = successor.id;
   task.updatedAt = now;
+  if (task.reminder && task.reminder.status === "scheduled") task.reminder = { ...task.reminder, status: "cancelled" };
   store.tasks.push(successor);
   writeManualStore(store);
   return successor;
@@ -180,7 +205,7 @@ export function updateActionRecord(input: SaveActionRecordInput): ActionTask {
   const [hour, minute] = input.time.split(":").map(Number);
   if (!Number.isInteger(hour) || hour < 0 || hour > 23 || !Number.isInteger(minute) || minute < 0 || minute > 59) throw new Error("请选择有效时间");
   if (!Number.isInteger(input.actualMinutes) || input.actualMinutes < 0 || input.actualMinutes > 480) throw new Error("实际投入应为 0～480 分钟");
-  if (input.status === "partially_completed" && input.actualMinutes < 1) throw new Error("部分完成需要记录实际投入");
+  if (input.status !== "pending" && input.actualMinutes < 1) throw new Error("完成行动需要记录实际投入");
   const recordedAt = new Date(`${input.businessDate}T${input.time}:00+08:00`);
   if (Number.isNaN(recordedAt.getTime())) throw new Error("请选择有效完成时间");
   if (recordedAt.getTime() > Date.now()) throw new Error("完成时间不能晚于当前时间");
@@ -211,6 +236,7 @@ export function deleteTask(taskId: string): void {
   task.deletedAt = now;
   // 兼容仍按 status 过滤的历史统计读取方；deletedAt 仍是同步删除的唯一事实字段。
   task.status = "rescheduled";
+  if (task.reminder && task.reminder.status === "scheduled") task.reminder = { ...task.reminder, status: "cancelled" };
   task.updatedAt = now;
   writeManualStore(store);
 }

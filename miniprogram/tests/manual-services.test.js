@@ -27,7 +27,7 @@ const {
   setCurrentGoal,
   softDeleteArchivedGoal,
 } = require("../services/manualGoal.ts");
-const { readManualStore } = require("../services/manualStore.ts");
+const { readManualStore, writeManualStore } = require("../services/manualStore.ts");
 const { createTask, deleteTask, getTask, getTaskHistoryByGoal, getTasksByDate, getTodayPageTasks, rescheduleTask, updateActionRecord, updateTaskStatus } = require("../services/manualTask.ts");
 const { getProgressSummary, recordDailyCheckin } = require("../services/manualStats.ts");
 
@@ -148,5 +148,28 @@ const metricSummary = getProgressSummary(metricGoal.id, today);
 assert.equal(metricSummary.totalActionDays, 2);
 assert.equal(metricSummary.completedTasks, 5);
 assert.equal(metricSummary.totalActualMinutes, 30);
+
+const durationGoal = createGoal({ title: "完成时长默认逻辑", category: "custom" });
+const estimatedDurationCompletion = createTask({ goalId: durationGoal.id, title: "按预计时长完成", currentDate: today, estimatedMinutes: 40 });
+updateTaskStatus(estimatedDurationCompletion.id, "completed");
+assert.equal(getTask(estimatedDurationCompletion.id).actualMinutes, 40);
+
+const recordedDurationCompletion = createTask({ goalId: durationGoal.id, title: "保留已记录时长", currentDate: today, estimatedMinutes: 45 });
+updateTaskStatus(recordedDurationCompletion.id, "partially_completed", 18, "not_enough_time");
+updateTaskStatus(recordedDurationCompletion.id, "completed");
+assert.equal(getTask(recordedDurationCompletion.id).actualMinutes, 18);
+
+const explicitDurationCompletion = createTask({ goalId: durationGoal.id, title: "使用明确实际时长", currentDate: today, estimatedMinutes: 30 });
+updateTaskStatus(explicitDurationCompletion.id, "completed", 25);
+assert.equal(getTask(explicitDurationCompletion.id).actualMinutes, 25);
+assert.throws(() => updateTaskStatus(explicitDurationCompletion.id, "completed", 0));
+
+const legacyDurationCompletion = createTask({ goalId: durationGoal.id, title: "兼容历史零时长", currentDate: today, estimatedMinutes: 60 });
+const legacyStore = readManualStore();
+const legacyTask = legacyStore.tasks.find((task) => task.id === legacyDurationCompletion.id);
+legacyTask.status = "completed";
+legacyTask.actualMinutes = 0;
+writeManualStore(legacyStore);
+assert.equal(getTask(legacyDurationCompletion.id).actualMinutes, 60);
 
 console.log("manual service tests passed");

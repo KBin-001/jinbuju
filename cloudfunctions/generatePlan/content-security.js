@@ -1,7 +1,7 @@
 const cloud = require("wx-server-sdk");
 
 const TEXT_CHUNK_LIMIT = 2000;
-const IMAGE_SIZE_LIMIT = 1024 * 1024;
+const IMAGE_SIZE_LIMIT = 2 * 1024 * 1024;
 const CONTENT_FIELDS = new Set([
   "answer",
   "answers",
@@ -150,15 +150,28 @@ function imageContentType(fileId) {
   return "";
 }
 
+function imageBufferContentType(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 12) return "";
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return "image/jpeg";
+  if (buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "image/png";
+  return "";
+}
+
 async function assertSafeAvatar(openid, fileId, dependencies = {}) {
   const normalizedFileId = String(fileId || "").trim();
-  if (!normalizedFileId || !normalizedFileId.startsWith("cloud://")) return;
   const expectedPath = String(dependencies.expectedPath || "").replace(/^\/+/, "");
-  if (expectedPath && !normalizedFileId.includes(`/${expectedPath}`)) {
+  if (!normalizedFileId || !normalizedFileId.startsWith("cloud://")) {
+    if (expectedPath) {
+      throw contentSecurityError("CONTENT_SECURITY_REJECTED", "头像文件来源无效，请重新选择。");
+    }
+    return;
+  }
+  const storagePath = normalizedFileId.replace(/^cloud:\/\/[^/]+\//, "");
+  if (expectedPath && !storagePath.startsWith(expectedPath)) {
     throw contentSecurityError("CONTENT_SECURITY_REJECTED", "头像文件归属无效，请重新选择。");
   }
-  const contentType = imageContentType(normalizedFileId);
-  if (!contentType) {
+  const declaredContentType = imageContentType(normalizedFileId);
+  if (!declaredContentType) {
     throw contentSecurityError("CONTENT_SECURITY_REJECTED", "头像仅支持 JPG 或 PNG 图片。");
   }
   const downloadFile = dependencies.downloadFile || cloud.downloadFile.bind(cloud);
@@ -171,7 +184,11 @@ async function assertSafeAvatar(openid, fileId, dependencies = {}) {
     throw contentSecurityError("CONTENT_SECURITY_UNAVAILABLE", "头像安全检测暂不可用，请稍后重试。", error);
   }
   if (!Buffer.isBuffer(buffer) || buffer.length === 0 || buffer.length > IMAGE_SIZE_LIMIT) {
-    throw contentSecurityError("CONTENT_SECURITY_REJECTED", "头像图片无效或超过 1MB，请重新选择。");
+    throw contentSecurityError("CONTENT_SECURITY_REJECTED", "头像图片无效或超过 2MB，请重新选择。");
+  }
+  const contentType = imageBufferContentType(buffer);
+  if (!contentType || contentType !== declaredContentType) {
+    throw contentSecurityError("CONTENT_SECURITY_REJECTED", "头像文件类型与内容不一致，请重新选择。");
   }
   try {
     const response = await securityApi.imgSecCheck({ media: { contentType, value: buffer } });
@@ -204,6 +221,7 @@ module.exports = {
   chunkTexts,
   collectContentText,
   imageContentType,
+  imageBufferContentType,
   responseErrorCode,
   responseSuggest,
 };

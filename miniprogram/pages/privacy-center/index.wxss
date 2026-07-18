@@ -16,6 +16,7 @@ page { background: var(--color-background); }
 .legal-links view { min-height: 68rpx; padding: 0 22rpx; display: flex; align-items: center; border: 1rpx solid var(--color-border); border-radius: 34rpx; color: var(--color-primary); font-size: 23rpx; }
 .agreement-check { margin-top: 22rpx; }
 .agreement-check label { display: flex; align-items: flex-start; gap: 12rpx; color: var(--color-text-secondary); font-size: 23rpx; line-height: 34rpx; }
+.agreement-recorded { min-height: 76rpx; margin-top: 20rpx; padding: 16rpx 20rpx; display: flex; align-items: center; gap: 12rpx; border-radius: 20rpx; background: var(--color-success-soft); color: var(--color-success); font-size: 22rpx; line-height: 32rpx; }
 .confirm-button { width: 100%; min-height: 88rpx; margin-top: 22rpx; border-radius: 44rpx; background: var(--color-primary); color: #fff; }
 .error-message { margin-top: 18rpx; color: var(--color-danger); font-size: 23rpx; line-height: 34rpx; }
 .info-item { min-height: 106rpx; display: flex; align-items: flex-start; gap: 18rpx; padding: 22rpx 0; }
@@ -24,6 +25,12 @@ page { background: var(--color-background); }
 .info-item > view { min-width: 0; flex: 1; }
 .info-item view view, .rights-row view view { font-size: 25rpx; font-weight: 650; }
 .info-item text, .rights-row text { display: block; margin-top: 7rpx; color: var(--color-text-secondary); font-size: 22rpx; line-height: 33rpx; }
+.collection-entry { min-height: 112rpx; display: flex; align-items: center; gap: 18rpx; }
+.collection-entry--pressed { opacity: .72; }
+.collection-entry__icon { width: 64rpx; height: 64rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 20rpx; background: var(--color-primary-soft); color: var(--color-primary); }
+.collection-entry__copy { min-width: 0; flex: 1; }
+.collection-entry__copy view { font-size: 25rpx; font-weight: 650; }
+.collection-entry__copy text { display: block; margin-top: 7rpx; color: var(--color-text-secondary); font-size: 22rpx; line-height: 33rpx; }
 .plain-copy { background: var(--color-card-soft); color: var(--color-text-secondary); }
 .rights-card { padding-top: 8rpx; padding-bottom: 8rpx; }
 .rights-row { min-height: 112rpx; display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }

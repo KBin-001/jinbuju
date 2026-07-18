@@ -1,14 +1,223 @@
 <view class="page legal-page" data-theme="{{appTheme}}">
-  <view class="legal-title">进步局隐私政策</view>
-  <view class="legal-meta">版本：privacy-1.1-rc.1 · 发布状态：候选稿</view>
-  <view class="legal-notice">上线前必须补充运营主体、联系渠道、发布日期、生效日期和数据保存期限，并按实际云环境与 AI 模型配置完成法律审核。候选稿不能冒充已生效正式政策。</view>
-  <view class="legal-section"><view class="legal-heading">1. 我们处理哪些信息</view><view class="legal-copy">为建立微信小程序账号，我们使用微信提供的用户身份标识，但不会向你或小队成员展示 OpenID。你主动设置时，我们处理昵称、头像和个人简介；你主动点击手机号授权按钮时，服务端使用一次性凭证获取手机号并只展示脱敏状态。拒绝绑定手机号不影响目标、行动、进度等核心功能。</view></view>
-  <view class="legal-section"><view class="legal-heading">2. 目标与成长数据</view><view class="legal-copy">我们处理你创建的目标、每日行动、预计与实际投入、完成状态、复盘、成长收藏和 AI 教练问答所需的真实摘要，用于展示今日计划、统计趋势、历史目标和个性化建议。AI 不会替你虚构行动记录。</view></view>
-  <view class="legal-section"><view class="legal-heading">3. 小队中的公开范围</view><view class="legal-copy">加入小队后，其他成员可看到昵称、头像、今日任务摘要、完成状态、投入时间及榜单位置。手机号、微信身份标识、完整个人目标与未公开的行动明细不向普通成员展示。队长的成员管理权限仍需由服务端校验。</view></view>
-  <view class="legal-section"><view class="legal-heading">4. 存储、同步与安全</view><view class="legal-copy">核心业务数据存储于项目配置的腾讯云开发 CloudBase 环境；设备本地仅保存最近快照、待重试操作和非敏感界面偏好。清除本地缓存不会删除云端数据。服务端写操作依据可信微信身份确定数据归属，前端不能指定他人身份。</view></view>
-  <view class="legal-section"><view class="legal-heading">5. 第三方与 AI 处理</view><view class="legal-copy">微信平台提供身份、头像昵称选择和可选手机号授权能力；腾讯云开发提供云函数、数据库、文件存储和当前配置的 AI 模型调用能力。AI 功能只发送完成分析所必需的目标与行动摘要。上线前应按实际模型、地域和日志保留配置补全第三方信息共享清单。</view></view>
-  <view class="legal-section"><view class="legal-heading">6. 你的选择与权利</view><view class="legal-copy">你可以在“我的”中更正资料、查看历史目标、解除手机号绑定、撤回可选授权、清除设备缓存、删除成长数据或申请注销账号。清除缓存、删除成长数据和注销账号影响范围不同；永久删除前需要再次确认，失败时不会显示为成功。</view></view>
-  <view class="legal-section"><view class="legal-heading">7. 协议记录与更新</view><view class="legal-copy">我们记录你主动同意的协议类型、版本、时间和来源，不默认勾选。重大更新应再次展示并取得主动同意。撤回可选的手机号处理同意不会影响不依赖手机号的核心功能。</view></view>
-  <view class="legal-section"><view class="legal-heading">8. 未成年人和联系我们</view><view class="legal-copy">本产品面向年轻用户，但尚未完成针对未成年人的年龄识别、监护人同意和专门个人信息规则。上线前必须明确目标用户年龄范围并补全对应机制。当前可通过“关于进步局”中的微信反馈入口提交数据与隐私问题；正式运营主体与其他联系方式待上线前补充。</view></view>
-  <view class="legal-section"><view class="legal-heading">9. 订阅通知</view><view class="legal-copy">每日行动提醒、AI 教练建议和小队动态仅在你主动点击微信订阅授权后开启。我们记录通知场景、授权结果、授权时间和与你微信身份对应的 OpenID，用于核验一次性额度、去重、限流和投递；不会读取聊天记录、位置或通讯录。你可以在“隐私与授权”中逐项关闭，关闭后未消费额度会失效；微信侧总开关需在微信授权管理中修改。消费或过期账本、发送日志和站内消息默认保留 30 天，仍有效的一次性额度最长保留 7 天。</view></view>
+  <view class="legal-header">
+    <view class="legal-title">进步局隐私政策</view>
+    <view class="legal-subtitle">本政策说明进步局在微信小程序中如何收集、使用、共享、存储和保护你的个人信息。</view>
+    <view class="legal-meta">
+      <view class="legal-meta-row">
+        <text class="legal-meta-label">版本</text>
+        <text class="legal-meta-value">{{version}}</text>
+        <text class="legal-meta-divider"></text>
+        <text class="legal-meta-label">生效日期</text>
+        <text class="legal-meta-value">{{effectiveDate}}</text>
+      </view>
+      <view class="legal-meta-row">
+        <text class="legal-meta-label">更新日期</text>
+        <text class="legal-meta-value">{{updatedAt}}</text>
+        <text class="legal-meta-divider"></text>
+        <text class="legal-meta-label">运营主体</text>
+        <text class="legal-meta-value">{{operator}}</text>
+      </view>
+    </view>
+    <view wx:if="{{showPendingNotice}}" class="legal-notice">
+      <text class="legal-notice-title">待补充字段提示</text>
+      本政策当前为可发布版本，但部分运营信息（运营主体名称、联系方式、备案号等）仍为占位内容，正式提交审核与上线前必须替换为真实信息并通过法务审核。
+    </view>
+  </view>
+
+  <view class="legal-toc">
+    <view class="legal-toc-title">目录</view>
+    <view class="legal-toc-list">
+      <view class="legal-toc-item">一、政策适用范围</view>
+      <view class="legal-toc-item">二、我们收集的信息</view>
+      <view class="legal-toc-item">三、信息的使用</view>
+      <view class="legal-toc-item">四、信息的共享与披露</view>
+      <view class="legal-toc-item">五、信息的存储与保护</view>
+      <view class="legal-toc-item">六、你的权利</view>
+      <view class="legal-toc-item">七、适用人群</view>
+      <view class="legal-toc-item">八、第三方与权限清单</view>
+      <view class="legal-toc-item">九、订阅消息</view>
+      <view class="legal-toc-item">十、政策更新</view>
+      <view class="legal-toc-item">十一、联系我们</view>
+    </view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">一</text>政策适用范围</view>
+    <view class="legal-copy">本政策适用于你通过微信小程序使用「进步局」（以下简称"本服务"）时，我们对你个人信息的处理行为。本政策不适用于你通过其他渠道（如微信开放平台、第三方网站）使用相关服务时的信息处理，也不适用于本服务中接入的其他第三方服务（如微信支付），该等服务的个人信息处理规则以对应主体公布的政策为准。</view>
+    <view class="legal-copy">本服务是目标与行动记录工具，不设置年龄识别或年龄准入流程。使用者可根据自身需要选择使用，并应理解本政策所说明的数据处理方式。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">二</text>我们收集的信息</view>
+    <view class="legal-copy">我们仅收集为实现本服务功能所必需的信息。本服务不申请也不使用你的地理位置、通讯录、麦克风、摄像头、蓝牙、健康数据等敏感权限。</view>
+
+    <view class="legal-subheading">2.1 你主动提供或授权的信息</view>
+    <view class="legal-list">
+      <view class="legal-list-item"><text class="legal-list-item-title">微信身份标识。</text>你打开本服务时，我们通过微信开放能力获取 OpenID 与 UnionID 用于建立账号与身份识别，但不会向其他成员展示这些标识。</view>
+      <view class="legal-list-item"><text class="legal-list-item-title">微信头像与昵称。</text>当你在「我的」中点击"选择头像"或在个人资料中填写昵称、个人简介时，我们会处理你主动提交的资料。头像文件会通过腾讯云开发上传至云存储，便于在小队、分享卡等场景中展示。</view>
+      <view class="legal-list-item"><text class="legal-list-item-title">手机号（可选）。</text>仅在你主动在「账号与安全」中点击"绑定手机号"按钮并授权后，我们才会通过微信提供的 getPhoneNumber 能力获取手机号，并在服务端校验后以脱敏形式展示。拒绝绑定不影响目标、行动、进度等核心功能的使用。</view>
+    </view>
+
+    <view class="legal-subheading">2.2 你使用服务时产生的信息</view>
+    <view class="legal-list">
+      <view class="legal-list-item"><text class="legal-list-item-title">目标与行动数据。</text>包括你创建的目标、每日行动、预计投入与实际投入、完成状态、复盘记录、成长收藏及与 AI 教练的问答摘要，用于今日计划、进度统计、历史目标和个性化建议。AI 教练不会替你虚构行动记录。</view>
+      <view class="legal-list-item"><text class="legal-list-item-title">小队关系与公开行动摘要。</text>加入小队后，你的昵称、头像、今日任务摘要、完成状态、投入时间与榜单位置会向同小队成员展示。手机号、微信身份标识、完整个人目标与未公开的行动明细不会向普通成员展示。</view>
+      <view class="legal-list-item"><text class="legal-list-item-title">协议同意记录。</text>我们记录你主动同意的协议类型、版本号、同意时间和来源页面，用于核验合规状态。我们不会默认勾选同意。</view>
+      <view class="legal-list-item"><text class="legal-list-item-title">通知授权记录。</text>当你主动点击微信订阅授权后，我们会记录通知场景、授权结果、授权时间及与你微信身份对应的 OpenID，用于核验一次性额度、去重、限流和投递。</view>
+    </view>
+
+    <view class="legal-subheading">2.3 我们自动接收的信息</view>
+    <view class="legal-list">
+      <view class="legal-list-item"><text class="legal-list-item-title">设备与窗口信息。</text>包括屏幕尺寸、状态栏高度、菜单按钮位置等，仅用于计算页面布局与导航栏适配，不用于跨应用用户追踪。</view>
+      <view class="legal-list-item"><text class="legal-list-item-title">日志信息。</text>包括访问时间、访问页面、云函数调用结果与异常信息，用于排查故障与保障服务安全。日志中不记录完整手机号、OpenID 明文或敏感凭证。</view>
+    </view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">三</text>信息的使用</view>
+    <view class="legal-copy">我们仅在你本人或法律允许的范围内，将信息用于以下目的：</view>
+    <view class="legal-list">
+      <view class="legal-list-item">为你建立账号、维护身份与会话，展示个人资料与小队身份；</view>
+      <view class="legal-list-item">提供今日计划、行动打卡、投入时间统计、目标进度、复盘与成长趋势等核心功能；</view>
+      <view class="legal-list-item">在小队中展示成员身份、行动榜和轻量鼓励，并提供房间号复制、邀请好友等社交能力；</view>
+      <view class="legal-list-item">基于你真实记录的目标与行动摘要，调用 AI 模型生成分析、提醒与下一步建议；</view>
+      <view class="legal-list-item">在你主动订阅后，向你投递每日行动提醒、AI 教练建议和小队动态通知；</view>
+      <view class="legal-list-item">核验协议同意状态、保障账号安全、排查故障与异常、防止违规与滥用；</view>
+      <view class="legal-list-item">在法律允许范围内改进服务功能、性能与体验。</view>
+    </view>
+    <view class="legal-copy">我们不会将你的个人信息用于本政策未载明的其他用途。如需变更使用目的，我们将再次取得你的同意。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">四</text>信息的共享与披露</view>
+    <view class="legal-copy">我们不会向第三方出售你的个人信息。在以下情形下，我们可能会共享或披露必要范围内的信息：</view>
+    <view class="legal-list">
+      <view class="legal-list-item"><text class="legal-list-item-title">与你授权的第三方共享。</text>本服务的数据存储、云函数、云存储与 AI 网关由腾讯云开发 CloudBase 提供，详见"第八条 第三方与权限清单"。</view>
+      <view class="legal-list-item"><text class="legal-list-item-title">与你同意的小队成员共享。</text>加入小队后，本节第 2.2 条所列公开行动摘要会向同小队成员展示。</view>
+      <view class="legal-list-item"><text class="legal-list-item-title">法律义务与安全需要。</text>如依据法律法规、有权机关要求，或为保护用户、公众与本服务的合法权益所必需。</view>
+      <view class="legal-list-item"><text class="legal-list-item-title">合并、收购或资产转让。</text>如本服务发生该等交易，我们会要求接收方继续受本政策约束；如改变信息处理目的，将再次取得你的同意。</view>
+    </view>
+    <view class="legal-copy">我们不会向任何第三方共享你的手机号、完整目标内容或未公开的行动明细，除非你本人主动发起或法律明确要求。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">五</text>信息的存储与保护</view>
+    <view class="legal-subheading">5.1 存储位置</view>
+    <view class="legal-copy">你的核心业务数据（账号、目标、行动、复盘、小队关系、协议记录等）存储于腾讯云开发 CloudBase 提供的云端数据库与云存储中；头像等媒体文件存储于云存储。设备本地仅保留最近一次同步的快照、待重试的离线操作和非敏感的界面偏好。</view>
+    <view class="legal-subheading">5.2 保留期限</view>
+    <view class="legal-list">
+      <view class="legal-list-item">账号与业务数据：在你使用本服务期间持续保留，直至你主动删除或注销账号；</view>
+      <view class="legal-list-item">订阅消息授权与发送日志：默认保留 30 天，仍有效的一次性订阅额度最长保留 7 天；</view>
+      <view class="legal-list-item">异常与安全日志：默认保留不超过 {{securityLogRetentionDays}} 天；</view>
+      <view class="legal-list-item">协议同意记录：在账号存续期间保留；账号注销后为满足审计要求保留不超过法定最短期限。</view>
+    </view>
+    <view class="legal-subheading">5.3 安全措施</view>
+    <view class="legal-copy">我们采用腾讯云开发提供的传输加密、访问控制与日志审计能力，并对敏感操作进行服务端身份核验，前端不能指定他人身份。仅经授权的人员在必要范围内可访问数据，并受到保密义务约束。清除本地缓存不会删除云端数据，但可能影响离线可用性。</view>
+    <view class="legal-copy">如发生个人信息泄露事件，我们将依据法律法规及时采取补救措施并告知你与监管部门。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">六</text>你的权利</view>
+    <view class="legal-copy">在你使用本服务期间，你可以通过「我的 → 隐私与授权」和相关页面行使以下权利：</view>
+    <view class="legal-list">
+      <view class="legal-list-item"><text class="legal-list-item-title">查询与更正。</text>查看个人资料、目标、行动记录与协议状态，并更正可编辑的资料字段。</view>
+      <view class="legal-list-item"><text class="legal-list-item-title">删除与归档。</text>历史目标支持归档、移到「最近删除」、恢复与彻底删除；删除全部成长数据会保留账号、协议记录与小队关系；注销账号会删除账号及归属数据，队长需先转让或解散小队。</view>
+      <view class="legal-list-item"><text class="legal-list-item-title">撤回同意。</text>你可在「隐私与授权」中撤回可选的手机号处理同意；撤回不会影响不依赖手机号的核心功能，已绑定时请先解除绑定。</view>
+      <view class="legal-list-item"><text class="legal-list-item-title">关闭通知。</text>你可在「隐私与授权」中逐项关闭每日行动提醒、AI 教练建议与小队动态；关闭后未消费的订阅额度会失效，微信侧总开关需在微信授权管理中修改。</view>
+      <view class="legal-list-item"><text class="legal-list-item-title">清除本地缓存。</text>清除本地缓存不会删除云端数据，但可能影响离线可用性。</view>
+      <view class="legal-list-item"><text class="legal-list-item-title">账号注销。</text>你可以申请注销账号，注销后账号及归属数据将按本政策第五条的保留期限处理。</view>
+    </view>
+    <view class="legal-copy">所有涉及数据删除、账号注销与小队解散的危险操作均需二次确认；操作失败时不会显示为成功。如你对行使上述权利有困难，可通过第十一条的联系方式与我们联系。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">七</text>适用人群</view>
+    <view class="legal-copy">本服务作为轻量目标与行动管理工具，不设置年龄准入限制，也不主动收集年龄信息。所有使用者均使用相同的核心功能与隐私设置；我们不会根据年龄进行差异化推荐或营销。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">八</text>第三方与权限清单</view>
+    <view class="legal-copy">本服务接入的第三方及其处理范围如下。具体第三方主体、数据处理地域与日志保留策略，请在正式上线前根据实际云环境配置补全。</view>
+
+    <view class="legal-subheading">8.1 第三方服务</view>
+    <view class="legal-info-card">
+      <view class="legal-info-card-title">微信开放平台</view>
+      <view class="legal-info-card-desc">提供微信身份标识（OpenID/UnionID）、头像与昵称选择（chooseAvatar）、手机号授权（getPhoneNumber）、订阅消息（requestSubscribeMessage）、分享与反馈能力。相关数据处理受微信隐私规则约束。</view>
+    </view>
+    <view class="legal-info-card">
+      <view class="legal-info-card-title">腾讯云开发 CloudBase</view>
+      <view class="legal-info-card-desc">提供云函数、数据库、云存储与 AI 网关能力，承载账号、目标、行动、复盘、小队与协议等核心数据。数据处理地域与保留策略以腾讯云开发服务协议为准。</view>
+    </view>
+
+    <view class="legal-subheading">8.2 设备权限清单</view>
+    <view class="legal-info-card">
+      <view class="legal-info-card-title">剪贴板（写入）</view>
+      <view class="legal-info-card-desc">用于复制小队房间号与邀请文案，仅在主动点击时触发，不读取剪贴板内容。</view>
+    </view>
+    <view class="legal-info-card">
+      <view class="legal-info-card-title">相册（写入）</view>
+      <view class="legal-info-card-desc">用于将今日完成卡保存到你的相册。需要你授权后方可写入，拒绝授权不影响其他功能。</view>
+    </view>
+    <view class="legal-info-card">
+      <view class="legal-info-card-title">订阅消息</view>
+      <view class="legal-info-card-desc">用于发送每日行动提醒、AI 教练建议与小队动态，仅在主动订阅后产生一次性投递额度。</view>
+    </view>
+    <view class="legal-info-card">
+      <view class="legal-info-card-title">本地存储</view>
+      <view class="legal-info-card-desc">用于保存账号缓存、待重试的离线操作与非敏感界面偏好，可随时清除。</view>
+    </view>
+    <view class="legal-info-card">
+      <view class="legal-info-card-title">振动反馈</view>
+      <view class="legal-info-card-desc">用于在完成行动等场景提供轻量振动反馈，不涉及信息收集。</view>
+    </view>
+
+    <view class="legal-copy" style="margin-top: 16rpx;">本服务未申请位置、通讯录、麦克风、摄像头、蓝牙、健康数据等敏感权限。如未来因新功能需要新增权限，我们将再次取得你的授权并更新本政策。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">九</text>订阅消息</view>
+    <view class="legal-copy">每日行动提醒、AI 教练建议和小队动态仅在你主动点击微信订阅授权后开启。每次微信订阅授权仅产生一次可用额度，消费后失效。</view>
+    <view class="legal-list">
+      <view class="legal-list-item">我们不会读取你的聊天记录、位置或通讯录；</view>
+      <view class="legal-list-item">你可以在「隐私与授权」中逐项关闭通知，关闭后未消费额度会失效；</view>
+      <view class="legal-list-item">微信侧总开关需在微信授权管理中修改；</view>
+      <view class="legal-list-item">发送失败时，仅在偏好仍开启且符合规则时生成站内提醒；</view>
+      <view class="legal-list-item">消费或过期账本、发送日志和站内消息默认保留 30 天，仍有效的一次性额度最长保留 7 天。</view>
+    </view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">十</text>政策更新</view>
+    <view class="legal-copy">本政策可能因业务调整、法律法规变化或安全需要而更新。我们将在小程序内通过显著位置提示重大变更，并视情况要求你重新主动同意。本政策顶部"版本"与"生效日期"字段即为最新版本标识。</view>
+    <view class="legal-copy">我们不会以默认勾选或仅继续使用代替必要的确认。如你不同意更新后的政策，可停止使用本服务或申请注销账号。</view>
+  </view>
+
+  <view class="legal-section">
+    <view class="legal-heading"><text class="legal-heading-index">十一</text>联系我们</view>
+    <view class="legal-copy">如你对本政策或个人信息处理有疑问、建议或投诉，可通过以下方式联系我们。我们将在收到你的请求后于合理期限内回复。</view>
+    <view class="legal-contact">
+      <view class="legal-contact-row">
+        <text class="legal-contact-label">运营主体</text>
+        <text class="legal-contact-value">{{operator}}</text>
+      </view>
+      <view class="legal-contact-row">
+        <text class="legal-contact-label">联系邮箱</text>
+        <view style="display:flex;align-items:center;">
+          <text class="legal-contact-value">{{contactEmail}}</text>
+          <view class="legal-contact-copy" bindtap="copyEmail">复制</view>
+        </view>
+      </view>
+      <view class="legal-contact-row">
+        <text class="legal-contact-label">小程序内反馈</text>
+        <text class="legal-contact-value">「关于进步局 → 通过微信提交反馈」</text>
+      </view>
+      <view class="legal-contact-row">
+        <text class="legal-contact-label">个人信息保护负责人</text>
+        <text class="legal-contact-value">{{dpoName}}</text>
+      </view>
+    </view>
+    <view class="legal-copy" style="margin-top: 16rpx;">为便于核验身份，向我们提出请求时请说明你的「进步局 ID」（在「我的」中可见），不要在反馈中填写完整手机号、OpenID 或其他敏感凭证。</view>
+  </view>
+
+  <view class="legal-footnote">本政策由进步局产品团队制定并维护，最后更新于 {{updatedAt}}。</view>
 </view>

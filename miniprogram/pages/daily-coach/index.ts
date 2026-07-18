@@ -1,23 +1,14 @@
 import { DailyCoachAnalysis, getDailyCoachAnalysis } from "../../services/dailyCoach";
 import { askProgressCoach, prepareProgressCoach } from "../../services/progressCoach";
-import { executeCoachAction } from "../../services/manualSync";
+import { executeCoachProposal } from "../../services/manualSync";
 import { getProgressSummary } from "../../services/manualStats";
 import { getCurrentThemeId } from "../../services/theme";
+import { getLocalUserProfile } from "../../services/profile";
 import { getTodayBusinessDate } from "../../utils/date";
-import { isNotificationConfigured } from "../../config/notification";
-import { requestNotificationAuthorization } from "../../services/notification";
-import { CoachActionProposal, CoachRange, ProgressCoachChatMessage } from "../../types/progressCoach";
+import { ProgressCoachChatMessage } from "../../types/progressCoach";
 
 interface DailyChatMessage extends ProgressCoachChatMessage {
   id: string;
-  mode: "direct" | "compact" | "detailed";
-  summary: string;
-  advice: string;
-  insights: string[];
-  followUps: string[];
-  showFull: boolean;
-  canExpand: boolean;
-  actionProposal?: CoachActionProposal;
 }
 
 interface CoachEvidence {
@@ -149,18 +140,19 @@ Page({
   data: {
     appTheme: getCurrentThemeId(), ...getNavigationMetrics(), status: "loading" as "loading" | "ready" | "error", errorMessage: "",
     requestedDate: "", requestedGoalId: "", analysis: EMPTY_ANALYSIS, workspace: EMPTY_WORKSPACE,
-    question: "", messages: [] as DailyChatMessage[], asking: false, chatError: "", failedQuestion: "", executingProposalId: "",
-    aiNotificationAvailable: isNotificationConfigured("ai_coach_advice"), notificationAuthorizing: false,
+    messages: [] as DailyChatMessage[], asking: false, chatError: "", failedQuestion: "", executingProposalId: "",
+    conversationId: "", userAvatarUrl: "",
+    quickQuestions: ["为什么这样判断？", "帮我调整接下来的计划", "分析最近一周"],
   },
 
   onLoad(query: Record<string, string>) {
     const requestedDate = /^\d{4}-\d{2}-\d{2}$/.test(String(query.date || "")) ? String(query.date) : getTodayBusinessDate();
-    this.setData({ requestedDate, requestedGoalId: String(query.goalId || "") });
+    this.setData({ requestedDate, requestedGoalId: String(query.goalId || ""), messages: [], conversationId: "", chatError: "", failedQuestion: "", userAvatarUrl: getLocalUserProfile()?.avatarUrl || "" });
     this.loadAnalysis();
   },
 
   onShow() {
-    this.setData({ appTheme: getCurrentThemeId(), ...getNavigationMetrics() });
+    this.setData({ appTheme: getCurrentThemeId(), ...getNavigationMetrics(), userAvatarUrl: getLocalUserProfile()?.avatarUrl || "" });
     if (this.data.status === "ready") this.refreshAnalysis(false);
   },
 
@@ -189,18 +181,6 @@ Page({
     }
     wx.navigateTo({ url: `/pages/action-edit/index?goalId=${encodeURIComponent(this.data.analysis.goalId)}&date=${encodeURIComponent(this.data.analysis.date || getTodayBusinessDate())}` });
   },
-  async subscribeAiCoachAdvice() {
-    if (this.data.notificationAuthorizing) return;
-    this.setData({ notificationAuthorizing: true });
-    try {
-      const result = await requestNotificationAuthorization("ai_coach_advice", "daily_coach");
-      wx.showToast({ title: result === "accept" ? "明日建议已订阅" : "未获得订阅授权", icon: result === "accept" ? "success" : "none" });
-    } catch (error) {
-      wx.showToast({ title: error instanceof Error ? error.message : "订阅未完成", icon: "none" });
-    } finally {
-      this.setData({ notificationAuthorizing: false });
-    }
-  },
   selectSection(event: { currentTarget: { dataset: { section?: string } } }) {
     const section = String(event.currentTarget.dataset.section || "review");
     if (section === "insights") {
@@ -211,53 +191,45 @@ Page({
     wx.pageScrollTo({ selector: "#today-review", duration: 240 });
   },
 
-  inputQuestion(event: { detail: { value?: string } }) { this.setData({ question: String(event.detail.value || "").slice(0, 120), chatError: "" }); },
-  chooseSuggestion(event: { currentTarget: { dataset: { question?: string; scope?: CoachRange } } }) {
-    const question = String(event.currentTarget.dataset.question || "").slice(0, 120);
-    const scope = event.currentTarget.dataset.scope || "day";
+  handleChatSend(event: { detail: { question?: string } }) {
+    const question = String(event.detail.question || "").slice(0, 1000);
     if (!question || this.data.asking) return;
-    if (scope === "week") {
+    if (question === "分析最近一周") {
       wx.navigateTo({ url: `/pages/ai-coach/index?scope=week&goalId=${encodeURIComponent(this.data.analysis.goalId)}` });
       return;
     }
     this.askQuestion(question, true);
   },
-  toggleFullReply(event: { currentTarget: { dataset: { id?: string } } }) {
-    const id = String(event.currentTarget.dataset.id || "");
-    this.setData({ messages: this.data.messages.map((item) => item.id === id ? { ...item, showFull: !item.showFull } : item) });
-  },
   async askQuestion(question: string, showUser: boolean) {
     if (this.data.asking || !question) return;
-    if (!this.data.analysis.goalId) { wx.showToast({ title: "请先创建目标", icon: "none" }); return; }
-    const history = this.data.messages.map((item) => ({ role: item.role, content: item.content, sentAt: item.sentAt })).slice(-6);
+    const history = this.data.messages.map((item) => ({ role: item.role, content: item.content, sentAt: item.sentAt })).slice(-20);
     const now = Date.now();
-    const userMessage: DailyChatMessage = { id: `daily_user_${now}`, role: "user", content: question, sentAt: new Date(now).toISOString(), mode: "direct", summary: "", advice: "", insights: [], followUps: [], showFull: false, canExpand: false };
-    const nextMessages = showUser ? this.data.messages.concat(userMessage).slice(-5) : this.data.messages;
-    this.setData({ messages: nextMessages, asking: true, chatError: "", failedQuestion: "", question: "" });
+    const userMessage: DailyChatMessage = { id: `daily_user_${now}`, role: "user", content: question, sentAt: new Date(now).toISOString(), scope: "day", analysisDate: this.data.analysis.date, goalId: this.data.analysis.goalId };
+    const nextMessages = showUser ? this.data.messages.concat(userMessage).slice(-50) : this.data.messages;
+    this.setData({ messages: nextMessages, asking: true, chatError: "", failedQuestion: "" });
     try {
-      const result = await askProgressCoach("day", this.data.analysis.goalId, question, history, this.data.analysis.date, new Date(now).toISOString());
-      const mode = result.mode || "direct";
-      const assistantMessage: DailyChatMessage = { id: `daily_ai_${Date.now()}`, role: "assistant", content: result.answer, mode,
-        summary: mode === "direct" ? "" : result.summary || result.answer, advice: mode === "direct" ? "" : result.advice || "",
-        insights: mode === "direct" ? [] : (result.insights || []).slice(0, 3), followUps: (result.followUps || []).slice(0, 2),
-        showFull: false, canExpand: mode !== "direct" && result.answer.length > 180, actionProposal: result.actionProposal };
-      this.setData({ messages: this.data.messages.concat(assistantMessage).slice(-6), asking: false });
+      const result = await askProgressCoach("day", this.data.analysis.goalId, question, history, this.data.analysis.date, new Date(now).toISOString(), this.data.conversationId || undefined);
+      const assistantMessage: DailyChatMessage = { id: result.assistantMessageId || `daily_ai_${Date.now()}`, role: "assistant", content: result.answer,
+        sentAt: result.generatedAt, scope: "day", analysisDate: this.data.analysis.date, goalId: this.data.analysis.goalId, presentation: result.presentation, actionProposal: result.actionProposal };
+      this.setData({ conversationId: result.conversationId || this.data.conversationId, messages: this.data.messages.concat(assistantMessage).slice(-50), asking: false });
     } catch (error) { this.setData({ asking: false, chatError: aiErrorMessage(error), failedQuestion: question }); }
   },
-  sendQuestion() {
-    const question = this.data.question.trim();
-    if (!question) { wx.showToast({ title: "先写下你想聊的情况", icon: "none" }); return; }
-    this.askQuestion(question, true);
-  },
   retryLastQuestion() { if (this.data.failedQuestion && !this.data.asking) this.askQuestion(this.data.failedQuestion, false); },
-  async confirmCoachAction(event: { currentTarget: { dataset: { proposalId?: string } } }) {
-    const proposalId = String(event.currentTarget.dataset.proposalId || "");
+  async confirmCoachAction(event: { detail: { proposalId?: string } }) {
+    const proposalId = String(event.detail.proposalId || "");
     if (!proposalId || this.data.executingProposalId) return;
-    this.setData({ executingProposalId: proposalId });
+    const proposal = this.data.messages.find((item) => item.actionProposal?.id === proposalId)?.actionProposal;
+    if (!proposal) { wx.showToast({ title: "操作确认信息已失效", icon: "none" }); return; }
+    this.setData({ executingProposalId: proposalId, chatError: "", failedQuestion: "" });
     try {
-      await executeCoachAction(proposalId);
-      this.setData({ executingProposalId: "", messages: this.data.messages.map((item) => item.actionProposal?.id === proposalId ? { ...item, actionProposal: { ...item.actionProposal, status: "executed" as const } } : item) });
-      this.refreshAnalysis(false); wx.showToast({ title: "已同步到今日行动", icon: "success" });
+      const outcome = await executeCoachProposal(proposal);
+      this.setData({ executingProposalId: "", chatError: "", failedQuestion: "", messages: this.data.messages.map((item) => item.actionProposal?.id === proposalId ? { ...item, actionProposal: { ...item.actionProposal, status: "executed" as const } } : item) });
+      this.refreshAnalysis(false);
+      const title = outcome.reminder === "scheduled" ? "行动与提醒已设置"
+        : outcome.reminder === "rejected" ? "行动已创建，提醒未开启"
+          : outcome.reminder === "invalid" ? "行动已创建，提醒时间无效"
+            : outcome.reminder === "failed" ? "行动已创建，提醒设置失败" : "已同步到今日行动";
+      wx.showToast({ title, icon: outcome.reminder === "rejected" || outcome.reminder === "invalid" || outcome.reminder === "failed" ? "none" : "success" });
     } catch (error) { this.setData({ executingProposalId: "", chatError: aiErrorMessage(error) }); }
   },
 });

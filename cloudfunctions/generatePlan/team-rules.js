@@ -9,13 +9,14 @@ const ENCOURAGEMENT_TYPES = [
 const MAX_TEAM_MEMBERS = 50;
 const TEAM_CONTRACT_VERSION = 2;
 const TEAM_SCHEMA_VERSION = 2;
-const TEAM_BUILD_ID = "team-cloud-2026-07-16.1";
+const TEAM_BUILD_ID = "team-cloud-2026-07-19.1";
 const TEAM_SUPPORTED_ACTIONS = [
   "getTeamRuntimeInfo", "getTeamInviteInfo", "getMyTeam", "getTeamPage", "createTeam", "joinTeam", "joinTeamByRoomCode",
   "getTeamActivityFeed", "updateTeamSettings", "updateTeamMemberPrivacy", "reviewTeamJoinRequest",
   "removeTeamMember", "leaveTeam", "transferTeamOwner", "dissolveTeam", "sendEncouragement", "syncTeamActivity",
 ];
-const ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
+const ROOM_CODE_PATTERN = /^\d{4}$/;
+const LEGACY_ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 const TEAM_ROLES = ["owner", "member"];
 
 function stablePublicId(prefix, value) {
@@ -55,7 +56,7 @@ function resolveMemberTodayStatus({ visibleCount, skippedCount, completionRate, 
 
 function normalizeRoomCode(value) {
   const code = String(value || "").trim().toUpperCase().replace(/\s+/g, "");
-  return ROOM_CODE_PATTERN.test(code) ? code : "";
+  return ROOM_CODE_PATTERN.test(code) || LEGACY_ROOM_CODE_PATTERN.test(code) ? code : "";
 }
 
 module.exports = {
@@ -65,6 +66,7 @@ module.exports = {
   TEAM_CONTRACT_VERSION,
   TEAM_SCHEMA_VERSION,
   TEAM_SUPPORTED_ACTIONS,
+  LEGACY_ROOM_CODE_PATTERN,
   ROOM_CODE_PATTERN,
   TEAM_ROLES,
   compareRank,

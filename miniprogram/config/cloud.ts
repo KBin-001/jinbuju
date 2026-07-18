@@ -1,4 +1,6 @@
-export const CLOUD_ENV_ID = "ai-d3g9qsay37da6a3cc";
+// 客户端不绑定具体环境 ID，由微信开发者工具/发布版本所关联的默认云环境决定。
+// 这样开发、体验与生产版本不会因源码常量而误连同一个环境。
+export const CLOUD_ENV_ID = "";
 
 export function initCloud(): void {
   if (!wx.cloud) {

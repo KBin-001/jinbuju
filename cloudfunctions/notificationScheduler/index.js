@@ -11,5 +11,11 @@ exports.main = async () => {
     name: "generatePlan",
     data: { action: "notification.runScheduled" },
   });
-  return result && result.result;
+  const payload = result && result.result;
+  if (!payload || payload.success !== true) {
+    const error = new Error(payload && payload.error && payload.error.message || "Scheduled notification dispatch failed");
+    error.code = payload && payload.error && payload.error.code || "SCHEDULED_DISPATCH_FAILED";
+    throw error;
+  }
+  return payload;
 };

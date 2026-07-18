@@ -3,6 +3,7 @@ import { deleteTask, getTask, SaveActionRecordInput, updateActionRecord } from "
 import { DetailCalendarDay, DetailPeriod, DurationSlice, getTodayDataBounds, getTodayDataCalendar, getTodayDataDetails } from "../../services/todayDetails";
 import { ActionTask } from "../../types/manual";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
+import { MODAL_CONFIRM_COLORS } from "../../services/theme";
 
 function dateLabel(value: string): string {
   const date = new Date(`${value}T00:00:00`);
@@ -222,7 +223,7 @@ Page({
       title: "删除行动记录",
       content: "删除后，今日统计、目标进度和历史复盘中的这条记录都会同步更新。",
       confirmText: "删除",
-      confirmColor: "#B85C4A",
+      confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: (result) => {
         if (!result.confirm) return;
         this.setData({ deletingRecord: true });

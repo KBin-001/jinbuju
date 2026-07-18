@@ -44,5 +44,7 @@ export interface CloudDataOverview {
     actions: number;
     checkins: number;
     achievements: number;
+    coachConversations: number;
+    coachMessages: number;
   };
 }

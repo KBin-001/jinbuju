@@ -1,7 +1,7 @@
 import { getAccountRuntime } from "../../services/account";
 import { clearLocalCachesAndRestore, getLocalCacheOverview, refreshCloudSnapshot } from "../../services/dataSync";
 import { getSyncRuntime } from "../../services/syncStatus";
-import { withAppTheme } from "../../services/theme";
+import { MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
 import { CloudDataOverview } from "../../types/account";
 
 type PageStatus = "loading" | "ready" | "error";
@@ -77,7 +77,7 @@ Page(withAppTheme({
       content: "只清除当前设备的快照、草稿和预览，不会删除云端目标、行动或收藏。清除后会立即尝试从云端恢复。",
       cancelText: "取消",
       confirmText: "清除并恢复",
-      confirmColor: "#245B4D",
+      confirmColor: MODAL_CONFIRM_COLORS.confirm,
       success: async (result) => {
         if (!result.confirm) return;
         this.setData({ clearingCache: true, errorMessage: "" });

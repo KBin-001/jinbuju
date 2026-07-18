@@ -36,7 +36,7 @@
             <view class="hero-meta">成员 {{team.memberCount}}/{{team.maxMembers}} · 房间 {{team.roomCode}}</view>
           </view>
           <view class="hero-seal">
-            <image wx:if="{{team.avatar}}" src="{{team.avatar}}" mode="aspectFill" binderror="onTeamAvatarError" />
+            <image wx:if="{{team.avatar}}" src="{{team.avatar}}" mode="aspectFill" lazy-load binderror="onTeamAvatarError" />
             <text wx:else>{{team.avatarText}}</text>
           </view>
         </view>
@@ -102,8 +102,8 @@
         >
           <view class="member-rank">{{memberIndex + 1}}</view>
           <view class="member-avatar avatar-grad {{item.avatarClass}}">
-            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" data-index="{{memberIndex}}" binderror="onMemberAvatarError" />
-            <image wx:else src="/images/icons/avatar.png" mode="aspectFill" />
+            <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" lazy-load data-index="{{memberIndex}}" binderror="onMemberAvatarError" />
+            <image wx:else src="/images/icons/avatar.png" mode="aspectFill" lazy-load />
           </view>
 
           <view class="member-main">
@@ -159,8 +159,8 @@
       <scroll-view class="detail-scroll" scroll-y enhanced show-scrollbar="{{false}}">
         <view class="detail-profile">
           <view class="detail-avatar avatar-grad {{selectedDetail.avatarClass}}">
-            <image wx:if="{{selectedDetail.avatar}}" src="{{selectedDetail.avatar}}" mode="aspectFill" binderror="onDetailAvatarError" />
-            <image wx:else src="/images/icons/avatar.png" mode="aspectFill" />
+            <image wx:if="{{selectedDetail.avatar}}" src="{{selectedDetail.avatar}}" mode="aspectFill" lazy-load binderror="onDetailAvatarError" />
+            <image wx:else src="/images/icons/avatar.png" mode="aspectFill" lazy-load />
           </view>
           <view class="detail-profile-main">
             <view class="detail-name-row">

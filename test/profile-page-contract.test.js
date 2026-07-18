@@ -12,6 +12,7 @@ const growth = read("miniprogram/services/profileGrowth.ts");
 
 assert(!wxml.includes("journey-card"), "我的页不应保留重复的账户概览卡");
 assert(!wxml.includes("profile-statuses"), "头部不应堆叠同步或手机号 pill");
+assert(!wxml.includes("profile-display-id") && !wxml.includes("{{displayId}}"), "我的页不应向用户展示内部账号标识");
 assert(!wxml.includes("goal-progress") && !wxml.includes("progressPercent"), "当前目标卡不得展示进度条或完成率");
 assert(wxml.includes("currentGoal.continuityText"), "当前目标卡应展示连续行动天数");
 assert(wxml.includes("showSyncNotice") && wxml.includes("syncNoticeText"), "缓存或离线状态应有可见说明");
@@ -43,6 +44,9 @@ for (const key of ["goals", "history", "badges", "sync", "account", "privacy", "
   assert(wxml.includes(`data-key="${key}"`), `管理列表缺少 ${key} 入口`);
   assert(page.includes(`key === "${key}"`), `${key} 入口缺少真实跳转事件`);
 }
+
+assert(wxml.includes('open-type="contact"') && wxml.includes("联系客服"), "我的页必须提供可直接唤起微信客服的入口");
+assert(styles.includes(".manage-contact-row") && styles.includes(".manage-contact-row::after"), "客服入口需要保持与设置列表一致的轻量样式");
 
 assert(page.includes("this.loadProfile();\n    bootstrapAccount()"), "页面应先展示本地记录，再刷新云端账号");
 assert(page.includes('on("sync:state"') && page.includes('off("sync:state"'), "页面应订阅并清理同步状态监听");

@@ -1,6 +1,6 @@
 import { getActiveGoals } from "../../services/manualGoal";
 import { deleteTask, getTask, getTasksByGoal, SaveActionRecordInput, updateActionRecord } from "../../services/manualTask";
-import { withAppTheme } from "../../services/theme";
+import { MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
 import { ActionTask, Goal } from "../../types/manual";
 import { getTodayBusinessDate } from "../../utils/date";
 import { getActionTaskDisplayStatus } from "../../utils/taskStatus";
@@ -208,7 +208,7 @@ Page(withAppTheme({
       title: "删除行动记录？",
       content: "删除后会同步影响今日统计、目标进度和历史复盘，且无法恢复。",
       confirmText: "删除",
-      confirmColor: "#A45B4F",
+      confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: (result) => {
         if (!result.confirm) return;
         this.setData({ deletingRecord: true });

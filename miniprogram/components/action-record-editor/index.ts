@@ -1,4 +1,5 @@
 import { ActionTask, ActionTaskStatus } from "../../types/manual";
+import { MODAL_CONFIRM_COLORS } from "../../services/theme";
 
 type EditableStatus = Extract<ActionTaskStatus, "completed" | "partially_completed" | "pending">;
 
@@ -46,7 +47,7 @@ Component({
         title: "放弃本次修改？",
         content: "尚未保存的行动记录将不会保留。",
         confirmText: "放弃修改",
-        confirmColor: "#B85C4A",
+        confirmColor: MODAL_CONFIRM_COLORS.danger,
         success: (result) => {
           if (result.confirm) this.triggerEvent("close");
         },

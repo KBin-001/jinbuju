@@ -48,6 +48,8 @@ const USER_OWNED_COLLECTIONS = [
   "goal_analysis_drafts",
   "stage_preview_versions",
   "progress_ai_snapshots",
+  "coach_conversations",
+  "coach_messages",
   "manual_goals",
   "manual_tasks",
   "manual_checkins",

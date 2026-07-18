@@ -27,6 +27,8 @@ const REQUIRED_COLLECTIONS = [
   "achievement_unlocks",
   "spark_checkins",
   "coach_action_proposals",
+  "coach_conversations",
+  "coach_messages",
   "account_bindings",
   "user_consents",
   "account_operations",
@@ -34,6 +36,7 @@ const REQUIRED_COLLECTIONS = [
   "notification_preference",
   "notification_sent_log",
   "in_app_messages",
+  "task_reminders",
 ];
 let collectionsReady = false;
 

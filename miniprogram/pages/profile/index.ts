@@ -11,6 +11,8 @@ import { getCommunityEntry, resolveCommunityQrUrl } from "../../services/profile
 import { getSyncRuntime, SyncRuntimeState } from "../../services/syncStatus";
 import { off, on } from "../../utils/eventBus";
 import { getTabHeaderLayout } from "../../utils/tabHeader";
+import { requirePlatformPrivacyAuthorization } from "../../services/platformPrivacy";
+import { FEATURE_FLAGS } from "../../config/features";
 
 type ProfilePageStatus = "loading" | "ready" | "error";
 type CommunitySheetStatus = "loading" | "preparing" | "ready" | "expired" | "error";
@@ -84,6 +86,7 @@ Page({
     displayName: "行动伙伴",
     displayAvatarUrl: "",
     displayId: "",
+    phoneBindingEnabled: FEATURE_FLAGS.ENABLE_PHONE_BINDING,
     phoneStatusText: "待联网",
     syncTone: "neutral",
     syncTitle: "等待首次同步",
@@ -98,6 +101,7 @@ Page({
     currentGoal: null as GoalCardView | null,
     achievementSummary: "0 / 18",
     profileEditorVisible: false,
+    platformPrivacyAuthorized: false,
     profileDraftNickname: "",
     profileDraftAvatarUrl: "",
     profileDraftSource: "custom" as UserProfileSource,
@@ -190,9 +194,9 @@ Page({
         displayName: userProfile?.nickname || "行动伙伴",
         displayAvatarUrl: userProfile?.avatarUrl || "",
         displayId: accountState?.account.displayId || "",
-        phoneStatusText: accountState
+        phoneStatusText: FEATURE_FLAGS.ENABLE_PHONE_BINDING && accountState
           ? (accountState.account.phoneBound ? "已绑定" : "未绑定")
-          : "待联网",
+          : "",
         ...presentation,
         showSyncNotice: accountUnavailable || presentation.showSyncNotice,
         syncNoticeText: accountUnavailable
@@ -227,6 +231,15 @@ Page({
     });
   },
 
+  async authorizePlatformPrivacy() {
+    try {
+      await requirePlatformPrivacyAuthorization();
+      this.setData({ platformPrivacyAuthorized: true });
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "请先完成隐私授权", icon: "none" });
+    }
+  },
+
   closeProfileEditor() {
     this.setData({ profileEditorVisible: false });
   },
@@ -244,6 +257,7 @@ Page({
   async onChooseAvatar(event: { detail: { avatarUrl?: string } }) {
     const avatarUrl = String(event.detail.avatarUrl || "");
     if (!avatarUrl) return;
+    if (!this.data.platformPrivacyAuthorized) return;
     if (this.data.profileEditorVisible) {
       this.setData({ profileDraftAvatarUrl: avatarUrl, profileDraftSource: "wechat" });
       return;

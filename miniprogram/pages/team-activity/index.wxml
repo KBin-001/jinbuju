@@ -63,8 +63,8 @@
           >
             <view class="timeline-dot"></view>
             <view class="activity-avatar avatar-grad {{item.avatarClass}}">
-              <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" data-id="{{item.id}}" binderror="onActivityAvatarError" />
-              <image wx:else src="/images/icons/avatar.png" mode="aspectFill" />
+              <image wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" lazy-load data-id="{{item.id}}" binderror="onActivityAvatarError" />
+              <image wx:else src="/images/icons/avatar.png" mode="aspectFill" lazy-load />
             </view>
             <view class="activity-main">
               <view class="activity-line1">
@@ -107,8 +107,8 @@
 
       <view class="detail-head">
         <view class="detail-avatar avatar-grad {{selectedDetail.avatarClass}}">
-          <image wx:if="{{selectedDetail.avatar}}" src="{{selectedDetail.avatar}}" mode="aspectFill" binderror="onDetailAvatarError" />
-          <image wx:else src="/images/icons/avatar.png" mode="aspectFill" />
+          <image wx:if="{{selectedDetail.avatar}}" src="{{selectedDetail.avatar}}" mode="aspectFill" lazy-load binderror="onDetailAvatarError" />
+          <image wx:else src="/images/icons/avatar.png" mode="aspectFill" lazy-load />
         </view>
         <view class="detail-head-main">
           <view class="detail-name-row">

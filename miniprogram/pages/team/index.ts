@@ -1,6 +1,7 @@
 import { getActiveGoal } from "../../services/manualGoal";
 import { calculateTodaySummary, getTodayPageTasks, updateTaskStatus } from "../../services/manualTask";
-import { getCurrentThemeId, withAppTheme } from "../../services/theme";
+import { readManualStore, writeManualStore } from "../../services/manualStore";
+import { getCurrentThemeId, MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
 import { getTabHeaderLayout } from "../../utils/tabHeader";
 import { isNotificationConfigured } from "../../config/notification";
 import { requestNotificationAuthorization } from "../../services/notification";
@@ -10,13 +11,13 @@ import {
   dissolveTeam,
   getTeamInviteInfo,
   getTeamActivityFeed,
+  getCachedTeam,
   getMyTeam,
   joinRoom,
   leaveTeam,
   sendEncouragement,
   updateSelfActivity,
   updateSelfDisplayMode,
-  updateSelfTaskDetailVisible,
   updateTeamSettings,
   validateRoomCode,
 } from "../../services/team";
@@ -102,7 +103,7 @@ function normalizeTeamDisplayName(team: Team | null): string {
 
 function displayRoomCode(roomCode?: string): string {
   const raw = (roomCode || "").trim().toUpperCase();
-  return raw || "------";
+  return raw || "----";
 }
 
 function formatTeamDate(value?: string): string {
@@ -189,6 +190,30 @@ function privacyText(mode: TeamDisplayMode): string {
   if (mode === "public") return "公开";
   if (mode === "anonymous") return "匿名";
   return "半公开";
+}
+
+function displayModeLabel(mode: TeamDisplayMode): string {
+  if (mode === "public") return "显示昵称与行动";
+  if (mode === "nicknameOnly") return "仅显示昵称";
+  return "匿名参与";
+}
+
+function buildSelfVisibility(member: MemberView | null, team: Team | null) {
+  if (!member || !team) return { label: "暂未获取", help: "联网后可调整展示方式" };
+  const preference = member.selfDisplayMode || member.displayMode;
+  if (team.anonymityMode !== "public") {
+    return { label: "当前匿名", help: `已选择${displayModeLabel(preference)}，小队关闭匿名模式后生效` };
+  }
+  if (member.profileAllowedInTeam === false) {
+    return { label: "当前匿名", help: "请先在“我的”页开启在小队中使用该资料" };
+  }
+  if (preference === "anonymous") {
+    return { label: "匿名参与", help: "其他成员看不到你的昵称、头像和行动" };
+  }
+  if (preference === "nicknameOnly") {
+    return { label: "仅显示昵称", help: "其他成员只能看到你的昵称" };
+  }
+  return { label: "昵称与行动", help: "其他成员可看到昵称、头像和公开行动" };
 }
 
 function statusText(status: MemberTodayStatus): string {
@@ -450,6 +475,9 @@ Page(withAppTheme({
     teamOwnerName: "队长",
     teamJoinedDate: "暂未记录",
     teamRuleText: "凭房间号加入",
+    selfVisibilityLabel: "暂未获取",
+    selfVisibilityHelp: "联网后可调整展示方式",
+    updatingSelfDisplay: false,
     savingSettings: false,
     teamAvatar: "",
     teamAvatarText: "队",
@@ -463,13 +491,13 @@ Page(withAppTheme({
     joining: false,
     markingComplete: false,
     encouragingMemberId: "",
-    currentScrollTop: 0,
     teamNotificationAvailable: isNotificationConfigured("team_activity"),
     teamNotificationPromptVisible: false,
     notificationAuthorizing: false,
   },
 
   notificationPromptTimer: null as ReturnType<typeof setTimeout> | null,
+  scrollTopCache: 0,
 
   onLoad(query: Record<string, string>) {
     const roomCode = String(query.roomCode || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
@@ -482,6 +510,8 @@ Page(withAppTheme({
   onShow() {
     (this as any).getTabBar?.()?.syncSelected?.();
     this.setData({ appTheme: getCurrentThemeId() });
+    const cached = getCachedTeam();
+    if (cached.team || cached.members.length > 0) this.applyTeamData(cached);
     this.load();
     this.startBusinessDateWatcher();
     this.scheduleNotificationPrompt();
@@ -547,7 +577,7 @@ Page(withAppTheme({
   },
 
   onPageScroll(event: { scrollTop: number }) {
-    this.setData({ currentScrollTop: event.scrollTop });
+    this.scrollTopCache = event.scrollTop;
   },
 
   onShareAppMessage() {
@@ -583,19 +613,17 @@ Page(withAppTheme({
         getTeamInviteInfo().then((invite) => this.setData({ inviterMemberId: invite.inviterMemberId }), () => undefined);
       }
       if (!current.team) return;
-      if (current.runtime?.capabilities.canMutate) {
-        try {
-          const synced = await this.syncCurrentActivity();
-          this.applyTeamData(synced);
-        } catch (_) {
-          this.setData({ serviceNotice: "今日行动暂未同步，小队首页仍可继续查看。" });
-        }
-      }
-      if (current.runtime?.capabilities.canReadActivity && this.data.teamViewMode === "group") {
-        await this.loadActivityPreview();
-      } else {
+      const canReadActivity = Boolean(current.runtime?.capabilities.canReadActivity && this.data.teamViewMode === "group");
+      const syncPromise = current.runtime?.capabilities.canMutate
+        ? this.syncCurrentActivity()
+          .then((synced) => this.applyTeamData(synced))
+          .catch(() => this.setData({ serviceNotice: "今日行动暂未同步，小队首页仍可继续查看。" }))
+        : Promise.resolve();
+      const activityPromise = canReadActivity ? this.loadActivityPreview() : Promise.resolve();
+      if (!canReadActivity) {
         this.setData({ activityList: [], activityStatus: current.runtime?.capabilities.canReadActivity ? "idle" : "unavailable" });
       }
+      await Promise.all([syncPromise, activityPromise]);
     } catch (error) {
       this.setData({
         status: "error",
@@ -648,6 +676,7 @@ Page(withAppTheme({
     const companionRows = buildCompanionRows(memberViews);
     const selfRecord = data.selfMember || members.find((member) => member.isSelf) || null;
     const selfMember = selfRecord ? toMemberView(selfRecord, team, viewerCanManage) : null;
+    const selfVisibility = buildSelfVisibility(selfMember, team);
     const effectiveMemberCount = Math.max(
       Number(team?.memberCount || 0),
       Number(dailyStats?.totalMembers || 0),
@@ -697,6 +726,8 @@ Page(withAppTheme({
       team,
       members: memberViews,
       selfMember,
+      selfVisibilityLabel: selfVisibility.label,
+      selfVisibilityHelp: selfVisibility.help,
       teamViewMode,
       dailyStats,
       displayTeamName: normalizeTeamDisplayName(team),
@@ -757,7 +788,8 @@ Page(withAppTheme({
   },
 
   inputRoomCode(event: { detail: { value?: string } }) {
-    const value = String(event.detail.value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+    const raw = String(event.detail.value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+    const value = /^[A-HJ-NP-Z2-9]{6}$/.test(raw) ? raw : raw.replace(/\D/g, "").slice(0, 4);
     this.setData({ roomCodeInput: value });
   },
 
@@ -931,7 +963,7 @@ Page(withAppTheme({
       title: isOwner ? "解散小队" : "退出小队",
       content: isOwner ? "解散后所有成员都将退出，历史行动不会被删除。此操作不可撤销。" : "退出后将不再参与小队榜单，个人行动记录不会受影响。",
       confirmText: isOwner ? "确认解散" : "确认退出",
-      confirmColor: "#B54A43",
+      confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: async ({ confirm }) => {
         if (!confirm) return;
         this.setData({ savingSettings: true });
@@ -955,7 +987,10 @@ Page(withAppTheme({
       wx.showToast({ title: "请先添加今日行动", icon: "none" });
       return;
     }
-    const prevScrollTop = this.data.currentScrollTop;
+    const prevScrollTop = this.scrollTopCache;
+    const originalTasks = snapshot.tasks
+      .filter((task) => task.status !== "completed" && task.status !== "rescheduled")
+      .map((task) => ({ ...task, reminder: task.reminder ? { ...task.reminder } : undefined }));
     this.setData({ markingComplete: true });
     try {
       snapshot.tasks
@@ -974,6 +1009,12 @@ Page(withAppTheme({
       wx.showToast({ title: "今日行动已完成", icon: "success" });
       wx.nextTick(() => wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 }));
     } catch (error) {
+      if (originalTasks.length > 0) {
+        const originalById = new Map(originalTasks.map((task) => [task.id, task]));
+        const store = readManualStore();
+        store.tasks = store.tasks.map((task) => originalById.get(task.id) || task);
+        writeManualStore(store);
+      }
       this.setData({ markingComplete: false });
       wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
     }
@@ -994,7 +1035,7 @@ Page(withAppTheme({
 
   async submitEncouragement(memberId: string, type: EncouragementType) {
     if (this.data.encouragingMemberId) return;
-    const prevScrollTop = this.data.currentScrollTop;
+    const prevScrollTop = this.scrollTopCache;
     this.setData({ encouragingMemberId: memberId });
     try {
       await sendEncouragement({ memberId, type });
@@ -1009,25 +1050,41 @@ Page(withAppTheme({
   },
 
   openSelfPrivacyOptions() {
-    if (!this.data.selectedMember?.isSelf) return;
-    const options: Array<{ label: string; mode: TeamDisplayMode; detail: boolean }> = [
-      { label: "显示昵称与行动", mode: "public", detail: true },
-      { label: "仅显示昵称", mode: "nicknameOnly", detail: false },
+    const self = this.data.selfMember || this.data.members.find((member) => member.isSelf);
+    if (!self || !this.data.runtime?.capabilities.canMutate || this.data.updatingSelfDisplay) return;
+    const currentMode = self.selfDisplayMode || self.displayMode;
+    const options: Array<{ label: string; mode: TeamDisplayMode }> = [
+      { label: "显示昵称与行动", mode: "public" },
+      { label: "仅显示昵称", mode: "nicknameOnly" },
     ];
-    if (this.data.team?.allowAnonymous) options.push({ label: "匿名参与", mode: "anonymous", detail: false });
+    if (this.data.team?.allowAnonymous) options.push({ label: "匿名参与", mode: "anonymous" });
     wx.showActionSheet({
-      itemList: options.map((item) => item.label),
+      itemList: options.map((item) => item.mode === currentMode ? `${item.label}（当前）` : item.label),
       success: async ({ tapIndex }) => {
         const option = options[tapIndex];
         if (!option) return;
+        if (option.mode === currentMode) {
+          wx.showToast({ title: "当前已是该展示方式", icon: "none" });
+          return;
+        }
+        this.setData({ updatingSelfDisplay: true });
         try {
-          await updateSelfDisplayMode(option.mode);
-          await updateSelfTaskDetailVisible(option.detail);
-          const data = await this.syncCurrentActivity();
+          const data = await updateSelfDisplayMode(option.mode);
           this.applyTeamData(data);
-          this.setData({ memberDetailVisible: false, selectedMember: null });
-          wx.showToast({ title: "展示方式已更新", icon: "success" });
+          this.setData({ updatingSelfDisplay: false });
+          const nextSelf = data.selfMember || data.members.find((member) => member.isSelf);
+          const blockedByTeam = data.team?.anonymityMode !== "public" && option.mode !== "anonymous";
+          const blockedByProfile = nextSelf?.profileAllowedInTeam === false && option.mode !== "anonymous";
+          wx.showToast({
+            title: blockedByTeam
+              ? "小队匿名中，设置已保存"
+              : blockedByProfile
+                ? "请先在我的页开放资料"
+                : option.mode === "anonymous" ? "已切换为匿名参与" : "展示方式已更新",
+            icon: blockedByTeam || blockedByProfile ? "none" : "success",
+          });
         } catch (error) {
+          this.setData({ updatingSelfDisplay: false });
           wx.showToast({ title: error instanceof Error ? error.message : "更新失败", icon: "none" });
         }
       },

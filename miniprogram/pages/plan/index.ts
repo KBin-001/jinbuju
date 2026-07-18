@@ -1019,61 +1019,70 @@ Page(withAppTheme({
     wx.navigateTo({ url: `/pages/ai-coach/index?${query.join("&")}` });
   },
 
-  onBarTap(event: { currentTarget: { dataset: { key?: string } } }) {
+  onBarTap(event: { currentTarget: { dataset: { key?: string; index?: string | number } } }) {
     const key = String(event.currentTarget.dataset.key || "");
-    const today = getTodayBusinessDate();
-    const tasks = this.data.goal ? getTaskHistoryByGoal(this.data.goal.id) : [];
-    const currentKey = this.data.selectedTrendItem?.key;
-    const nextKey = currentKey === key ? undefined : key;
-    const trendView = buildTrendView(this.data.trendRange, tasks, today, nextKey);
-    this.setData({
-      barChart: trendView.barChart,
-      selectedTrendItem: trendView.barChart.bars.find((bar) => bar.active) || null,
-    });
+    const index = Number(event.currentTarget.dataset.index);
+    const bar = this.data.barChart.bars[index];
+    if (!key || !bar || bar.key !== key) return;
+
+    const currentIndex = this.data.barChart.bars.findIndex((item) => item.active);
+    const nextActive = currentIndex !== index;
+    const patch: Record<string, unknown> = {
+      [`barChart.bars[${index}].active`]: nextActive,
+      selectedTrendItem: nextActive ? { ...bar, active: true } : null,
+    };
+    if (currentIndex >= 0 && currentIndex !== index) {
+      patch[`barChart.bars[${currentIndex}].active`] = false;
+    }
+    this.setData(patch);
   },
 
   onChartBackdropTap() {
     if (!this.data.selectedTrendItem) return;
-    const bars = this.data.barChart.bars.map((bar) => ({ ...bar, active: false }));
+    const currentIndex = this.data.barChart.bars.findIndex((bar) => bar.active);
+    if (currentIndex < 0) {
+      this.setData({ selectedTrendItem: null });
+      return;
+    }
     this.setData({
-      barChart: { ...this.data.barChart, bars },
+      [`barChart.bars[${currentIndex}].active`]: false,
       selectedTrendItem: null,
     });
   },
 
-  onHeatmapDayTap(event: { currentTarget: { dataset: { date?: string } } }) {
+  onHeatmapDayTap(event: { currentTarget: { dataset: { date?: string; weekIndex?: string | number; dayIndex?: string | number } } }) {
     const date = String(event.currentTarget.dataset.date || "");
-    if (!date) return;
-    const today = getTodayBusinessDate();
-    const tasks = this.data.goal ? getTaskHistoryByGoal(this.data.goal.id) : [];
-    const year = toDate(today).getFullYear();
-    const current = this.data.selectedHeatmapDay;
-    const nextDate = current && current.date === date ? undefined : date;
-    const { weeks } = buildYearHeatmap(year, today, tasks, nextDate);
+    const weekIndex = Number(event.currentTarget.dataset.weekIndex);
+    const dayIndex = Number(event.currentTarget.dataset.dayIndex);
+    const day = this.data.heatmapWeeks[weekIndex]?.days[dayIndex];
+    if (!date || !day || day.date !== date || day.isEmpty || day.isFuture) return;
 
-    let selected: SelectedHeatmapDay | null = null;
-    if (nextDate) {
-      for (const week of weeks) {
-        for (const day of week.days) {
-          if (day.date === nextDate) {
-            selected = {
-              date: nextDate,
-              dateLabel: formatMonthDay(nextDate),
-              minutes: day.minutes,
-              actions: day.actions,
-              hasRecord: day.hasRecord,
-            };
-            break;
-          }
-        }
-        if (selected) break;
-      }
-    }
-
-    this.setData({
-      heatmapWeeks: weeks,
-      selectedHeatmapDay: selected,
+    let currentWeekIndex = -1;
+    let currentDayIndex = -1;
+    this.data.heatmapWeeks.some((week, candidateWeekIndex) => {
+      const candidateDayIndex = week.days.findIndex((item) => item.active);
+      if (candidateDayIndex < 0) return false;
+      currentWeekIndex = candidateWeekIndex;
+      currentDayIndex = candidateDayIndex;
+      return true;
     });
+
+    const nextActive = currentWeekIndex !== weekIndex || currentDayIndex !== dayIndex;
+    const selected: SelectedHeatmapDay | null = nextActive ? {
+      date,
+      dateLabel: formatMonthDay(date),
+      minutes: day.minutes,
+      actions: day.actions,
+      hasRecord: day.hasRecord,
+    } : null;
+    const patch: Record<string, unknown> = {
+      [`heatmapWeeks[${weekIndex}].days[${dayIndex}].active`]: nextActive,
+      selectedHeatmapDay: selected,
+    };
+    if (currentWeekIndex >= 0 && (currentWeekIndex !== weekIndex || currentDayIndex !== dayIndex)) {
+      patch[`heatmapWeeks[${currentWeekIndex}].days[${currentDayIndex}].active`] = false;
+    }
+    this.setData(patch);
   },
 
   openHistoryReview() {

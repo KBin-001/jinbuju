@@ -1,6 +1,6 @@
 const cloud = require("wx-server-sdk");
 const crypto = require("crypto");
-const { generateTextWithMetadata } = require("./ai");
+const { generateCoachActionIntent, generateTextWithMetadata } = require("./ai");
 const { addBusinessDays, formatBusinessDate } = require("./date");
 const { stableId } = require("./repository");
 const { createCoachProposal } = require("./manual-sync");
@@ -569,8 +569,35 @@ async function askProgressCoach(openid, event, generator = generateTextWithMetad
 }
 
 function recentUserCommand(question, history) {
+  const current = String(question || "").trim();
+  // Only join a short clarification (for example "30 分钟") to the previous
+  // command. A complete question such as "今天我完成了什么？" must stand on its
+  // own and go to the model instead of inheriting an older write intent.
+  if (isQueryLike(current) || current.length > 40 || /(完成|做完|添加|增加|新增|安排|设定|设置|创建)/.test(current)) {
+    return { text: current, commandSentAt: "" };
+  }
   const previous = history.slice().reverse().find((item) => item.role === "user" && /(完成|做完|添加|增加|新增|安排|设定|设置|创建)/.test(item.content));
-  return { text: previous ? `${previous.content}；${question}` : question, commandSentAt: previous && previous.sentAt || "" };
+  return { text: previous ? `${previous.content}；${current}` : current, commandSentAt: previous && previous.sentAt || "" };
+}
+
+function isQueryLike(value) {
+  return /(?:什么|哪些|哪(?:个|一)?项|多少|几项|是否|有没有|完成率|完成情况|完成记录|进度|为什么|为何|怎么|如何|怎样|建议|适合|吗|呢|？|\?)/.test(String(value || ""));
+}
+
+function isExplicitCompletionWrite(value) {
+  const text = String(value || "");
+  const explicitMutation = /(?:把|将).{1,100}(?:(?:标记|设为|改为).{0,16})?(?:已?完成|做完)|(?:标记|设为|改为).{0,100}(?:已?完成|做完)/.test(text);
+  if (explicitMutation) return true;
+  if (isQueryLike(text)) return false;
+  return /(?:完成了|做完了|已完成|已经完成|已经做完)/.test(text);
+}
+
+function isExplicitCreateWrite(value) {
+  const text = String(value || "");
+  const explicitRequest = /(?:帮我|请|给我|替我|我要|我想)(?:.{0,16})?(?:添加|增加|新增|创建|安排|设定|设置)|^(?:今天|今日|明天|明日|后天)?(?:添加|增加|新增|创建|安排|设定|设置)/.test(text);
+  if (explicitRequest) return true;
+  if (isQueryLike(text)) return false;
+  return /(?:添加|增加|新增|创建)(?:一个|一项)?(?:任务|行动|计划)/.test(text);
 }
 
 function extractMinutes(text) {
@@ -607,24 +634,94 @@ function resolveCommandDate(text, analysisDate) {
   return requiredDate(date, "行动日期");
 }
 
-function extractCreateTaskTitle(text) {
-  const commandText = String(text).split("；")[0];
-  const titleMatch = commandText.match(/(?:添加|增加|新增|安排|设定|设置|创建)(?:一个|一项)?(?:任务|行动|计划)?[：:]?(.+?)(?=，|,|预计|大概|用时|\d+\s*(?:分钟|min)|$)/i);
-  return String(titleMatch && titleMatch[1] || "")
-    .replace(/^(?:今天|今日|明天|明日|后天)(?:上午|下午|晚上|早上)?(?:\d{1,2}(?::\d{1,2})?点?)?/, "")
-    .replace(/^(?:上午|下午|晚上|早上)?\d{1,2}(?::\d{1,2})?点?/, "")
-    .replace(/计划$/, "")
-    .trim()
-    .replace(/[“”"']/g, "");
+function hasExplicitCommandDate(text) {
+  return /(?:今天|今日|明天|明日|后天)|\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}日?/.test(String(text || ""));
 }
 
-async function buildCoachCommand(openid, snapshot, question, history, messageSentAt, analysisDate, proposalCreator = createCoachProposal) {
+function extractCreateTaskTitle(text) {
+  return String(text || "").split("；")[0]
+    .replace(/^.*?(?:添加|增加|新增|安排|设定|设置|创建)(?:一个|一项)?(?:任务|行动|计划)?[：:,，]?/, "")
+    .replace(/^(?:就是|是|在|于)\s*/, "")
+    .replace(/(?:今天|今日|明天|明日|后天)/g, "")
+    .replace(/(?:凌晨|早上|上午|中午|下午|晚上|晚间)?\s*\d{1,2}\s*(?::|点|时)\s*(?:半|\d{0,2})\s*分?/g, "")
+    .replace(/(?:凌晨|早上|上午|中午|下午|晚上|晚间)?\s*[零一二两三四五六七八九十]{1,3}\s*(?:点|时)\s*(?:半|[零一二两三四五六七八九十]{0,3}分?)?/g, "")
+    .replace(/提醒我?/g, "")
+    .replace(/\d{1,3}\s*(?:分钟|min(?:ute)?s?)/gi, "")
+    .replace(/(?:预计|大概|用时|持续|投入)/g, "")
+    .replace(/(?:任务|行动|计划)$/g, "")
+    .replace(/^[的地得\s，,：:]+|[的地得\s，,。.!！?？]+$/g, "")
+    .replace(/(?:任务|行动|计划)$/g, "")
+    .replace(/[“”"']/g, "")
+    .trim();
+}
+
+function extractReminderTime(value) {
+  const digitMap = { 零: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+  const chineseNumber = (clock) => {
+    if (clock === "十") return "10";
+    const parts = clock.split("十");
+    if (parts.length === 2) return String((parts[0] ? digitMap[parts[0]] : 1) * 10 + (parts[1] ? digitMap[parts[1]] : 0));
+    return String(digitMap[clock] === undefined ? clock : digitMap[clock]);
+  };
+  const normalizedValue = String(value || "")
+    .replace(/([零一二两三四五六七八九十]{1,3})(?=点|时)/g, chineseNumber)
+    .replace(/([点时])([零一二两三四五六七八九十]{1,3})分/g, (_match, separator, minute) => `${separator}${chineseNumber(minute)}分`);
+  const matches = Array.from(normalizedValue.matchAll(/(凌晨|早上|上午|中午|下午|晚上|晚间)?\s*(\d{1,2})\s*(?::|点|时)\s*(半|\d{0,2})\s*分?/g));
+  const match = matches[matches.length - 1];
+  if (!match) return "";
+  const period = String(match[1] || "");
+  let hour = Number(match[2]);
+  let minute = match[3] === "半" ? 30 : Number(match[3] || 0);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour > 23 || minute > 59) return "";
+  if ((period === "下午" || period === "晚上" || period === "晚间") && hour < 12) hour += 12;
+  if (period === "中午" && hour < 11) hour += 12;
+  if (period === "凌晨" && hour === 12) hour = 0;
+  minute = Math.floor(minute / 5) * 5;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function reminderLeadMinutes(currentDate, reminderTime, messageSentAt) {
+  const target = Date.parse(`${currentDate}T${reminderTime}:00+08:00`);
+  const sent = Date.parse(messageSentAt);
+  return Number.isFinite(target) && Number.isFinite(sent) ? Math.floor((target - sent) / 60000) : Number.NaN;
+}
+
+function normalizeCreateIntent(raw, fallbackText, analysisDate) {
+  const modelTitle = raw && raw.operation === "create_task" ? String(raw.title || "") : "";
+  const title = (modelTitle || extractCreateTaskTitle(fallbackText)).replace(/[\r\n\t]/g, " ").trim().slice(0, 40);
+  const modelMinutes = Number(raw && raw.operation === "create_task" ? raw.estimatedMinutes : 0);
+  const estimatedMinutes = Number.isInteger(modelMinutes) && modelMinutes >= 5 && modelMinutes <= 240 ? modelMinutes : extractMinutes(fallbackText);
+  const modelDate = String(raw && raw.operation === "create_task" ? raw.currentDate || "" : "");
+  // Relative dates are deterministic business facts. Never let the model turn
+  // “明天/后天” back into the current analysis date.
+  const currentDate = hasExplicitCommandDate(fallbackText)
+    ? resolveCommandDate(fallbackText, analysisDate)
+    : /^\d{4}-\d{2}-\d{2}$/.test(modelDate) ? modelDate : analysisDate;
+  const modelTime = String(raw && raw.operation === "create_task" ? raw.reminderTime || "" : "");
+  const reminderTime = extractReminderTime(modelTime) || extractReminderTime(fallbackText);
+  return { title, estimatedMinutes, currentDate, reminderTime };
+}
+
+async function extractCreateIntent(text, analysisDate, intentGenerator = generateCoachActionIntent) {
+  let modelIntent = null;
+  try {
+    modelIntent = await intentGenerator([{
+      role: "system",
+      content: `你只负责把明确的新增行动指令转换为 propose_coach_action 工具参数。当前上海业务日期是 ${analysisDate}。任务标题必须只保留行动本身，不得包含“今天/明天”、具体时钟、预计时长或“就是”等口头词。晚上10点应转换为 reminderTime=22:00。不要虚构用户未提供的信息。`,
+    }, { role: "user", content: text }], 12000, { action: "extractCoachAction", promptVersion: "coach-action-tool-2026-07-18.1" });
+  } catch (error) {
+    console.warn("coach action tool extraction fallback", { code: String(error && error.code || "UNKNOWN").slice(0, 80) });
+  }
+  return normalizeCreateIntent(modelIntent, text, analysisDate);
+}
+
+async function buildCoachCommand(openid, snapshot, question, history, messageSentAt, analysisDate, proposalCreator = createCoachProposal, intentGenerator = generateCoachActionIntent) {
   const command = recentUserCommand(question, history);
   const text = command.text;
   const minutes = extractMinutes(text);
   const pendingTasks = snapshot.tasks.filter((task) => task.status === "pending" || task.status === "partially_completed");
 
-  if (/(完成了|已完成|做完了|做完|完成)/.test(text) && !/(完成率|完成情况|如何完成|怎么完成)/.test(text)) {
+  if (isExplicitCompletionWrite(text)) {
     const candidates = taskCandidates(pendingTasks, text);
     if (!candidates.length) return clarification("我没有找到对应的未完成行动，请告诉我更完整的任务名称。", ["taskId"], { candidateTaskIds: [] });
     if (candidates.length > 1) return clarification("我找到了多项相似行动，请选择你刚刚完成的是哪一项。", ["taskId"], { candidateTaskIds: candidates.map((item) => item.id), candidateTaskTitles: candidates.map((item) => item.title) });
@@ -639,16 +736,21 @@ async function buildCoachCommand(openid, snapshot, question, history, messageSen
     return { answer: `我已整理好操作，请确认是否将“${task.title}”标记为已完成。`, mode: "direct", evidenceTaskIds: [task.id], evidenceDates: [task.currentDate], actionProposal: proposal };
   }
 
-  if (/(添加|增加|新增|安排|设定|设置|创建)/.test(text) && /(任务|行动|计划|预计|分钟|今天|明天|后天)/.test(text)) {
-    const currentDate = resolveCommandDate(text, analysisDate);
-    const title = extractCreateTaskTitle(text);
+  if (isExplicitCreateWrite(text) && /(任务|行动|计划|预计|分钟|今天|明天|后天)/.test(text)) {
+    const createIntent = await extractCreateIntent(text, analysisDate, intentGenerator);
+    const { currentDate, estimatedMinutes: createMinutes, reminderTime, title } = createIntent;
     if (!title || title.length < 2) return clarification("可以，请先告诉我需要添加的行动名称。", ["title"], { currentDate });
-    if (!minutes) return clarification(`“${title}”预计需要多少分钟？`, ["estimatedMinutes"], { title, currentDate });
-    if (minutes < 5 || minutes > 240) return clarification("预计时间需要在 5～240 分钟之间，请重新告诉我。", ["estimatedMinutes"], { title, currentDate });
+    if (!createMinutes) return clarification(`“${title}”预计需要多少分钟？`, ["estimatedMinutes"], { title, currentDate, reminderTime });
+    if (createMinutes < 5 || createMinutes > 240) return clarification("预计时间需要在 5～240 分钟之间，请重新告诉我。", ["estimatedMinutes"], { title, currentDate, reminderTime });
+    const leadMinutes = reminderTime ? reminderLeadMinutes(currentDate, reminderTime, messageSentAt) : Number.NaN;
+    if (reminderTime && Number.isFinite(leadMinutes) && leadMinutes < 10) {
+      return clarification(`${reminderTime} 距离现在不足 10 分钟或已经过去，请告诉我一个更晚的提醒时间。`, ["reminderTime"], { title, estimatedMinutes: createMinutes, currentDate, reminderTime });
+    }
     const targetGoal = snapshot.goals.find((goal) => goal.status === "active" && (snapshot.goalId === "overall" || goal.id === snapshot.goalId)) || snapshot.goals.find((goal) => goal.status === "active");
     if (!targetGoal) return clarification("当前没有可添加行动的进行中目标。", ["goalId"]);
-    const proposal = await proposalCreator(openid, { type: "create_task", goalId: targetGoal.id, title, estimatedMinutes: minutes, currentDate, messageSentAt });
-    return { answer: `我已生成“${title}”的新增行动，请确认后写入对应日期的行动列表。`, mode: "direct", evidenceTaskIds: [], evidenceDates: [currentDate], actionProposal: proposal };
+    const proposal = await proposalCreator(openid, { type: "create_task", goalId: targetGoal.id, title, estimatedMinutes: createMinutes, currentDate, reminderTime, messageSentAt });
+    const reminderCopy = reminderTime ? `，并在 ${reminderTime} 提醒你开始` : "";
+    return { answer: `我已生成“${title}”的新增行动${reminderCopy}。请确认后写入对应日期的行动列表。`, mode: "direct", evidenceTaskIds: [], evidenceDates: [currentDate], actionProposal: proposal };
   }
   return null;
 }
@@ -665,6 +767,14 @@ module.exports = {
   buildQuestionPrompt,
   calculateMetrics,
   getDataLevel,
+  isExplicitCompletionWrite,
+  isExplicitCreateWrite,
+  isQueryLike,
+  extractCreateIntent,
+  extractCreateTaskTitle,
+  extractReminderTime,
+  hasExplicitCommandDate,
+  reminderLeadMinutes,
   normalizeHistory,
   normalizeSnapshot,
   parseAiJson,

@@ -3,7 +3,7 @@ import { getTasksByGoal } from "../../services/manualTask";
 import { getProgressSummary } from "../../services/manualStats";
 import { getLocalUserProfile } from "../../services/profile";
 import { askProgressCoach } from "../../services/progressCoach";
-import { executeCoachAction } from "../../services/manualSync";
+import { executeCoachProposal } from "../../services/manualSync";
 import { getCurrentThemeId } from "../../services/theme";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
 import { ActionTask } from "../../types/manual";
@@ -11,14 +11,6 @@ import { CoachActionProposal, CoachRange, ProgressCoachChatMessage } from "../..
 
 interface ChatMessage extends ProgressCoachChatMessage {
   id: string;
-  summary?: string;
-  suggestion?: string;
-  followUps?: string[];
-  metrics?: Array<{ value: string; label: string }>;
-  insights?: string[];
-  mode?: "direct" | "compact" | "detailed";
-  showFull?: boolean;
-  canExpand?: boolean;
   actionProposal?: CoachActionProposal;
 }
 
@@ -138,7 +130,7 @@ Page({
     scopeSubtitle: "结合当前目标与累计行动分析",
     reportName: "累计完成情况",
     initialPrompt: "帮我分析一下当前的整体成长情况",
-    displayName: "微信用户",
+    displayName: "微信用户", userAvatarUrl: "",
     goalTitle: "当前目标",
     completedCount: 0,
     totalCount: 0,
@@ -151,12 +143,12 @@ Page({
     bottleneck: "完成更多行动后，会形成更具体的建议。",
     quickQuestions: [] as string[],
     messages: [] as ChatMessage[],
-    question: "",
     asking: false,
     chatError: "",
     failedQuestion: "",
     scrollIntoView: "",
     executingProposalId: "",
+    conversationId: "",
   },
 
   onLoad(query: Record<string, string>) {
@@ -170,11 +162,17 @@ Page({
       reportName: copy.reportName,
       initialPrompt: copy.prompt,
       quickQuestions: copy.questions,
-    }, () => this.loadLocalOverview());
+      messages: [],
+      conversationId: "",
+      chatError: "",
+      failedQuestion: "",
+    }, () => {
+      this.loadLocalOverview();
+    });
   },
 
   onShow() {
-    this.setData({ appTheme: getCurrentThemeId(), ...getNavigationMetrics() });
+    this.setData({ appTheme: getCurrentThemeId(), ...getNavigationMetrics(), userAvatarUrl: getLocalUserProfile()?.avatarUrl || "" });
   },
 
   loadLocalOverview() {
@@ -196,6 +194,7 @@ Page({
     this.setData({
       goalId: this.data.scope === "overall" ? "" : selectedGoal?.id || "",
       displayName: profile?.nickname || "微信用户",
+      userAvatarUrl: profile?.avatarUrl || "",
       goalTitle: title,
       completedCount: stats.completedActions,
       totalCount: stats.totalActions,
@@ -213,59 +212,46 @@ Page({
 
   sendGuidedQuestion(event: { currentTarget: { dataset: { question?: string } } }) {
     if (this.data.asking) return;
-    const question = String(event.currentTarget.dataset.question || "").slice(0, 120);
+    const question = String(event.currentTarget.dataset.question || "").slice(0, 1000);
     if (!question) return;
-    this.setData({ question, chatError: "" }, () => this.sendQuestion());
+    this.askQuestion(question, true);
   },
 
-  toggleFullReply(event: { currentTarget: { dataset: { id?: string } } }) {
-    const id = String(event.currentTarget.dataset.id || "");
-    if (!id) return;
-    this.setData({
-      messages: this.data.messages.map((item) => item.id === id ? { ...item, showFull: !item.showFull } : item),
-    });
+  handleChatSend(event: { detail: { question?: string } }) {
+    this.askQuestion(String(event.detail.question || "").slice(0, 1000), true);
   },
 
-  inputQuestion(event: { detail: { value?: string } }) {
-    this.setData({ question: String(event.detail.value || "").slice(0, 120), chatError: "" });
-  },
-
-  async sendQuestion() {
+  async askQuestion(question: string, showUser: boolean) {
     if (this.data.asking) return;
-    const question = this.data.question.trim();
     if (!question) {
       wx.showToast({ title: "先写下你想问的问题", icon: "none" });
       return;
     }
-    const history = this.data.messages.map((item) => ({ role: item.role, content: item.content, sentAt: item.sentAt })).slice(-12);
+    const history = this.data.messages.map((item) => ({ role: item.role, content: item.content, sentAt: item.sentAt })).slice(-20);
     const messageSentAt = new Date().toISOString();
-    const userMessage: ChatMessage = { id: `user_${Date.now()}`, role: "user", content: question, sentAt: messageSentAt };
+    const userMessage: ChatMessage = { id: `user_${Date.now()}`, role: "user", content: question, sentAt: messageSentAt,
+      scope: this.data.scope, analysisDate: getTodayBusinessDate(), goalId: this.data.goalId || undefined };
     this.setData({
-      messages: this.data.messages.concat(userMessage),
-      question: "",
+      messages: showUser ? this.data.messages.concat(userMessage).slice(-50) : this.data.messages,
       asking: true,
       chatError: "",
       failedQuestion: "",
       scrollIntoView: userMessage.id,
     });
     try {
-      const result = await askProgressCoach(this.data.scope, this.data.goalId || undefined, question, history, getTodayBusinessDate(), messageSentAt);
-      const mode = result.mode || "direct";
+      const result = await askProgressCoach(this.data.scope, this.data.goalId || undefined, question, history, getTodayBusinessDate(), messageSentAt, this.data.conversationId || undefined);
       const assistantMessage: ChatMessage = {
-        id: `assistant_${Date.now()}`,
+        id: result.assistantMessageId || `assistant_${Date.now()}`,
         role: "assistant",
         content: result.answer,
-        summary: mode === "direct" ? "" : result.summary || result.answer,
-        suggestion: mode === "direct" ? "" : result.advice || "",
-        followUps: mode === "direct" ? [] : result.followUps || [],
-        metrics: mode === "direct" ? [] : (result.stats || []).map((item) => ({ value: item.value, label: item.label })),
-        insights: result.insights || [],
-        mode,
-        showFull: false,
-        canExpand: mode !== "direct" && result.answer.length > 180,
+        sentAt: result.generatedAt,
+        scope: this.data.scope,
+        analysisDate: getTodayBusinessDate(),
+        goalId: this.data.goalId || undefined,
+        presentation: result.presentation,
         actionProposal: result.actionProposal,
       };
-      this.setData({ messages: this.data.messages.concat(assistantMessage).slice(-6), asking: false, scrollIntoView: assistantMessage.id });
+      this.setData({ conversationId: result.conversationId || this.data.conversationId, messages: this.data.messages.concat(assistantMessage).slice(-50), asking: false, scrollIntoView: assistantMessage.id });
     } catch (error) {
       this.setData({ asking: false, chatError: errorMessage(error), failedQuestion: question, scrollIntoView: "chat-error" });
     }
@@ -274,16 +260,17 @@ Page({
   retryLastQuestion() {
     if (!this.data.failedQuestion || this.data.asking) return;
     const failedQuestion = this.data.failedQuestion;
-    const messages = this.data.messages.filter((item) => !(item.role === "user" && item.content === failedQuestion && item === this.data.messages[this.data.messages.length - 1]));
-    this.setData({ messages, question: failedQuestion, failedQuestion: "", chatError: "" }, () => this.sendQuestion());
+    this.setData({ failedQuestion: "", chatError: "" }, () => this.askQuestion(failedQuestion, false));
   },
 
-  async confirmCoachAction(event: { currentTarget: { dataset: { proposalId?: string } } }) {
-    const proposalId = String(event.currentTarget.dataset.proposalId || "");
+  async confirmCoachAction(event: { detail: { proposalId?: string } }) {
+    const proposalId = String(event.detail.proposalId || "");
     if (!proposalId || this.data.executingProposalId) return;
-    this.setData({ executingProposalId: proposalId });
+    const proposal = this.data.messages.find((item) => item.actionProposal?.id === proposalId)?.actionProposal;
+    if (!proposal) { wx.showToast({ title: "操作确认信息已失效", icon: "none" }); return; }
+    this.setData({ executingProposalId: proposalId, chatError: "", failedQuestion: "" });
     try {
-      await executeCoachAction(proposalId);
+      const outcome = await executeCoachProposal(proposal);
       this.setData({
         executingProposalId: "",
         chatError: "",
@@ -291,7 +278,11 @@ Page({
           ? { ...item, actionProposal: { ...item.actionProposal, status: "executed" as const } }
           : item),
       }, () => this.loadLocalOverview());
-      wx.showToast({ title: "已同步到今日行动", icon: "success" });
+      const title = outcome.reminder === "scheduled" ? "行动与提醒已设置"
+        : outcome.reminder === "rejected" ? "行动已创建，提醒未开启"
+          : outcome.reminder === "invalid" ? "行动已创建，提醒时间无效"
+            : outcome.reminder === "failed" ? "行动已创建，提醒设置失败" : "已同步到今日行动";
+      wx.showToast({ title, icon: outcome.reminder === "rejected" || outcome.reminder === "invalid" || outcome.reminder === "failed" ? "none" : "success" });
     } catch (error) {
       this.setData({ executingProposalId: "", chatError: errorMessage(error) });
     }

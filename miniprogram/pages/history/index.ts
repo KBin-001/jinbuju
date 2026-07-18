@@ -7,7 +7,7 @@ import {
   softDeleteArchivedGoal,
 } from "../../services/manualGoal";
 import { syncManualData } from "../../services/manualSync";
-import { withAppTheme } from "../../services/theme";
+import { MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
 import { ArchivedGoal } from "../../types/manual";
 
 type HistoryStatus = "loading" | "ready" | "error";
@@ -159,7 +159,7 @@ Page(withAppTheme({
       title: "移到最近删除？",
       content: `“${title}”会离开历史列表，之后仍可恢复或彻底删除。`,
       confirmText: "移到最近删除",
-      confirmColor: "#9B554D",
+      confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: (result) => {
         if (!result.confirm) return;
         softDeleteArchivedGoal(id);
@@ -191,14 +191,14 @@ Page(withAppTheme({
       title: "彻底删除？",
       content: `“${title}”的目标内容、行动与复盘将无法恢复。`,
       confirmText: "继续",
-      confirmColor: "#9B554D",
+      confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: (first) => {
         if (!first.confirm) return;
         wx.showModal({
           title: "最后一次确认",
           content: "此操作不可撤销。确定永久删除吗？",
           confirmText: "彻底删除",
-          confirmColor: "#9B554D",
+          confirmColor: MODAL_CONFIRM_COLORS.danger,
           success: (second) => {
             if (!second.confirm) return;
             purgeArchivedGoal(id);

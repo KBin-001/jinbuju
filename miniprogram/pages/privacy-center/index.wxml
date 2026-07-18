@@ -12,18 +12,20 @@
       <view class="version-row"><view><view>用户协议</view><text>{{status.versions.terms}}</text></view><view class="record-chip {{status.consents.terms.agreed ? '' : 'record-chip--pending'}}">{{status.consents.terms.agreed ? '已记录' : '待确认'}}</view></view>
       <view class="draft-note">当前为发布候选版本。运营主体、联系方式、发布日期和生效日期仍需上线前人工确认。</view>
       <view class="legal-links"><view bindtap="openPrivacy">阅读隐私政策</view><view bindtap="openTerms">阅读用户协议</view></view>
-      <checkbox-group class="agreement-check" bindchange="onConsentChange"><label><checkbox value="agree" checked="{{consentChecked}}" color="#245B4D" /><text>我已分别阅读并同意当前版本的隐私政策与用户协议</text></label></checkbox-group>
-      <t-button class="confirm-button" loading="{{saving}}" disabled="{{!consentChecked || saving}}" bindtap="confirmAgreements">保存同意记录</t-button>
+      <view wx:if="{{agreementsAccepted}}" class="agreement-recorded"><t-icon name="check-circle" size="32rpx" /><text>当前版本已同意；协议版本更新后会再次提示确认。</text></view>
+      <block wx:else>
+        <checkbox-group class="agreement-check" bindchange="onConsentChange"><label><checkbox value="agree" checked="{{consentChecked}}" color="#245B4D" /><text>我已分别阅读并同意当前版本的隐私政策与用户协议</text></label></checkbox-group>
+        <t-button class="confirm-button" loading="{{saving}}" disabled="{{!consentChecked || saving}}" bindtap="confirmAgreements">保存同意记录</t-button>
+      </block>
       <view wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</view>
     </view>
 
     <view class="card list-card">
-      <view class="section-title">个人信息收集清单</view>
-      <view class="info-item"><t-icon name="user" size="34rpx" /><view><view>微信身份、昵称与头像</view><text>用于建立账号、展示个人资料和小队身份</text></view></view>
-      <view class="info-item"><t-icon name="flag" size="34rpx" /><view><view>目标、行动、投入与复盘</view><text>用于今日计划、进度统计、历史目标和 AI 建议</text></view></view>
-      <view class="info-item"><t-icon name="user" size="34rpx" /><view><view>小队关系与公开行动摘要</view><text>用于成员身份、行动榜与轻量鼓励</text></view></view>
-      <view class="info-item"><t-icon name="info-circle" size="34rpx" /><view><view>手机号（可选）</view><text>仅在用户主动授权并确认用途后绑定</text></view></view>
-      <view class="info-item"><t-icon name="notification" size="34rpx" /><view><view>通知授权记录与微信身份</view><text>仅用于投递你主动订阅的行动、教练和小队提醒</text></view></view>
+      <view class="collection-entry" bindtap="openPrivacy" hover-class="collection-entry--pressed">
+        <view class="collection-entry__icon"><t-icon name="file" size="34rpx" /></view>
+        <view class="collection-entry__copy"><view>个人信息收集与使用清单</view><text>查看收集的信息、使用目的、保存期限和你的权利</text></view>
+        <t-icon name="chevron-right" size="32rpx" />
+      </view>
     </view>
 
     <view class="card notification-card">
@@ -61,8 +63,8 @@
 
     <view class="card rights-card">
       <view class="section-title">你的数据权利</view>
-      <view class="rights-row" bindtap="openAccountSecurity"><view><view>手机号绑定与解除</view><text>拒绝绑定不影响核心功能</text></view><t-icon name="chevron-right" size="32rpx" /></view>
-      <view class="rights-row" bindtap="withdrawOptionalConsent"><view><view>撤回可选手机号处理同意</view><text>已绑定时请先解除绑定</text></view><t-icon name="chevron-right" size="32rpx" /></view>
+      <view wx:if="{{phoneBindingEnabled}}" class="rights-row" bindtap="openAccountSecurity"><view><view>手机号绑定与解除</view><text>拒绝绑定不影响核心功能</text></view><t-icon name="chevron-right" size="32rpx" /></view>
+      <view wx:if="{{phoneBindingEnabled}}" class="rights-row" bindtap="withdrawOptionalConsent"><view><view>撤回可选手机号处理同意</view><text>已绑定时请先解除绑定</text></view><t-icon name="chevron-right" size="32rpx" /></view>
       <view class="rights-row" bindtap="openDataManagement"><view><view>删除数据与注销账号</view><text>三类操作分开处理并二次确认</text></view><t-icon name="chevron-right" size="32rpx" /></view>
     </view>
   </block>

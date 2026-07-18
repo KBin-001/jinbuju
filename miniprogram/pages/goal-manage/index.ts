@@ -1,6 +1,6 @@
 import { endGoal, getActiveGoal, getActiveGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
-import { withAppTheme } from "../../services/theme";
+import { MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
 import { Goal, ProgressSummary } from "../../types/manual";
 
 interface GoalManageCardView {
@@ -120,7 +120,7 @@ Page(withAppTheme({
       content: `“${title}”会进入历史目标，已有行动、投入和成长记录都会保留。`,
       cancelText: "再想想",
       confirmText: "确认结束",
-      confirmColor: "#B86152",
+      confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: (result) => {
         if (!result.confirm) return;
         this.setData({ endingGoalId: id });

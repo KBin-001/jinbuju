@@ -62,10 +62,48 @@ export interface ProgressCoachReplyStat {
   value: string;
 }
 
+export type CoachPresentationKind = "summary" | "metrics" | "priorities" | "tasks" | "clarification";
+export type CoachPresentationTone = "positive" | "warning" | "neutral" | "success";
+
+export interface CoachPresentationMetric {
+  label: string;
+  value: string;
+  unit?: string;
+  progress?: number;
+}
+
+export interface CoachPresentationSection {
+  index: string;
+  title: string;
+  detail: string;
+}
+
+export interface CoachPresentationPriority {
+  label: string;
+  title: string;
+  detail: string;
+  tone: CoachPresentationTone;
+}
+
+export interface CoachPresentation {
+  kind: CoachPresentationKind;
+  eyebrow: string;
+  title: string;
+  summary: string;
+  metrics?: CoachPresentationMetric[];
+  sections?: CoachPresentationSection[];
+  priorities?: CoachPresentationPriority[];
+}
+
 export interface ProgressCoachAnswer {
   answer: string;
-  evidenceTaskIds: string[];
-  evidenceDates: string[];
+  conversationId?: string;
+  userMessageId?: string;
+  assistantMessageId?: string;
+  generatedAt?: string;
+  contextVersion?: string;
+  evidenceTaskIds?: string[];
+  evidenceDates?: string[];
   mode?: ProgressCoachReplyMode;
   summary?: string;
   statKeys?: ProgressCoachStatKey[];
@@ -73,10 +111,11 @@ export interface ProgressCoachAnswer {
   insights?: string[];
   advice?: string;
   followUps?: string[];
+  presentation?: CoachPresentation;
   actionProposal?: CoachActionProposal;
 }
 
-export type CoachActionRequiredField = "taskId" | "actualMinutes" | "title" | "estimatedMinutes" | "goalId";
+export type CoachActionRequiredField = "taskId" | "actualMinutes" | "title" | "estimatedMinutes" | "goalId" | "reminderTime";
 export type CoachActionType = "complete_task" | "create_task" | "needs_clarification";
 
 export interface CoachActionProposal {
@@ -93,6 +132,7 @@ export interface CoachActionProposal {
   completedAt?: string;
   title?: string;
   estimatedMinutes?: number;
+  reminderTime?: string;
   currentDate?: string;
   expiresAt?: string;
 }
@@ -102,6 +142,7 @@ export interface CoachActionResult {
   type: "complete_task" | "create_task";
   status: "executed";
   task: import("./manual").ActionTask;
+  reminderTime?: string;
 }
 
 export interface CoachActionStatusResult {
@@ -112,7 +153,19 @@ export interface CoachActionStatusResult {
 }
 
 export interface ProgressCoachChatMessage {
+  id?: string;
   role: "user" | "assistant";
   content: string;
   sentAt?: string;
+  scope?: CoachRange;
+  analysisDate?: string;
+  goalId?: string;
+  presentation?: CoachPresentation;
+  actionProposal?: CoachActionProposal;
+}
+
+export interface CoachConversation {
+  conversationId: string;
+  messages: ProgressCoachChatMessage[];
+  hasMore: boolean;
 }

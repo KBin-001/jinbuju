@@ -27,7 +27,8 @@ const LEGACY_CACHE_KEY = "JINBUJU_TEAM_CACHE_V2";
 const CACHE_KEY_PREFIX = "JINBUJU_TEAM_CACHE_V3_";
 const CACHE_REGISTRY_KEY = "JINBUJU_TEAM_CACHE_KEYS_V3";
 const DEV_MOCK_KEY = "JINBUJU_TEAM_DEV_MOCK_V1";
-const ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
+const ROOM_CODE_PATTERN = /^\d{4}$/;
+const LEGACY_ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{6}$/;
 const REQUEST_TIMEOUT = 15000;
 export const MAX_TEAM_MEMBERS = 50;
 
@@ -234,7 +235,7 @@ export function getTeamRuntimeInfo(force = false): Promise<TeamRuntimeInfo | nul
 
 export function validateRoomCode(value: string): string {
   const roomCode = String(value || "").trim().toUpperCase().replace(/\s+/g, "");
-  if (!ROOM_CODE_PATTERN.test(roomCode)) throw createError("INVALID_ROOM_CODE", "请输入 6 位房间号。" );
+  if (!ROOM_CODE_PATTERN.test(roomCode) && !LEGACY_ROOM_CODE_PATTERN.test(roomCode)) throw createError("INVALID_ROOM_CODE", "请输入 4 位数字房间号。" );
   return roomCode;
 }
 

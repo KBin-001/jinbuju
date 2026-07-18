@@ -23,8 +23,9 @@ assert.match(page, /pages\/growth-records\/index\?from=progress&goalId=/);
 assert.doesNotMatch(template, /最近完成|待继续行动/, "完整成长记录流程应从进度页独立出去");
 assert.doesNotMatch(page, /updateActionRecord|recordEditorVisible/, "进度页不应继续持有成长记录编辑状态");
 assert.match(template, /wx:if="\{\{hasTrendData\}\}" class="coach-card/);
-assert.match(template, /\{\{coachScopeLabel\}\}复盘/);
-assert.match(template, /查看完整分析/);
+assert.match(template, /AI 成长教练/);
+assert.match(template, /\{\{coachScopeLabel\}\} · 真实行动记录/);
+assert.match(template, /进入教练对话/);
 assert.match(template, /trendSummary\.summaryText/);
 assert.match(template, /完成行动（项）/);
 assert.doesNotMatch(template, /<canvas/);
@@ -38,7 +39,12 @@ assert.doesNotMatch(template, /ai-coach-shanshui-v1\.jpg/, "紧凑 AI 入口不�
 assert.doesNotMatch(page, /analyzeProgress\s*\(/, "进入进度页不得自动生成 AI 报告");
 assert.doesNotMatch(page, /prepareProgressCoach\s*\(/, "进入进度页不得发起 AI 上下文网络请求");
 assert.doesNotMatch(coachPage, /prepareProgressCoach\s*\(/, "打开 AI 面板不得自动发起上下文网络请求");
-assert.match(coachService, /askProgressCoach[\s\S]*await prepareProgressCoach/, "只能在用户发送问题时准备上下文并调用 AI");
+assert.match(coachService, /askProgressCoach[\s\S]*await verifyCoachRuntime\(\);[\s\S]*await syncManualData\(\);/, "只能在用户发送问题时同步可信数据并调用 AI");
+assert.doesNotMatch(
+  coachService.slice(coachService.indexOf("export async function askProgressCoach"), coachService.indexOf("export async function getCoachConversation")),
+  /prepareProgressCoach\(/,
+  "普通问答不应依赖旧快照或进行中目标",
+);
 assert.match(page, /task\.activityDate \|\| task\.currentDate/, "趋势必须使用真实行动业务日期");
 assert.match(page, /task\.status === "rescheduled"[\s\S]*task\.statusBeforeReschedule === "partially_completed"[\s\S]*\(task\.actualMinutes \|\| 0\) > 0/, "顺延前真实投入必须保留");
 assert.match(page, /getTaskHistoryByGoal/, "趋势必须使用包含顺延历史的分析专用查询");

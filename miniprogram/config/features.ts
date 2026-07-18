@@ -3,6 +3,12 @@ export const FEATURE_FLAGS = {
   ENABLE_AI_PROGRESS_COACH: true,
   ENABLE_TEAM: true,
   /**
+   * 手机号绑定前端入口开关（宏定义）。
+   * 当前阶段不展示绑定、解绑、手机号处理同意及绑定状态；不删除已有云端数据。
+   * 后续仅将此项改为 true，即可恢复前端入口。
+   */
+  ENABLE_PHONE_BINDING: false,
+  /**
    * 主题换肤功能开关（宏定义）
    * - false：禁用主题换肤，系统强制使用默认主题（inkGreen 墨绿成长），
    *          不会读取/写入主题 storage，不广播主题变更事件。
@@ -22,4 +28,3 @@ export const FEATURE_FLAGS = {
    */
   ENABLE_TREND_LINE: true,
 } as const;
-

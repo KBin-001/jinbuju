@@ -82,7 +82,7 @@
             <view class="bar-area">
               <view class="bar-grid"><view></view><view></view><view></view><view></view></view>
               <view class="bar-columns">
-                <view wx:for="{{barChart.bars}}" wx:key="key" class="bar-column" data-key="{{item.key}}" catchtap="onBarTap">
+                <view wx:for="{{barChart.bars}}" wx:key="key" class="bar-column" data-key="{{item.key}}" data-index="{{index}}" catchtap="onBarTap">
                   <view wx:if="{{item.active}}" class="bar-tooltip tooltip-{{item.tooltipAlign}}" style="bottom: calc({{item.tooltipBottomPercent}}% + 12rpx);"><text>{{item.minutes}} 分钟</text><text>{{item.actions}} 项完成</text></view>
                   <view wx:if="{{completionDotsEnabled && item.hasNext}}" class="completion-segment" style="-webkit-clip-path: {{item.lineClipPath}}; clip-path: {{item.lineClipPath}};"></view>
                   <view wx:if="{{completionDotsEnabled}}" class="completion-point {{item.actions > 0 ? 'has-value' : ''}} {{item.active ? 'is-active' : ''}} {{item.labelsOverlap ? 'labels-overlap' : ''}} label-shift-{{item.tooltipAlign}}" style="bottom: {{item.actionHeightPercent}}%;"><text>{{item.actions}}</text></view>
@@ -119,7 +119,7 @@
               <view class="heatmap-months"><text wx:for="{{heatmapMonthLabels}}" wx:key="label" style="left: {{item.left}}rpx;">{{item.label}}</text></view>
               <view class="heatmap-grid">
                 <view wx:for="{{heatmapWeeks}}" wx:for-item="week" wx:for-index="weekIndex" wx:key="weekIndex" class="heatmap-column">
-                  <view wx:for="{{week.days}}" wx:for-item="day" wx:for-index="dayIndex" wx:key="dayIndex" class="heatmap-cell level-{{day.level}} {{day.active ? 'is-active' : ''}} {{day.isEmpty || day.isFuture ? 'is-muted' : ''}}" data-date="{{day.date}}" catchtap="onHeatmapDayTap"></view>
+                  <view wx:for="{{week.days}}" wx:for-item="day" wx:for-index="dayIndex" wx:key="dayIndex" class="heatmap-cell level-{{day.level}} {{day.active ? 'is-active' : ''}} {{day.isEmpty || day.isFuture ? 'is-muted' : ''}}" data-date="{{day.date}}" data-week-index="{{weekIndex}}" data-day-index="{{dayIndex}}" catchtap="onHeatmapDayTap"></view>
                 </view>
               </view>
             </view>
@@ -138,10 +138,10 @@
     <view wx:if="{{hasTrendData}}" class="coach-card surface-card" bindtap="openAiCoach" hover-class="tap-pressed">
       <view class="coach-icon"><t-icon name="chat" size="32rpx" /></view>
       <view class="coach-copy">
-        <view class="coach-title-row"><view class="section-title">{{coachScopeLabel}}复盘</view><view class="coach-period">真实行动记录</view></view>
+        <view class="coach-title-row"><view class="section-title">AI 成长教练</view><view class="coach-period">{{coachScopeLabel}} · 真实行动记录</view></view>
         <view class="coach-message">{{trendRange === 'year' ? yearSummary.summaryText : trendSummary.summaryText}}</view>
       </view>
-      <view class="coach-action"><text>查看完整分析</text><t-icon name="chevron-right" size="28rpx" /></view>
+      <view class="coach-action"><text>进入教练对话</text><t-icon name="chevron-right" size="28rpx" /></view>
     </view>
 
     <view wx:if="{{goal}}" class="growth-record-entry surface-card" bindtap="openGrowthRecords" hover-class="tap-pressed" aria-role="button" aria-label="查看完整成长记录">

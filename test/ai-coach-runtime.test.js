@@ -30,8 +30,13 @@ assert(cloudActions.includes('stage = "task_write"'), "执行日志缺少任务�
 assert(cloudActions.includes('stage = "proposal_commit"'), "执行日志缺少 proposal 回写阶段");
 assert(cloudActions.includes('stage = "transaction_committed"'), "执行日志缺少事务完成阶段");
 assert(cloudActions.includes('logAction("task_reconciled"'), "缺少历史部分成功修复日志");
+assert(cloudActions.includes('logAction("create_reconciled"'), "缺少新增行动事务失败后的幂等恢复日志");
+assert(cloudActions.includes('logAction("status_reconcile_deferred"'), "状态查询缺少任务已写入后的 proposal 恢复路径");
+assert(cloudActions.includes("executedProposalData(proposal, actionResult)"), "proposal 完成结果仍可能从 null 路径更新失败");
+assert(cloudActions.includes("userId: account.userId"), "AI 新建任务缺少提醒归属 userId");
 assert(cloudActions.includes("getCoachActionStatus"), "服务端缺少只读状态查询实现");
 assert(manualSync.includes("getCoachActionStatus(proposalId)"), "客户端模糊失败后未查询实际状态");
 assert(manualSync.includes('status.status === "executed"'), "客户端未处理实际已执行结果");
+assert(manualSync.includes('status.status === "pending"'), "客户端未对仍为 pending 的确认操作进行安全重试");
 
 console.log("AI 教练运行时与日志检查通过");

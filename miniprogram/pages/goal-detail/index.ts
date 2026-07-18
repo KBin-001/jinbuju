@@ -2,7 +2,7 @@ import { endGoal, getActiveGoal, getGoal, setCurrentGoal } from "../../services/
 import { getProgressSummary } from "../../services/manualStats";
 import { getTasksByGoal } from "../../services/manualTask";
 import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
-import { withAppTheme } from "../../services/theme";
+import { MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
 import { addBusinessDays, formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
 import { getActionTaskDisplayStatus } from "../../utils/taskStatus";
 
@@ -158,7 +158,7 @@ Page(withAppTheme({
       content: "结束后会进入历史目标，已有行动记录、投入时间和复盘数据都会保留。",
       cancelText: "暂不结束",
       confirmText: "确认结束",
-      confirmColor: "#A45B4F",
+      confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: (result) => {
         if (!result.confirm) return;
         this.setData({ lifecycleSubmitting: true });
@@ -184,7 +184,7 @@ Page(withAppTheme({
       content: "当前目标会完整保存到历史目标，再进入新目标创建流程，不会覆盖已有数据。",
       cancelText: "暂不更换",
       confirmText: "保留并更换",
-      confirmColor: "#245B4D",
+      confirmColor: MODAL_CONFIRM_COLORS.confirm,
       success: (result) => {
         if (!result.confirm) return;
         this.setData({ lifecycleSubmitting: true });

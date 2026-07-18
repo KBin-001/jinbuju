@@ -71,6 +71,8 @@ page { background: #F8F5EE; }
 .manage-list { margin-top: 7rpx; }
 .manage-row { min-height: 100rpx; display: flex; align-items: center; gap: 16rpx; border-top: 1rpx solid rgba(36,91,77,.09); }
 .manage-row:first-child { border-top: 0; }
+.manage-contact-row { width: 100%; padding: 0; box-sizing: border-box; border-right: 0; border-bottom: 0; border-left: 0; border-radius: 0; background: transparent; text-align: left; }
+.manage-contact-row::after { border: 0; }
 .manage-icon { width: 58rpx; height: 58rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 19rpx; background: rgba(232,240,235,.92); color: #246252; }
 .manage-star-symbol { width: 35rpx; height: 35rpx; background: currentColor; clip-path: polygon(50% 2%,61% 35%,96% 35%,68% 55%,79% 91%,50% 70%,21% 91%,32% 55%,4% 35%,39% 35%); }
 .manage-copy { min-width: 0; flex: 1; }

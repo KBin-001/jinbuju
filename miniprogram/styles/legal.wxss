@@ -1,27 +1,73 @@
+/* 进步局 · 法律文档统一样式
+ * 复用全局设计令牌：米白底、墨绿主色、克制金色、卡片圆角、宋体标题。
+ * 不引入第二套色板；与 about、privacy-center 等页面风格一致。
+ */
+
 .legal-page {
-  padding-top: 32rpx;
+  padding-top: 16rpx;
+  padding-bottom: 80rpx;
   background: var(--color-bg-page);
   color: var(--color-text-main);
+}
+
+/* ===== 文档头部 ===== */
+.legal-header {
+  margin-bottom: 24rpx;
 }
 
 .legal-title {
   color: var(--color-primary);
   font-family: "Songti SC", STSong, serif;
-  font-size: 42rpx;
+  font-size: 44rpx;
   font-weight: 700;
   letter-spacing: 2rpx;
   line-height: 1.35;
 }
 
-.legal-meta {
-  margin-top: 12rpx;
+.legal-subtitle {
+  margin-top: 8rpx;
   color: var(--color-text-secondary);
   font-size: var(--font-caption);
-  line-height: 34rpx;
+  line-height: 1.6;
 }
 
+.legal-meta {
+  margin-top: 14rpx;
+  padding: 18rpx 22rpx;
+  border-radius: var(--radius-card-small);
+  background: var(--color-bg-soft);
+  color: var(--color-text-secondary);
+  font-size: var(--font-caption);
+  line-height: 1.75;
+}
+
+.legal-meta-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4rpx 8rpx;
+}
+
+.legal-meta-label {
+  color: var(--color-text-light);
+}
+
+.legal-meta-value {
+  color: var(--color-text-main);
+  font-weight: 600;
+}
+
+.legal-meta-divider {
+  width: 1rpx;
+  height: 18rpx;
+  margin: 0 4rpx;
+  background: var(--color-divider);
+  align-self: center;
+}
+
+/* 候选/待补字段提示 */
 .legal-notice {
-  margin-top: 22rpx;
+  margin-top: 18rpx;
   padding: 22rpx 24rpx;
   border: 1rpx solid rgba(168, 112, 37, .22);
   border-radius: var(--radius-card);
@@ -31,6 +77,49 @@
   line-height: 1.7;
 }
 
+.legal-notice-title {
+  display: block;
+  margin-bottom: 6rpx;
+  font-weight: 700;
+}
+
+/* ===== 目录 ===== */
+.legal-toc {
+  margin-top: 8rpx;
+  padding: 26rpx 28rpx;
+  border: 1rpx solid var(--color-border-soft);
+  border-radius: var(--radius-card);
+  background: var(--color-bg-card);
+  box-shadow: var(--shadow-card-soft);
+}
+
+.legal-toc-title {
+  color: var(--color-text-light);
+  font-size: var(--font-caption);
+  font-weight: 600;
+  letter-spacing: 2rpx;
+}
+
+.legal-toc-list {
+  margin-top: 14rpx;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6rpx 24rpx;
+}
+
+.legal-toc-item {
+  padding: 10rpx 0;
+  color: var(--color-text-body);
+  font-size: var(--font-body);
+  line-height: 1.45;
+}
+
+.legal-toc-item--active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ===== 章节卡片 ===== */
 .legal-section {
   margin-top: 20rpx;
   padding: var(--space-card-inner);
@@ -42,14 +131,187 @@
 
 .legal-heading {
   color: var(--color-text-main);
-  font-size: 29rpx;
-  font-weight: 650;
+  font-size: 30rpx;
+  font-weight: 700;
   line-height: 1.45;
 }
 
+.legal-heading-index {
+  display: inline-block;
+  margin-right: 10rpx;
+  color: var(--color-gold);
+  font-family: "Songti SC", STSong, serif;
+  font-weight: 700;
+}
+
 .legal-copy {
-  margin-top: 12rpx;
+  margin-top: 14rpx;
   color: var(--color-text-body);
   font-size: 26rpx;
   line-height: 1.8;
+}
+
+.legal-copy + .legal-copy {
+  margin-top: 12rpx;
+}
+
+/* 子标题 */
+.legal-subheading {
+  margin-top: 18rpx;
+  color: var(--color-primary);
+  font-size: 27rpx;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.legal-subheading:first-child {
+  margin-top: 0;
+}
+
+/* 段落内的强调字段（待补占位、关键术语） */
+.legal-placeholder {
+  display: inline;
+  padding: 2rpx 8rpx;
+  border-radius: var(--radius-pill);
+  background: var(--color-gold-soft);
+  color: var(--color-warning);
+  font-weight: 600;
+  font-size: 23rpx;
+}
+
+.legal-emphasis {
+  color: var(--color-primary);
+  font-weight: 650;
+}
+
+/* 列表 */
+.legal-list {
+  margin-top: 14rpx;
+  padding-left: 4rpx;
+}
+
+.legal-list-item {
+  position: relative;
+  padding-left: 26rpx;
+  color: var(--color-text-body);
+  font-size: 26rpx;
+  line-height: 1.8;
+}
+
+.legal-list-item::before {
+  content: "";
+  position: absolute;
+  left: 6rpx;
+  top: 22rpx;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: var(--color-primary-light);
+}
+
+.legal-list-item + .legal-list-item {
+  margin-top: 6rpx;
+}
+
+.legal-list-item-title {
+  color: var(--color-text-main);
+  font-weight: 600;
+}
+
+/* 信息卡片：权限清单 / 第三方 SDK */
+.legal-info-card {
+  margin-top: 16rpx;
+  padding: 20rpx 22rpx;
+  border: 1rpx solid var(--color-border-soft);
+  border-radius: var(--radius-card-small);
+  background: var(--color-bg-soft);
+}
+
+.legal-info-card + .legal-info-card {
+  margin-top: 12rpx;
+}
+
+.legal-info-card-title {
+  color: var(--color-text-main);
+  font-size: 26rpx;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.legal-info-card-desc {
+  margin-top: 6rpx;
+  color: var(--color-text-secondary);
+  font-size: 24rpx;
+  line-height: 1.65;
+}
+
+/* 联系信息块 */
+.legal-contact {
+  margin-top: 18rpx;
+  padding: 22rpx 24rpx;
+  border: 1rpx solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--gradient-card-soft);
+}
+
+.legal-contact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid var(--color-divider);
+}
+
+.legal-contact-row:last-child {
+  border-bottom: 0;
+}
+
+.legal-contact-label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-caption);
+}
+
+.legal-contact-value {
+  color: var(--color-text-main);
+  font-size: var(--font-body);
+  font-weight: 600;
+}
+
+.legal-contact-copy {
+  margin-left: 12rpx;
+  padding: 6rpx 18rpx;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 22rpx;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* 页脚 */
+.legal-footnote {
+  margin-top: 32rpx;
+  padding: 0 12rpx;
+  color: var(--color-text-light);
+  font-size: 22rpx;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* ===== 响应式与小屏适配 ===== */
+@media (max-width: 340px) {
+  .legal-title {
+    font-size: 40rpx;
+  }
+
+  .legal-toc-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .legal-toc-item,
+  .legal-contact-copy {
+    transition: none;
+  }
 }

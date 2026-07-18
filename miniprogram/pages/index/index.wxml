@@ -85,9 +85,15 @@
               <image wx:else src="/assets/coach-ui/icon-doc.svg" mode="aspectFit" />
             </view>
             <view class="task-copy">
-              <view class="task-title-line"><view class="task-title">{{task.displayTitle}}</view></view>
-              <view class="task-meta"><text>预计 {{task.estimatedMinutes}} 分钟</text><text wx:if="{{task.actualMinutes}}" class="task-meta-actual">实际 {{task.actualMinutes}} 分钟</text></view>
-              <view class="task-status-line"><text class="task-status task-status--{{task.statusTone}}">{{task.statusLabel}}</text></view>
+              <view class="task-title-line">
+                <view class="task-title">{{task.displayTitle}}</view>
+                <text class="task-duration">预计 {{task.estimatedMinutes}} 分钟</text>
+              </view>
+              <view class="task-status-line">
+                <text class="task-status task-status--{{task.statusTone}}">{{task.statusLabel}}</text>
+                <text wx:if="{{task.actualMinutes}}" class="task-meta-actual">实际 {{task.actualMinutes}} 分钟</text>
+                <text wx:if="{{task.reminder && task.reminder.status === 'scheduled'}}" class="task-meta-actual">{{task.reminder.time}} 提醒</text>
+              </view>
             </view>
             <view class="task-tail-check {{task.status === 'completed' ? 'is-done' : ''}} {{!task.canComplete ? 'is-disabled' : ''}}" data-id="{{task.id}}" catchtap="toggleTaskDone" aria-label="{{task.status === 'completed' ? '取消完成' : '标记完成'}}">
               <t-icon wx:if="{{task.status === 'completed'}}" name="check" />
@@ -137,10 +143,10 @@
       <view class="reference-coach-entry" bindtap="openDailyCoach" hover-class="reference-card--pressed">
         <view class="reference-coach-copy">
           <view class="proactive-insight proactive-insight--{{proactiveInsight.tone}}">
-            <view class="proactive-label">{{coachStatus === 'ready' ? 'AI 今日建议' : coachStatus === 'loading' ? '正在整理建议' : '今日数据提示'}}</view>
+            <view class="proactive-label">AI 成长教练 · 今日</view>
             <view class="proactive-title">{{coachStatus === 'loading' ? '正在结合今日行动整理下一步' : proactiveInsight.title}}</view>
             <view class="proactive-body">{{coachStatus === 'loading' ? '建议生成期间，你仍然可以照常查看和完成行动。' : proactiveInsight.body}}</view>
-            <view class="coach-entry-footer"><text>{{coachStatus === 'error' ? 'AI 暂时不可用，当前展示本地建议' : '查看建议依据'}}</text><t-icon name="chevron-right" size="27rpx" /></view>
+            <view class="coach-entry-footer"><text>{{coachStatus === 'error' ? 'AI 暂时不可用，当前展示本地建议' : '查看完整建议与对话'}}</text><t-icon name="chevron-right" size="27rpx" /></view>
           </view>
         </view>
       </view>
@@ -187,13 +193,13 @@
       <view class="quick-add-grabber" bindtouchstart="quickAddTouchStart" bindtouchmove="quickAddTouchMove" bindtouchend="quickAddTouchEnd" bindtouchcancel="quickAddTouchEnd"></view>
       <view class="quick-add-header">
         <view>
-          <view class="quick-add-title">添加今日行动</view>
+          <view class="quick-add-title">添加行动</view>
         </view>
         <view class="quick-add-close {{quickAddSubmitting ? 'is-disabled' : ''}}" catchtap="closeQuickAdd" aria-label="关闭">
           <t-icon name="close" />
         </view>
       </view>
-      <view class="quick-add-copy">写下一件今天能推进的小事，行动会安排到今天。</view>
+      <view class="quick-add-copy">写下一件准备推进的小事，可安排日期并设置一次微信提醒。</view>
 
       <view class="quick-add-field">
         <view class="quick-add-label">行动标题</view>
@@ -216,6 +222,24 @@
           <view wx:for="{{quickDurationPrimaryOptions}}" wx:key="value" class="quick-duration-chip {{quickAddMinuteIndex === item.sourceIndex ? 'is-selected' : ''}}" data-index="{{item.sourceIndex}}" catchtap="selectQuickDurationChip">{{item.value}} 分钟</view>
           <view class="quick-duration-chip {{quickAddMinutes !== 30 && quickAddMinutes !== 45 && quickAddMinutes !== 60 && quickAddMinutes !== 90 && quickAddMinutes !== 120 ? 'is-selected' : ''}}" catchtap="openCustomDuration">{{quickAddMinutes !== 30 && quickAddMinutes !== 45 && quickAddMinutes !== 60 && quickAddMinutes !== 90 && quickAddMinutes !== 120 ? quickAddMinutes + ' 分钟' : '更多时长'}}</view>
         </view>
+      </view>
+
+      <view class="quick-add-field">
+        <view class="quick-add-label">行动日期</view>
+        <picker mode="date" value="{{quickAddDate}}" start="{{todayDate}}" end="{{quickAddDateEnd}}" bindchange="changeQuickAddDate">
+          <view class="quick-reminder-picker"><text>{{quickAddDate}}</text><text>选择日期</text></view>
+        </picker>
+      </view>
+
+      <view class="quick-add-field quick-reminder-row">
+        <view><view class="quick-add-label">提醒我</view><view class="quick-add-hint">每条微信提醒需要一次授权</view></view>
+        <switch color="#245B4D" checked="{{quickAddReminderEnabled}}" bindchange="toggleQuickAddReminder" />
+      </view>
+      <view wx:if="{{quickAddReminderEnabled}}" class="quick-reminder-time">
+        <picker mode="time" value="{{quickAddReminderTime}}" bindchange="changeQuickAddReminderTime">
+          <view class="quick-reminder-picker"><text>{{quickAddReminderTime}}</text><text>5 分钟粒度</text></view>
+        </picker>
+        <view class="quick-reminder-note">保存时会立即弹出微信一次性订阅授权。</view>
       </view>
 
       <view class="quick-add-actions">

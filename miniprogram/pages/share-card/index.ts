@@ -3,6 +3,7 @@ import { getProgressSummary } from "../../services/manualStats";
 import { calculateTodaySummary, getTasksByGoal } from "../../services/manualTask";
 import { getLocalUserProfile } from "../../services/profile";
 import { getTodayBusinessDate } from "../../utils/date";
+import { MODAL_CONFIRM_COLORS } from "../../services/theme";
 
 const CARD_WIDTH = 690;
 const FONT_FAMILY = '"PingFang SC", "Microsoft YaHei", sans-serif';
@@ -392,7 +393,7 @@ Page({
       title: "需要相册权限",
       content: "请在设置中允许保存到相册，分享卡只会保存在你的设备中。",
       confirmText: "去设置",
-      confirmColor: "#356859",
+      confirmColor: MODAL_CONFIRM_COLORS.confirm,
       success: (result) => {
         if (result.confirm) wx.openSetting();
       },
