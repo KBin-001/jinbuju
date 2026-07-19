@@ -64,7 +64,7 @@
           <view class="manage-row" data-key="sync" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><t-icon name="cloud" size="36rpx" /></view><view class="manage-copy"><text>云端数据与同步</text><text>最近成功 {{syncLabel}}</text></view><text class="manage-value manage-value--pill manage-value--{{syncTone}}">{{syncTitle}}</text><t-icon name="chevron-right" size="33rpx" /></view>
           <view class="manage-row" data-key="account" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><t-icon name="user" size="36rpx" /></view><view class="manage-copy"><text>账号与安全</text><text>数据与注销</text></view><text wx:if="{{phoneBindingEnabled}}" class="manage-value {{phoneStatusText === '未绑定' ? 'manage-value--warning' : ''}}">{{phoneStatusText}}</text><t-icon name="chevron-right" size="33rpx" /></view>
           <view class="manage-row" data-key="privacy" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><t-icon name="lock-on" size="36rpx" /></view><view class="manage-copy"><text>隐私与协议</text><text>授权、信息清单与协议</text></view><t-icon name="chevron-right" size="33rpx" /></view>
-          <button class="manage-row manage-contact-row" open-type="contact" hover-class="is-pressed" aria-label="联系客服"><view class="manage-icon"><t-icon name="help-circle" size="36rpx" /></view><view class="manage-copy"><text>联系客服</text><text>问题咨询与使用帮助</text></view><t-icon name="chevron-right" size="33rpx" /></button>
+          <view class="manage-row manage-contact-row" bindtap="openCustomerService" hover-class="is-pressed" aria-role="button" aria-label="联系客服"><view class="manage-icon"><t-icon name="help-circle" size="36rpx" /></view><view class="manage-copy"><text>联系客服</text><text>扫码添加客服微信</text></view><t-icon name="chevron-right" size="33rpx" /></view>
           <view class="manage-row" data-key="about" bindtap="openToolboxItem" hover-class="is-pressed"><view class="manage-icon"><t-icon name="help-circle" size="36rpx" /></view><view class="manage-copy"><text>帮助与关于</text><text>产品说明与问题反馈</text></view><t-icon name="chevron-right" size="33rpx" /></view>
         </view>
       </view>
@@ -82,6 +82,17 @@
         <view class="profile-setting-row"><view><text class="profile-label">在小队中使用该资料</text><text class="profile-helper">匿名模式下仍会隐藏头像和名称。</text></view><t-switch value="{{profileDraftUseInTeam}}" color="#245B4D" bindchange="toggleProfileUseInTeam" /></view>
       </view>
       <view class="sheet-actions"><t-button class="sheet-cancel" disabled="{{profileSaving}}" bindtap="closeProfileEditor">取消</t-button><t-button class="sheet-save" loading="{{profileSaving}}" disabled="{{profileSaving}}" bindtap="saveProfileEditor">保存</t-button></view>
+    </view>
+  </view>
+
+  <view wx:if="{{customerServiceVisible}}" class="customer-service-sheet-layer" catchtouchmove="noop">
+    <view class="customer-service-sheet-mask" catchtap="closeCustomerService"></view>
+    <view class="customer-service-sheet-panel" catchtap="noop">
+      <view class="customer-service-sheet-handle"></view>
+      <view class="customer-service-sheet-head"><view><text class="customer-service-sheet-kicker">客服支持</text><text class="customer-service-sheet-title">添加客服微信</text></view><view class="customer-service-sheet-close" catchtap="closeCustomerService" hover-class="is-pressed" aria-role="button" aria-label="关闭客服二维码"><t-icon name="close" size="34rpx" /></view></view>
+      <text class="customer-service-sheet-copy">点击放大或长按识别二维码，添加客服后可咨询使用问题。</text>
+      <view class="customer-service-qr-frame" bindtap="previewCustomerServiceQr" hover-class="is-pressed" aria-role="button" aria-label="预览客服二维码"><image class="customer-service-qr-image" src="/assets/customer-service-qr.jpg" mode="aspectFit" show-menu-by-longpress="{{true}}" /></view>
+      <text class="customer-service-sheet-tip">请勿向客服发送密码、验证码或其他敏感凭证。</text>
     </view>
   </view>
 
@@ -129,7 +140,7 @@
         <view class="community-state-action" bindtap="retryGrowthCommunity" hover-class="is-pressed">重新加载</view>
       </view>
 
-      <view class="community-privacy-note"><t-icon name="info-circle" size="27rpx" /><text>二维码仅用于加入成长交流社群。加入后遵循微信社群规则；进步局不会读取群聊记录或通讯录，也不会自动上传你的目标和行动记录。</text></view>
+      <view class="community-privacy-note"><t-icon name="info-circle" size="27rpx" /><text>二维码仅用于加入成长交流社群。加入后遵循微信社群规则；今日进度｜目标计划打卡不会读取群聊记录或通讯录，也不会自动上传你的目标和行动记录。</text></view>
     </view>
   </view>
 </view>

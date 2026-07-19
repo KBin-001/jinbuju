@@ -40,19 +40,30 @@ async function run() {
   assert.strictEqual(context.sourceHash.length, 64);
   const serializedContext = JSON.stringify(context);
   assert.doesNotMatch(serializedContext, /owner-openid|must-not-leak|138\*\*\*\*0000/);
-  const metricsPresentation = buildCoachPresentation(context, "为什么这样判断？", "今天已形成进展。\n1. 完成情况：已完成一项行动。\n2. 投入情况：实际投入 35 分钟。");
-  assert.strictEqual(metricsPresentation.kind, "metrics");
+  const diagnosisPresentation = buildCoachPresentation(context, "为什么这样判断？", "模型声称完成 999 项、投入 9999 分钟也不能成为模板数据。");
+  assert.strictEqual(diagnosisPresentation.kind, "diagnosis");
+  assert.deepStrictEqual(diagnosisPresentation.sections.map((item) => item.index), ["依据", "下一步"]);
+  assert.deepStrictEqual(diagnosisPresentation.sections.map((item) => item.detail), [
+    "已完成 1/1 项行动，实际投入 35 分钟，预计 30 分钟",
+    "当前范围内的行动已经完成，可以补充实际投入或安排下一项具体行动。",
+  ]);
+  assert.doesNotMatch(JSON.stringify(diagnosisPresentation.sections), /999/);
+  const progressPresentation = buildCoachPresentation(context, "今天进展是什么？", "今天已经完成计划，整体节奏稳定。\n下一步可以继续巩固记录。");
+  assert.strictEqual(progressPresentation.kind, "diagnosis");
+  assert.strictEqual(progressPresentation.title, "结论");
+  assert.deepStrictEqual(progressPresentation.sections.map((item) => item.index), ["依据", "下一步"]);
+  const metricsPresentation = buildCoachPresentation(context, "当前进度怎么样？", "模型正文保持独立。");
+  assert.strictEqual(metricsPresentation.kind, "metric_overview");
   assert.deepStrictEqual(metricsPresentation.metrics.map((item) => item.value), ["1/1", "35", "100"]);
-  assert.strictEqual(metricsPresentation.sections.length, 2);
   const priorityContext = { ...context, selectedDate: { tasks: [
     { title: "先处理高优先任务", status: "pending", estimatedMinutes: 45 },
     { title: "随后完成复盘", status: "pending", estimatedMinutes: 30 },
   ] } };
   const priorityPresentation = buildCoachPresentation(priorityContext, "帮我安排接下来的计划", "先完成最关键的一项，再做复盘。");
-  assert.strictEqual(priorityPresentation.kind, "priorities");
+  assert.strictEqual(priorityPresentation.kind, "priority_plan");
   assert.strictEqual(priorityPresentation.priorities[0].title, "先处理高优先任务");
   const taskPresentation = buildCoachPresentation(context, "今天有什么任务？", "模型返回的杂乱任务正文不应直接展示");
-  assert.strictEqual(taskPresentation.kind, "tasks");
+  assert.strictEqual(taskPresentation.kind, "task_list");
   assert.strictEqual(taskPresentation.title, "共 1 项行动");
   assert.strictEqual(taskPresentation.priorities[0].title, "背单词");
   const clarificationPresentation = buildCoachPresentation(context, "明天八点提醒我", "提醒时间需要调整", {
@@ -60,6 +71,52 @@ async function run() {
   });
   assert.strictEqual(clarificationPresentation.kind, "clarification");
   assert.strictEqual(clarificationPresentation.title, "提醒时间需要调整");
+
+  const timelineContext = { ...context, selectedDate: { tasks: [
+    { title: "晨间阅读", status: "pending", estimatedMinutes: 30, reminder: { time: "08:00" } },
+    { title: "晚间复盘", status: "pending", estimatedMinutes: 20, reminder: { time: "21:30" } },
+  ] } };
+  const timelinePresentation = buildCoachPresentation(timelineContext, "按时间安排提醒顺序", "模型输出 06:00 不得进入时间轴。");
+  assert.strictEqual(timelinePresentation.kind, "timeline");
+  assert.deepStrictEqual(timelinePresentation.timeline.map((item) => item.time), ["08:00", "21:30"]);
+  assert.doesNotMatch(JSON.stringify(timelinePresentation.timeline), /06:00/);
+
+  const comparisonPresentation = buildCoachPresentation(context, "对比计划和实际投入", "回答里的 888 分钟不能成为对比数据。");
+  assert.strictEqual(comparisonPresentation.kind, "comparison");
+  assert.strictEqual(comparisonPresentation.comparison[0].current, "35 分钟");
+  assert.strictEqual(comparisonPresentation.comparison[0].previous, "30 分钟");
+  assert.doesNotMatch(JSON.stringify(comparisonPresentation.comparison), /888/);
+
+  const trendContext = { ...context, scope: "week", recent: { ...context.recent, tasks: [
+    { title: "行动一", currentDate: "2026-07-16", status: "completed" },
+    { title: "行动二", currentDate: "2026-07-17", status: "pending" },
+  ] } };
+  const trendPresentation = buildCoachPresentation(trendContext, "最近一周趋势", "模型猜测 100% 不得覆盖真实趋势。");
+  assert.strictEqual(trendPresentation.kind, "trend");
+  assert.deepStrictEqual(trendPresentation.trend.map((item) => item.displayValue), ["1/1", "0/1", "1/1"]);
+
+  const milestoneContext = { ...context, profile: { currentStreakDays: 5, longestStreakDays: 12 }, stageReviews: [{ stageNumber: 2, completionRate: 60 }] };
+  const milestonePresentation = buildCoachPresentation(milestoneContext, "我的成长里程碑", "模型说连续 99 天不能进入指标。");
+  assert.strictEqual(milestonePresentation.kind, "milestone");
+  assert.deepStrictEqual(milestonePresentation.metrics.map((item) => item.value), ["5", "12", "2"]);
+
+  const teamContext = { ...context, team: {
+    team: { name: "同行小队" }, dailyStats: { date: "2026-07-18", totalMembers: 4, completedMembers: 2, totalGrowthMinutes: 180, completionRate: 50 },
+    members: [{ isSelf: true, rank: 2, growthMinutes: 35 }],
+  } };
+  const teamPresentation = buildCoachPresentation(teamContext, "我在小队排名怎么样", "模型回答第一名不能覆盖真实排名。");
+  assert.strictEqual(teamPresentation.kind, "team_snapshot");
+  assert.strictEqual(teamPresentation.team[0].value, "第 2 名");
+
+  const proposalPresentation = buildCoachPresentation(context, "帮我新增行动", "请确认后执行。", {
+    type: "create_task", status: "pending", title: "阅读", estimatedMinutes: 45, currentDate: "2026-07-19", reminderTime: "20:30",
+  });
+  assert.strictEqual(proposalPresentation.kind, "action_proposal");
+  assert.deepStrictEqual(proposalPresentation.action, {
+    title: "阅读", summary: "", detail: "预计 45 分钟 · 2026-07-19", status: "pending", reminderTime: "20:30",
+  });
+  const directPresentation = buildCoachPresentation(context, "给我一句鼓励", "保持今天的节奏即可。");
+  assert.strictEqual(directPresentation.kind, "direct");
 
   const rawAnswer = "第一段  保留空格\n\n**不是富文本解析**\n" + "长回复".repeat(300);
   const messages = buildModelMessages(context, [{ role: "assistant", content: rawAnswer }], "继续说", "用户喜欢晚间行动");

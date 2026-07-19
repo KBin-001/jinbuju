@@ -1,6 +1,6 @@
 {
   "project": {
-    "name": "进步局 - 移动端 UI 稿",
+    "name": "今日进度｜目标计划打卡 - 移动端 UI 稿",
     "path": "d:\\xwechat_files\\Project\\jinbuju\\jinbuju-mobile-ui",
     "operation": "create",
     "deviceType": "mobile",
@@ -9,7 +9,7 @@
     "replicationMode": "high-fidelity",
     "sourceUrl": null,
     "visualSpecExcerpt": null,
-    "styleDefinitionBrief": "微信小程序「进步局」1:1 移动端 UI 稿复刻。深绿主色 #356859，暖白背景 #F5F7F2，柔和成长感，低压力陪伴感，清晰克制现代。",
+    "styleDefinitionBrief": "微信小程序「今日进度｜目标计划打卡」1:1 移动端 UI 稿复刻。深绿主色 #356859，暖白背景 #F5F7F2，柔和成长感，低压力陪伴感，清晰克制现代。",
     "designRead": "miniprogram / goal-oriented users / warm gentle growth / information-dense / avoid demo feel",
     "designDials": {
       "layoutVariance": 2,

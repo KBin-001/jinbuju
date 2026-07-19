@@ -110,6 +110,7 @@ export interface ProgressSummary {
   todayCompleted: number;
   todayTotal: number;
   currentStreakDays: number;
+  longestStreakDays: number;
   recentDays: DailyActionSummary[];
   heatmapWeeks: GrowthHeatmapDay[][];
   badges: GrowthBadge[];

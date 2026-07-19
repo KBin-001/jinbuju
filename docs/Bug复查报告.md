@@ -1,4 +1,4 @@
-# 进步局（jinbuju）小程序 Bug 专项复查报告
+# 今日进度｜目标计划打卡（jinbuju）小程序 Bug 专项复查报告
 
 > **复查日期**：2026-07-18
 > **复查方式**：静态代码审查（未修改任何代码），覆盖 `miniprogram/` 前端 + `cloudfunctions/generatePlan/` 云函数

@@ -62,7 +62,21 @@ export interface ProgressCoachReplyStat {
   value: string;
 }
 
-export type CoachPresentationKind = "summary" | "metrics" | "priorities" | "tasks" | "clarification";
+export type CoachPresentationLegacyKind = "summary" | "metrics" | "priorities" | "tasks";
+export type CoachPresentationKind =
+  | "direct"
+  | "metric_overview"
+  | "task_list"
+  | "priority_plan"
+  | "timeline"
+  | "comparison"
+  | "trend"
+  | "diagnosis"
+  | "milestone"
+  | "team_snapshot"
+  | "clarification"
+  | "action_proposal"
+  | CoachPresentationLegacyKind;
 export type CoachPresentationTone = "positive" | "warning" | "neutral" | "success";
 
 export interface CoachPresentationMetric {
@@ -85,15 +99,72 @@ export interface CoachPresentationPriority {
   tone: CoachPresentationTone;
 }
 
-export interface CoachPresentation {
-  kind: CoachPresentationKind;
+export interface CoachPresentationTimelineItem {
+  time: string;
+  title: string;
+  detail: string;
+  tone?: CoachPresentationTone;
+}
+
+export interface CoachPresentationComparisonItem {
+  label: string;
+  current: string;
+  previous: string;
+  delta?: string;
+  tone?: CoachPresentationTone;
+}
+
+export interface CoachPresentationTrendItem {
+  label: string;
+  value: number;
+  displayValue?: string;
+  progress?: number;
+  tone?: CoachPresentationTone;
+}
+
+export interface CoachPresentationTeamItem {
+  label: string;
+  value: string;
+  detail?: string;
+  tone?: CoachPresentationTone;
+}
+
+export interface CoachPresentationAction {
+  title?: string;
+  summary?: string;
+  detail?: string;
+  status?: string;
+  reminderTime?: string;
+}
+
+interface CoachPresentationBase {
   eyebrow: string;
   title: string;
   summary: string;
   metrics?: CoachPresentationMetric[];
   sections?: CoachPresentationSection[];
   priorities?: CoachPresentationPriority[];
+  timeline?: CoachPresentationTimelineItem[];
+  comparison?: CoachPresentationComparisonItem[];
+  trend?: CoachPresentationTrendItem[];
+  team?: CoachPresentationTeamItem[];
+  action?: CoachPresentationAction;
 }
+
+export type CoachPresentation =
+  | (CoachPresentationBase & { kind: "direct" })
+  | (CoachPresentationBase & { kind: "metric_overview"; metrics: CoachPresentationMetric[] })
+  | (CoachPresentationBase & { kind: "task_list"; priorities: CoachPresentationPriority[] })
+  | (CoachPresentationBase & { kind: "priority_plan"; priorities: CoachPresentationPriority[] })
+  | (CoachPresentationBase & { kind: "timeline"; timeline: CoachPresentationTimelineItem[] })
+  | (CoachPresentationBase & { kind: "comparison"; comparison: CoachPresentationComparisonItem[] })
+  | (CoachPresentationBase & { kind: "trend"; trend: CoachPresentationTrendItem[] })
+  | (CoachPresentationBase & { kind: "diagnosis"; sections: CoachPresentationSection[] })
+  | (CoachPresentationBase & { kind: "milestone"; metrics: CoachPresentationMetric[] })
+  | (CoachPresentationBase & { kind: "team_snapshot"; team: CoachPresentationTeamItem[] })
+  | (CoachPresentationBase & { kind: "clarification" })
+  | (CoachPresentationBase & { kind: "action_proposal"; action: CoachPresentationAction })
+  | (CoachPresentationBase & { kind: CoachPresentationLegacyKind });
 
 export interface ProgressCoachAnswer {
   answer: string;

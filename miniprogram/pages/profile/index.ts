@@ -106,6 +106,7 @@ Page({
     profileDraftAvatarUrl: "",
     profileDraftSource: "custom" as UserProfileSource,
     profileDraftUseInTeam: true,
+    customerServiceVisible: false,
     currentThemeId: getCurrentThemeId() as string,
     communitySheetVisible: false,
     communitySheetStatus: "loading" as CommunitySheetStatus,
@@ -436,6 +437,24 @@ Page({
       communitySheetStatus: "error",
       communityQrUrl: "",
       communityErrorMessage: "社区二维码加载失败，请检查网络后重试。",
+    });
+  },
+
+  openCustomerService() {
+    this.setData({ customerServiceVisible: true });
+  },
+
+  closeCustomerService() {
+    this.setData({ customerServiceVisible: false });
+  },
+
+  previewCustomerServiceQr() {
+    const qrUrl = "/assets/customer-service-qr.jpg";
+    wx.previewImage({
+      current: qrUrl,
+      urls: [qrUrl],
+      showmenu: true,
+      fail: () => wx.showToast({ title: "客服二维码预览失败，请稍后重试", icon: "none" }),
     });
   },
 

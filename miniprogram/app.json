@@ -39,7 +39,7 @@
     "backgroundColor": "#F7F3EA",
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#F7F3EA",
-    "navigationBarTitleText": "进步局",
+    "navigationBarTitleText": "今日进度｜目标计划打卡",
     "navigationBarTextStyle": "black"
   },
   "lazyCodeLoading": "requiredComponents",

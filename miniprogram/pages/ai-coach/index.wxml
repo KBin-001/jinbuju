@@ -1,46 +1,102 @@
 <view class="insight-page" data-theme="{{appTheme}}">
   <view class="status-mask" style="height: {{statusBarHeight}}px;" aria-hidden="true"></view>
-  <view class="insight-hero" style="padding-top: {{navTop}}px;">
-    <image class="hero-landscape" src="/assets/ai-coach/mountain-bg.svg" mode="aspectFill" aria-hidden="true" />
+
+  <view class="insight-hero">
+    <image class="hero-landscape" src="/assets/ai-coach-shanshui-v2.jpg" mode="widthFix" aria-hidden="true" />
     <view class="hero-veil"></view>
-    <view class="insight-nav" style="height: {{navHeight}}px; padding-right: {{menuRightInset}}px;">
-      <view class="nav-back" bindtap="goBack" role="button" aria-label="返回"><t-icon name="chevron-left" size="42rpx" /></view>
-      <view class="nav-copy">
-        <view class="nav-title">AI 成长教练<view class="nav-spark"></view></view>
-        <view class="nav-subtitle">{{scopeSubtitle}}</view>
+    <view class="insight-nav" style="top: {{navTop}}px; height: {{navHeight}}px; padding-right: {{menuRightInset}}px;">
+      <view class="nav-back" bindtap="goBack" role="button" aria-label="返回" hover-class="is-pressed"><t-icon name="chevron-left" size="50rpx" /></view>
+      <view class="nav-brand">
+        <image class="coach-brand" src="/components/coach-chat/coach-mark.svg" mode="aspectFit" aria-hidden="true" />
+        <text class="nav-title">AI 成长教练</text>
       </view>
     </view>
-    <view class="hero-period"><text>{{scopeLabel}}</text><view>{{goalTitle}}</view></view>
+
+    <view class="scope-switch" style="top: {{scopeTop}}px;" bindtap="toggleScopeMenu" role="button" aria-label="切换教练分析范围">
+      <text>{{scopeLabel}}</text><t-icon name="chevron-down" size="28rpx" />
+    </view>
+    <view wx:if="{{scopeMenuOpen}}" class="scope-popover" style="top: {{scopeMenuTop}}px;">
+      <view class="scope-option" data-scope="day" bindtap="selectCoachScope"><view><text>今日复盘</text><text>查看今天的行动与投入</text></view></view>
+      <view class="scope-option {{scope === 'week' ? 'is-active' : ''}}" data-scope="week" bindtap="selectCoachScope"><view><text>本周复盘</text><text>回顾最近 7 天的节奏</text></view><t-icon wx:if="{{scope === 'week'}}" name="check" size="28rpx" /></view>
+      <view class="scope-option {{scope === 'month' ? 'is-active' : ''}}" data-scope="month" bindtap="selectCoachScope"><view><text>本月观察</text><text>查看本月行动趋势</text></view><t-icon wx:if="{{scope === 'month'}}" name="check" size="28rpx" /></view>
+      <view class="scope-option {{scope === 'overall' ? 'is-active' : ''}}" data-scope="overall" bindtap="selectCoachScope"><view><text>长期洞察</text><text>结合全部目标和成长记录</text></view><t-icon wx:if="{{scope === 'overall'}}" name="check" size="28rpx" /></view>
+    </view>
+
+    <view class="hero-conclusion" style="top: {{headlineTop}}px;">
+      <view class="hero-spark" aria-hidden="true"></view>
+      <view class="hero-title">{{judgement}}</view>
+      <view class="hero-brush" aria-hidden="true"><view></view></view>
+    </view>
   </view>
 
   <view class="insight-content">
-    <view class="scope-questions">
-      <view wx:for="{{quickQuestions}}" wx:key="*this" class="scope-question" data-question="{{item}}" bindtap="sendGuidedQuestion" role="button">{{index === 0 ? '完成情况' : (index === 1 ? '当前卡点' : '下一步')}}</view>
-    </view>
-
-    <view class="insight-card overview-card">
-      <view class="card-kicker">{{reportName}}</view>
-      <view class="overview-title">{{judgement}}</view>
-      <view class="metrics-grid">
-        <view class="metric"><text class="metric-value"><block wx:if="{{totalCount}}">{{completedCount}}<text>/{{totalCount}}</text></block><block wx:else>暂无</block></text><text class="metric-label">完成行动</text></view>
-        <view class="metric"><text class="metric-value">{{periodMinutes}}<text> 分钟</text></text><text class="metric-label">实际投入</text></view>
-        <view class="metric"><text class="metric-value">{{completionRate}}<text>%</text></text><text class="metric-label">行动完成率</text></view>
-      </view>
-      <view wx:if="{{totalCount}}" class="progress-track"><view class="progress-fill" style="width: {{completionRate}}%;"></view></view>
-    </view>
-
-    <view class="insight-card diagnosis-card">
-      <view class="card-kicker card-kicker--spark">教练观察<view></view></view>
-      <view class="diagnosis-main">{{bottleneck}}</view>
-      <view class="diagnosis-stats">
-        <view><text>{{activeDays}}</text><text>行动天数</text></view>
-        <view><text>{{streakDays}}</text><text>连续天数</text></view>
-        <view><text>{{recentActionDate}}</text><text>最近行动</text></view>
+    <view class="metric-grid">
+      <view wx:for="{{metricCards}}" wx:key="key" class="metric-card metric-card--{{item.tone}}">
+        <view class="metric-icon metric-icon--{{item.tone}}"><t-icon name="{{item.icon}}" size="36rpx" /></view>
+        <view class="metric-value">{{item.value}}<text>{{item.unit}}</text></view>
+        <view class="metric-label">{{item.label}}</view>
+        <view wx:if="{{item.progress !== undefined}}" class="metric-progress"><view style="width: {{item.progress}}%;"></view></view>
+        <view class="metric-note">{{item.note}}</view>
       </view>
     </view>
 
-    <view class="insight-card conversation-card">
-      <coach-chat title="继续问教练" user-avatar-url="{{userAvatarUrl}}" messages="{{messages}}" quick-questions="{{quickQuestions}}" asking="{{asking}}" error-message="{{chatError}}" executing-proposal-id="{{executingProposalId}}" bindsend="handleChatSend" bindretry="retryLastQuestion" bindconfirmproposal="confirmCoachAction"></coach-chat>
+    <view class="advice-card">
+      <image class="advice-watermark" src="/assets/ai-coach-shanshui-v2.jpg" mode="aspectFill" aria-hidden="true" />
+      <view class="advice-content">
+        <view class="advice-heading">
+          <view class="advice-spark"><t-icon name="star-filled" size="33rpx" /></view>
+          <text class="advice-title">{{scope === 'week' ? '本周建议' : scope === 'month' ? '本月建议' : '长期建议'}}</text>
+          <text class="advice-badge">AI</text>
+        </view>
+        <view class="advice-copy">{{bottleneck}}</view>
+        <view class="advice-quick-list">
+          <view wx:for="{{quickQuestions}}" wx:key="*this" class="advice-quick advice-quick--{{index}}" data-question="{{item}}" bindtap="sendGuidedQuestion" role="button">
+            <t-icon name="{{index === 0 ? 'help-circle' : index === 1 ? 'chart-line' : 'flag'}}" size="28rpx" />
+            <text>{{item}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="rhythm-card">
+      <view class="section-heading">
+        <view><view class="section-title">{{rhythmTitle}}</view><view class="section-subtitle">{{rhythmSubtitle}}</view></view>
+        <view class="rhythm-legend"><view></view><text>真实投入</text></view>
+      </view>
+      <view class="rhythm-chart">
+        <view wx:for="{{rhythmPoints}}" wx:key="key" class="rhythm-column {{item.isCurrent ? 'is-current' : ''}} {{item.isFuture ? 'is-future' : ''}}">
+          <view class="rhythm-value">{{item.minutes ? item.minutes : ''}}</view>
+          <view class="rhythm-track"><view class="rhythm-bar" style="height: {{item.height}}%;"></view></view>
+          <view class="rhythm-label">{{item.label}}</view>
+          <view class="rhythm-count">{{item.completed ? item.completed + '项' : ''}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="review-card">
+      <view class="section-heading">
+        <view><view class="section-title">{{reviewTitle}}</view><view class="section-subtitle">{{reviewSubtitle}}</view></view>
+        <view class="section-link" bindtap="goProgress" role="button"><text>查看进度</text><t-icon name="chevron-right" size="27rpx" /></view>
+      </view>
+      <view wx:if="{{focusKind === 'actions' && reviewItems.length}}" class="review-list">
+        <view wx:for="{{reviewItems}}" wx:key="id" class="review-row" data-task-id="{{item.id}}" bindtap="openReviewItem" role="button">
+          <view class="review-icon review-icon--{{item.tone}}"><t-icon name="{{item.icon}}" size="30rpx" /></view>
+          <view class="review-copy"><view class="review-title">{{item.title}}</view><view class="review-subtitle">{{item.subtitle}}</view></view>
+          <view class="review-status review-status--{{item.tone}}">{{item.statusLabel}}</view>
+        </view>
+      </view>
+      <view wx:elif="{{focusKind === 'goals' && goalItems.length}}" class="goal-list">
+        <view wx:for="{{goalItems}}" wx:key="id" class="goal-row">
+          <view class="goal-row-head"><view class="goal-title">{{item.title}}</view><view class="goal-status goal-status--{{item.tone}}">{{item.statusLabel}}</view></view>
+          <view class="goal-copy">{{item.subtitle}}</view>
+          <view class="goal-progress-row"><view class="goal-progress"><view style="width: {{item.progress}}%;"></view></view><text>{{item.completed}}/{{item.total}}</text></view>
+        </view>
+      </view>
+      <view wx:else class="review-empty">{{scope === 'overall' ? '还没有可以展示的目标沉淀' : '这个范围内还没有行动记录'}}</view>
+    </view>
+
+    <view class="conversation-section">
+      <coach-chat id="coach-chat" title="继续问教练" user-avatar-url="{{userAvatarUrl}}" messages="{{messages}}" asking="{{asking}}" error-message="{{chatError}}" executing-proposal-id="{{executingProposalId}}" bindsend="handleChatSend" bindretry="retryLastQuestion" bindconfirmproposal="confirmCoachAction"></coach-chat>
     </view>
   </view>
 </view>

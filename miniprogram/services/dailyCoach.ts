@@ -5,6 +5,7 @@ import { getTasksByDate } from "./manualTask";
 export interface DailyCoachTask {
   id: string;
   title: string;
+  description?: string;
   estimatedMinutes: number;
   actualMinutes: number;
   status: ActionTask["status"];
@@ -53,6 +54,7 @@ function toViewTask(task: ActionTask): DailyCoachTask {
   return {
     id: task.id,
     title: task.title,
+    description: task.description,
     estimatedMinutes: task.estimatedMinutes,
     actualMinutes: task.actualMinutes || 0,
     status: task.status,

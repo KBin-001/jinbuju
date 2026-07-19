@@ -77,6 +77,8 @@ Page(withAppTheme({
     this.setData({ showExample: !this.data.showExample });
   },
 
+  noop() {},
+
   retry() {
     this.checkWelcomeStatus();
   },

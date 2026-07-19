@@ -1,67 +1,237 @@
 <view class="coach-chat">
-  <view class="coach-chat__title">{{title}}</view>
-  <view class="coach-chat__subtitle">结合你的行动、目标与成长记录继续对话</view>
-  <scroll-view wx:if="{{quickQuestions.length}}" class="coach-chat__quick-list" scroll-x enhanced show-scrollbar="{{false}}">
-    <view wx:for="{{quickQuestions}}" wx:key="*this" class="coach-chat__quick" data-question="{{item}}" bindtap="sendQuickQuestion" role="button">{{item}}</view>
-  </scroll-view>
-
-  <view wx:if="{{messages.length}}" class="coach-chat__messages">
-    <view wx:for="{{messages}}" wx:key="id" id="{{item.id}}" class="coach-chat__message coach-chat__message--{{item.role}}">
-      <view wx:if="{{item.role === 'user'}}" class="coach-chat__user-row">
-        <view class="coach-chat__user-text">{{item.content}}</view>
-        <image class="coach-chat__avatar" src="{{userAvatarUrl && !avatarFailed ? userAvatarUrl : '/images/icons/avatar.png'}}" mode="aspectFill" binderror="avatarError"></image>
+  <view wx:if="{{quickQuestions.length}}" class="coach-chat__invitation">
+    <view class="coach-chat__invitation-heading">
+      <view class="coach-chat__invitation-spark"><t-icon name="star-filled" size="30rpx" /></view>
+      <view class="coach-chat__invitation-copy">
+        <text class="coach-chat__invitation-title-text">教练正在等你</text>
+        <text class="coach-chat__invitation-subtitle">随时聊聊你的困惑与下一步</text>
       </view>
+    </view>
+    <view class="coach-chat__quick-list">
+      <view wx:for="{{quickQuestions}}" wx:key="*this" class="coach-chat__quick coach-chat__quick--{{index}}" data-question="{{item}}" bindtap="sendQuickQuestion" role="button">
+        <t-icon name="{{index === 0 ? 'help-circle' : index === 1 ? 'flag' : 'chart-line'}}" size="28rpx" />
+        <text class="coach-chat__quick-text">{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{displayMessages.length}}" class="coach-chat__messages">
+    <view
+      wx:for="{{displayMessages}}"
+      wx:key="id"
+      id="{{item.id}}"
+      class="coach-chat__message coach-chat__message--{{item.role}}"
+    >
+      <view wx:if="{{item.role === 'user'}}" class="coach-chat__user-row">
+        <text wx:if="{{item.timeLabel}}" class="coach-chat__message-time">{{item.timeLabel}}</text>
+        <view class="coach-chat__user-text">{{item.content}}</view>
+        <t-avatar
+          class="coach-chat__avatar"
+          image="{{userAvatarUrl && !avatarFailed ? userAvatarUrl : '/images/icons/avatar.png'}}"
+          size="64rpx"
+          shape="circle"
+          bordered
+          bind:error="avatarError"
+        />
+      </view>
+
       <view wx:else class="coach-chat__assistant">
-        <view class="coach-chat__mark"><view class="coach-chat__mark-core"></view></view>
+        <view class="coach-chat__brand" aria-label="AI 成长教练">
+          <image class="coach-chat__brand-image" src="./coach-mark.svg" mode="aspectFit" />
+        </view>
+
         <view class="coach-chat__assistant-body coach-chat__assistant-body--{{item.presentation.kind || 'plain'}}">
           <block wx:if="{{item.presentation}}">
-            <view class="coach-chat__eyebrow"><view class="coach-chat__eyebrow-mark"></view><text>{{item.presentation.eyebrow}}</text></view>
-            <view class="coach-chat__response-title">{{item.presentation.title}}</view>
-            <view class="coach-chat__response-summary">{{item.presentation.summary}}</view>
+            <block wx:if="{{item.presentation.kind === 'direct'}}">
+              <view class="coach-chat__structure-label"><t-icon name="check-circle" size="25rpx" /><text>结论</text></view>
+              <view class="coach-chat__answer coach-chat__answer--direct">{{item.content}}</view>
+            </block>
+            <block wx:else>
+              <view class="coach-chat__eyebrow">
+                <t-icon name="{{item.presentation.kind === 'diagnosis' ? 'search' : item.presentation.kind === 'priority_plan' ? 'flag' : 'star-filled'}}" size="27rpx" />
+                <text>{{item.presentation.eyebrow || '教练回复'}}</text>
+              </view>
+              <view class="coach-chat__structure-label coach-chat__structure-label--conclusion"><t-icon name="check-circle" size="25rpx" /><text>结论</text></view>
+              <view wx:if="{{item.presentation.title}}" class="coach-chat__response-title">{{item.presentation.title}}</view>
+              <view wx:if="{{item.presentation.summary}}" class="coach-chat__response-summary">{{item.presentation.summary}}</view>
 
             <view wx:if="{{item.presentation.metrics && item.presentation.metrics.length}}" class="coach-chat__metrics">
+              <view class="coach-chat__structure-label coach-chat__structure-label--wide"><t-icon name="search" size="25rpx" /><text>依据</text></view>
               <view wx:for="{{item.presentation.metrics}}" wx:for-item="metric" wx:key="label" class="coach-chat__metric">
-                <view class="coach-chat__metric-value">{{metric.value}}<text wx:if="{{metric.unit}}" class="coach-chat__metric-unit">{{metric.unit}}</text></view>
+                <view class="coach-chat__metric-head">
+                  <view class="coach-chat__metric-value">{{metric.value}}<text wx:if="{{metric.unit}}" class="coach-chat__metric-unit">{{metric.unit}}</text></view>
+                  <t-icon name="chart" size="29rpx" color="#557D6E" />
+                </view>
                 <view class="coach-chat__metric-label">{{metric.label}}</view>
-                <view wx:if="{{metric.progress >= 0}}" class="coach-chat__metric-track"><view class="coach-chat__metric-fill" style="width: {{metric.progress}}%;"></view></view>
+                <t-progress wx:if="{{metric.progress >= 0}}" percentage="{{metric.progress}}" label="{{false}}" stroke-width="5" />
               </view>
             </view>
 
-            <view wx:if="{{item.presentation.kind !== 'priorities' && item.presentation.sections && item.presentation.sections.length}}" class="coach-chat__sections">
-              <view wx:for="{{item.presentation.sections}}" wx:for-item="section" wx:key="index" class="coach-chat__section">
+            <view wx:if="{{item.presentation.sections && item.presentation.sections.length}}" class="coach-chat__sections">
+              <view wx:if="{{item.presentation.sections[0].index !== '依据'}}" class="coach-chat__structure-label coach-chat__structure-label--inset"><t-icon name="search" size="25rpx" /><text>依据</text></view>
+              <view wx:for="{{item.presentation.sections}}" wx:for-item="section" wx:key="index" class="coach-chat__section coach-chat__section--{{section.index === '下一步' ? 'next' : section.index === '依据' ? 'evidence' : 'default'}}">
                 <view class="coach-chat__section-index">{{section.index}}</view>
-                <view class="coach-chat__section-copy"><view class="coach-chat__section-title">{{section.title}}</view><view wx:if="{{section.detail}}" class="coach-chat__section-detail">{{section.detail}}</view></view>
+                <view class="coach-chat__section-copy">
+                  <view class="coach-chat__section-title">{{section.title}}</view>
+                  <view wx:if="{{section.detail}}" class="coach-chat__section-detail">{{section.detail}}</view>
+                </view>
               </view>
             </view>
 
             <view wx:if="{{item.presentation.priorities && item.presentation.priorities.length}}" class="coach-chat__priorities">
+              <view class="coach-chat__structure-label coach-chat__structure-label--inset"><t-icon name="flag" size="25rpx" /><text>下一步</text></view>
               <view wx:for="{{item.presentation.priorities}}" wx:for-item="priority" wx:key="title" class="coach-chat__priority">
-                <view class="coach-chat__priority-tag coach-chat__priority-tag--{{priority.tone}}">{{priority.label}}</view>
-                <view class="coach-chat__priority-copy"><view class="coach-chat__priority-title">{{priority.title}}</view><view class="coach-chat__priority-detail">{{priority.detail}}</view></view>
-                <t-icon name="chevron-right" size="28rpx" color="#839089" />
+                <t-tag
+                  class="coach-chat__priority-tag"
+                  theme="{{priority.tone === 'warning' ? 'warning' : priority.tone === 'success' ? 'success' : 'primary'}}"
+                  variant="light"
+                  shape="round"
+                  size="small"
+                >{{priority.label}}</t-tag>
+                <view class="coach-chat__priority-copy">
+                  <view class="coach-chat__priority-title">{{priority.title}}</view>
+                  <view wx:if="{{priority.detail}}" class="coach-chat__priority-detail">{{priority.detail}}</view>
+                </view>
               </view>
             </view>
 
+            <view wx:if="{{item.presentation.timeline && item.presentation.timeline.length}}" class="coach-chat__timeline">
+              <view class="coach-chat__structure-label coach-chat__structure-label--inset"><t-icon name="flag" size="25rpx" /><text>下一步</text></view>
+              <view wx:for="{{item.presentation.timeline}}" wx:for-item="entry" wx:key="time" class="coach-chat__timeline-item">
+                <view class="coach-chat__timeline-rail">
+                  <view class="coach-chat__timeline-dot"></view>
+                  <view class="coach-chat__timeline-line"></view>
+                </view>
+                <view class="coach-chat__timeline-copy">
+                  <view class="coach-chat__timeline-time">{{entry.time}}</view>
+                  <view class="coach-chat__timeline-title">{{entry.title}}</view>
+                  <view wx:if="{{entry.detail}}" class="coach-chat__timeline-detail">{{entry.detail}}</view>
+                </view>
+              </view>
+            </view>
+
+            <view wx:if="{{item.presentation.comparison && item.presentation.comparison.length}}" class="coach-chat__comparison">
+              <view class="coach-chat__structure-label coach-chat__structure-label--inset"><t-icon name="search" size="25rpx" /><text>依据</text></view>
+              <view wx:for="{{item.presentation.comparison}}" wx:for-item="comparison" wx:key="label" class="coach-chat__comparison-item">
+                <view class="coach-chat__comparison-label">{{comparison.label}}</view>
+                <view class="coach-chat__comparison-values">
+                  <text class="coach-chat__comparison-current">{{comparison.current}}</text>
+                  <text wx:if="{{comparison.previous}}" class="coach-chat__comparison-previous">对比 {{comparison.previous}}</text>
+                  <text wx:if="{{comparison.delta}}" class="coach-chat__comparison-delta">{{comparison.delta}}</text>
+                </view>
+              </view>
+            </view>
+
+            <view wx:if="{{item.presentation.trend && item.presentation.trend.length}}" class="coach-chat__trend">
+              <view class="coach-chat__structure-label"><t-icon name="search" size="25rpx" /><text>依据</text></view>
+              <view wx:for="{{item.presentation.trend}}" wx:for-item="point" wx:key="label" class="coach-chat__trend-item">
+                <view class="coach-chat__trend-copy">
+                  <text>{{point.label}}</text>
+                  <text>{{point.displayValue || point.value}}</text>
+                </view>
+                <t-progress percentage="{{point.progress >= 0 ? point.progress : point.value}}" label="{{false}}" stroke-width="5" />
+              </view>
+            </view>
+
+            <view wx:if="{{item.presentation.team && item.presentation.team.length}}" class="coach-chat__team">
+              <view class="coach-chat__structure-label coach-chat__structure-label--inset"><t-icon name="search" size="25rpx" /><text>依据</text></view>
+              <view wx:for="{{item.presentation.team}}" wx:for-item="teamItem" wx:key="label" class="coach-chat__team-item">
+                <t-icon name="usergroup" size="31rpx" color="#557D6E" />
+                <view class="coach-chat__team-copy">
+                  <view class="coach-chat__team-label">{{teamItem.label}}</view>
+                  <view wx:if="{{teamItem.detail}}" class="coach-chat__team-detail">{{teamItem.detail}}</view>
+                </view>
+                <view class="coach-chat__team-value">{{teamItem.value}}</view>
+              </view>
+            </view>
+
+            <view wx:if="{{item.presentation.action}}" class="coach-chat__structure-label coach-chat__structure-label--next"><t-icon name="flag" size="25rpx" /><text>下一步</text></view>
+            <view wx:if="{{item.presentation.action}}" class="coach-chat__action-template">
+              <view class="coach-chat__action-icon"><t-icon name="task-add" size="31rpx" /></view>
+              <view class="coach-chat__action-copy">
+                <view class="coach-chat__action-title">{{item.presentation.action.title || item.presentation.action.summary}}</view>
+                <view wx:if="{{item.presentation.action.detail}}" class="coach-chat__action-detail">{{item.presentation.action.detail}}</view>
+                <view wx:if="{{item.presentation.action.reminderTime}}" class="coach-chat__action-time">
+                  <t-icon name="time" size="25rpx" />
+                  <text>{{item.presentation.action.reminderTime}}</text>
+                </view>
+              </view>
+              <t-tag wx:if="{{item.presentation.action.status}}" theme="primary" variant="light" shape="round" size="small">{{item.presentation.action.status}}</t-tag>
+            </view>
+            </block>
           </block>
-          <view wx:else class="coach-chat__answer">{{item.content}}</view>
+
+          <block wx:else>
+            <view class="coach-chat__structure-label"><t-icon name="check-circle" size="25rpx" /><text>结论</text></view>
+            <view class="coach-chat__answer">{{item.content}}</view>
+          </block>
+
           <view wx:if="{{item.actionProposal && item.actionProposal.id}}" class="coach-chat__proposal">
-            <view class="coach-chat__proposal-title">{{item.actionProposal.summary}}</view>
-            <view wx:if="{{item.actionProposal.reminderTime}}" class="coach-chat__proposal-reminder"><t-icon name="time" size="27rpx" /><text>{{item.actionProposal.reminderTime}} 提醒开始</text></view>
-            <view wx:if="{{item.actionProposal.status === 'pending'}}" class="coach-chat__proposal-button {{executingProposalId !== '' ? 'is-disabled' : ''}}" data-proposal-id="{{item.actionProposal.id}}" bindtap="confirmProposal" role="button" aria-label="确认执行">{{executingProposalId === item.actionProposal.id ? '正在执行…' : '确认执行'}}</view>
-            <view wx:else class="coach-chat__proposal-done">已执行并同步到行动记录</view>
+            <view class="coach-chat__proposal-heading">
+              <t-icon name="task-add" size="31rpx" />
+              <view class="coach-chat__proposal-title">{{item.actionProposal.summary}}</view>
+            </view>
+            <view wx:if="{{item.actionProposal.reminderTime}}" class="coach-chat__proposal-reminder">
+              <t-icon name="time" size="27rpx" />
+              <text>{{item.actionProposal.reminderTime}} 提醒开始</text>
+            </view>
+            <t-button
+              wx:if="{{item.actionProposal.status === 'pending'}}"
+              class="coach-chat__proposal-button"
+              theme="primary"
+              size="medium"
+              block
+              disabled="{{executingProposalId !== ''}}"
+              loading="{{executingProposalId === item.actionProposal.id}}"
+              data-proposal-id="{{item.actionProposal.id}}"
+              bindtap="confirmProposal"
+            >{{executingProposalId === item.actionProposal.id ? '正在执行…' : '确认执行'}}</t-button>
+            <view wx:else class="coach-chat__proposal-done">
+              <t-icon name="check-circle" size="27rpx" />
+              <text>已执行并同步到行动记录</text>
+            </view>
+          </view>
+          <view class="coach-chat__feedback">
+            <view class="coach-chat__feedback-button {{item.feedback === 'up' ? 'is-selected' : ''}}" data-message-id="{{item.id}}" data-rating="up" bindtap="rateAnswer" role="button" aria-label="这个回答有帮助"><t-icon name="thumb-up" size="27rpx" /></view>
+            <view class="coach-chat__feedback-button {{item.feedback === 'down' ? 'is-selected' : ''}}" data-message-id="{{item.id}}" data-rating="down" bindtap="rateAnswer" role="button" aria-label="这个回答需要改进"><t-icon name="thumb-down" size="27rpx" /></view>
           </view>
         </view>
       </view>
     </view>
   </view>
 
-  <view wx:if="{{asking}}" class="coach-chat__thinking"><view class="coach-chat__spinner"></view><text>正在结合你的真实记录思考</text></view>
-  <view wx:if="{{errorMessage}}" class="coach-chat__error"><text class="coach-chat__error-copy">{{errorMessage}}</text><view class="coach-chat__error-retry" bindtap="retry" role="button">重新发送</view></view>
-  <view class="coach-chat__input-dock">
-    <view class="coach-chat__input-bar">
-      <textarea class="coach-chat__input" value="{{question}}" maxlength="1000" disabled="{{asking}}" auto-height fixed cursor-spacing="20" confirm-type="send" confirm-hold="{{true}}" placeholder="问问今天怎么安排，或继续追问刚才的建议" placeholder-class="coach-chat__placeholder" bindinput="inputQuestion" bindconfirm="sendQuestion"></textarea>
-      <view class="coach-chat__send {{asking || !question ? 'is-disabled' : ''}}" bindtap="sendQuestion" role="button" aria-label="发送"><t-icon name="send" size="33rpx" /></view>
-    </view>
-    <view class="coach-chat__input-note">AI 会优先依据你的真实记录回答 · 行动修改需你确认</view>
+  <view wx:if="{{asking}}" class="coach-chat__thinking">
+    <view class="coach-chat__brand coach-chat__brand--thinking"><image class="coach-chat__brand-image" src="./coach-mark.svg" mode="aspectFit" /></view>
+    <t-chat-thinking content="{{thinkingContent}}" status="pending" layout="block" animation="moving" />
   </view>
+
+  <view wx:if="{{errorMessage}}" class="coach-chat__error" id="chat-error">
+    <t-icon name="error-circle" size="31rpx" />
+    <text class="coach-chat__error-copy">{{errorMessage}}</text>
+    <view class="coach-chat__error-retry" bindtap="retry" role="button">重新发送</view>
+  </view>
+
+  <view class="coach-chat__composer">
+    <view class="coach-chat__input-bar">
+      <textarea
+        class="coach-chat__input"
+        value="{{question}}"
+        maxlength="1000"
+        disabled="{{asking}}"
+        auto-height
+        adjust-position="{{true}}"
+        cursor-spacing="24"
+        confirm-type="send"
+        confirm-hold="{{true}}"
+        placeholder="说说你的困惑，教练随时在这里"
+        placeholder-class="coach-chat__placeholder"
+        bindinput="inputQuestion"
+        bindconfirm="sendQuestion"
+      ></textarea>
+      <view class="coach-chat__send {{asking || !question ? 'is-disabled' : ''}}" bindtap="sendQuestion" role="button" aria-label="发送">
+        <t-icon name="arrow-up" size="34rpx" />
+      </view>
+    </view>
+  </view>
+  <view class="coach-chat__anchor"></view>
 </view>

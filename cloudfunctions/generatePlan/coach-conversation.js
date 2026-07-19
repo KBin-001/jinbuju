@@ -103,21 +103,6 @@ function firstCoachSummary(answer) {
   return cleanCoachText(firstSentence || lines[0] || answer).slice(0, 180);
 }
 
-function answerSections(answer) {
-  const lines = String(answer || "").split(/\n+/).map((line) => line.trim()).filter(Boolean);
-  const sections = [];
-  lines.forEach((line) => {
-    const numbered = line.match(/^\s*(\d{1,2})[\.、)]\s*(.+)$/);
-    if (!numbered) return;
-    const content = cleanCoachText(numbered[2]);
-    const separator = content.search(/[：:，,。]/);
-    const title = (separator > 0 ? content.slice(0, separator) : content).slice(0, 28);
-    const detail = (separator > 0 ? content.slice(separator + 1) : "").trim().slice(0, 140);
-    sections.push({ index: String(sections.length + 1).padStart(2, "0"), title, detail });
-  });
-  return sections.slice(0, 4);
-}
-
 function scopedCoachTasks(context) {
   const selected = context && context.selectedDate && Array.isArray(context.selectedDate.tasks) ? context.selectedDate.tasks : [];
   const recent = context && context.recent && Array.isArray(context.recent.tasks) ? context.recent.tasks : [];
@@ -132,21 +117,78 @@ function scopedCoachTasks(context) {
   return tasks.filter((item) => String(item.currentDate || "") >= startDate && String(item.currentDate || "") <= context.analysisDate);
 }
 
+function clampPercent(value) {
+  return Math.max(0, Math.min(100, Math.round(Number(value || 0))));
+}
+
+function taskPresentationRows(tasks, limit = 8) {
+  return tasks.slice(0, limit).map((item) => {
+    const completedTask = item.status === "completed";
+    const partialTask = item.status === "partially_completed";
+    return {
+      label: completedTask ? "已完成" : partialTask ? "进行中" : "待完成",
+      title: String(item.title || "未命名行动").slice(0, 42),
+      detail: completedTask && Number(item.actualMinutes || 0) > 0
+        ? `实际 ${Math.max(0, Number(item.actualMinutes || 0))} 分钟 · 预计 ${Math.max(0, Number(item.estimatedMinutes || 0))} 分钟`
+        : `预计 ${Math.max(0, Number(item.estimatedMinutes || 0))} 分钟${item.reminder && item.reminder.time ? ` · ${String(item.reminder.time).slice(0, 5)} 提醒` : ""}`,
+      tone: completedTask ? "success" : partialTask ? "positive" : "neutral",
+    };
+  });
+}
+
+function trustedTaskMetrics(context) {
+  const metricTasks = scopedCoachTasks(context).filter((item) => item.status !== "skipped");
+  const useAggregate = context && context.scope === "overall" && context.aggregate;
+  const total = useAggregate ? Math.max(0, Number(context.aggregate.total || 0) - Number(context.aggregate.skipped || 0)) : metricTasks.length;
+  const completed = useAggregate ? Math.max(0, Number(context.aggregate.completed || 0)) : metricTasks.filter((item) => item.status === "completed").length;
+  const actualMinutes = useAggregate ? Math.max(0, Number(context.aggregate.actualMinutes || 0)) : metricTasks.reduce((sum, item) => sum + Math.max(0, Number(item.actualMinutes || 0)), 0);
+  const estimatedMinutes = useAggregate ? Math.max(0, Number(context.aggregate.estimatedMinutes || 0)) : metricTasks.reduce((sum, item) => sum + Math.max(0, Number(item.estimatedMinutes || 0)), 0);
+  return { tasks: metricTasks, total, completed, actualMinutes, estimatedMinutes, completionRate: total ? clampPercent(completed / total * 100) : 0 };
+}
+
+function trustedTrend(tasks) {
+  const byDate = new Map();
+  tasks.filter((item) => item.currentDate).forEach((item) => {
+    const date = String(item.currentDate);
+    const current = byDate.get(date) || { total: 0, completed: 0 };
+    if (item.status !== "skipped") current.total += 1;
+    if (item.status === "completed") current.completed += 1;
+    byDate.set(date, current);
+  });
+  return Array.from(byDate.entries()).sort(([left], [right]) => left.localeCompare(right)).slice(-7).map(([date, value]) => {
+    const progress = value.total ? clampPercent(value.completed / value.total * 100) : 0;
+    return { label: date.slice(5), value: value.completed, displayValue: `${value.completed}/${value.total}`, progress, tone: progress >= 80 ? "success" : progress >= 40 ? "positive" : "neutral" };
+  });
+}
+
 function buildCoachPresentation(context, question, answer, actionProposal) {
   const text = String(question || "");
   const summary = firstCoachSummary(answer);
-  const sections = answerSections(answer);
   const selectedTasks = context && context.selectedDate && Array.isArray(context.selectedDate.tasks) ? context.selectedDate.tasks : [];
   const visibleTasks = selectedTasks.filter((item) => item.status !== "skipped");
-  const metricTasks = scopedCoachTasks(context).filter((item) => item.status !== "skipped");
-  const useAggregate = context && context.scope === "overall" && context.aggregate;
-  const metricTotal = useAggregate ? Math.max(0, Number(context.aggregate.total || 0) - Number(context.aggregate.skipped || 0)) : metricTasks.length;
-  const completed = useAggregate ? Math.max(0, Number(context.aggregate.completed || 0)) : metricTasks.filter((item) => item.status === "completed").length;
-  const actualMinutes = useAggregate ? Math.max(0, Number(context.aggregate.actualMinutes || 0)) : metricTasks.reduce((sum, item) => sum + Math.max(0, Number(item.actualMinutes || 0)), 0);
-  const completionRate = metricTotal ? Math.round(completed / metricTotal * 100) : 0;
+  const metrics = trustedTaskMetrics(context || {});
   const isPlan = /计划|安排|优先|先做|调整|拆解|下一步|怎么做/.test(text);
-  const isMetric = /进度|完成|投入|数据|情况|表现|复盘|分析|判断|为什么/.test(text);
+  const isMetric = /进展|进度|完成|投入|数据|情况|表现|复盘|分析|判断|为什么/.test(text);
   const isTaskOverview = /(?:今天|今日).*(?:任务|行动)|(?:任务|行动).*(?:有哪些|有什么|哪些|列表)/.test(text);
+  const isTimeline = /时间表|日程|几点|什么时候|时间安排|提醒顺序/.test(text);
+  const isComparison = /对比|比较|计划.*实际|实际.*计划|上周|昨天|差距/.test(text);
+  const isTrend = /趋势|走势|最近(?:一周|七天|7天)|变化/.test(text);
+  const isMilestone = /连续|里程碑|阶段|成就|成长记录/.test(text);
+  const isTeam = /小队|队友|排名|队内|团队/.test(text);
+
+  if (actionProposal && actionProposal.type !== "needs_clarification") {
+    const title = String(actionProposal.title || actionProposal.taskTitle || "待确认行动").slice(0, 80);
+    const detailParts = [];
+    if (Number(actionProposal.estimatedMinutes || 0) > 0) detailParts.push(`预计 ${Number(actionProposal.estimatedMinutes)} 分钟`);
+    if (actionProposal.currentDate) detailParts.push(String(actionProposal.currentDate));
+    return {
+      kind: "action_proposal", eyebrow: "行动提案", title: "确认后执行", summary,
+      action: {
+        title, summary: String(actionProposal.summary || "").slice(0, 160), detail: detailParts.join(" · "),
+        status: String(actionProposal.status || "pending"), reminderTime: String(actionProposal.reminderTime || "").slice(0, 5),
+      },
+    };
+  }
 
   if (actionProposal && actionProposal.type === "needs_clarification") {
     const needsReminder = Array.isArray(actionProposal.requiredFields) && actionProposal.requiredFields.includes("reminderTime");
@@ -158,23 +200,67 @@ function buildCoachPresentation(context, question, answer, actionProposal) {
   }
 
   if (isTaskOverview) {
-    const taskRows = visibleTasks.slice(0, 8).map((item) => {
-      const completedTask = item.status === "completed";
-      const partialTask = item.status === "partially_completed";
-      return {
-        label: completedTask ? "已完成" : partialTask ? "进行中" : "待完成",
-        title: String(item.title || "未命名行动").slice(0, 42),
-        detail: completedTask && Number(item.actualMinutes || 0) > 0
-          ? `实际 ${Number(item.actualMinutes)} 分钟 · 预计 ${Number(item.estimatedMinutes || 0)} 分钟`
-          : `预计 ${Number(item.estimatedMinutes || 0)} 分钟${item.reminder && item.reminder.time ? ` · ${item.reminder.time} 提醒` : ""}`,
-        tone: completedTask ? "success" : partialTask ? "positive" : "neutral",
-      };
-    });
+    const taskRows = taskPresentationRows(visibleTasks);
     const pendingCount = visibleTasks.filter((item) => item.status !== "completed").length;
     return {
-      kind: "tasks", eyebrow: "今日行动", title: `共 ${visibleTasks.length} 项行动`,
+      kind: "task_list", eyebrow: "今日行动", title: `共 ${visibleTasks.length} 项行动`,
       summary: `已完成 ${visibleTasks.length - pendingCount} 项，待继续 ${pendingCount} 项${visibleTasks.length > taskRows.length ? `，下方展示前 ${taskRows.length} 项` : ""}。`,
       priorities: taskRows, sections: [],
+    };
+  }
+
+  if (isTimeline) {
+    const timedTasks = visibleTasks.filter((item) => item.reminder && item.reminder.time).sort((a, b) => String(a.reminder.time).localeCompare(String(b.reminder.time)));
+    if (timedTasks.length) return {
+      kind: "timeline", eyebrow: "时间安排", title: "按提醒时间推进", summary,
+      timeline: timedTasks.slice(0, 8).map((item) => ({
+        time: String(item.reminder.time).slice(0, 5), title: String(item.title || "未命名行动").slice(0, 42),
+        detail: `预计 ${Math.max(0, Number(item.estimatedMinutes || 0))} 分钟`,
+        tone: item.status === "completed" ? "success" : item.status === "partially_completed" ? "positive" : "neutral",
+      })),
+    };
+  }
+
+  if (isTeam && context && context.team && context.team.dailyStats) {
+    const stats = context.team.dailyStats;
+    const self = Array.isArray(context.team.members) ? context.team.members.find((item) => item.isSelf) : null;
+    const teamRows = [
+      { label: "小队完成率", value: `${clampPercent(stats.completionRate)}%`, detail: `${Math.max(0, Number(stats.completedMembers || 0))}/${Math.max(0, Number(stats.totalMembers || 0))} 人完成`, tone: "positive" },
+      { label: "共同投入", value: `${Math.max(0, Number(stats.totalGrowthMinutes || 0))} 分钟`, detail: String(stats.date || context.analysisDate || ""), tone: "neutral" },
+    ];
+    if (self) teamRows.unshift({ label: "我的排名", value: self.rank > 0 ? `第 ${Number(self.rank)} 名` : "暂未上榜", detail: `${Math.max(0, Number(self.growthMinutes || 0))} 分钟投入`, tone: "success" });
+    return { kind: "team_snapshot", eyebrow: "小队同行", title: String(context.team.team && context.team.team.name || "今日小队数据"), summary, team: teamRows };
+  }
+
+  if (isMilestone) {
+    const currentStreak = Math.max(0, Number(context && context.profile && context.profile.currentStreakDays || 0));
+    const longestStreak = Math.max(0, Number(context && context.profile && context.profile.longestStreakDays || 0));
+    const reviews = context && Array.isArray(context.stageReviews) ? context.stageReviews : [];
+    const latestReview = reviews[0] || null;
+    return {
+      kind: "milestone", eyebrow: "成长里程碑", title: currentStreak ? `已连续行动 ${currentStreak} 天` : "从下一次行动开始积累",
+      summary,
+      metrics: [
+        { label: "当前连续", value: String(currentStreak), unit: "天" },
+        { label: "最长连续", value: String(longestStreak), unit: "天" },
+        ...(latestReview ? [{ label: "最近阶段", value: String(Math.max(0, Number(latestReview.stageNumber || 0))), unit: "阶段", progress: clampPercent(latestReview.completionRate) }] : []),
+      ],
+    };
+  }
+
+  if (isTrend) {
+    const trend = trustedTrend(scopedCoachTasks(context || {}));
+    if (trend.length) return { kind: "trend", eyebrow: "行动趋势", title: "最近行动变化", summary, trend };
+  }
+
+  if (isComparison && metrics.total) {
+    const minuteDelta = metrics.actualMinutes - metrics.estimatedMinutes;
+    return {
+      kind: "comparison", eyebrow: "投入对比", title: "计划与实际", summary,
+      comparison: [
+        { label: "投入时长", current: `${metrics.actualMinutes} 分钟`, previous: `${metrics.estimatedMinutes} 分钟`, delta: `${minuteDelta >= 0 ? "+" : ""}${minuteDelta} 分钟`, tone: minuteDelta <= 0 ? "success" : "warning" },
+        { label: "行动完成", current: `${metrics.completed} 项`, previous: `${metrics.total} 项`, delta: `${metrics.completionRate}%`, tone: metrics.completionRate >= 80 ? "success" : "positive" },
+      ],
     };
   }
 
@@ -185,21 +271,28 @@ function buildCoachPresentation(context, question, answer, actionProposal) {
       detail: `预计 ${Math.max(0, Number(item.estimatedMinutes || 0))} 分钟${item.reminder && item.reminder.time ? ` · ${item.reminder.time} 提醒` : ""}`,
       tone: index === 0 ? "warning" : index === 1 ? "positive" : "neutral",
     }));
-    if (priorities.length) return { kind: "priorities", eyebrow: "接下来的计划", title: "按优先级推进", summary, priorities, sections };
+    if (priorities.length) return { kind: "priority_plan", eyebrow: "接下来的计划", title: "按优先级推进", summary, priorities };
   }
 
-  if (isMetric && metricTotal) {
+  if (isMetric && metrics.total) {
+    const nextTask = visibleTasks.find((item) => item.status !== "completed");
+    const diagnosisSections = [
+      { index: "依据", title: "真实行动记录", detail: `已完成 ${metrics.completed}/${metrics.total} 项行动，实际投入 ${metrics.actualMinutes} 分钟，预计 ${metrics.estimatedMinutes} 分钟` },
+      nextTask
+        ? { index: "下一步", title: String(nextTask.title || "继续推进待完成行动").slice(0, 42), detail: `优先完成这一项，预计 ${Math.max(0, Number(nextTask.estimatedMinutes || 0))} 分钟。` }
+        : { index: "下一步", title: "巩固当前节奏", detail: "当前范围内的行动已经完成，可以补充实际投入或安排下一项具体行动。" },
+    ];
+    if (/进展|判断|为什么|分析|复盘/.test(text)) return { kind: "diagnosis", eyebrow: "教练分析", title: "结论", summary, sections: diagnosisSections };
     return {
-      kind: "metrics", eyebrow: "判断依据", title: "行动数据概览", summary,
+      kind: "metric_overview", eyebrow: "数据概览", title: "行动进展", summary,
       metrics: [
-        { label: "完成行动", value: `${completed}/${metricTotal}`, progress: completionRate },
-        { label: "实际投入", value: String(actualMinutes), unit: "分钟" },
-        { label: "完成率", value: String(completionRate), unit: "%", progress: completionRate },
+        { label: "完成行动", value: `${metrics.completed}/${metrics.total}`, progress: metrics.completionRate },
+        { label: "实际投入", value: String(metrics.actualMinutes), unit: "分钟" },
+        { label: "完成率", value: String(metrics.completionRate), unit: "%", progress: metrics.completionRate },
       ],
-      sections,
     };
   }
-  return { kind: "summary", eyebrow: "教练回复", title: sections.length ? "要点整理" : "直接回答", summary: sections.length ? summary : cleanCoachText(answer).slice(0, 600), sections };
+  return { kind: "direct", eyebrow: "教练分析", title: "结论", summary: cleanCoachText(answer) };
 }
 
 async function saveConversation(openid, conversationId, summary, lastMessageAtMs) {
@@ -297,5 +390,5 @@ async function askProgressCoach(openid, event = {}, generator = generateMessages
 
 module.exports = {
   CONVERSATION_SCHEMA_VERSION, RETENTION_MS, askProgressCoach, buildModelMessages,
-  answerSections, buildCoachPresentation, buildRollingSummary, conversationIdFor, getCoachConversation, normalizeScope, publicMessage, resolveConversationId,
+  buildCoachPresentation, buildRollingSummary, conversationIdFor, getCoachConversation, normalizeScope, publicMessage, resolveConversationId,
 };

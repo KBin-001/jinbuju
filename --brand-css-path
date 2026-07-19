@@ -282,7 +282,7 @@
             <span class="flex-1 text-[14px] font-normal truncate" style="color: var(--color-text-primary);">隐私政策</span>
             <i data-lucide="chevron-right" class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary); opacity: 0.5;"></i>
           </div>
-          <!-- Item 4: 关于进步局 -->
+          <!-- Item 4: 关于今日进度｜目标计划打卡 -->
           <div class="flex items-center px-4 py-3.5 transition-colors duration-200 cursor-pointer"
                style="padding-left: 16px;"
                onmouseenter="this.style.background='rgba(53,104,89,0.03)';"
@@ -291,7 +291,7 @@
             <div class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: var(--color-surface-green);">
               <i data-lucide="info" class="h-4 w-4" style="color: var(--color-primary);"></i>
             </div>
-            <span class="flex-1 text-[14px] font-normal truncate" style="color: var(--color-text-primary);">关于进步局</span>
+            <span class="flex-1 text-[14px] font-normal truncate" style="color: var(--color-text-primary);">关于今日进度｜目标计划打卡</span>
             <i data-lucide="chevron-right" class="h-4 w-4 shrink-0" style="color: var(--color-text-secondary); opacity: 0.5;"></i>
           </div>
         </section>

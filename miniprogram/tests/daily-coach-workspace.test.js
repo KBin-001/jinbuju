@@ -10,13 +10,33 @@ const chatTemplate = fs.readFileSync(path.join(root, "components/coach-chat/inde
 const chatStyles = fs.readFileSync(path.join(root, "components/coach-chat/index.wxss"), "utf8");
 const service = fs.readFileSync(path.join(root, "services/dailyCoach.ts"), "utf8");
 
-assert.match(template, /今日结论/);
-assert.match(template, /教练判断/);
+assert.match(service, /description:\s*task\.description/, "行动预览应优先使用真实描述字段");
+
+assert.match(template, /class="scope-switch"[\s\S]*今日复盘/);
+assert.match(template, /data-scope="week"[\s\S]*data-scope="month"[\s\S]*data-scope="overall"/, "顶部选择器必须连通周、月和长期洞察");
+assert.match(template, /ai-coach-shanshui-v2\.jpg/, "方案一页面必须使用专用山水背景");
+assert.match(template, /class="metric-grid"/);
+assert.equal((template.match(/class="metric-card metric-card--/g) || []).length, 3, "默认首页必须使用三列等高真实指标卡");
+assert.match(template, /workspace\.streakDays/);
+assert.match(template, /workspace\.todayAdvice/, "今日建议必须由页面真实统计即时生成");
+assert.match(template, /workspace\.taskPreviews/, "默认页必须预览真实今日行动");
+assert.match(template, /workspace\.recentDays/, "默认页必须绘制真实七日进展");
+assert.match(template, /workspace\.longestStreakDays/, "最近进展必须展示真实最长连续天数");
+assert.match(template, /bindtap="sendGuidedQuestion"/, "今日建议快捷问题必须进入现有问答链路");
+assert.match(template, /bindtap="openTask"/, "行动预览必须可进入真实编辑页");
+assert.doesNotMatch(template, /quick-questions=/, "每日页快捷问题已归入今日建议，不应在聊天组件重复展示");
+assert.doesNotMatch(template, /microphone|voice|waveform|麦克风|语音/, "文字输入方案不得伪装语音能力");
+assert.match(chatTemplate, /教练正在等你[\s\S]*随时聊聊你的困惑与下一步/);
+assert.doesNotMatch(chatTemplate, /开始对话/, "共享教练组件不应增加冗余的开始按钮");
 assert.doesNotMatch(template, /下一步建议|next-step|runPrimaryAction|runSecondaryAction/);
 assert.match(template, /title="继续问教练"/);
-assert.match(template, /今日行动完成率/);
+assert.match(template, /analysis\.completionPercent/);
 assert.doesNotMatch(template, /jinbuju-ai-robot|coach-robot|帮我分析一下今天的完成情况<\/view>/, "页面不应伪造聊天或继续使用卡通机器人");
 assert.match(page, /getDailyCoachAnalysis/);
+assert.match(page, /buildTodayAdvice/);
+assert.match(page, /buildTaskPreviews/);
+assert.match(page, /buildRecentDays/);
+assert.match(page, /\["为什么这样建议", "今日总结", "找出今日卡点"\]/, "今日建议入口文案必须保持统一");
 assert.match(page, /askProgressCoach\("day"/);
 assert.match(page, /executeCoachProposal/);
 assert.match(page, /executingProposalId:\s*"",\s*chatError:\s*"",\s*failedQuestion:\s*""/, "确认执行成功后必须清除残留错误提示");
@@ -26,6 +46,7 @@ assert.match(page, /messages:\s*\[\],\s*conversationId:\s*""/, "每次进入每�
 assert.match(page, /this\.data\.conversationId \|\| undefined/, "当前页面内应保留多轮上下文");
 assert.match(page, /slice\(-50\)/, "当前页面最多展示最近 50 条消息");
 assert.match(page, /scope=week/, "最近一周必须进入真实周分析能力");
+assert.match(page, /selectCoachScope/);
 assert.match(page, /getMenuButtonBoundingClientRect/, "自定义导航必须避让微信右上角胶囊");
 assert.match(template, /padding-right: \{\{menuRightInset\}\}px/, "导航未使用真实胶囊右侧占位");
 assert.match(template, /<coach-chat/);

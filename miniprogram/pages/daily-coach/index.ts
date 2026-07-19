@@ -19,12 +19,33 @@ interface CoachEvidence {
   description: string;
 }
 
+interface DailyTaskPreview {
+  id: string;
+  title: string;
+  subtitle: string;
+  tone: "complete" | "active" | "pending";
+  icon: string;
+  statusLabel: string;
+}
+
+interface ProgressDayView {
+  date: string;
+  label: string;
+  level: 0 | 1 | 2 | 3;
+  isToday: boolean;
+}
+
 interface WorkspaceView {
   conclusionTitle: string;
   conclusionSubtitle: string;
   todayStatus: string;
   statusTone: string;
   judgementTitle: string;
+  streakDays: number;
+  longestStreakDays: number;
+  todayAdvice: string;
+  taskPreviews: DailyTaskPreview[];
+  recentDays: ProgressDayView[];
   evidences: CoachEvidence[];
 }
 
@@ -40,8 +61,62 @@ const EMPTY_WORKSPACE: WorkspaceView = {
   todayStatus: "尚未开始",
   statusTone: "idle",
   judgementTitle: "正在核对今天的行动记录。",
+  streakDays: 0,
+  longestStreakDays: 0,
+  todayAdvice: "完成第一项行动后，教练会结合真实记录给出建议。",
+  taskPreviews: [],
+  recentDays: [],
   evidences: [],
 };
+
+const WEEKDAY_SHORT = ["日", "一", "二", "三", "四", "五", "六"];
+
+function taskPreviewSubtitle(task: DailyCoachAnalysis["completedTasks"][number]): string {
+  const description = String(task.description || "").trim();
+  if (description) return description;
+  if (task.actualMinutes > 0) return `实际 ${task.actualMinutes} 分钟 · 预计 ${task.estimatedMinutes} 分钟`;
+  return `预计投入 ${task.estimatedMinutes} 分钟`;
+}
+
+function buildTaskPreviews(analysis: DailyCoachAnalysis): DailyTaskPreview[] {
+  const ordered = analysis.completedTasks.concat(
+    analysis.pendingTasks.filter((task) => task.status === "partially_completed"),
+    analysis.pendingTasks.filter((task) => task.status !== "partially_completed"),
+  );
+  return ordered.slice(0, 3).map((task) => {
+    if (task.status === "completed") return { id: task.id, title: task.title, subtitle: taskPreviewSubtitle(task), tone: "complete" as const, icon: "check-circle", statusLabel: "已完成" };
+    if (task.status === "partially_completed") return { id: task.id, title: task.title, subtitle: taskPreviewSubtitle(task), tone: "active" as const, icon: "edit", statusLabel: "进行中" };
+    return { id: task.id, title: task.title, subtitle: taskPreviewSubtitle(task), tone: "pending" as const, icon: "time", statusLabel: "待完成" };
+  });
+}
+
+function progressLevel(completedCount: number, partialCount: number, totalCount: number): 0 | 1 | 2 | 3 {
+  if (!totalCount) return 0;
+  const ratio = (completedCount + partialCount * 0.5) / totalCount;
+  if (ratio >= 1) return 3;
+  if (ratio >= 0.5) return 2;
+  return ratio > 0 ? 1 : 0;
+}
+
+function buildRecentDays(progress: ReturnType<typeof getProgressSummary> | null): ProgressDayView[] {
+  return (progress?.recentDays || []).slice().reverse().map((day) => {
+    const date = new Date(`${day.date}T00:00:00+08:00`);
+    return {
+      date: day.date,
+      label: day.isToday ? "今" : WEEKDAY_SHORT[date.getDay()],
+      level: progressLevel(day.completedCount, day.partialCount, day.totalCount),
+      isToday: day.isToday,
+    };
+  });
+}
+
+function buildTodayAdvice(analysis: DailyCoachAnalysis): string {
+  const remaining = Math.max(0, analysis.totalCount - analysis.completedCount);
+  if (!analysis.totalCount) return "先添加一项今天能完成的小行动，建立第一条真实记录。";
+  if (analysis.completedCount === analysis.totalCount) return "今天的行动已经全部完成，保持当前节奏，并记录一个有效做法。";
+  if (analysis.priorityTask && (analysis.actualMinutes > 0 || analysis.completedCount > 0)) return `你已经开始推进，接下来优先完成“${analysis.priorityTask.title}”，先把最接近收尾的一项做好。`;
+  return `今天还有 ${remaining} 项行动待完成，先从最容易开始的一项进入节奏。`;
+}
 
 function getNavigationMetrics() {
   try {
@@ -53,11 +128,13 @@ function getNavigationMetrics() {
       statusBarHeight: windowInfo.statusBarHeight,
       navTop,
       navHeight,
+      scopeTop: navTop + navHeight + 9,
+      scopeMenuTop: navTop + navHeight + 50,
+      headlineTop: navTop + navHeight + 82,
       menuRightInset: Math.max(92, windowInfo.windowWidth - menu.left + 8),
-      heroHeight: menu.bottom + 42,
     };
   } catch (_error) {
-    return { statusBarHeight: 44, navTop: 44, navHeight: 32, menuRightInset: 96, heroHeight: 128 };
+    return { statusBarHeight: 44, navTop: 44, navHeight: 32, scopeTop: 85, scopeMenuTop: 126, headlineTop: 158, menuRightInset: 96 };
   }
 }
 
@@ -132,7 +209,13 @@ function buildWorkspace(analysis: DailyCoachAnalysis): WorkspaceView {
   }
 
   return {
-    conclusionTitle, conclusionSubtitle, todayStatus, statusTone, judgementTitle, evidences: evidences.slice(0, 3),
+    conclusionTitle, conclusionSubtitle, todayStatus, statusTone, judgementTitle,
+    streakDays: Math.max(0, Number(progress?.currentStreakDays || 0)),
+    longestStreakDays: Math.max(0, Number(progress?.longestStreakDays || 0)),
+    todayAdvice: buildTodayAdvice(analysis),
+    taskPreviews: buildTaskPreviews(analysis),
+    recentDays: buildRecentDays(progress),
+    evidences: evidences.slice(0, 3),
   };
 }
 
@@ -141,13 +224,13 @@ Page({
     appTheme: getCurrentThemeId(), ...getNavigationMetrics(), status: "loading" as "loading" | "ready" | "error", errorMessage: "",
     requestedDate: "", requestedGoalId: "", analysis: EMPTY_ANALYSIS, workspace: EMPTY_WORKSPACE,
     messages: [] as DailyChatMessage[], asking: false, chatError: "", failedQuestion: "", executingProposalId: "",
-    conversationId: "", userAvatarUrl: "",
-    quickQuestions: ["为什么这样判断？", "帮我调整接下来的计划", "分析最近一周"],
+    conversationId: "", userAvatarUrl: "", scopeMenuOpen: false,
+    quickQuestions: ["为什么这样建议", "今日总结", "找出今日卡点"],
   },
 
   onLoad(query: Record<string, string>) {
     const requestedDate = /^\d{4}-\d{2}-\d{2}$/.test(String(query.date || "")) ? String(query.date) : getTodayBusinessDate();
-    this.setData({ requestedDate, requestedGoalId: String(query.goalId || ""), messages: [], conversationId: "", chatError: "", failedQuestion: "", userAvatarUrl: getLocalUserProfile()?.avatarUrl || "" });
+    this.setData({ requestedDate, requestedGoalId: String(query.goalId || ""), messages: [], conversationId: "", chatError: "", failedQuestion: "", userAvatarUrl: getLocalUserProfile()?.avatarUrl || "", scopeMenuOpen: false });
     this.loadAnalysis();
   },
 
@@ -174,6 +257,10 @@ Page({
 
   goBack() { wx.navigateBack({ delta: 1 }); },
   openTodayRecords() { wx.navigateTo({ url: `/pages/today-data/index?date=${encodeURIComponent(this.data.analysis.date || getTodayBusinessDate())}` }); },
+  openTask(event: { currentTarget: { dataset: { taskId?: string } } }) {
+    const taskId = String(event.currentTarget.dataset.taskId || "");
+    if (taskId) wx.navigateTo({ url: `/pages/action-edit/index?id=${encodeURIComponent(taskId)}` });
+  },
   addTodayAction() {
     if (!this.data.analysis.goalId) {
       wx.navigateTo({ url: "/pages/goal-create/index" });
@@ -181,14 +268,15 @@ Page({
     }
     wx.navigateTo({ url: `/pages/action-edit/index?goalId=${encodeURIComponent(this.data.analysis.goalId)}&date=${encodeURIComponent(this.data.analysis.date || getTodayBusinessDate())}` });
   },
-  selectSection(event: { currentTarget: { dataset: { section?: string } } }) {
-    const section = String(event.currentTarget.dataset.section || "review");
-    if (section === "insights") {
-      if (!this.data.analysis.goalId) { wx.showToast({ title: "持续行动后会生成更多洞察", icon: "none" }); return; }
-      wx.navigateTo({ url: `/pages/ai-coach/index?scope=week&goalId=${encodeURIComponent(this.data.analysis.goalId)}` });
-      return;
-    }
-    wx.pageScrollTo({ selector: "#today-review", duration: 240 });
+  toggleScopeMenu() {
+    this.setData({ scopeMenuOpen: !this.data.scopeMenuOpen });
+  },
+  selectCoachScope(event: { currentTarget: { dataset: { scope?: string } } }) {
+    const scope = String(event.currentTarget.dataset.scope || "day");
+    this.setData({ scopeMenuOpen: false });
+    if (scope === "day") return;
+    const goalQuery = this.data.analysis.goalId ? `&goalId=${encodeURIComponent(this.data.analysis.goalId)}` : "";
+    wx.navigateTo({ url: `/pages/ai-coach/index?scope=${encodeURIComponent(scope)}${goalQuery}` });
   },
 
   handleChatSend(event: { detail: { question?: string } }) {
@@ -200,19 +288,28 @@ Page({
     }
     this.askQuestion(question, true);
   },
+  sendGuidedQuestion(event: { currentTarget: { dataset: { question?: string } } }) {
+    this.handleChatSend({ detail: { question: String(event.currentTarget.dataset.question || "") } });
+  },
+  scrollChatToLatest() {
+    wx.nextTick(() => {
+      const chat = this.selectComponent("#coach-chat") as unknown as { scrollToLatest?: () => void };
+      chat?.scrollToLatest?.();
+    });
+  },
   async askQuestion(question: string, showUser: boolean) {
     if (this.data.asking || !question) return;
     const history = this.data.messages.map((item) => ({ role: item.role, content: item.content, sentAt: item.sentAt })).slice(-20);
     const now = Date.now();
     const userMessage: DailyChatMessage = { id: `daily_user_${now}`, role: "user", content: question, sentAt: new Date(now).toISOString(), scope: "day", analysisDate: this.data.analysis.date, goalId: this.data.analysis.goalId };
     const nextMessages = showUser ? this.data.messages.concat(userMessage).slice(-50) : this.data.messages;
-    this.setData({ messages: nextMessages, asking: true, chatError: "", failedQuestion: "" });
+    this.setData({ messages: nextMessages, asking: true, chatError: "", failedQuestion: "" }, () => this.scrollChatToLatest());
     try {
       const result = await askProgressCoach("day", this.data.analysis.goalId, question, history, this.data.analysis.date, new Date(now).toISOString(), this.data.conversationId || undefined);
       const assistantMessage: DailyChatMessage = { id: result.assistantMessageId || `daily_ai_${Date.now()}`, role: "assistant", content: result.answer,
         sentAt: result.generatedAt, scope: "day", analysisDate: this.data.analysis.date, goalId: this.data.analysis.goalId, presentation: result.presentation, actionProposal: result.actionProposal };
-      this.setData({ conversationId: result.conversationId || this.data.conversationId, messages: this.data.messages.concat(assistantMessage).slice(-50), asking: false });
-    } catch (error) { this.setData({ asking: false, chatError: aiErrorMessage(error), failedQuestion: question }); }
+      this.setData({ conversationId: result.conversationId || this.data.conversationId, messages: this.data.messages.concat(assistantMessage).slice(-50), asking: false }, () => this.scrollChatToLatest());
+    } catch (error) { this.setData({ asking: false, chatError: aiErrorMessage(error), failedQuestion: question }, () => this.scrollChatToLatest()); }
   },
   retryLastQuestion() { if (this.data.failedQuestion && !this.data.asking) this.askQuestion(this.data.failedQuestion, false); },
   async confirmCoachAction(event: { detail: { proposalId?: string } }) {
@@ -223,13 +320,13 @@ Page({
     this.setData({ executingProposalId: proposalId, chatError: "", failedQuestion: "" });
     try {
       const outcome = await executeCoachProposal(proposal);
-      this.setData({ executingProposalId: "", chatError: "", failedQuestion: "", messages: this.data.messages.map((item) => item.actionProposal?.id === proposalId ? { ...item, actionProposal: { ...item.actionProposal, status: "executed" as const } } : item) });
+      this.setData({ executingProposalId: "", chatError: "", failedQuestion: "", messages: this.data.messages.map((item) => item.actionProposal?.id === proposalId ? { ...item, actionProposal: { ...item.actionProposal, status: "executed" as const } } : item) }, () => this.scrollChatToLatest());
       this.refreshAnalysis(false);
       const title = outcome.reminder === "scheduled" ? "行动与提醒已设置"
         : outcome.reminder === "rejected" ? "行动已创建，提醒未开启"
           : outcome.reminder === "invalid" ? "行动已创建，提醒时间无效"
             : outcome.reminder === "failed" ? "行动已创建，提醒设置失败" : "已同步到今日行动";
       wx.showToast({ title, icon: outcome.reminder === "rejected" || outcome.reminder === "invalid" || outcome.reminder === "failed" ? "none" : "success" });
-    } catch (error) { this.setData({ executingProposalId: "", chatError: aiErrorMessage(error) }); }
+    } catch (error) { this.setData({ executingProposalId: "", chatError: aiErrorMessage(error) }, () => this.scrollChatToLatest()); }
   },
 });

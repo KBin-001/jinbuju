@@ -32,6 +32,16 @@ export function getProgressSummary(goalId: string, today = getTodayBusinessDate(
     if (!streakDates.has(date)) break;
     currentStreakDays += 1;
   }
+  let longestStreakDays = 0;
+  let runningStreakDays = 0;
+  let previousActionDate = "";
+  Array.from(streakDates).sort().forEach((date) => {
+    runningStreakDays = previousActionDate && addBusinessDays(previousActionDate, 1) === date
+      ? runningStreakDays + 1
+      : 1;
+    longestStreakDays = Math.max(longestStreakDays, runningStreakDays);
+    previousActionDate = date;
+  });
   const heatmapDays: GrowthHeatmapDay[] = [];
   for (let offset = -27; offset <= 0; offset += 1) {
     const date = addBusinessDays(today, offset);
@@ -67,7 +77,7 @@ export function getProgressSummary(goalId: string, today = getTodayBusinessDate(
     { key: "streak_7", title: "一周稳住", description: "连续行动 7 天", unlocked: currentStreakDays >= 7, progressText: currentStreakDays >= 7 ? "已解锁" : `${currentStreakDays}/7 天` },
     { key: "minutes_600", title: "十小时养成", description: "累计投入 600 分钟", unlocked: totalActualMinutes >= 600, progressText: totalActualMinutes >= 600 ? "已解锁" : `${Math.min(totalActualMinutes, 600)}/600 分钟` },
   ];
-  return { totalTasks: tasks.length, completedTasks, totalActualMinutes, totalActionDays: actionDates.size, todayCompleted: todayTasks.filter((task) => task.status === "completed").length, todayTotal: todayTasks.length, currentStreakDays, recentDays, heatmapWeeks, badges, unfinishedTasks: tasks.filter((task) => task.status === "pending" || task.status === "partially_completed").sort((a, b) => a.currentDate.localeCompare(b.currentDate)).slice(0, 8) };
+  return { totalTasks: tasks.length, completedTasks, totalActualMinutes, totalActionDays: actionDates.size, todayCompleted: todayTasks.filter((task) => task.status === "completed").length, todayTotal: todayTasks.length, currentStreakDays, longestStreakDays, recentDays, heatmapWeeks, badges, unfinishedTasks: tasks.filter((task) => task.status === "pending" || task.status === "partially_completed").sort((a, b) => a.currentDate.localeCompare(b.currentDate)).slice(0, 8) };
 }
 
 export function recordDailyCheckin(goalId: string, businessDate: string): DailyCheckin {

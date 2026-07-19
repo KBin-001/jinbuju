@@ -45,8 +45,10 @@ for (const key of ["goals", "history", "badges", "sync", "account", "privacy", "
   assert(page.includes(`key === "${key}"`), `${key} 入口缺少真实跳转事件`);
 }
 
-assert(wxml.includes('open-type="contact"') && wxml.includes("联系客服"), "我的页必须提供可直接唤起微信客服的入口");
-assert(styles.includes(".manage-contact-row") && styles.includes(".manage-contact-row::after"), "客服入口需要保持与设置列表一致的轻量样式");
+assert(wxml.includes('bindtap="openCustomerService"') && page.includes("openCustomerService()"), "我的页必须提供可打开客服承接层的入口");
+assert(wxml.includes("/assets/customer-service-qr.jpg") && wxml.includes('show-menu-by-longpress="{{true}}"'), "客服二维码必须可见并支持长按识别");
+assert(page.includes("wx.previewImage") && page.includes("previewCustomerServiceQr()"), "客服二维码必须支持点击放大预览");
+assert(styles.includes(".manage-contact-row") && styles.includes(".customer-service-sheet-panel"), "客服入口与二维码承接层需要保持完整样式");
 
 assert(page.includes("this.loadProfile();\n    bootstrapAccount()"), "页面应先展示本地记录，再刷新云端账号");
 assert(page.includes('on("sync:state"') && page.includes('off("sync:state"'), "页面应订阅并清理同步状态监听");

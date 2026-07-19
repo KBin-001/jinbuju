@@ -84,6 +84,7 @@ assert.equal(summary.totalActualMinutes, 55);
 assert.equal(summary.totalActionDays, 1);
 assert.equal(summary.todayCompleted, 1);
 assert.equal(summary.todayTotal, 2);
+assert.equal(summary.longestStreakDays, 1);
 
 const deleted = createTask({ goalId: cetGoal.id, title: "临时行动", currentDate: today, estimatedMinutes: 30 });
 deleteTask(deleted.id);
@@ -148,6 +149,8 @@ const metricSummary = getProgressSummary(metricGoal.id, today);
 assert.equal(metricSummary.totalActionDays, 2);
 assert.equal(metricSummary.completedTasks, 5);
 assert.equal(metricSummary.totalActualMinutes, 30);
+assert.equal(metricSummary.currentStreakDays, 2);
+assert.equal(metricSummary.longestStreakDays, 2);
 
 const durationGoal = createGoal({ title: "完成时长默认逻辑", category: "custom" });
 const estimatedDurationCompletion = createTask({ goalId: durationGoal.id, title: "按预计时长完成", currentDate: today, estimatedMinutes: 40 });

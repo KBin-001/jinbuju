@@ -1,12 +1,12 @@
-import { getActiveGoal, getActiveGoals, getGoal } from "../../services/manualGoal";
-import { getTasksByGoal } from "../../services/manualTask";
+import { getActiveGoal, getActiveGoals, getArchivedGoals, getGoal } from "../../services/manualGoal";
+import { getTaskHistoryByGoal } from "../../services/manualTask";
 import { getProgressSummary } from "../../services/manualStats";
 import { getLocalUserProfile } from "../../services/profile";
 import { askProgressCoach } from "../../services/progressCoach";
 import { executeCoachProposal } from "../../services/manualSync";
 import { getCurrentThemeId } from "../../services/theme";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
-import { ActionTask } from "../../types/manual";
+import { ActionTask, Goal } from "../../types/manual";
 import { CoachActionProposal, CoachRange, ProgressCoachChatMessage } from "../../types/progressCoach";
 
 interface ChatMessage extends ProgressCoachChatMessage {
@@ -21,6 +21,48 @@ interface PeriodStats {
   completionRate: number;
 }
 
+interface ScopeMetric {
+  key: "complete" | "minutes" | "days" | "goals";
+  icon: string;
+  value: number;
+  unit: string;
+  label: string;
+  note: string;
+  tone: "paper" | "mint" | "gold";
+  progress?: number;
+}
+
+interface RhythmPoint {
+  key: string;
+  label: string;
+  minutes: number;
+  completed: number;
+  height: number;
+  isCurrent: boolean;
+  isFuture?: boolean;
+}
+
+interface ReviewItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  statusLabel: string;
+  tone: "complete" | "active" | "pending";
+  icon: string;
+  editable: boolean;
+}
+
+interface GoalInsightItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  completed: number;
+  total: number;
+  progress: number;
+  statusLabel: string;
+  tone: "active" | "archived";
+}
+
 function normalizeScope(value?: string): CoachRange {
   if (value === "week" || value === "month") return value;
   return "overall";
@@ -32,37 +74,179 @@ function toDate(value: string): Date {
 
 function periodStart(scope: CoachRange, today: string): string | undefined {
   const date = toDate(today);
-  if (scope === "week") return formatDate(addDays(date, -6));
-  if (scope === "month") {
-    const day = date.getDay();
-    const mondayOffset = day === 0 ? -6 : 1 - day;
-    return formatDate(addDays(date, mondayOffset - 28));
-  }
+  if (scope === "week") return formatDate(addDays(date, -((date.getDay() + 6) % 7)));
+  if (scope === "month") return formatDate(new Date(date.getFullYear(), date.getMonth(), 1));
   return undefined;
 }
 
 function summarize(tasks: ActionTask[]): PeriodStats {
-  const completedActions = tasks.filter((task) => task.status === "completed").length;
+  const visibleTasks = tasks.filter((task) => task.status !== "skipped" && task.status !== "rescheduled");
+  const completedActions = visibleTasks.filter((task) => task.status === "completed").length;
   return {
     minutes: tasks.reduce((sum, task) => sum + (task.actualMinutes || 0), 0),
     completedActions,
-    totalActions: tasks.length,
-    completionRate: tasks.length ? Math.round((completedActions / tasks.length) * 100) : 0,
+    totalActions: visibleTasks.length,
+    completionRate: visibleTasks.length ? Math.round((completedActions / visibleTasks.length) * 100) : 0,
   };
+}
+
+function businessDate(task: ActionTask): string {
+  return task.activityDate || task.currentDate;
+}
+
+function inPeriod(task: ActionTask, start: string | undefined, today: string): boolean {
+  const date = businessDate(task);
+  return (!start || date >= start) && date <= today;
+}
+
+function metricCards(scope: CoachRange, stats: PeriodStats, activeDays: number, streakDays: number, activeGoalCount: number, archivedGoalCount: number): ScopeMetric[] {
+  if (scope === "overall") {
+    return [
+      { key: "complete", icon: "check-circle", value: stats.completedActions, unit: "项", label: "累计完成", note: `共沉淀 ${stats.totalActions} 项行动`, tone: "paper", progress: stats.completionRate },
+      { key: "minutes", icon: "time", value: stats.minutes, unit: "分钟", label: "累计投入", note: `${activeDays} 个真实行动日`, tone: "mint" },
+      { key: "goals", icon: "flag", value: activeGoalCount, unit: "个", label: "进行中目标", note: archivedGoalCount ? `另有 ${archivedGoalCount} 个历史目标` : "持续目标正在积累", tone: "gold" },
+    ];
+  }
+  return [
+    { key: "complete", icon: "check-circle", value: stats.completedActions, unit: `/${stats.totalActions}`, label: "完成行动", note: `完成率 ${stats.completionRate}%`, tone: "paper", progress: stats.completionRate },
+    { key: "minutes", icon: "time", value: stats.minutes, unit: "分钟", label: "实际投入", note: "只统计真实记录", tone: "mint" },
+    { key: "days", icon: "flag", value: activeDays, unit: "天", label: "行动天数", note: streakDays ? `当前连续 ${streakDays} 天` : "从一次行动开始", tone: "gold" },
+  ];
+}
+
+function statusView(task: ActionTask): Pick<ReviewItem, "statusLabel" | "tone" | "icon"> {
+  if (task.status === "completed") return { statusLabel: "已完成", tone: "complete", icon: "check-circle" };
+  if (task.status === "partially_completed") return { statusLabel: "进行中", tone: "active", icon: "time" };
+  return { statusLabel: "待推进", tone: "pending", icon: "time" };
+}
+
+function reviewItems(tasks: ActionTask[]): ReviewItem[] {
+  const priority: Record<string, number> = { partially_completed: 0, pending: 1, completed: 2 };
+  return tasks
+    .filter((task) => task.status !== "skipped" && task.status !== "rescheduled")
+    .slice()
+    .sort((left, right) => (priority[left.status] ?? 3) - (priority[right.status] ?? 3) || businessDate(right).localeCompare(businessDate(left)))
+    .slice(0, 3)
+    .map((task) => {
+      const status = statusView(task);
+      const date = businessDate(task);
+      const minutes = task.actualMinutes || task.estimatedMinutes;
+      return {
+        id: task.id,
+        title: task.title,
+        subtitle: task.description || `${Number(date.slice(5, 7))}月${Number(date.slice(8, 10))}日 · ${task.actualMinutes ? "实际" : "预计"} ${minutes} 分钟`,
+        ...status,
+        editable: task.status !== "rescheduled",
+      };
+    });
+}
+
+function normalizeHeights(points: Omit<RhythmPoint, "height">[]): RhythmPoint[] {
+  const maxMinutes = Math.max(1, ...points.map((point) => point.minutes));
+  return points.map((point) => ({ ...point, height: point.minutes ? Math.max(22, Math.round((point.minutes / maxMinutes) * 100)) : 8 }));
+}
+
+function buildRhythm(scope: CoachRange, today: string, tasks: ActionTask[]): RhythmPoint[] {
+  const todayDate = toDate(today);
+  if (scope === "week") {
+    const startDate = toDate(periodStart("week", today) || today);
+    const labels = ["一", "二", "三", "四", "五", "六", "日"];
+    return normalizeHeights(labels.map((label, index) => {
+      const date = formatDate(addDays(startDate, index));
+      const dayTasks = tasks.filter((task) => businessDate(task) === date);
+      return {
+        key: date,
+        label,
+        minutes: dayTasks.reduce((sum, task) => sum + (task.actualMinutes || 0), 0),
+        completed: dayTasks.filter((task) => task.status === "completed").length,
+        isCurrent: date === today,
+        isFuture: date > today,
+      };
+    }));
+  }
+  if (scope === "month") {
+    const daysInMonth = new Date(todayDate.getFullYear(), todayDate.getMonth() + 1, 0).getDate();
+    const monthPrefix = today.slice(0, 7);
+    const points: Omit<RhythmPoint, "height">[] = [];
+    for (let startDay = 1; startDay <= daysInMonth; startDay += 7) {
+      const endDay = Math.min(daysInMonth, startDay + 6);
+      const startDate = `${monthPrefix}-${String(startDay).padStart(2, "0")}`;
+      const endDate = `${monthPrefix}-${String(endDay).padStart(2, "0")}`;
+      const bucket = tasks.filter((task) => businessDate(task) >= startDate && businessDate(task) <= endDate);
+      points.push({
+        key: startDate,
+        label: `第${points.length + 1}周`,
+        minutes: bucket.reduce((sum, task) => sum + (task.actualMinutes || 0), 0),
+        completed: bucket.filter((task) => task.status === "completed").length,
+        isCurrent: Number(today.slice(8, 10)) >= startDay && Number(today.slice(8, 10)) <= endDay,
+        isFuture: startDate > today,
+      });
+    }
+    return normalizeHeights(points);
+  }
+  const points: Omit<RhythmPoint, "height">[] = [];
+  for (let offset = 5; offset >= 0; offset -= 1) {
+    const cursor = new Date(todayDate.getFullYear(), todayDate.getMonth() - offset, 1);
+    const next = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+    const start = formatDate(cursor);
+    const end = formatDate(addDays(next, -1));
+    const bucket = tasks.filter((task) => businessDate(task) >= start && businessDate(task) <= end);
+    points.push({
+      key: start,
+      label: `${cursor.getMonth() + 1}月`,
+      minutes: bucket.reduce((sum, task) => sum + (task.actualMinutes || 0), 0),
+      completed: bucket.filter((task) => task.status === "completed").length,
+      isCurrent: offset === 0,
+    });
+  }
+  return normalizeHeights(points);
+}
+
+function goalInsightItems(activeGoals: Goal[], activeTasks: ActionTask[], archivedGoals: ReturnType<typeof getArchivedGoals>): GoalInsightItem[] {
+  const activeItems: GoalInsightItem[] = activeGoals.map((goal) => {
+    const tasks = activeTasks.filter((task) => task.goalId === goal.id && task.status !== "rescheduled" && task.status !== "skipped");
+    const completed = tasks.filter((task) => task.status === "completed").length;
+    return {
+      id: goal.id,
+      title: goal.title,
+      subtitle: goal.description || "正在持续推进",
+      completed,
+      total: tasks.length,
+      progress: tasks.length ? Math.round((completed / tasks.length) * 100) : 0,
+      statusLabel: "进行中",
+      tone: "active" as const,
+    };
+  });
+  const archivedItems: GoalInsightItem[] = archivedGoals.map((goal) => ({
+    id: goal.id,
+    title: goal.title,
+    subtitle: `${goal.stats.actualMinutes || 0} 分钟真实投入`,
+    completed: goal.stats.completedActions || 0,
+    total: goal.stats.totalActions || 0,
+    progress: goal.stats.completionRate || 0,
+    statusLabel: "已归档",
+    tone: "archived" as const,
+  }));
+  return activeItems.concat(archivedItems).slice(0, 3);
 }
 
 function getNavigationMetrics() {
   try {
     const windowInfo = wx.getWindowInfo();
     const menu = wx.getMenuButtonBoundingClientRect();
+    const navTop = Math.max(windowInfo.statusBarHeight, menu.top);
+    const navHeight = Math.max(32, menu.height);
     return {
       statusBarHeight: windowInfo.statusBarHeight,
-      navTop: Math.max(windowInfo.statusBarHeight, menu.top),
-      navHeight: Math.max(32, menu.height),
+      navTop,
+      navHeight,
+      scopeTop: navTop + navHeight + 9,
+      scopeMenuTop: navTop + navHeight + 50,
+      headlineTop: navTop + navHeight + 82,
       menuRightInset: Math.max(92, windowInfo.windowWidth - menu.left + 8),
     };
   } catch (_error) {
-    return { statusBarHeight: 44, navTop: 44, navHeight: 32, menuRightInset: 96 };
+    return { statusBarHeight: 44, navTop: 44, navHeight: 32, scopeTop: 85, scopeMenuTop: 126, headlineTop: 158, menuRightInset: 96 };
   }
 }
 
@@ -72,21 +256,21 @@ function scopeCopy(scope: CoachRange) {
     subtitle: "只分析本周行动，不做长期评价",
     reportName: "本周完成情况",
     prompt: "帮我分析一下本周的完成情况",
-    questions: ["帮我分析一下本周的完成情况", "我本周最需要调整什么", "告诉我下周最适合做的下一步"],
+    questions: ["为什么这样建议", "本周总结", "找出本周问题"],
   };
   if (scope === "month") return {
     label: "本月观察",
     subtitle: "只分析本月行动，不做长期评价",
     reportName: "本月完成情况",
     prompt: "帮我分析一下本月的完成情况",
-    questions: ["帮我分析一下本月的完成情况", "我本月最需要调整什么", "告诉我下个月最适合做的下一步"],
+    questions: ["查看进步总结", "本月总结", "找出高效习惯"],
   };
   return {
-    label: "整体成长",
+    label: "长期洞察",
     subtitle: "结合当前目标与累计行动分析",
     reportName: "累计完成情况",
     prompt: "帮我分析一下当前的整体成长情况",
-    questions: ["帮我分析整体成长情况", "我目前最大的卡点是什么", "告诉我接下来最值得做的一步"],
+    questions: ["当前方向对吗", "拆解长期路径", "回顾成长变化"],
   };
 }
 
@@ -126,7 +310,7 @@ Page({
     scope: "overall" as CoachRange,
     requestedGoalId: "",
     goalId: "",
-    scopeLabel: "整体成长",
+    scopeLabel: "长期洞察",
     scopeSubtitle: "结合当前目标与累计行动分析",
     reportName: "累计完成情况",
     initialPrompt: "帮我分析一下当前的整体成长情况",
@@ -141,14 +325,23 @@ Page({
     recentActionDate: "暂无",
     judgement: "正在整理你的行动记录。",
     bottleneck: "完成更多行动后，会形成更具体的建议。",
+    metricCards: [] as ScopeMetric[],
+    rhythmTitle: "成长轨迹",
+    rhythmSubtitle: "根据真实投入记录生成",
+    rhythmPoints: [] as RhythmPoint[],
+    reviewTitle: "阶段行动回顾",
+    reviewSubtitle: "优先展示需要继续推进的行动",
+    reviewItems: [] as ReviewItem[],
+    goalItems: [] as GoalInsightItem[],
+    focusKind: "goals" as "actions" | "goals",
     quickQuestions: [] as string[],
     messages: [] as ChatMessage[],
     asking: false,
     chatError: "",
     failedQuestion: "",
-    scrollIntoView: "",
     executingProposalId: "",
     conversationId: "",
+    scopeMenuOpen: false,
   },
 
   onLoad(query: Record<string, string>) {
@@ -166,6 +359,7 @@ Page({
       conversationId: "",
       chatError: "",
       failedQuestion: "",
+      scopeMenuOpen: false,
     }, () => {
       this.loadLocalOverview();
     });
@@ -178,21 +372,30 @@ Page({
   loadLocalOverview() {
     const requested = this.data.requestedGoalId ? getGoal(this.data.requestedGoalId) : null;
     const selectedGoal = requested?.status === "active" ? requested : getActiveGoal();
-    const goals = this.data.scope === "overall" ? getActiveGoals() : selectedGoal ? [selectedGoal] : [];
+    const activeGoals = getActiveGoals();
+    const archivedGoals = this.data.scope === "overall" ? getArchivedGoals() : [];
+    const goals = this.data.scope === "overall" ? activeGoals : selectedGoal ? [selectedGoal] : [];
     const today = getTodayBusinessDate();
     const start = periodStart(this.data.scope, today);
-    const tasks = goals.reduce<ActionTask[]>((all, goal) => all.concat(getTasksByGoal(goal.id)), [])
-      .filter((task) => !start || (task.currentDate >= start && task.currentDate <= today));
+    const activeTasks = goals.reduce<ActionTask[]>((all, goal) => all.concat(getTaskHistoryByGoal(goal.id)), []);
+    const archivedTasks = this.data.scope === "overall" ? archivedGoals.reduce<ActionTask[]>((all, goal) => all.concat(goal.actions || []), []) : [];
+    const uniqueTasks = Array.from(new Map(activeTasks.concat(archivedTasks).map((task) => [task.id, task])).values());
+    const tasks = uniqueTasks.filter((task) => inPeriod(task, start, today));
     const stats = summarize(tasks);
     const streakDays = goals.reduce((max, goal) => Math.max(max, getProgressSummary(goal.id, today).currentStreakDays || 0), 0);
     const activeDates = Array.from(new Set(tasks
       .filter((task) => task.status === "completed" || task.status === "partially_completed" || (task.actualMinutes || 0) > 0)
-      .map((task) => task.currentDate)));
+      .map((task) => businessDate(task))));
     const recentActionDate = activeDates.sort().pop();
     const profile = getLocalUserProfile();
     const title = goals.length > 1 ? `${goals.length} 个进行中目标` : goals[0]?.title || "当前目标";
+    const isOverall = this.data.scope === "overall";
+    const rhythmTitle = this.data.scope === "week" ? "本周行动节奏" : this.data.scope === "month" ? "本月周节奏" : "近半年成长轨迹";
+    const rhythmSubtitle = this.data.scope === "week" ? "按自然周展示每天的真实投入" : this.data.scope === "month" ? "按本月每七天观察投入变化" : "只统计已经发生的行动记录";
+    const reviewTitle = this.data.scope === "week" ? "本周行动回顾" : this.data.scope === "month" ? "本月行动回顾" : "目标全景";
+    const reviewSubtitle = isOverall ? `进行中 ${activeGoals.length} 个 · 已归档 ${archivedGoals.length} 个` : "优先展示仍需要继续推进的行动";
     this.setData({
-      goalId: this.data.scope === "overall" ? "" : selectedGoal?.id || "",
+      goalId: isOverall ? "" : selectedGoal?.id || "",
       displayName: profile?.nickname || "微信用户",
       userAvatarUrl: profile?.avatarUrl || "",
       goalTitle: title,
@@ -205,10 +408,49 @@ Page({
       recentActionDate: recentActionDate ? `${Number(recentActionDate.slice(5, 7))}/${Number(recentActionDate.slice(8, 10))}` : "暂无",
       judgement: judgement(stats, this.data.scopeLabel),
       bottleneck: bottleneck(stats, streakDays),
+      metricCards: metricCards(this.data.scope, stats, activeDates.length, streakDays, activeGoals.length, archivedGoals.length),
+      rhythmTitle,
+      rhythmSubtitle,
+      rhythmPoints: buildRhythm(this.data.scope, today, tasks),
+      reviewTitle,
+      reviewSubtitle,
+      reviewItems: isOverall ? [] : reviewItems(tasks),
+      goalItems: isOverall ? goalInsightItems(activeGoals, activeTasks, archivedGoals) : [],
+      focusKind: isOverall ? "goals" : "actions",
     });
   },
 
   goBack() { wx.navigateBack({ delta: 1 }); },
+
+  toggleScopeMenu() {
+    this.setData({ scopeMenuOpen: !this.data.scopeMenuOpen });
+  },
+
+  selectCoachScope(event: { currentTarget: { dataset: { scope?: string } } }) {
+    const nextScope = String(event.currentTarget.dataset.scope || "overall");
+    this.setData({ scopeMenuOpen: false });
+    if (nextScope === "day") {
+      const targetGoalId = this.data.goalId || this.data.requestedGoalId;
+      const goalQuery = targetGoalId ? `?goalId=${encodeURIComponent(targetGoalId)}` : "";
+      wx.redirectTo({ url: `/pages/daily-coach/index${goalQuery}` });
+      return;
+    }
+    const scope = normalizeScope(nextScope);
+    if (scope === this.data.scope) return;
+    const copy = scopeCopy(scope);
+    this.setData({
+      scope,
+      scopeLabel: copy.label,
+      scopeSubtitle: copy.subtitle,
+      reportName: copy.reportName,
+      initialPrompt: copy.prompt,
+      quickQuestions: copy.questions,
+      messages: [],
+      conversationId: "",
+      chatError: "",
+      failedQuestion: "",
+    }, () => this.loadLocalOverview());
+  },
 
   sendGuidedQuestion(event: { currentTarget: { dataset: { question?: string } } }) {
     if (this.data.asking) return;
@@ -219,6 +461,13 @@ Page({
 
   handleChatSend(event: { detail: { question?: string } }) {
     this.askQuestion(String(event.detail.question || "").slice(0, 1000), true);
+  },
+
+  scrollChatToLatest() {
+    wx.nextTick(() => {
+      const chat = this.selectComponent("#coach-chat") as unknown as { scrollToLatest?: () => void };
+      chat?.scrollToLatest?.();
+    });
   },
 
   async askQuestion(question: string, showUser: boolean) {
@@ -236,8 +485,7 @@ Page({
       asking: true,
       chatError: "",
       failedQuestion: "",
-      scrollIntoView: userMessage.id,
-    });
+    }, () => this.scrollChatToLatest());
     try {
       const result = await askProgressCoach(this.data.scope, this.data.goalId || undefined, question, history, getTodayBusinessDate(), messageSentAt, this.data.conversationId || undefined);
       const assistantMessage: ChatMessage = {
@@ -251,9 +499,9 @@ Page({
         presentation: result.presentation,
         actionProposal: result.actionProposal,
       };
-      this.setData({ conversationId: result.conversationId || this.data.conversationId, messages: this.data.messages.concat(assistantMessage).slice(-50), asking: false, scrollIntoView: assistantMessage.id });
+      this.setData({ conversationId: result.conversationId || this.data.conversationId, messages: this.data.messages.concat(assistantMessage).slice(-50), asking: false }, () => this.scrollChatToLatest());
     } catch (error) {
-      this.setData({ asking: false, chatError: errorMessage(error), failedQuestion: question, scrollIntoView: "chat-error" });
+      this.setData({ asking: false, chatError: errorMessage(error), failedQuestion: question }, () => this.scrollChatToLatest());
     }
   },
 
@@ -277,16 +525,28 @@ Page({
         messages: this.data.messages.map((item) => item.actionProposal?.id === proposalId
           ? { ...item, actionProposal: { ...item.actionProposal, status: "executed" as const } }
           : item),
-      }, () => this.loadLocalOverview());
+      }, () => {
+        this.loadLocalOverview();
+        this.scrollChatToLatest();
+      });
       const title = outcome.reminder === "scheduled" ? "行动与提醒已设置"
         : outcome.reminder === "rejected" ? "行动已创建，提醒未开启"
           : outcome.reminder === "invalid" ? "行动已创建，提醒时间无效"
             : outcome.reminder === "failed" ? "行动已创建，提醒设置失败" : "已同步到今日行动";
       wx.showToast({ title, icon: outcome.reminder === "rejected" || outcome.reminder === "invalid" || outcome.reminder === "failed" ? "none" : "success" });
     } catch (error) {
-      this.setData({ executingProposalId: "", chatError: errorMessage(error) });
+      this.setData({ executingProposalId: "", chatError: errorMessage(error) }, () => this.scrollChatToLatest());
     }
   },
+
+  openReviewItem(event: { currentTarget: { dataset: { taskId?: string } } }) {
+    const taskId = String(event.currentTarget.dataset.taskId || "");
+    const item = this.data.reviewItems.find((candidate) => candidate.id === taskId);
+    if (!item?.editable) return;
+    wx.navigateTo({ url: `/pages/action-edit/index?id=${encodeURIComponent(taskId)}` });
+  },
+
+  goProgress() { wx.switchTab({ url: "/pages/plan/index" }); },
 
   goToday() { wx.switchTab({ url: "/pages/index/index" }); },
 });

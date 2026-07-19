@@ -584,7 +584,7 @@ Page(withAppTheme({
     const team = this.data.team;
     const inviteReady = Boolean(team?.roomCode && this.data.canInviteFriends && this.data.inviterMemberId);
     return {
-      title: inviteReady && team ? `${team.name} 邀请你一起行动` : "进步局 · 一起自律，各自成长",
+      title: inviteReady && team ? `${team.name} 邀请你一起行动` : "今日进度｜目标计划打卡 · 一起自律，各自成长",
       path: inviteReady && team
         ? `/pages/team/index?roomCode=${encodeURIComponent(team.roomCode)}&from=invite&inviterMemberId=${encodeURIComponent(this.data.inviterMemberId)}`
         : "/pages/team/index",
