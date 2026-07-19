@@ -14,7 +14,7 @@ for (const token of ["#F7F3EA", "#FFFCF6", "#245B4D", "#7F9D91", "#C89B4A", "#24
   assert(theme.includes(token), `统一主题缺少品牌色 ${token}`);
 }
 
-assert(theme.includes('[data-theme="mint"]') && theme.includes('[data-theme="inkGreen"]'), "历史主题 id 应兼容读取");
+assert(!/data-theme="(?:mint|cream|apricot)"/.test(theme), "主题文件不应继续打包历史主题选择器");
 assert((theme.match(/--color-primary:\s*#245B4D/g) || []).length >= 1, "主色未收敛为深墨绿");
 assert(!theme.includes("#356859"), "主题文件仍包含旧版主绿色");
 assert(appStyles.includes('@import "./styles/theme.wxss"'), "全局样式未引入统一主题");

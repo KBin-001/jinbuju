@@ -15,7 +15,6 @@ export interface CloudSyncSummary {
 }
 
 export interface CloudUserProfile extends UserDisplayProfile {
-  themeId?: string;
   welcomeCompleted?: boolean;
   joinedAt?: string;
 }

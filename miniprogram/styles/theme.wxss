@@ -1,12 +1,5 @@
-/* 今日进度｜目标计划打卡 · 发布候选版统一设计令牌
- * 历史主题 id 继续保留给页面状态与兼容逻辑使用，但视觉统一到同一套
- * 现代东方山水基线。页面只定义布局和少量场景装饰，不再创建第二套色板。
- */
-page,
-[data-theme="mint"],
-[data-theme="cream"],
-[data-theme="inkGreen"],
-[data-theme="apricot"] {
+/* 今日进度｜目标计划打卡 · 唯一发布主题：现代东方山水 */
+page {
   /* Surface */
   --color-bg-page: #F7F3EA;
   --color-bg-card: #FFFCF6;
@@ -233,35 +226,35 @@ page,
   --checkbox-text-color: var(--color-text-main);
 }
 
-page [data-theme] {
+page {
   color: var(--color-text-main);
   background-color: var(--color-bg-page);
 }
 
-page [data-theme] .card,
-page [data-theme] .section-card {
+page .card,
+page .section-card {
   border-color: var(--color-border);
   background-color: var(--color-bg-card);
 }
 
-page [data-theme] .primary-button {
+page .primary-button {
   color: var(--color-text-inverse);
   background: var(--color-primary);
   box-shadow: var(--shadow-button-primary);
 }
 
-page [data-theme] .secondary-button {
+page .secondary-button {
   color: var(--color-primary);
   border-color: var(--color-border);
   background: var(--color-bg-card);
 }
 
-page [data-theme] .status-chip,
-page [data-theme] .ui-tag {
+page .status-chip,
+page .ui-tag {
   color: var(--color-primary);
   background: var(--color-primary-soft);
 }
 
-page [data-theme] .progress-bar-inner {
+page .progress-bar-inner {
   background: var(--gradient-progress);
 }

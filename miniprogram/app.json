@@ -35,6 +35,55 @@
     { "root": "pages/data-management", "pages": ["index"] },
     { "root": "pages/about", "pages": ["index"] }
   ],
+  "preloadRule": {
+    "pages/welcome/index": {
+      "network": "all",
+      "packages": ["pages/legal/privacy", "pages/legal/terms"]
+    },
+    "pages/index/index": {
+      "network": "all",
+      "packages": [
+        "pages/action-edit",
+        "pages/checkin",
+        "pages/daily-coach",
+        "pages/ai-coach",
+        "pages/today-data",
+        "pages/goal-create"
+      ]
+    },
+    "pages/plan/index": {
+      "network": "all",
+      "packages": [
+        "pages/action-edit",
+        "pages/ai-coach",
+        "pages/growth-records",
+        "pages/goal-detail",
+        "pages/goal-create",
+        "pages/goal-generate",
+        "pages/plan-preview",
+        "pages/stage-review",
+        "pages/today-data"
+      ]
+    },
+    "pages/team/index": {
+      "network": "all",
+      "packages": ["pages/team-members", "pages/team-activity", "pages/team-invite"]
+    },
+    "pages/profile/index": {
+      "network": "all",
+      "packages": [
+        "pages/goal-manage",
+        "pages/growth-records",
+        "pages/history",
+        "pages/achievements",
+        "pages/account-security",
+        "pages/privacy-center",
+        "pages/data-sync",
+        "pages/data-management",
+        "pages/about"
+      ]
+    }
+  },
   "window": {
     "backgroundColor": "#F7F3EA",
     "backgroundTextStyle": "light",

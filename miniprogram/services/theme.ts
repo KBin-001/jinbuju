@@ -1,299 +1,60 @@
 /**
- * 今日进度｜目标计划打卡 · 主题皮肤服务
- * ------------------------------------------------
- * 提供 4 套低压力主题：薄荷绿 / 奶油黄 / 墨绿成长（默认）/ 奶油杏桃
- * - 当前主题持久化到本地 storage
- * - 通过 eventBus 广播 "theme:change" 事件，便于其它页面在 onShow 时同步
- * - themeToProfileCssVars() 生成可绑定到页面根节点 style 的 CSS 变量字符串
+ * 发布版固定主题。
  *
- * 宏定义开关：FEATURE_FLAGS.ENABLE_THEME_SWITCHING
- * - false（默认）：禁用换肤，getCurrentThemeId 始终返回默认主题，
- *                  setCurrentTheme 不写入 storage、不广播事件，
- *                  onThemeChange 返回空取消函数。系统强制使用 inkGreen 默认主题。
- * - true：恢复完整换肤能力，可读取/保存/切换主题。
+ * 项目只保留当前“现代东方山水”配色，不再读取主题缓存、广播换肤事件
+ * 或打包历史主题预设。withAppTheme 保留为页面兼容包装器，避免为了删除
+ * 换肤功能而改动所有页面生命周期。
  */
 
-import { FEATURE_FLAGS } from "../config/features";
-import { emit, on, off } from "../utils/eventBus";
+export type ThemeId = "inkGreen";
 
-/** 主题换肤宏定义：禁用时系统强制使用默认主题，所有切换操作变为空操作 */
-const THEME_SWITCHING_ENABLED = FEATURE_FLAGS.ENABLE_THEME_SWITCHING;
+export const DEFAULT_THEME_ID: ThemeId = "inkGreen";
 
-export type ThemeId = "mint" | "cream" | "inkGreen" | "apricot";
-
-/** wx.showModal 语义色，避免各页面自行定义相同操作的颜色。 */
 export const MODAL_CONFIRM_COLORS = {
   confirm: "#245B4D",
   danger: "#B54A43",
 } as const;
 
-export interface ThemePreset {
-  id: ThemeId;
-  name: string;
-  desc: string;
-  /** 主色（按钮 / 强调） */
-  primary: string;
-  /** 深色（标题 / 重点数字） */
-  primaryDeep: string;
-  /** 浅色（进度条 / 图表） */
-  primaryLight: string;
-  /** 极浅底（标签 / 按钮底） */
-  primarySoft: string;
-  /** 成长强调色 */
-  accent: string;
-  /** 页面背景 */
-  bg: string;
-  /** 次级卡片底 */
-  cardSoft: string;
-  /** Hero 卡渐变 */
-  heroGradient: string;
-  /** 进度条渐变 */
-  progressGradient: string;
-  /** 卡片阴影 */
-  shadow: string;
-  /** 风格标签，用于主题弹窗筛选 */
-  tags: string[];
-}
-
-export const THEME_EVENT = "theme:change";
-// V2 设计启用新的主题偏好键，让旧版默认薄荷绿缓存自然迁移到墨绿色默认值。
-const THEME_STORAGE_KEY = "APP_THEME_V2";
-export const DEFAULT_THEME_ID: ThemeId = "inkGreen";
-
-export const THEME_PRESETS: ThemePreset[] = [
-  {
-    id: "mint",
-    name: "薄荷绿",
-    desc: "清新 · 轻盈成长感",
-    primary: "#3F8F72",
-    primaryDeep: "#24584A",
-    primaryLight: "#7CC6A0",
-    primarySoft: "#E6F4EC",
-    accent: "#7CC6A0",
-    bg: "#F6FAF7",
-    cardSoft: "#EFF8F3",
-    heroGradient: "linear-gradient(135deg, #E6F4EC 0%, #F7FBF8 60%, #FFFFFF 100%)",
-    progressGradient: "linear-gradient(90deg, #7CC6A0 0%, #3F8F72 100%)",
-    shadow: "0 8rpx 28rpx rgba(36, 88, 74, 0.08)",
-    tags: ["清新"],
-  },
-  {
-    id: "cream",
-    name: "奶油黄",
-    desc: "暖色 · 温柔陪伴感",
-    primary: "#B58A2E",
-    primaryDeep: "#6B4F12",
-    primaryLight: "#E6C062",
-    primarySoft: "#FFF4D8",
-    accent: "#F4C95D",
-    bg: "#FFF9EE",
-    cardSoft: "#FFF6DC",
-    heroGradient: "linear-gradient(135deg, #FFF4D8 0%, #FFFBF0 60%, #FFFFFF 100%)",
-    progressGradient: "linear-gradient(90deg, #F4C95D 0%, #B58A2E 100%)",
-    shadow: "0 8rpx 28rpx rgba(107, 79, 18, 0.08)",
-    tags: ["柔和", "活力"],
-  },
-  {
-    id: "inkGreen",
-    name: "墨绿成长",
-    desc: "默认 · 沉静自律成长感",
-    primary: "#356859",
-    primaryDeep: "#1F5B4A",
-    primaryLight: "#7FAA91",
-    primarySoft: "#EAF5EF",
-    accent: "#356859",
-    bg: "#F5F7F2",
-    cardSoft: "#F0F5F1",
-    heroGradient: "linear-gradient(135deg, #1F5B4A 0%, #356859 58%, #4C806E 100%)",
-    progressGradient: "linear-gradient(90deg, #7FAA91 0%, #356859 100%)",
-    shadow: "0 12rpx 32rpx rgba(31, 91, 74, 0.10)",
-    tags: ["沉稳"],
-  },
-  {
-    id: "apricot",
-    name: "奶油杏桃",
-    desc: "温暖 · 轻盈治愈感",
-    primary: "#E08A6B",
-    primaryDeep: "#B5634A",
-    primaryLight: "#F0B49A",
-    primarySoft: "#FCEEE6",
-    accent: "#F4A87E",
-    bg: "#FFF7F3",
-    cardSoft: "#FBEFE8",
-    heroGradient: "linear-gradient(135deg, #FCEEE6 0%, #FFF7F3 60%, #FFFFFF 100%)",
-    progressGradient: "linear-gradient(90deg, #F4A87E 0%, #E08A6B 100%)",
-    shadow: "0 8rpx 28rpx rgba(181, 99, 74, 0.08)",
-    tags: ["柔和", "活力"],
-  },
-];
-
-const THEME_MAP: Record<ThemeId, ThemePreset> = THEME_PRESETS.reduce(
-  (acc, theme) => {
-    acc[theme.id] = theme;
-    return acc;
-  },
-  {} as Record<ThemeId, ThemePreset>
-);
-
-function isThemeId(value: unknown): value is ThemeId {
-  return (
-    value === "mint" ||
-    value === "cream" ||
-    value === "inkGreen" ||
-    value === "apricot"
-  );
-}
-
-export function getThemeById(id: ThemeId): ThemePreset {
-  return THEME_MAP[id] || THEME_MAP[DEFAULT_THEME_ID];
-}
+const CURRENT_THEME = {
+  page: "#F7F3EA",
+  card: "#FFFCF6",
+  primary: "#245B4D",
+  secondary: "#7F9D91",
+} as const;
 
 export function getCurrentThemeId(): ThemeId {
-  // 宏定义禁用期间：始终返回默认主题，不读取本地缓存
-  if (!THEME_SWITCHING_ENABLED) {
-    return DEFAULT_THEME_ID;
-  }
-  const value = wx.getStorageSync(THEME_STORAGE_KEY);
-  return isThemeId(value) ? value : DEFAULT_THEME_ID;
+  return DEFAULT_THEME_ID;
 }
 
-export function getCurrentTheme(): ThemePreset {
-  return getThemeById(getCurrentThemeId());
-}
-
-/** 保存当前主题到 storage，并广播变更事件，全局生效 */
-export function setCurrentTheme(id: ThemeId): ThemePreset {
-  // 宏定义禁用期间：不写入 storage、不广播事件，直接返回默认主题
-  if (!THEME_SWITCHING_ENABLED) {
-    return getThemeById(DEFAULT_THEME_ID);
-  }
-  const theme = getThemeById(id);
-  wx.setStorageSync(THEME_STORAGE_KEY, id);
-  // 同步全局可见区（导航栏 / 后续可扩展为 page data-theme）
+export function applyGlobalTheme(_id?: ThemeId): ThemeId {
   try {
     wx.setNavigationBarColor({
       frontColor: "#000000",
-      backgroundColor: theme.bg,
-      animation: { duration: 200, timingFunc: "easeIn" },
+      backgroundColor: CURRENT_THEME.page,
+      animation: { duration: 0, timingFunc: "linear" },
     });
-  } catch (e) {
-    // 忽略导航栏同步失败
+  } catch (_error) {
+    // 自定义导航页或旧基础库无需阻断启动。
   }
-  syncTabBar(theme);
-  emit(THEME_EVENT, id);
-  return theme;
-}
-
-/**
- * 生成绑定到「我的」页面根节点 style 的 CSS 变量字符串。
- * 通过覆盖 --profile-* 变量，使 Hero 卡 / 按钮 / 进度条 / 统计等实时跟随主题。
- */
-export function themeToProfileCssVars(theme: ThemePreset): string {
-  return [
-    `--profile-primary: ${theme.primary}`,
-    `--profile-deep: ${theme.primaryDeep}`,
-    `--profile-primary-soft: ${theme.primarySoft}`,
-    `--profile-primary-light: ${theme.primaryLight}`,
-    `--profile-accent: ${theme.accent}`,
-    `--profile-growth: ${theme.accent}`,
-    `--profile-soft: ${theme.cardSoft}`,
-    `--profile-bg: ${theme.bg}`,
-    `--profile-shadow: ${theme.shadow}`,
-    `--profile-hero-gradient: ${theme.heroGradient}`,
-    `--profile-progress-gradient: ${theme.progressGradient}`,
-  ].join(";");
-}
-
-/** 监听主题变更（返回取消函数） */
-export function onThemeChange(handler: (id: ThemeId) => void): () => void {
-  // 宏定义禁用期间：主题不会变更，注册空监听并返回空取消函数
-  if (!THEME_SWITCHING_ENABLED) {
-    return () => {};
-  }
-  on(THEME_EVENT, handler as (payload?: any) => void);
-  return () => off(THEME_EVENT, handler as (payload?: any) => void);
-}
-
-/**
- * 将当前主题应用到全局可见区域：
- *  - 同步导航栏背景色与文字色
- *  - 同步 app.json window.backgroundColor（运行期）
- *  - 触发 theme:change 事件，profile 等页面会自动响应
- *
- * 建议在 app.ts onLaunch 中调用一次以应用启动时的主题。
- */
-export function applyGlobalTheme(id?: ThemeId): ThemeId {
-  const themeId = id || getCurrentThemeId();
-  const theme = getThemeById(themeId);
-  try {
-    // 1. 同步导航栏颜色
-    wx.setNavigationBarColor({
-      frontColor: theme.id === "cream" ? "#000000" : "#000000",
-      backgroundColor: theme.bg,
-      animation: { duration: 200, timingFunc: "easeIn" },
-    });
-  } catch (e) {
-    // 忽略导航栏同步失败
-  }
-  syncTabBar(theme);
-  return themeId;
-}
-
-function syncTabBar(theme: ThemePreset) {
   try {
     wx.setTabBarStyle({
-      color: theme.id === "inkGreen" ? "#71827A" : "#9AA8A3",
-      selectedColor: theme.primary,
-      backgroundColor: "#FFFFFF",
+      color: CURRENT_THEME.secondary,
+      selectedColor: CURRENT_THEME.primary,
+      backgroundColor: CURRENT_THEME.card,
       borderStyle: "white",
     });
-  } catch (e) {
-    // 非 tabBar 页面或基础库不支持时无需阻断主题切换
+  } catch (_error) {
+    // 非 Tab 页面调用时保持静默。
   }
+  return DEFAULT_THEME_ID;
 }
 
-type ThemedPageOptions = Record<string, any> & {
-  data?: Record<string, any>;
-  onLoad?: (...args: any[]) => any;
-  onShow?: (...args: any[]) => any;
-  onUnload?: (...args: any[]) => any;
-};
+type ThemedPageOptions = Record<string, any> & { data?: Record<string, any> };
 
-/**
- * 为页面统一注入 appTheme，并在主题切换、页面返回时自动同步。
- * 页面根节点只需绑定 data-theme="{{appTheme}}"，不再各自维护主题逻辑。
- */
+/** 为现有页面注入唯一主题 id，不再为换肤包装或额外触发页面生命周期。 */
 export function withAppTheme<T extends ThemedPageOptions>(options: T): T {
-  const originalOnLoad = options.onLoad;
-  const originalOnShow = options.onShow;
-  const originalOnUnload = options.onUnload;
-
   return {
     ...options,
-    data: {
-      ...(options.data || {}),
-      appTheme: getCurrentThemeId(),
-    },
-    onLoad(this: any, ...args: any[]) {
-      if (this.__offAppTheme) this.__offAppTheme();
-      this.__offAppTheme = onThemeChange((themeId) => {
-        this.setData({ appTheme: themeId });
-      });
-      this.setData({ appTheme: getCurrentThemeId() });
-      return originalOnLoad && originalOnLoad.apply(this, args);
-    },
-    onShow(this: any, ...args: any[]) {
-      const themeId = getCurrentThemeId();
-      this.setData({ appTheme: themeId });
-      applyGlobalTheme(themeId);
-      return originalOnShow && originalOnShow.apply(this, args);
-    },
-    onUnload(this: any, ...args: any[]) {
-      if (this.__offAppTheme) {
-        this.__offAppTheme();
-        this.__offAppTheme = null;
-      }
-      return originalOnUnload && originalOnUnload.apply(this, args);
-    },
+    data: { ...(options.data || {}), appTheme: DEFAULT_THEME_ID },
   } as T;
 }

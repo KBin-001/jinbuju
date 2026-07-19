@@ -9,7 +9,7 @@ App<IAppOption>({
 
   onLaunch() {
     initCloud();
-    // 启动时应用本地存储中的主题（同步导航栏颜色等）
+    // 同步发布版唯一配色到系统导航栏与 TabBar。
     applyGlobalTheme();
   },
 });

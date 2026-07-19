@@ -24,7 +24,6 @@ function publicProfile(user) {
     avatarUrl: String(user.avatarUrl || ""),
     profileSource: user.profileSource === "wechat" ? "wechat" : "custom",
     useProfileInTeam: user.useProfileInTeam !== false,
-    themeId: String(user.themeId || ""),
     welcomeCompleted: user.welcomeCompleted === true,
     joinedAt,
     updatedAt: user.profileUpdatedAt || user.updatedAt || "",
