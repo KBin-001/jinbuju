@@ -113,6 +113,21 @@ page { background: #f7f3ea; }
 .growth-record-copy { min-width: 0; flex: 1; }
 .growth-record-summary { margin-top: 4rpx; overflow: hidden; color: #7c817d; font-size: 20rpx; line-height: 30rpx; text-overflow: ellipsis; white-space: nowrap; }
 .growth-record-action { min-height: 64rpx; display: flex; align-items: center; flex: none; color: #245b4d; font-size: 20rpx; font-weight: 650; }
+.recent-tasks-card { margin-top: 22rpx; padding: 28rpx 24rpx 8rpx; }
+.recent-tasks-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20rpx; padding: 0 4rpx 20rpx; }
+.recent-tasks-description { margin-top: 5rpx; color: #7c817d; font-size: 20rpx; line-height: 30rpx; }
+.recent-tasks-count { flex: none; padding: 7rpx 14rpx; border-radius: 18rpx; color: #245b4d; background: #e8f0eb; font-size: 19rpx; font-weight: 650; line-height: 26rpx; }
+.recent-task-list { border-top: 1rpx solid rgba(104,116,108,.12); }
+.recent-task-row { box-sizing: border-box; min-height: 112rpx; padding: 19rpx 2rpx; display: flex; align-items: center; gap: 16rpx; border-bottom: 1rpx solid rgba(104,116,108,.1); }
+.recent-task-row:last-child { border-bottom: 0; }
+.recent-task-status { width: 46rpx; height: 46rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 50%; color: #fff; background: #3f8a76; }
+.recent-task-copy { min-width: 0; flex: 1; }
+.recent-task-title { overflow: hidden; color: #24312d; font-size: 25rpx; font-weight: 650; line-height: 36rpx; text-overflow: ellipsis; white-space: nowrap; }
+.recent-task-meta { margin-top: 4rpx; display: flex; flex-wrap: wrap; gap: 4rpx 14rpx; color: #858b87; font-size: 18rpx; line-height: 27rpx; }
+.recent-task-actual { min-width: 86rpx; padding: 9rpx 12rpx; display: flex; align-items: baseline; justify-content: center; gap: 3rpx; flex: none; border-radius: 18rpx; color: #245b4d; background: #edf3ef; }
+.recent-task-actual text:first-child { font-size: 25rpx; font-weight: 700; line-height: 30rpx; }
+.recent-task-actual text:last-child { font-size: 16rpx; line-height: 24rpx; }
+.recent-task-arrow { flex: none; }
 .state-card { margin-top: 20rpx; padding: 54rpx 32rpx; text-align: center; }
 .state-symbol { display: flex; align-items: center; justify-content: center; width: 76rpx; height: 76rpx; margin: 0 auto 22rpx; border-radius: 50%; color: #9b7432; background: #f6ecd7; }
 .state-title { margin-top: 20rpx; color: #24312d; font-size: 32rpx; font-weight: 700; line-height: 44rpx; }
@@ -146,6 +161,10 @@ page { background: #f7f3ea; }
   .trend-card { padding-right: 22rpx; padding-left: 22rpx; }
   .growth-record-entry { padding-right: 18rpx; padding-left: 18rpx; gap: 13rpx; }
   .growth-record-action text { display: none; }
+  .recent-tasks-card { padding-right: 18rpx; padding-left: 18rpx; }
+  .recent-task-row { gap: 11rpx; }
+  .recent-task-meta text:last-child { display: none; }
+  .recent-task-actual { min-width: 76rpx; padding-right: 9rpx; padding-left: 9rpx; }
   .section-head { align-items: flex-start; flex-direction: row; gap: 12rpx; }
   .trend-tabs { align-self: auto; flex: 0 0 auto; }
   .trend-summary-divider { margin-right: 18rpx; margin-left: 18rpx; }

@@ -1,8 +1,8 @@
 import { FEATURE_FLAGS } from "../../config/features";
 import { getActiveGoal, getActiveGoals, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
-import { getTaskHistoryByGoal } from "../../services/manualTask";
-import { getCurrentThemeId, withAppTheme } from "../../services/theme";
+import { deleteTask, getTask, getTaskHistoryByGoal, SaveActionRecordInput, updateActionRecord } from "../../services/manualTask";
+import { getCurrentThemeId, MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
 import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
@@ -28,6 +28,14 @@ interface GoalOption {
   title: string;
   periodText: string;
   active: boolean;
+}
+
+interface RecentCompletedTask {
+  id: string;
+  title: string;
+  actualMinutes: number;
+  estimatedMinutes: number;
+  completedTime: string;
 }
 
 interface TrendBar {
@@ -237,6 +245,28 @@ function getHeatLevel(minutes: number): HeatLevel {
 
 function taskBusinessDate(task: ActionTask): string {
   return task.activityDate || task.currentDate;
+}
+
+function buildRecentCompletedTasks(tasks: ActionTask[], today: string): RecentCompletedTask[] {
+  return tasks
+    .filter((task) => !task.deletedAt && task.status === "completed" && taskBusinessDate(task) === today)
+    .sort((left, right) => {
+      const leftTime = new Date(left.completedAt || left.updatedAt || left.createdAt).getTime();
+      const rightTime = new Date(right.completedAt || right.updatedAt || right.createdAt).getTime();
+      return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime);
+    })
+    .map((task) => {
+      const timestamp = new Date(task.completedAt || task.updatedAt || task.createdAt);
+      return {
+        id: task.id,
+        title: task.title,
+        actualMinutes: Math.max(0, Number(task.actualMinutes || 0)),
+        estimatedMinutes: Math.max(0, Number(task.estimatedMinutes || 0)),
+        completedTime: Number.isNaN(timestamp.getTime())
+          ? "今日完成"
+          : `${String(timestamp.getHours()).padStart(2, "0")}:${String(timestamp.getMinutes()).padStart(2, "0")} 完成`,
+      };
+    });
 }
 
 function isTrendTask(task: ActionTask): boolean {
@@ -852,6 +882,12 @@ Page(withAppTheme({
     hasAnyTask: false,
     hasActionData: false,
     hasTrendData: false,
+    recentCompletedTasks: [] as RecentCompletedTask[],
+    recordEditorVisible: false,
+    editingRecordId: "",
+    recordEditorTask: null as ActionTask | null,
+    savingRecord: false,
+    deletingRecord: false,
   },
   focusGoalHandler: null as null | (() => void),
   manualSyncHandler: null as null | (() => void),
@@ -922,6 +958,7 @@ Page(withAppTheme({
         hasAnyTask,
         hasActionData,
         hasTrendData: trendHasData(this.data.trendRange, trendView),
+        recentCompletedTasks: buildRecentCompletedTasks(allTasks, today),
       });
     } catch (error) {
       this.setData({
@@ -958,6 +995,67 @@ Page(withAppTheme({
     const goalId = this.data.goal?.id;
     if (!goalId) return;
     wx.navigateTo({ url: `/pages/growth-records/index?from=progress&goalId=${encodeURIComponent(goalId)}` });
+  },
+
+  openRecentTask(event: { currentTarget: { dataset: { id?: string } } }) {
+    if (this.data.savingRecord || this.data.deletingRecord) return;
+    const taskId = String(event.currentTarget.dataset.id || "");
+    const task = getTask(taskId);
+    if (!task || task.deletedAt || task.status !== "completed" || taskBusinessDate(task) !== getTodayBusinessDate()) {
+      wx.showToast({ title: "该行动记录已发生变化", icon: "none" });
+      this.load();
+      return;
+    }
+    this.setData({
+      recordEditorVisible: true,
+      editingRecordId: task.id,
+      recordEditorTask: task,
+      savingRecord: false,
+      deletingRecord: false,
+    });
+  },
+
+  closeRecordEditor() {
+    if (!this.data.savingRecord && !this.data.deletingRecord) {
+      this.setData({ recordEditorVisible: false, editingRecordId: "", recordEditorTask: null });
+    }
+  },
+
+  saveRecordEditor(event: CustomEvent<Omit<SaveActionRecordInput, "taskId">>) {
+    if (this.data.savingRecord || !this.data.editingRecordId) return;
+    this.setData({ savingRecord: true });
+    try {
+      updateActionRecord({ taskId: this.data.editingRecordId, ...event.detail });
+      this.setData({ recordEditorVisible: false, editingRecordId: "", recordEditorTask: null, savingRecord: false });
+      this.load();
+      wx.showToast({ title: "实际投入已更新", icon: "success" });
+    } catch (error) {
+      this.setData({ savingRecord: false });
+      wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
+    }
+  },
+
+  deleteRecordEditor() {
+    if (this.data.savingRecord || this.data.deletingRecord || !this.data.editingRecordId) return;
+    wx.showModal({
+      title: "删除行动记录？",
+      content: "删除后会同步影响今日统计、目标进度和历史复盘，且无法恢复。",
+      confirmText: "删除",
+      confirmColor: MODAL_CONFIRM_COLORS.danger,
+      success: (result) => {
+        if (!result.confirm) return;
+        this.setData({ deletingRecord: true });
+        try {
+          deleteTask(this.data.editingRecordId);
+          this.setData({ recordEditorVisible: false, editingRecordId: "", recordEditorTask: null, deletingRecord: false });
+          this.load();
+          wx.showToast({ title: "行动记录已删除", icon: "success" });
+        } catch (error) {
+          this.setData({ deletingRecord: false });
+          wx.showToast({ title: error instanceof Error ? error.message : "删除失败", icon: "none" });
+        }
+      },
+    });
   },
 
   openGoalPicker() {

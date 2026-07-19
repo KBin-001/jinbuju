@@ -149,6 +149,24 @@
       <view class="growth-record-copy"><view class="section-title">成长记录</view><view class="growth-record-summary">{{growthRecordSummary}}</view></view>
       <view class="growth-record-action"><text>查看全部</text><t-icon name="chevron-right" size="30rpx" /></view>
     </view>
+
+    <view wx:if="{{recentCompletedTasks.length}}" class="recent-tasks-card surface-card">
+      <view class="recent-tasks-head">
+        <view><view class="section-title">最近任务</view><view class="recent-tasks-description">仅显示今日已完成，可修改实际投入</view></view>
+        <view class="recent-tasks-count">{{recentCompletedTasks.length}} 项</view>
+      </view>
+      <view class="recent-task-list">
+        <view wx:for="{{recentCompletedTasks}}" wx:key="id" class="recent-task-row" data-id="{{item.id}}" bindtap="openRecentTask" hover-class="tap-pressed" aria-role="button" aria-label="编辑{{item.title}}的实际投入">
+          <view class="recent-task-status"><t-icon name="check" size="24rpx" /></view>
+          <view class="recent-task-copy">
+            <view class="recent-task-title">{{item.title}}</view>
+            <view class="recent-task-meta"><text>{{item.completedTime}}</text><text>预计 {{item.estimatedMinutes}} 分钟</text></view>
+          </view>
+          <view class="recent-task-actual"><text>{{item.actualMinutes}}</text><text>分钟</text></view>
+          <t-icon class="recent-task-arrow" name="chevron-right" size="28rpx" color="#969A96" />
+        </view>
+      </view>
+    </view>
   </block>
 
   <view wx:if="{{goalPickerVisible}}" class="goal-picker-layer" catchtouchmove="noop">
@@ -164,5 +182,7 @@
       </scroll-view>
     </view>
   </view>
+
+  <action-record-editor visible="{{recordEditorVisible}}" task="{{recordEditorTask}}" saving="{{savingRecord}}" deleting="{{deletingRecord}}" bind:close="closeRecordEditor" bind:save="saveRecordEditor" bind:delete="deleteRecordEditor" />
 
 </view>
