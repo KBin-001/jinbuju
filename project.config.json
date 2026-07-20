@@ -48,7 +48,7 @@
     "disableSWC": true
   },
   "appid": "wx43cef9423fe2f523",
-  "projectname": "今日进度-目标计划打卡",
+  "projectname": "今日成长-目标打卡",
   "libVersion": "3.16.1",
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
   "condition": {

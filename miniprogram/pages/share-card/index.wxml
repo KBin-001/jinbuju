@@ -10,7 +10,7 @@
 
   <view wx:if="{{status === 'loading'}}" class="share-state">
     <view class="state-dot"></view>
-    <text>正在整理今日成长</text>
+    <text>正在整理今日成长-目标打卡</text>
   </view>
 
   <view wx:elif="{{status === 'error'}}" class="share-state">
@@ -23,7 +23,7 @@
     <view class="share-content" style="padding-top: {{contentTop}}px;">
       <view class="share-card">
         <view class="share-brand-bar">
-          <view class="brand-name"><text class="brand-mark"></text>进度条 · 今日完成卡</view>
+          <view class="brand-name"><text class="brand-mark"></text>今日成长-目标打卡 · 今日完成卡</view>
           <view class="brand-date">{{dateText}} {{weekday}}</view>
         </view>
 
@@ -90,7 +90,7 @@
           </view>
 
           <view class="share-encouragement">每天完成一点，就会靠近一点。</view>
-          <view class="share-signature"><text class="signature-mark"></text>我在「进度条」记录今天的成长</view>
+          <view class="share-signature"><text class="signature-mark"></text>我在「今日成长-目标打卡」记录今天的成长</view>
         </view>
       </view>
 

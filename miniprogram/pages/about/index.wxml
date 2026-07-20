@@ -2,11 +2,11 @@
   <view class="about-hero">
     <image class="about-hero__mountain" src="/assets/profile/profile-header-mist-v2.jpg" mode="aspectFill" />
     <view class="about-hero__veil"></view>
-    <view class="about-hero__content"><view class="about-mark">今</view><view class="about-brand-copy"><view class="about-title">今日进度</view><view class="about-subtitle">目标计划打卡</view><view class="about-version">版本 {{version}}</view></view></view>
+    <view class="about-hero__content"><view class="about-mark">今</view><view class="about-brand-copy"><view class="about-title">今日成长-目标打卡</view><view class="about-version">版本 {{version}}</view></view></view>
   </view>
   <view class="card about-card">
     <view class="about-heading">记录今日行动，看见目标进度。</view>
-    <view class="about-copy">今日进度｜目标计划打卡通过每日行动、目标进度、小队同行和 AI 教练，帮助你保持自己的节奏。所有进度、投入和复盘都来自真实行动记录。</view>
+    <view class="about-copy">今日成长-目标打卡通过每日行动、目标进度、小队同行和 AI 教练，帮助你保持自己的节奏。所有进度、投入和复盘都来自真实行动记录。</view>
   </view>
   <view class="card about-card about-card--small">
     <view class="about-heading">帮助与反馈</view>

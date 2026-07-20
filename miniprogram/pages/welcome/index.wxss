@@ -7,14 +7,14 @@ page { background: #F7F3EA; }
 .welcome-state { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48rpx 32rpx; text-align: center; }
 .welcome-content { padding: calc(38rpx + env(safe-area-inset-top)) 40rpx calc(38rpx + env(safe-area-inset-bottom)); }
 
-.brand { width: 330rpx; min-height: 92rpx; display: flex; align-items: center; }
+.brand { min-height: 92rpx; display: flex; align-items: center; }
 .brand-mark { width: 70rpx; height: 70rpx; flex: none; padding: 14rpx; display: flex; align-items: flex-end; justify-content: center; gap: 6rpx; border-radius: 20rpx; background: linear-gradient(145deg, #1D6654, #174A3F); box-shadow: 0 10rpx 24rpx rgba(36,91,77,.17); }
 .brand-step { width: 9rpx; border-radius: 5rpx 5rpx 2rpx 2rpx; background: #FFFCF6; }
 .brand-step-small { height: 18rpx; opacity: .72; }
 .brand-step-medium { height: 30rpx; opacity: .88; }
 .brand-step-large { height: 42rpx; }
-.brand-copy { width: 224rpx; min-width: 0; margin-left: 18rpx; display: flex; flex-direction: column; overflow: hidden; }
-.brand-name { color: #245B4D; font-family: "Songti SC", STSong, serif; font-size: 38rpx; font-weight: 700; line-height: 1.15; letter-spacing: 5rpx; white-space: nowrap; }
+.brand-copy { min-width: 0; margin-left: 18rpx; display: flex; flex-direction: column; overflow: hidden; }
+.brand-name { color: #245B4D; font-family: "Songti SC", STSong, serif; font-size: 32rpx; font-weight: 700; line-height: 1.15; letter-spacing: 2rpx; white-space: nowrap; }
 .brand-slogan { max-width: 100%; margin-top: 7rpx; overflow: hidden; color: #747D78; font-size: 20rpx; line-height: 1.2; letter-spacing: 1rpx; text-overflow: ellipsis; white-space: nowrap; }
 .brand-subname { color: #245B4D; font-weight: 650; }
 
@@ -109,12 +109,9 @@ page { background: #F7F3EA; }
 
 @media (max-width: 350px) {
   .welcome-content { padding-right: 28rpx; padding-left: 28rpx; }
-  .brand { width: 300rpx; }
   .brand-mark { width: 60rpx; height: 60rpx; padding: 12rpx; }
   .brand-copy { margin-left: 12rpx; }
-  .brand-name { font-size: 30rpx; letter-spacing: 3rpx; }
-  .brand-copy { width: 210rpx; }
-  .brand-slogan { font-size: 18rpx; letter-spacing: 0; }
+  .brand-name { font-size: 26rpx; letter-spacing: 1rpx; }
   .hero { margin-top: 42rpx; }
   .hero-title { font-size: 46rpx; }
   .hero-subtitle { font-size: 23rpx; }
@@ -146,11 +143,10 @@ page { background: #F7F3EA; }
 /* 单屏欢迎页：优先展示核心价值、产品示例和开始操作。 */
 .welcome-page { height: 100vh; min-height: 0; overflow: hidden; }
 .welcome-content { height: 100vh; min-height: 0; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; padding-top: calc(34rpx + env(safe-area-inset-top)); padding-bottom: calc(24rpx + env(safe-area-inset-bottom)); }
-.brand { width: 300rpx; min-height: 76rpx; }
-.brand-copy { width: 202rpx; }
+.brand { min-height: 76rpx; }
 .brand-mark { width: 64rpx; height: 64rpx; padding: 13rpx; }
 .brand-copy { margin-left: 14rpx; }
-.brand-name { font-size: 35rpx; }
+.brand-name { font-size: 28rpx; }
 .hero { margin-top: auto; }
 .hero-label { padding: 7rpx 15rpx; font-size: 20rpx; }
 .hero-title { margin-top: 15rpx; font-size: 46rpx; line-height: 1.3; }

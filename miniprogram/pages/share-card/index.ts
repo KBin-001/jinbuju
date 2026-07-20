@@ -206,7 +206,7 @@ Page({
 
     setFont(ctx, 25, 700);
     ctx.fillStyle = "#FFFFFF";
-    ctx.fillText("进度条 · 今日完成卡", 36, 61);
+    ctx.fillText("今日成长-目标打卡 · 今日完成卡", 36, 61);
     setFont(ctx, 21, 400);
     ctx.fillStyle = "rgba(255,255,255,0.78)";
     ctx.textAlign = "right";
@@ -349,7 +349,7 @@ Page({
     ctx.fillRect(52, encouragementY + 44, 586, 1);
     setFont(ctx, 20, 400);
     ctx.fillStyle = "#71827A";
-    ctx.fillText("我在「进度条」记录今天的成长", CARD_WIDTH / 2, encouragementY + 92);
+    ctx.fillText("我在「今日成长-目标打卡」记录今天的成长", CARD_WIDTH / 2, encouragementY + 92);
     ctx.textAlign = "left";
 
     return { canvas, dpr, height: cardHeight };

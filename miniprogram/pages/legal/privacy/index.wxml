@@ -1,7 +1,7 @@
 <view class="page legal-page" data-theme="{{appTheme}}">
   <view class="legal-header">
-    <view class="legal-title">今日进度｜目标计划打卡隐私政策</view>
-    <view class="legal-subtitle">本政策说明今日进度｜目标计划打卡在微信小程序中如何收集、使用、共享、存储和保护你的个人信息。</view>
+    <view class="legal-title">今日成长-目标打卡隐私政策</view>
+    <view class="legal-subtitle">本政策说明今日成长-目标打卡在微信小程序中如何收集、使用、共享、存储和保护你的个人信息。</view>
     <view class="legal-meta">
       <view class="legal-meta-row">
         <text class="legal-meta-label">版本</text>
@@ -43,7 +43,7 @@
 
   <view class="legal-section">
     <view class="legal-heading"><text class="legal-heading-index">一</text>政策适用范围</view>
-    <view class="legal-copy">本政策适用于你通过微信小程序使用「今日进度｜目标计划打卡」（以下简称"本服务"）时，我们对你个人信息的处理行为。本政策不适用于你通过其他渠道（如微信开放平台、第三方网站）使用相关服务时的信息处理，也不适用于本服务中接入的其他第三方服务（如微信支付），该等服务的个人信息处理规则以对应主体公布的政策为准。</view>
+    <view class="legal-copy">本政策适用于你通过微信小程序使用「今日成长-目标打卡」（以下简称"本服务"）时，我们对你个人信息的处理行为。本政策不适用于你通过其他渠道（如微信开放平台、第三方网站）使用相关服务时的信息处理，也不适用于本服务中接入的其他第三方服务（如微信支付），该等服务的个人信息处理规则以对应主体公布的政策为准。</view>
     <view class="legal-copy">本服务是目标与行动记录工具，不设置年龄识别或年龄准入流程。使用者可根据自身需要选择使用，并应理解本政策所说明的数据处理方式。</view>
   </view>
 
@@ -209,15 +209,15 @@
       </view>
       <view class="legal-contact-row">
         <text class="legal-contact-label">小程序内反馈</text>
-        <text class="legal-contact-value">「关于今日进度｜目标计划打卡 → 通过微信提交反馈」</text>
+        <text class="legal-contact-value">「关于今日成长-目标打卡 → 通过微信提交反馈」</text>
       </view>
       <view class="legal-contact-row">
         <text class="legal-contact-label">个人信息保护负责人</text>
         <text class="legal-contact-value">{{dpoName}}</text>
       </view>
     </view>
-    <view class="legal-copy" style="margin-top: 16rpx;">为便于核验身份，向我们提出请求时请说明你的「今日进度｜目标计划打卡 ID」（在「我的」中可见），不要在反馈中填写完整手机号、OpenID 或其他敏感凭证。</view>
+    <view class="legal-copy" style="margin-top: 16rpx;">为便于核验身份，向我们提出请求时请说明你的「今日成长-目标打卡 ID」（在「我的」中可见），不要在反馈中填写完整手机号、OpenID 或其他敏感凭证。</view>
   </view>
 
-  <view class="legal-footnote">本政策由今日进度｜目标计划打卡产品团队制定并维护，最后更新于 {{updatedAt}}。</view>
+  <view class="legal-footnote">本政策由今日成长-目标打卡产品团队制定并维护，最后更新于 {{updatedAt}}。</view>
 </view>

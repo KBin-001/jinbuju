@@ -1,7 +1,7 @@
 <view class="page legal-page" data-theme="{{appTheme}}">
   <view class="legal-header">
-    <view class="legal-title">今日进度｜目标计划打卡用户协议</view>
-    <view class="legal-subtitle">本协议约定你与今日进度｜目标计划打卡之间关于使用本微信小程序服务的权利与义务，请仔细阅读。</view>
+    <view class="legal-title">今日成长-目标打卡用户协议</view>
+    <view class="legal-subtitle">本协议约定你与今日成长-目标打卡之间关于使用本微信小程序服务的权利与义务，请仔细阅读。</view>
     <view class="legal-meta">
       <view class="legal-meta-row">
         <text class="legal-meta-label">版本</text>
@@ -45,14 +45,14 @@
 
   <view class="legal-section">
     <view class="legal-heading"><text class="legal-heading-index">一</text>协议的接受</view>
-    <view class="legal-copy">本协议是你与「今日进度｜目标计划打卡」运营方（以下简称"我们"）之间就使用本微信小程序及相关服务所订立的协议。请你在使用本服务前完整阅读本协议与《隐私政策》，尤其是以加粗或下划线标识的条款。</view>
+    <view class="legal-copy">本协议是你与「今日成长-目标打卡」运营方（以下简称"我们"）之间就使用本微信小程序及相关服务所订立的协议。请你在使用本服务前完整阅读本协议与《隐私政策》，尤其是以加粗或下划线标识的条款。</view>
     <view class="legal-copy">当你勾选"我已阅读并同意《用户协议》《隐私政策》"并点击"开始创建目标"或类似按钮时，即视为你已充分理解并接受本协议全部条款，本协议即对你产生效力。如你不同意任何条款，请停止使用本服务。</view>
     <view class="legal-copy">本服务是目标与行动记录工具，不设置年龄准入限制。使用者应根据自身情况合理安排目标、行动与投入时间。</view>
   </view>
 
   <view class="legal-section">
     <view class="legal-heading"><text class="legal-heading-index">二</text>服务说明</view>
-    <view class="legal-copy">「今日进度｜目标计划打卡」是一款帮助你把长期目标拆解为每日行动并持续坚持的微信小程序，主要功能包括：</view>
+    <view class="legal-copy">「今日成长-目标打卡」是一款帮助你把长期目标拆解为每日行动并持续坚持的微信小程序，主要功能包括：</view>
     <view class="legal-list">
       <view class="legal-list-item">目标管理：创建、编辑、归档与终止长期目标，并保留历史记录；</view>
       <view class="legal-list-item">每日行动：安排今天的具体行动、记录预计与实际投入、查看完成状态；</view>
@@ -78,7 +78,7 @@
       <view class="legal-list-item">访问、获取、篡改、删除他人数据，或绕过身份与权限校验；</view>
       <view class="legal-list-item">通过自动化脚本、模拟器、外挂或其他技术手段批量操作、操纵小队榜单或滥用 AI 服务；</view>
       <view class="legal-list-item">上传、传播违法、侵权、虚假、骚扰、危害国家安全或系统安全的内容；</view>
-      <view class="legal-list-item">冒用他人身份，或在「关于今日进度｜目标计划打卡 → 通过微信提交反馈」中填写完整手机号、OpenID 或其他敏感凭证；</view>
+      <view class="legal-list-item">冒用他人身份，或在「关于今日成长-目标打卡 → 通过微信提交反馈」中填写完整手机号、OpenID 或其他敏感凭证；</view>
       <view class="legal-list-item">将小队鼓励功能用于骚扰、广告、商业招揽或其他与产品定位无关的用途；</view>
       <view class="legal-list-item">以任何方式破坏或干扰本服务、腾讯云开发、微信开放平台及第三方服务的正常运行。</view>
     </view>
@@ -101,12 +101,12 @@
       <view class="legal-list-item">我们不会替你虚构行动记录或编造未发生的进度数据；</view>
       <view class="legal-list-item">我们仅发送完成分析所必需的目标与行动摘要，不会发送完整聊天记录或与本次分析无关的个人数据。</view>
     </view>
-    <view class="legal-copy">如你认为 AI 输出存在明显错误或不当内容，可通过「关于今日进度｜目标计划打卡 → 通过微信提交反馈」告知我们。</view>
+    <view class="legal-copy">如你认为 AI 输出存在明显错误或不当内容，可通过「关于今日成长-目标打卡 → 通过微信提交反馈」告知我们。</view>
   </view>
 
   <view class="legal-section">
     <view class="legal-heading"><text class="legal-heading-index">七</text>数据与隐私</view>
-    <view class="legal-copy">我们处理你个人信息的方式以《今日进度｜目标计划打卡隐私政策》为准。本协议与《隐私政策》共同构成我们之间关于本服务的完整约定。如本协议与《隐私政策》存在冲突，涉及个人信息处理的以《隐私政策》为准。</view>
+    <view class="legal-copy">我们处理你个人信息的方式以《今日成长-目标打卡隐私政策》为准。本协议与《隐私政策》共同构成我们之间关于本服务的完整约定。如本协议与《隐私政策》存在冲突，涉及个人信息处理的以《隐私政策》为准。</view>
     <view class="legal-copy">历史目标支持归档、移到「最近删除」、恢复与彻底删除。删除全部成长数据会保留账号、协议记录与小队关系；注销账号会删除账号及归属数据。队长需先转让或解散小队，所有危险操作均需二次确认。</view>
   </view>
 
@@ -166,10 +166,10 @@
       </view>
       <view class="legal-contact-row">
         <text class="legal-contact-label">小程序内反馈</text>
-        <text class="legal-contact-value">「关于今日进度｜目标计划打卡 → 通过微信提交反馈」</text>
+        <text class="legal-contact-value">「关于今日成长-目标打卡 → 通过微信提交反馈」</text>
       </view>
     </view>
   </view>
 
-  <view class="legal-footnote">本协议由今日进度｜目标计划打卡产品团队制定并维护，最后更新于 {{updatedAt}}。</view>
+  <view class="legal-footnote">本协议由今日成长-目标打卡产品团队制定并维护，最后更新于 {{updatedAt}}。</view>
 </view>

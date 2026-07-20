@@ -4,7 +4,7 @@
 
   <view wx:if="{{status === 'loading'}}" class="welcome-state">
     <t-loading size="44rpx" theme="circular" />
-    <view class="state-title">正在准备今日进度</view>
+    <view class="state-title">正在准备今日成长-目标打卡</view>
     <view class="state-description">马上就好</view>
   </view>
 
@@ -16,15 +16,14 @@
   </view>
 
   <view wx:else class="welcome-content">
-    <view class="brand" aria-label="今日进度，目标计划打卡">
+    <view class="brand" aria-label="今日成长-目标打卡">
       <view class="brand-mark" aria-hidden="true">
         <view class="brand-step brand-step-small"></view>
         <view class="brand-step brand-step-medium"></view>
         <view class="brand-step brand-step-large"></view>
       </view>
       <view class="brand-copy">
-        <text class="brand-name">今日进度</text>
-        <text class="brand-slogan brand-subname">目标计划打卡</text>
+        <text class="brand-name">今日成长-目标打卡</text>
       </view>
     </view>
 

@@ -9,7 +9,7 @@
     <view class="card identity-card">
       <view class="section-title">微信身份</view>
       <view class="identity-row"><view><view class="identity-label">展示标识</view><view class="identity-value">{{account.displayId}}</view></view><view class="safe-chip">已连接</view></view>
-      <view class="identity-note">该标识用于你识别自己的今日进度｜目标计划打卡账号，不会展示 OpenID。</view>
+      <view class="identity-note">该标识用于你识别自己的今日成长-目标打卡账号，不会展示 OpenID。</view>
     </view>
 
     <view wx:if="{{phoneBindingEnabled}}" class="card phone-card">

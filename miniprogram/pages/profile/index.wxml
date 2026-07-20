@@ -141,7 +141,7 @@
         <view class="community-state-action" bindtap="retryGrowthCommunity" hover-class="is-pressed">重新加载</view>
       </view>
 
-      <view class="community-privacy-note"><t-icon name="info-circle" size="27rpx" /><text>二维码仅用于加入成长交流社群。加入后遵循微信社群规则；今日进度｜目标计划打卡不会读取群聊记录或通讯录，也不会自动上传你的目标和行动记录。</text></view>
+      <view class="community-privacy-note"><t-icon name="info-circle" size="27rpx" /><text>二维码仅用于加入成长交流社群。加入后遵循微信社群规则；今日成长-目标打卡不会读取群聊记录或通讯录，也不会自动上传你的目标和行动记录。</text></view>
     </view>
   </view>
 </view>

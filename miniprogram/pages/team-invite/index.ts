@@ -46,7 +46,7 @@ Page({
   },
 
   copyGroupText() {
-    const text = `邀请你加入「${this.data.teamName}」\n房间号：${this.data.roomCode}\n打开今日进度｜目标计划打卡，在小队页输入房间号即可加入。`;
+    const text = `邀请你加入「${this.data.teamName}」\n房间号：${this.data.roomCode}\n打开今日成长-目标打卡，在小队页输入房间号即可加入。`;
     wx.setClipboardData({ data: text, success: () => wx.showToast({ title: "群邀请文案已复制", icon: "success" }) });
   },
 
