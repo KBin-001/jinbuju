@@ -45,7 +45,7 @@
         <image class="community-card__path" src="/assets/profile/community-path.svg" mode="aspectFill" aria-hidden="true" />
         <view class="community-card__veil"></view>
         <view class="community-card__content">
-          <view class="community-card__icon"><t-icon name="usergroup-add" size="38rpx" /></view>
+          <view class="community-card__icon"><image class="community-card__icon-image" src="/assets/icons/community-companions.svg" mode="aspectFit" aria-hidden="true" /></view>
           <view class="community-card__copy">
             <view class="community-card__title-row"><text class="community-card__title">成长社区</text><text class="community-card__badge">内测</text></view>
             <text class="community-card__description">找到同频伙伴，一起持续行动</text>
@@ -79,7 +79,7 @@
       <view class="profile-form-card">
         <view class="profile-avatar-row"><view class="profile-avatar-preview"><image wx:if="{{profileDraftAvatarUrl}}" src="{{profileDraftAvatarUrl}}" mode="aspectFill" binderror="useDefaultDraftAvatar" /><image wx:else class="profile-avatar-preview__default" src="/images/icons/avatar.png" mode="aspectFit" /></view><t-button wx:if="{{!platformPrivacyAuthorized}}" class="avatar-choose-btn" bindtap="authorizePlatformPrivacy">授权后选择头像</t-button><t-button wx:else class="avatar-choose-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">选择头像</t-button></view>
         <view class="profile-field"><text class="profile-label">展示名称</text><t-input class="profile-input" type="nickname" maxlength="16" value="{{profileDraftNickname}}" placeholder="输入昵称" bindchange="inputProfileNickname" /></view>
-        <view class="profile-setting-row"><view><text class="profile-label">在小队中使用该资料</text><text class="profile-helper">匿名模式下仍会隐藏头像和名称。</text></view><t-switch value="{{profileDraftUseInTeam}}" color="#245B4D" bindchange="toggleProfileUseInTeam" /></view>
+        <view class="profile-setting-row"><view><text class="profile-label">在小队中使用该资料</text><text class="profile-helper">匿名模式下仍会隐藏头像和名称。</text></view><t-switch value="{{profileDraftUseInTeam}}" color="#668F84" bindchange="toggleProfileUseInTeam" /></view>
       </view>
       <view class="sheet-actions"><t-button class="sheet-cancel" disabled="{{profileSaving}}" bindtap="closeProfileEditor">取消</t-button><t-button class="sheet-save" loading="{{profileSaving}}" disabled="{{profileSaving}}" bindtap="saveProfileEditor">保存</t-button></view>
     </view>
@@ -90,7 +90,7 @@
     <view class="customer-service-sheet-panel" catchtap="noop">
       <view class="customer-service-sheet-handle"></view>
       <view class="customer-service-sheet-head"><view><text class="customer-service-sheet-kicker">客服支持</text><text class="customer-service-sheet-title">添加客服微信</text></view><view class="customer-service-sheet-close" catchtap="closeCustomerService" hover-class="is-pressed" aria-role="button" aria-label="关闭客服二维码"><t-icon name="close" size="34rpx" /></view></view>
-      <text class="customer-service-sheet-copy">点击放大或长按识别二维码，添加客服后可咨询使用问题。</text>
+      <text class="customer-service-sheet-copy">点击图片可全屏放大，也可以直接长按识别二维码，添加客服后咨询使用问题。</text>
       <view class="customer-service-qr-frame" bindtap="previewCustomerServiceQr" hover-class="is-pressed" aria-role="button" aria-label="预览客服二维码"><image class="customer-service-qr-image" src="/assets/customer-service-qr.jpg" mode="aspectFit" show-menu-by-longpress="{{true}}" /></view>
       <text class="customer-service-sheet-tip">请勿向客服发送密码、验证码或其他敏感凭证。</text>
     </view>
@@ -124,6 +124,7 @@
           <image class="community-qr-image" src="{{communityQrUrl}}" mode="aspectFit" show-menu-by-longpress="{{true}}" binderror="handleGrowthCommunityQrError" />
         </view>
         <text class="community-qr-tip">点击放大，或长按二维码识别</text>
+        <text wx:if="{{communityQrExpiryText}}" class="community-qr-expiry">{{communityQrExpiryText}}</text>
       </view>
 
       <view wx:elif="{{communitySheetStatus === 'expired'}}" class="community-sheet-state">

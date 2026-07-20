@@ -102,8 +102,13 @@ page { background: #f8f5ec; }
 .today-action-list { margin-top: 10rpx; }
 .today-task-row { min-height: 102rpx; margin-bottom: 10rpx; padding: 13rpx 18rpx; display: flex; align-items: center; gap: 12rpx; }
 .today-task-row.is-done { border-color: rgba(91,120,101,.22); background: rgba(241,245,237,.95); }
-.reference-task-icon { position: relative; z-index: 2; width: 46rpx; height: 46rpx; flex: none; display: flex; align-items: center; justify-content: center; }
-.reference-task-icon image { width: 40rpx; height: 40rpx; filter: grayscale(.65) sepia(.15) hue-rotate(85deg) saturate(.75); opacity: .78; }
+.reference-task-icon { position: relative; z-index: 2; width: 50rpx; height: 50rpx; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 16rpx; color: #35695c; background: #e8f0eb; }
+.reference-task-icon image { width: 35rpx; height: 35rpx; }
+.reference-task-icon--blue { color: #496a76; background: #e9f0f2; }
+.reference-task-icon--gold { color: #98702f; background: #f7efdf; }
+.reference-task-icon--orange { color: #a86436; background: #f8ece3; }
+.reference-task-icon--purple { color: #665d77; background: #eeebf2; }
+.today-task-row.is-done .reference-task-icon { opacity: .9; }
 .task-copy { position: relative; z-index: 2; min-width: 0; flex: 1; }
 .task-title-line { min-width: 0; display: flex; align-items: center; gap: 14rpx; }
 .task-title { min-width: 0; flex: 1; overflow: hidden; color: #263e36; font-family: "Songti SC", STSong, serif; font-size: 27rpx; line-height: 36rpx; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
@@ -114,6 +119,7 @@ page { background: #f8f5ec; }
 .task-status--success { color: #245b4d; background: #e8f0eb; }
 .task-status--warning { color: #8d682d; background: #f7ebcf; }
 .task-status--danger { color: #9b5549; background: #fbf1ed; }
+.task-carry-badge { padding: 0 9rpx; border: 1rpx solid rgba(152,112,47,.18); border-radius: 999rpx; color: #8d682d; background: #fbf5e8; font-size: 16rpx; line-height: 25rpx; white-space: nowrap; }
 .task-tail-check { position: relative; z-index: 2; width: 50rpx; height: 50rpx; flex: none; display: flex; align-items: center; justify-content: center; border: 2rpx solid #777b76; border-radius: 50%; color: #fff; }
 .task-tail-check::after { content: ""; position: absolute; inset: -10rpx; border-radius: 50%; }
 .task-tail-check.is-done { border-color: #31584b; background: #31584b; box-shadow: 0 6rpx 13rpx rgba(49,88,75,.17); }

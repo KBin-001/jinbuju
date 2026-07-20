@@ -30,6 +30,8 @@ const {
 const { readManualStore, writeManualStore } = require("../services/manualStore.ts");
 const { createTask, deleteTask, getTask, getTaskHistoryByGoal, getTasksByDate, getTodayPageTasks, rescheduleTask, updateActionRecord, updateTaskStatus } = require("../services/manualTask.ts");
 const { getProgressSummary, recordDailyCheckin } = require("../services/manualStats.ts");
+const { addBusinessDays, getTodayBusinessDate } = require("../utils/date.ts");
+const { getDailyCoachAnalysis } = require("../services/dailyCoach.ts");
 
 const today = "2026-06-21";
 const blogGoal = createGoal({ title: "完成个人博客", category: "custom" });
@@ -97,6 +99,25 @@ assert.equal(getProgressSummary(cetGoal.id, today).totalActualMinutes, 15);
 const cetHistory = getTaskHistoryByGoal(cetGoal.id);
 assert.equal(cetHistory.some((task) => task.id === carriedPartial.id && task.status === "rescheduled" && task.actualMinutes === 15), true);
 assert.equal(cetHistory.some((task) => task.id === deleted.id), false);
+
+// 回归：顺延后继任务在第二天完成时，任务、默认实际投入和每日打卡快照都必须保留。
+const realToday = getTodayBusinessDate();
+const carryOriginDate = addBusinessDays(realToday, -1);
+const carryOrigin = createTask({ goalId: cetGoal.id, title: "顺延后完成的行动", currentDate: carryOriginDate, estimatedMinutes: 40 });
+const carrySuccessor = rescheduleTask(carryOrigin.id, carryOriginDate);
+assert.equal(carrySuccessor.currentDate, realToday);
+const completedCarry = updateTaskStatus(carrySuccessor.id, "completed");
+assert.equal(completedCarry.actualMinutes, 40);
+assert.equal(completedCarry.activityDate, realToday);
+const carryCheckin = recordDailyCheckin(cetGoal.id, realToday);
+assert.equal(carryCheckin.completedCount >= 1, true);
+assert.equal(carryCheckin.actualMinutes >= 40, true);
+assert.equal(getTask(carryOrigin.id).status, "rescheduled");
+assert.equal(getTask(carrySuccessor.id).status, "completed");
+const overdueForCoach = createTask({ goalId: cetGoal.id, title: "AI 应识别的待继续任务", currentDate: carryOriginDate, estimatedMinutes: 25 });
+const dailyCoach = getDailyCoachAnalysis(realToday, cetGoal.id);
+assert.equal(dailyCoach.pendingTasks.some((task) => task.id === overdueForCoach.id), true);
+assert.equal(dailyCoach.totalCount >= 2, true);
 
 const archivedGoal = endGoal(blogGoal.id);
 assert.equal(archivedGoal.id, blogGoal.id);

@@ -83,7 +83,13 @@ export function getProgressSummary(goalId: string, today = getTodayBusinessDate(
 export function recordDailyCheckin(goalId: string, businessDate: string): DailyCheckin {
   const store = readManualStore();
   const existing = store.checkins.find((item) => item.goalId === goalId && item.businessDate === businessDate);
-  const summary = calculateTodaySummary(store.tasks.filter((task) => task.goalId === goalId && task.currentDate === businessDate));
+  const summary = calculateTodaySummary(store.tasks.filter((task) => {
+    if (task.goalId !== goalId || task.deletedAt || task.status === "rescheduled") return false;
+    const effectiveDate = task.status === "completed" || task.status === "partially_completed"
+      ? task.activityDate || task.currentDate
+      : task.currentDate;
+    return effectiveDate === businessDate;
+  }));
   const now = new Date().toISOString();
   if (existing) { existing.completedCount = summary.completedCount; existing.partialCount = summary.partialCount; existing.actualMinutes = summary.actualMinutes; existing.updatedAt = now; writeManualStore(store); return existing; }
   const checkin: DailyCheckin = { id: createLocalId("checkin"), goalId, businessDate, completedCount: summary.completedCount, partialCount: summary.partialCount, actualMinutes: summary.actualMinutes, createdAt: now, updatedAt: now };

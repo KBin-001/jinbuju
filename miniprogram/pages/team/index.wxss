@@ -43,6 +43,7 @@
 .team-notification-optin button { min-width: 142rpx; height: 60rpx; padding: 0 18rpx; border-radius: 30rpx; color: #fff; background: var(--ink); font-size: 21rpx; }
 
 .team-content--state { padding-top: 20rpx; }
+.team-empty-landing { padding-top: 14rpx; }
 
 .paper-card {
   box-sizing: border-box;
@@ -444,12 +445,96 @@
 .state-action { display: flex; align-items: center; justify-content: center; min-width: 180rpx; height: 62rpx; margin-top: 28rpx; padding: 0 24rpx; border: 1rpx solid rgba(188, 129, 38, 0.65); border-radius: 32rpx; color: var(--gold-deep); font-size: 24rpx; }
 .state-actions .state-action { margin-top: 0; }
 .state-action--solid { border-color: var(--ink); background: var(--ink); color: #fff; }
+.empty-team-hero { position: relative; min-height: 800rpx; padding: 55rpx 40rpx 34rpx; overflow: hidden; border-color: rgba(213,199,174,.68); border-radius: 31rpx; background: rgba(255,253,248,.975); box-shadow: 0 16rpx 40rpx rgba(80,67,43,.08), inset 0 1rpx 0 rgba(255,255,255,.92); }
+.empty-team-landscape { position: absolute; z-index: 0; top: 0; right: 0; width: 100%; height: 535rpx; opacity: .12; filter: saturate(.75); }
+.empty-team-glow { position: absolute; z-index: 0; top: -88rpx; right: -68rpx; width: 410rpx; height: 410rpx; border-radius: 50%; background: radial-gradient(circle, rgba(236,202,139,.34), rgba(255,252,246,0) 69%); }
+.empty-team-sun { position: absolute; z-index: 1; top: 44rpx; right: 69rpx; width: 76rpx; height: 76rpx; border-radius: 50%; background: radial-gradient(circle at 42% 40%, rgba(248,219,164,.48), rgba(244,205,135,.12) 68%, transparent 72%); }
+.empty-team-copy { position: relative; z-index: 3; max-width: 560rpx; }
+.empty-team-eyebrow { display: inline-flex; min-height: 42rpx; padding: 0 17rpx; align-items: center; border: 1rpx solid rgba(196,151,77,.26); border-radius: 22rpx; background: rgba(250,242,224,.74); color: #a7772e; font-size: 19rpx; font-weight: 650; letter-spacing: 1rpx; }
+.empty-team-title { color: #24312d; font-family: "Songti SC", STSong, serif; font-size: 51rpx; font-weight: 700; line-height: 66rpx; letter-spacing: 1rpx; text-shadow: 0 1rpx 0 rgba(255,255,255,.9); }
+.empty-team-title text { display: block; }
+.empty-team-title text:last-child { color: #245b4d; }
+.empty-team-description { width: 346rpx; margin-top: 23rpx; color: #666b67; font-size: 22rpx; line-height: 39rpx; }
+.empty-team-visual { position: absolute; z-index: 2; top: 130rpx; right: -5rpx; width: 425rpx; height: 390rpx; overflow: hidden; }
+.empty-team-people { width: 100%; height: 100%; display: block; opacity: .98; }
+.empty-team-visual-fade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,253,248,.98) 0%, rgba(255,253,248,.34) 14%, transparent 32%), linear-gradient(0deg, rgba(255,253,248,.98) 0%, transparent 25%); pointer-events: none; }
+.empty-team-actions { position: absolute; z-index: 4; right: 40rpx; bottom: 178rpx; left: 40rpx; display: flex; gap: 18rpx; margin-top: 0; }
+.empty-team-button { display: flex; align-items: center; justify-content: center; gap: 12rpx; height: 80rpx; flex: 1; border-radius: 42rpx; font-size: 24rpx; font-weight: 680; white-space: nowrap; transition: transform 180ms ease, opacity 180ms ease; }
+.empty-team-button image { width: 33rpx; height: 33rpx; }
+.empty-team-button--primary { border: 1rpx solid rgba(91,139,121,.28); background: linear-gradient(135deg, rgba(226,240,233,.98), rgba(239,246,241,.96)); color: #356C5B; box-shadow: 0 8rpx 19rpx rgba(64,105,89,.10), inset 0 1rpx 0 rgba(255,255,255,.92); }
+.empty-team-button--primary image { opacity: .72; }
+.empty-team-button--secondary { box-sizing: border-box; border: 1rpx solid rgba(190,139,56,.34); background: linear-gradient(135deg, rgba(255,252,245,.98), rgba(250,243,229,.92)); color: #A87325; box-shadow: 0 8rpx 18rpx rgba(155,111,42,.075), inset 0 1rpx 0 rgba(255,255,255,.94); }
+.empty-team-button--pressed { opacity: .83; transform: scale(.98); }
+.empty-team-enter-icon { position: relative; width: 30rpx; height: 30rpx; box-sizing: border-box; border: 3rpx solid currentColor; border-left-color: transparent; border-radius: 5rpx; }
+.empty-team-enter-icon::before { position: absolute; top: 11rpx; left: -8rpx; width: 17rpx; height: 3rpx; border-radius: 2rpx; background: currentColor; content: ""; }
+.empty-team-enter-icon::after { position: absolute; top: 7rpx; left: -8rpx; width: 9rpx; height: 9rpx; box-sizing: border-box; border-bottom: 3rpx solid currentColor; border-left: 3rpx solid currentColor; content: ""; transform: rotate(45deg); }
+.empty-team-benefits { position: absolute; z-index: 4; right: 40rpx; bottom: 34rpx; left: 40rpx; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12rpx; margin-top: 0; }
+.empty-team-benefit { min-width: 0; min-height: 118rpx; padding: 15rpx 10rpx; display: flex; align-items: center; justify-content: center; gap: 11rpx; box-sizing: border-box; border: 1rpx solid rgba(201,177,132,.34); border-radius: 19rpx; background: linear-gradient(145deg, rgba(255,253,248,.92), rgba(250,247,239,.76)); box-shadow: inset 0 1rpx 0 rgba(255,255,255,.9); }
+.empty-team-benefit > view:last-child { min-width: 0; }
+.empty-team-benefit text { display: block; white-space: nowrap; }
+.empty-team-benefit text:first-child { color: #35413d; font-size: 22rpx; font-weight: 680; line-height: 32rpx; }
+.empty-team-benefit text:last-child { color: #85877f; font-size: 17rpx; line-height: 26rpx; }
+.empty-benefit-glyph { position: relative; width: 54rpx; height: 54rpx; flex: 0 0 54rpx; box-sizing: border-box; color: #568b78; filter: drop-shadow(0 4rpx 6rpx rgba(62,109,91,.10)); }
+.empty-benefit-glyph--companion { border: 2rpx solid rgba(86,139,120,.75); border-radius: 15rpx 15rpx 18rpx 18rpx; background: rgba(220,237,228,.76); }
+.empty-benefit-head { position: absolute; top: 8rpx; left: 17rpx; width: 12rpx; height: 12rpx; border: 3rpx solid currentColor; border-radius: 50%; }
+.empty-benefit-body { position: absolute; bottom: 7rpx; left: 11rpx; width: 22rpx; height: 12rpx; border: 3rpx solid currentColor; border-bottom: 0; border-radius: 14rpx 14rpx 0 0; }
+.empty-benefit-glyph--calendar { border: 3rpx solid currentColor; border-radius: 8rpx; background: rgba(230,241,235,.82); }
+.empty-benefit-glyph--calendar::before, .empty-benefit-glyph--calendar::after { position: absolute; top: -6rpx; width: 4rpx; height: 12rpx; border-radius: 2rpx; background: currentColor; content: ""; }
+.empty-benefit-glyph--calendar::before { left: 9rpx; }
+.empty-benefit-glyph--calendar::after { right: 9rpx; }
+.empty-calendar-line { position: absolute; top: 12rpx; right: 0; left: 0; height: 3rpx; background: currentColor; opacity: .6; }
+.empty-calendar-check { position: absolute; top: 23rpx; left: 15rpx; width: 14rpx; height: 8rpx; border-bottom: 3rpx solid currentColor; border-left: 3rpx solid currentColor; transform: rotate(-45deg); }
+.empty-benefit-glyph--target { border: 3rpx solid currentColor; border-radius: 50%; box-shadow: inset 0 0 0 6rpx rgba(255,252,246,.9), inset 0 0 0 9rpx currentColor; }
+.empty-benefit-glyph--target view { position: absolute; top: 19rpx; left: 19rpx; width: 6rpx; height: 6rpx; border-radius: 50%; background: currentColor; }
+.empty-team-proof { position: relative; min-height: 94rpx; margin-top: 22rpx; padding: 0 28rpx; display: flex; align-items: center; gap: 20rpx; overflow: hidden; box-sizing: border-box; border: 1rpx solid rgba(198,164,102,.32); border-radius: 26rpx; background: linear-gradient(100deg, rgba(255,251,241,.92), rgba(250,247,239,.72)); color: #5e615d; font-size: 22rpx; box-shadow: inset 0 1rpx 0 rgba(255,255,255,.86); }
+.empty-team-proof-people { width: 112rpx; height: 58rpx; flex: 0 0 112rpx; display: flex; align-items: center; }
+.empty-team-proof-people > view { width: 52rpx; height: 52rpx; margin-left: -18rpx; display: flex; align-items: center; justify-content: center; box-sizing: border-box; border: 4rpx solid #FFF9EF; border-radius: 50%; background: #DFECE5; color: #659282; }
+.empty-team-proof-people > view:first-child { margin-left: 0; background: #E8F1EC; }
+.empty-team-proof-people > view:nth-child(2) { background: #F3EAD8; color: #A78246; }
+.empty-team-proof-emphasis { margin: 0 5rpx; color: #9B6D28; font-weight: 700; }
+.empty-team-proof-branch { position: absolute; right: -20rpx; bottom: -18rpx; width: 140rpx; height: 60rpx; border-top: 2rpx solid rgba(196,151,77,.22); border-radius: 50%; transform: rotate(-12deg); }
+.empty-community-card { position: relative; min-height: 270rpx; margin-top: 22rpx; padding: 34rpx 35rpx; display: flex; align-items: flex-start; overflow: hidden; border-color: rgba(111,155,140,.24); border-radius: 31rpx; background: linear-gradient(105deg, rgba(237,246,240,.99), rgba(250,248,239,.97)); box-shadow: 0 12rpx 30rpx rgba(69,96,84,.075), inset 0 1rpx 0 rgba(255,255,255,.88); }
+.empty-community-landscape { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; opacity: .12; filter: saturate(.75); }
+.empty-community-visual { position: absolute; z-index: 1; right: -4rpx; bottom: 0; width: 330rpx; height: 222rpx; overflow: hidden; }
+.empty-community-people { width: 100%; height: 100%; display: block; opacity: .93; }
+.empty-community-visual-fade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(240,247,242,.98) 0%, rgba(240,247,242,.18) 26%, transparent 48%), linear-gradient(0deg, rgba(244,247,241,.92) 0%, transparent 20%); pointer-events: none; }
+.empty-community-copy { position: relative; z-index: 2; min-width: 0; width: 405rpx; }
+.empty-community-heading { display: flex; align-items: center; gap: 12rpx; }
+.empty-community-title { color: #285f50; font-family: "Songti SC", STSong, serif; font-size: 37rpx; font-weight: 700; line-height: 48rpx; letter-spacing: 1rpx; }
+.empty-community-badge { padding: 4rpx 12rpx; border-radius: 16rpx; background: #c7933c; color: #fffdf7; font-size: 17rpx; line-height: 27rpx; }
+.empty-community-description, .empty-community-benefits { display: block; }
+.empty-community-description { max-width: 350rpx; margin-top: 10rpx; color: #586a63; font-size: 21rpx; line-height: 33rpx; }
+.empty-community-benefits { color: #89958f; font-size: 18rpx; line-height: 30rpx; }
+.empty-community-action { position: absolute; z-index: 3; right: 30rpx; bottom: 25rpx; min-width: 178rpx; height: 64rpx; padding: 0 18rpx; display: flex; align-items: center; justify-content: center; box-sizing: border-box; border: 1rpx solid rgba(255,255,255,.26); border-radius: 34rpx; background: linear-gradient(135deg, #347865, #23604f); color: #fff; font-size: 21rpx; font-weight: 680; white-space: nowrap; box-shadow: 0 9rpx 20rpx rgba(40,94,77,.16), inset 0 1rpx 0 rgba(255,255,255,.15); }
 
 /* Bottom sheets */
 .team-popup-layer,
-.team-settings-layer { position: fixed; z-index: 12000; inset: 0; }
+.team-settings-layer,
+.team-community-layer { position: fixed; z-index: 12000; inset: 0; }
 .team-popup-mask,
-.team-settings-mask { position: absolute; inset: 0; background: rgba(25, 34, 31, 0.35); backdrop-filter: blur(5rpx); -webkit-backdrop-filter: blur(5rpx); }
+.team-settings-mask,
+.team-community-mask { position: absolute; inset: 0; background: rgba(25, 34, 31, 0.35); backdrop-filter: blur(5rpx); -webkit-backdrop-filter: blur(5rpx); }
+.team-community-panel { position: absolute; right: 0; bottom: 0; left: 0; max-height: 92vh; padding: 12rpx 30rpx calc(26rpx + env(safe-area-inset-bottom)); overflow-y: auto; box-sizing: border-box; border-radius: 34rpx 34rpx 0 0; background: #FBF8F0; box-shadow: 0 -18rpx 50rpx rgba(23,45,37,.16); }
+.team-community-handle { width: 76rpx; height: 7rpx; margin: 0 auto 18rpx; border-radius: 4rpx; background: rgba(36,49,45,.16); }
+.team-community-head { min-height: 76rpx; display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
+.team-community-head > view:first-child { min-width: 0; flex: 1; }
+.team-community-kicker, .team-community-title { display: block; }
+.team-community-kicker { color: #7F9D91; font-size: 20rpx; line-height: 28rpx; letter-spacing: 2rpx; }
+.team-community-title { margin-top: 3rpx; overflow: hidden; color: #24312D; font-family: "Songti SC",STSong,serif; font-size: 34rpx; line-height: 44rpx; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.team-community-close { width: 72rpx; height: 72rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 50%; background: #EEE9DD; color: #65716C; }
+.team-community-state { min-height: 390rpx; padding: 44rpx 24rpx 34rpx; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #668F84; text-align: center; }
+.team-community-state-title { margin-top: 19rpx; color: #24312D; font-family: "Songti SC",STSong,serif; font-size: 30rpx; line-height: 42rpx; font-weight: 700; }
+.team-community-state-copy { max-width: 500rpx; margin-top: 8rpx; color: #7C817D; font-size: 22rpx; line-height: 35rpx; }
+.team-community-retry { min-width: 188rpx; min-height: 70rpx; margin-top: 23rpx; padding: 0 30rpx; display: flex; align-items: center; justify-content: center; border-radius: 35rpx; background: #668F84; color: #FFF; font-size: 22rpx; font-weight: 650; }
+.team-community-retry--outline { border: 1rpx solid rgba(102,143,132,.26); background: rgba(255,252,246,.82); color: #557D6E; }
+.team-community-ready { padding: 18rpx 10rpx 24rpx; display: flex; align-items: center; flex-direction: column; text-align: center; }
+.team-community-description { max-width: 520rpx; color: #566A62; font-size: 22rpx; line-height: 34rpx; }
+.team-community-qr-frame { width: 584rpx; height: 811rpx; margin-top: 18rpx; padding: 12rpx; display: flex; align-items: center; justify-content: center; box-sizing: border-box; border: 1rpx solid rgba(36,91,77,.10); border-radius: 26rpx; background: #FFF; box-shadow: 0 10rpx 28rpx rgba(53,68,60,.08); }
+.team-community-qr { width: 560rpx; height: 787rpx; display: block; border-radius: 14rpx; }
+.team-community-tip { margin-top: 13rpx; color: #7C817D; font-size: 19rpx; line-height: 29rpx; }
+.team-community-expiry { margin-top: 4rpx; color: #9A722F; font-size: 18rpx; line-height: 28rpx; }
+.team-community-privacy { min-height: 72rpx; padding: 13rpx 16rpx; display: flex; align-items: flex-start; gap: 10rpx; border-radius: 18rpx; background: #F0F4F2; color: #6E7C76; font-size: 18rpx; line-height: 28rpx; }
+.team-community-privacy text { min-width: 0; flex: 1; }
 .team-popup { position: absolute; right: 0; bottom: 0; left: 0; box-sizing: border-box; padding: 18rpx 36rpx calc(34rpx + env(safe-area-inset-bottom)); border-radius: 34rpx 34rpx 0 0; background: #fcf8ef; box-shadow: 0 -18rpx 52rpx rgba(35, 44, 40, 0.16); }
 .popup-handle { width: 70rpx; height: 7rpx; margin: 0 auto 26rpx; border-radius: 4rpx; background: #d4cec1; }
 .popup-eyebrow,
@@ -551,6 +636,29 @@
   .companion-metric { width: 94rpx; flex-basis: 94rpx; margin-left: 9rpx; }
   .companion-action { max-width: 300rpx; }
   .self-prompt-button { padding-right: 10rpx; padding-left: 13rpx; }
+  .empty-team-hero { min-height: 782rpx; padding-right: 25rpx; padding-left: 25rpx; }
+  .empty-team-title { font-size: 43rpx; line-height: 57rpx; }
+  .empty-team-description { width: 292rpx; font-size: 20rpx; line-height: 34rpx; }
+  .empty-team-visual { top: 142rpx; right: -24rpx; width: 370rpx; height: 350rpx; }
+  .empty-team-actions { gap: 10rpx; }
+  .empty-team-actions { right: 25rpx; bottom: 172rpx; left: 25rpx; }
+  .empty-team-button { gap: 7rpx; font-size: 20rpx; }
+  .empty-team-button image { width: 28rpx; height: 28rpx; }
+  .empty-team-benefit { padding-right: 5rpx; padding-left: 5rpx; gap: 5rpx; }
+  .empty-team-benefits { right: 25rpx; bottom: 30rpx; left: 25rpx; margin-top: 0; }
+  .empty-benefit-glyph { width: 44rpx; height: 44rpx; flex-basis: 44rpx; }
+  .empty-team-benefit text:first-child { font-size: 18rpx; }
+  .empty-team-benefit text:last-child { font-size: 14rpx; }
+  .empty-community-card { min-height: 250rpx; padding-right: 20rpx; padding-left: 22rpx; }
+  .empty-community-copy { width: 330rpx; }
+  .empty-community-title { font-size: 29rpx; }
+  .empty-community-description { font-size: 18rpx; }
+  .empty-community-benefits { font-size: 15rpx; }
+  .empty-community-visual { right: -12rpx; width: 280rpx; height: 205rpx; }
+  .empty-community-action { right: 18rpx; min-width: 148rpx; font-size: 18rpx; }
+  .team-community-panel { padding-right: 22rpx; padding-left: 22rpx; }
+  .team-community-qr-frame { width: 530rpx; height: 736rpx; }
+  .team-community-qr { width: 506rpx; height: 712rpx; }
 }
 .companion-rank {
   width: 42rpx;

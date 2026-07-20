@@ -79,11 +79,7 @@
             data-id="{{task.id}}"
             bindtap="openTask"
           >
-            <view class="reference-task-icon reference-task-icon--{{task.actionIconType}}">
-              <image wx:if="{{task.actionIconType === 'book'}}" src="/assets/coach-ui/icon-book.svg" mode="aspectFit" />
-              <image wx:elif="{{task.actionIconType === 'audio'}}" src="/assets/coach-ui/icon-headphone.svg" mode="aspectFit" />
-              <image wx:else src="/assets/coach-ui/icon-doc.svg" mode="aspectFit" />
-            </view>
+            <view class="reference-task-icon reference-task-icon--{{task.actionIconTone}} reference-task-icon-key--{{task.actionIconKey}}"><image src="{{task.actionIconAsset}}" mode="aspectFit" /></view>
             <view class="task-copy">
               <view class="task-title-line">
                 <view class="task-title">{{task.displayTitle}}</view>
@@ -91,6 +87,7 @@
               </view>
               <view class="task-status-line">
                 <text class="task-status task-status--{{task.statusTone}}">{{task.statusLabel}}</text>
+                <text wx:if="{{task.rescheduled}}" class="task-carry-badge">顺延任务</text>
                 <text wx:if="{{task.actualMinutes}}" class="task-meta-actual">实际 {{task.actualMinutes}} 分钟</text>
                 <text wx:if="{{task.reminder && task.reminder.status === 'scheduled'}}" class="task-meta-actual">{{task.reminder.time}} 提醒</text>
               </view>

@@ -6,6 +6,8 @@ import { getTodayBusinessDate } from "../../utils/date";
 import { buildReminderAt, nextReminderTime, normalizeReminderTime, reminderDateRange } from "../../utils/actionReminder";
 import { withAppTheme } from "../../services/theme";
 import { ACTION_DURATION_VALUES } from "../../config/action";
+import { ACTION_ICON_OPTIONS, inferActionIconKey } from "../../utils/actionIcon";
+import { ActionIconKey } from "../../types/manual";
 
 Page(withAppTheme({
   data: {
@@ -15,6 +17,10 @@ Page(withAppTheme({
     description: "",
     estimatedMinutes: 30,
     durationOptions: ACTION_DURATION_VALUES,
+    isCustomDuration: false,
+    actionIconOptions: ACTION_ICON_OPTIONS,
+    selectedIconKey: "life" as ActionIconKey,
+    iconManual: false,
     currentDate: getTodayBusinessDate(),
     todayDate: getTodayBusinessDate(),
     dateEnd: reminderDateRange().end,
@@ -34,7 +40,6 @@ Page(withAppTheme({
     const currentDate = /^\d{4}-\d{2}-\d{2}$/.test(String(query.date || "")) ? String(query.date) : this.data.currentDate;
     if (!taskId) {
       this.setData({ loading: false, goalId, currentDate });
-      wx.setNavigationBarTitle({ title: "添加行动" });
       return;
     }
 
@@ -50,6 +55,9 @@ Page(withAppTheme({
       title: task.title,
       description: task.description || "",
       estimatedMinutes: task.estimatedMinutes,
+      isCustomDuration: !(ACTION_DURATION_VALUES as readonly number[]).includes(task.estimatedMinutes),
+      selectedIconKey: task.iconManual && task.iconKey ? task.iconKey : inferActionIconKey(task.title, task.description),
+      iconManual: Boolean(task.iconManual),
       currentDate: task.currentDate,
       reminderEnabled: task.reminder?.status === "scheduled",
       reminderTime: task.reminder?.time || nextReminderTime(),
@@ -57,22 +65,38 @@ Page(withAppTheme({
       loading: false,
       isEdit: true,
     });
-    wx.setNavigationBarTitle({ title: "编辑行动" });
   },
 
   inputTitle(event: { detail: { value?: string } }) {
-    this.setData({ title: String(event.detail.value || "").slice(0, 40), validationMessage: "" });
+    const title = String(event.detail.value || "").slice(0, 40);
+    this.setData({
+      title,
+      selectedIconKey: this.data.iconManual ? this.data.selectedIconKey : inferActionIconKey(title, this.data.description),
+      validationMessage: "",
+    });
+  },
+
+  selectActionIcon(event: { currentTarget: { dataset: { key?: ActionIconKey } } }) {
+    if (this.data.submitting) return;
+    const key = event.currentTarget.dataset.key;
+    if (!key || !ACTION_ICON_OPTIONS.some((option) => option.key === key)) return;
+    this.setData({ selectedIconKey: key, iconManual: true });
+  },
+
+  useAutomaticActionIcon() {
+    if (this.data.submitting) return;
+    this.setData({ selectedIconKey: inferActionIconKey(this.data.title, this.data.description), iconManual: false });
   },
 
   inputMinutes(event: { detail: { value?: string } }) {
-    this.setData({ estimatedMinutes: Number(event.detail.value), validationMessage: "" });
+    this.setData({ estimatedMinutes: Number(event.detail.value), isCustomDuration: true, validationMessage: "" });
   },
 
   selectDuration(event: { currentTarget: { dataset: { value?: string | number } } }) {
     if (this.data.submitting) return;
     const estimatedMinutes = Number(event.currentTarget.dataset.value);
     if (!Number.isInteger(estimatedMinutes)) return;
-    this.setData({ estimatedMinutes, validationMessage: "" });
+    this.setData({ estimatedMinutes, isCustomDuration: false, validationMessage: "" });
   },
 
   changeDate(event: { detail: { value?: string } }) {
@@ -141,6 +165,8 @@ Page(withAppTheme({
         title,
         description: this.data.description,
         estimatedMinutes,
+        iconKey: this.data.selectedIconKey,
+        iconManual: this.data.iconManual,
         currentDate: this.data.currentDate,
         reminder: this.data.reminderEnabled && reminderAllowed
           ? { time: this.data.reminderTime, remindAt, status: this.data.hadScheduledReminder ? "scheduled" as const : "pending_authorization" as const }

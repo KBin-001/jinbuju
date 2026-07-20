@@ -49,6 +49,16 @@ const event = {
 
 async function run() {
   const snapshot = normalizeSnapshot(event);
+  const upgradeSnapshot = normalizeSnapshot({
+    ...event,
+    goalId: "goal_upgrade",
+    snapshot: {
+      goals: [{ ...goal, id: "goal_upgrade", title: "准备专升本考试", category: "undergraduate_upgrade" }],
+      tasks: [],
+      checkins: [],
+    },
+  });
+  assert.strictEqual(upgradeSnapshot.goals[0].category, "undergraduate_upgrade");
   assert.deepStrictEqual(buildPeriod("week", "2026-07-11", snapshot), {
     startDate: "2026-07-06",
     endDate: "2026-07-12",

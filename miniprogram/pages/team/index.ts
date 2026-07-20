@@ -5,6 +5,8 @@ import { getCurrentThemeId, MODAL_CONFIRM_COLORS, withAppTheme } from "../../ser
 import { getTabHeaderLayout } from "../../utils/tabHeader";
 import { isNotificationConfigured } from "../../config/notification";
 import { requestNotificationAuthorization } from "../../services/notification";
+import { getCommunityEntry, resolveCommunityQrUrl } from "../../services/profile";
+import { communityExpiryText, getBundledCommunityQr, isCommunityEntryExpired } from "../../services/communityEntry";
 import { canShowNotificationPrompt, recordNotificationPrompt } from "../../utils/notificationPreference";
 import {
   createTeam,
@@ -38,6 +40,7 @@ import { differenceInBusinessDays, getTodayBusinessDate } from "../../utils/date
 type PageStatus = "loading" | "empty" | "ready" | "error";
 type TeamViewMode = "solo" | "group";
 type ActivityStatus = "idle" | "loading" | "ready" | "empty" | "error" | "unavailable";
+type CommunitySheetStatus = "loading" | "preparing" | "ready" | "expired" | "error";
 
 interface MemberView extends TeamMember {
   displayName: string;
@@ -494,10 +497,20 @@ Page(withAppTheme({
     teamNotificationAvailable: isNotificationConfigured("team_activity"),
     teamNotificationPromptVisible: false,
     notificationAuthorizing: false,
+    communitySheetVisible: false,
+    communitySheetStatus: "loading" as CommunitySheetStatus,
+    communityBusy: false,
+    communityTitle: "成长社区",
+    communityDescription: "找到同频伙伴，一起持续行动。",
+    communityQrUrl: "",
+    communityQrExpiryText: "",
+    communityErrorMessage: "",
   },
 
   notificationPromptTimer: null as ReturnType<typeof setTimeout> | null,
   scrollTopCache: 0,
+  communityRequestActive: false,
+  communityRequestSerial: 0,
 
   onLoad(query: Record<string, string>) {
     const roomCode = String(query.roomCode || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
@@ -785,6 +798,84 @@ Page(withAppTheme({
   closeJoinPopup() {
     if (this.data.joining) return;
     this.setData({ joinPopupVisible: false, roomCodeInput: "" });
+  },
+
+  openGrowthCommunity() {
+    if (this.data.communitySheetVisible) return;
+    this.setData({
+      communitySheetVisible: true,
+      communitySheetStatus: "loading",
+      communityBusy: true,
+      communityTitle: "成长社区",
+      communityDescription: "找到同频伙伴，一起持续行动。",
+      communityQrUrl: "",
+      communityQrExpiryText: "",
+      communityErrorMessage: "",
+    });
+    this.loadGrowthCommunity();
+  },
+
+  closeGrowthCommunity() {
+    this.communityRequestSerial += 1;
+    this.communityRequestActive = false;
+    this.setData({ communitySheetVisible: false, communityBusy: false });
+  },
+
+  async loadGrowthCommunity() {
+    if (this.communityRequestActive) return;
+    this.communityRequestActive = true;
+    const requestSerial = ++this.communityRequestSerial;
+    this.setData({ communitySheetStatus: "loading", communityBusy: true, communityErrorMessage: "" });
+    try {
+      const entry = await getCommunityEntry();
+      if (requestSerial !== this.communityRequestSerial || !this.data.communitySheetVisible) return;
+      const title = entry.title || "成长社区";
+      const description = entry.description || "找到同频伙伴，一起持续行动。";
+      if (entry.status === "expired" || isCommunityEntryExpired(entry.expiresAt)) {
+        this.communityRequestActive = false;
+        this.setData({ communitySheetStatus: "expired", communityBusy: false, communityTitle: title, communityDescription: description, communityQrUrl: "", communityQrExpiryText: "" });
+        return;
+      }
+      if (entry.status !== "ready" || !entry.imageFileId) {
+        const bundled = getBundledCommunityQr();
+        this.communityRequestActive = false;
+        if (bundled) {
+          this.setData({ communitySheetStatus: "ready", communityBusy: false, communityTitle: bundled.title, communityDescription: bundled.description, communityQrUrl: bundled.url, communityQrExpiryText: bundled.expiryText });
+        } else {
+          this.setData({ communitySheetStatus: "preparing", communityBusy: false, communityTitle: title, communityDescription: description, communityQrUrl: "", communityQrExpiryText: "" });
+        }
+        return;
+      }
+      const communityQrUrl = await resolveCommunityQrUrl(entry.imageFileId);
+      if (requestSerial !== this.communityRequestSerial || !this.data.communitySheetVisible) return;
+      if (!communityQrUrl) throw new Error("社区二维码暂时无法打开，请稍后重试。");
+      this.communityRequestActive = false;
+      this.setData({ communitySheetStatus: "ready", communityBusy: false, communityTitle: title, communityDescription: description, communityQrUrl, communityQrExpiryText: communityExpiryText(entry.expiresAt) });
+    } catch (error) {
+      if (requestSerial !== this.communityRequestSerial || !this.data.communitySheetVisible) return;
+      this.communityRequestActive = false;
+      const bundled = getBundledCommunityQr();
+      if (bundled) {
+        this.setData({ communitySheetStatus: "ready", communityBusy: false, communityTitle: bundled.title, communityDescription: bundled.description, communityQrUrl: bundled.url, communityQrExpiryText: bundled.expiryText, communityErrorMessage: "" });
+        return;
+      }
+      this.setData({ communitySheetStatus: "error", communityBusy: false, communityQrUrl: "", communityQrExpiryText: "", communityErrorMessage: error instanceof Error ? error.message : "社区入口暂时无法读取，请稍后重试。" });
+    }
+  },
+
+  retryGrowthCommunity() {
+    if (this.communityRequestActive) return;
+    this.loadGrowthCommunity();
+  },
+
+  previewGrowthCommunityQr() {
+    if (this.data.communitySheetStatus !== "ready" || !this.data.communityQrUrl) return;
+    wx.previewImage({ current: this.data.communityQrUrl, urls: [this.data.communityQrUrl], showmenu: true });
+  },
+
+  handleGrowthCommunityQrError() {
+    if (this.data.communitySheetStatus !== "ready") return;
+    this.setData({ communitySheetStatus: "error", communityQrUrl: "", communityQrExpiryText: "", communityErrorMessage: "社区二维码加载失败，请检查网络后重试。" });
   },
 
   inputRoomCode(event: { detail: { value?: string } }) {

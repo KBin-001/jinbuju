@@ -1,9 +1,10 @@
 import { addBusinessDays, getTodayBusinessDate, isValidBusinessDate } from "../utils/date";
-import { ActionIssueReason, ActionReminder, ActionTask, ActionTaskStatus, TodaySummary } from "../types/manual";
+import { ActionIconKey, ActionIssueReason, ActionReminder, ActionTask, ActionTaskStatus, TodaySummary } from "../types/manual";
 import { buildReminderAt } from "../utils/actionReminder";
+import { inferActionIconKey } from "../utils/actionIcon";
 import { createLocalId, readManualStore, writeManualStore } from "./manualStore";
 
-export interface SaveTaskInput { id?: string; goalId: string; title: string; description?: string; currentDate: string; estimatedMinutes: number; reminder?: ActionReminder | null; }
+export interface SaveTaskInput { id?: string; goalId: string; title: string; description?: string; currentDate: string; estimatedMinutes: number; iconKey?: ActionIconKey; iconManual?: boolean; reminder?: ActionReminder | null; }
 export interface SaveActionRecordInput { taskId: string; title: string; businessDate: string; time: string; actualMinutes: number; status: "completed" | "partially_completed" | "pending"; reflection?: string; }
 
 function validate(input: SaveTaskInput): void {
@@ -19,7 +20,7 @@ export function createTask(input: SaveTaskInput): ActionTask {
   const store = readManualStore();
   if (!store.goals.some((goal) => goal.id === input.goalId && goal.status === "active")) throw new Error("当前目标不存在");
   const now = new Date().toISOString();
-  const task: ActionTask = { id: createLocalId("task"), goalId: input.goalId, title: input.title.trim(), description: input.description?.trim() || undefined, plannedDate: input.currentDate, currentDate: input.currentDate, estimatedMinutes: input.estimatedMinutes, reminder: input.reminder || undefined, status: "pending", source: "manual", createdAt: now, updatedAt: now };
+  const task: ActionTask = { id: createLocalId("task"), goalId: input.goalId, title: input.title.trim(), description: input.description?.trim() || undefined, plannedDate: input.currentDate, currentDate: input.currentDate, estimatedMinutes: input.estimatedMinutes, iconKey: input.iconManual && input.iconKey ? input.iconKey : inferActionIconKey(input.title, input.description), iconManual: Boolean(input.iconManual), reminder: input.reminder || undefined, status: "pending", source: "manual", createdAt: now, updatedAt: now };
   store.tasks.push(task);
   writeManualStore(store);
   return task;
@@ -70,6 +71,8 @@ export function updateTask(input: SaveTaskInput): ActionTask {
   const previousDate = task.currentDate;
   task.title = input.title.trim(); task.description = input.description?.trim() || undefined;
   task.currentDate = input.currentDate; task.estimatedMinutes = input.estimatedMinutes;
+  task.iconManual = Boolean(input.iconManual);
+  task.iconKey = input.iconManual && input.iconKey ? input.iconKey : inferActionIconKey(input.title, input.description);
   if (input.reminder === null) task.reminder = undefined;
   else if (input.reminder) task.reminder = input.reminder;
   else if (task.reminder && task.reminder.status === "scheduled" && previousDate !== input.currentDate) {

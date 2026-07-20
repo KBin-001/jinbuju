@@ -16,7 +16,7 @@
       <view class="section-title">手机号绑定</view>
       <view class="phone-status"><view><view class="identity-label">当前状态</view><view class="identity-value">{{account.phoneBound ? account.phoneMasked : '暂未绑定'}}</view></view><view class="optional-chip">可选</view></view>
       <view class="phone-purpose">手机号仅用于后续确实需要的账号辅助与必要通知。拒绝或解除绑定，不影响目标、行动、进度和小队等核心功能。</view>
-      <checkbox-group wx:if="{{!account.phoneBound}}" class="consent-check" bindchange="onPhoneConsentChange"><label><checkbox value="agree" checked="{{phoneConsentChecked}}" color="#245B4D" /><text>我已阅读并同意手机号绑定说明，并知晓该信息为可选</text></label></checkbox-group>
+      <checkbox-group wx:if="{{!account.phoneBound}}" class="consent-check" bindchange="onPhoneConsentChange"><label><checkbox value="agree" checked="{{phoneConsentChecked}}" color="#668F84" /><text>我已阅读并同意手机号绑定说明，并知晓该信息为可选</text></label></checkbox-group>
       <button wx:if="{{!account.phoneBound && !platformPrivacyAuthorized}}" class="phone-button {{!phoneConsentChecked ? 'is-disabled' : ''}}" bindtap="authorizePlatformPrivacy" disabled="{{operating || !phoneConsentChecked}}">授权后绑定手机号</button>
       <button wx:elif="{{!account.phoneBound}}" class="phone-button {{!phoneConsentChecked ? 'is-disabled' : ''}}" open-type="getPhoneNumber" bindgetphonenumber="onGetPhoneNumber" disabled="{{operating || !phoneConsentChecked}}">{{operating ? '正在处理' : '绑定手机号'}}</button>
       <t-button wx:else class="unbind-button" loading="{{operating}}" disabled="{{operating}}" bindtap="unbindPhone">解除绑定</t-button>

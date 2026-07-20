@@ -8,6 +8,7 @@ const assert = (condition, message) => { if (!condition) throw new Error(message
 const wxml = read("miniprogram/pages/profile/index.wxml");
 const page = read("miniprogram/pages/profile/index.ts");
 const styles = read("miniprogram/pages/profile/index.wxss");
+const communityEntry = read("miniprogram/services/communityEntry.ts");
 const growth = read("miniprogram/services/profileGrowth.ts");
 
 assert(!wxml.includes("journey-card"), "我的页不应保留重复的账户概览卡");
@@ -23,7 +24,7 @@ const communityCardPosition = wxml.indexOf('class="paper-card community-card"');
 const manageCardPosition = wxml.indexOf('class="paper-card manage-card"');
 assert(growthCardPosition >= 0 && communityCardPosition > growthCardPosition && manageCardPosition > communityCardPosition, "成长社区必须位于成长记录与管理设置之间");
 assert(wxml.includes('bindtap="openGrowthCommunity"') && page.includes("openGrowthCommunity()"), "成长社区整卡必须始终具有真实点击事件");
-assert(wxml.includes('name="usergroup-add"') && wxml.includes("进入社区"), "成长社区应使用正式线性图标和明确 CTA");
+assert(wxml.includes('/assets/icons/community-companions.svg') && wxml.includes("进入社区"), "成长社区应使用可稳定渲染的浅色社区图标和明确 CTA");
 assert(wxml.includes("找到同频伙伴，一起持续行动") && wxml.includes("每日交流 · 每周复盘 · 目标互助"), "成长社区卡文案必须完整展示");
 assert((wxml.match(/>内测</g) || []).length === 1, "成长社区只能展示一个内测标签");
 assert(styles.includes(".community-card { height: 152rpx") && styles.includes("background: #EDF4EF"), "成长社区应保持 152rpx 浅玉绿卡片");
@@ -34,6 +35,8 @@ assert(page.includes("getCommunityEntry") && page.includes("resolveCommunityQrUr
 assert(page.includes('entry.status === "expired"') && page.includes('entry.status === "preparing"'), "社区状态必须遵循服务端 status 协议");
 assert(page.includes("communityRequestActive") && page.includes("communityRequestSerial"), "社区入口必须防止重复请求和关闭后的过期回写");
 assert(wxml.includes('show-menu-by-longpress="{{true}}"') && page.includes("wx.previewImage") && page.includes("showmenu: true"), "二维码必须支持长按与带菜单预览");
+assert(communityEntry.includes("/assets/community-qr-20260727.jpg") && communityEntry.includes("2026-07-27T23:59:59+08:00"), "本期成长社区二维码必须提供明确有效期的本地兜底");
+assert(wxml.includes("communityQrExpiryText") && styles.includes(".community-qr-expiry"), "成长社区二维码有效期必须在页面可见");
 assert(page.includes("二维码预览失败，请稍后重试"), "二维码预览失败必须有明确反馈");
 assert(wxml.includes('binderror="handleGrowthCommunityQrError"') && wxml.includes("不会读取群聊记录或通讯录") && wxml.includes("不会自动上传你的目标和行动记录"), "二维码失败状态和隐私边界说明必须可见");
 assert(!wxml.includes("weekly-summary") && !wxml.includes("growth-grid"), "我的页不应重复进度页的周统计和三列累计卡");
@@ -49,6 +52,7 @@ assert(wxml.includes('bindtap="openCustomerService"') && page.includes("openCust
 assert(wxml.includes("/assets/customer-service-qr.jpg") && wxml.includes('show-menu-by-longpress="{{true}}"'), "客服二维码必须可见并支持长按识别");
 assert(page.includes("wx.previewImage") && page.includes("previewCustomerServiceQr()"), "客服二维码必须支持点击放大预览");
 assert(styles.includes(".manage-contact-row") && styles.includes(".customer-service-sheet-panel"), "客服入口与二维码承接层需要保持完整样式");
+assert(styles.includes(".customer-service-qr-frame { width: 612rpx; height: 897rpx"), "客服竖版二维码必须使用接近全宽的大图展示");
 
 assert(page.includes("this.loadProfile();\n    bootstrapAccount()"), "页面应先展示本地记录，再刷新云端账号");
 assert(page.includes('on("sync:state"') && page.includes('off("sync:state"'), "页面应订阅并清理同步状态监听");

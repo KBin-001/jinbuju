@@ -27,8 +27,6 @@
 
   <block wx:else>
     <view class="goal-hero surface-card">
-      <image class="goal-hero__landscape" src="/assets/progress-mountain-path-v2.jpg" mode="aspectFill" />
-      <view class="goal-hero__veil"></view>
       <view class="hero-topline">
         <view class="hero-eyebrow">当前目标</view>
         <view class="goal-switch" bindtap="openGoalPicker" hover-class="tap-pressed">
@@ -38,14 +36,13 @@
       </view>
       <view class="goal-title">{{goal.title}}</view>
       <view wx:if="{{goalPeriod}}" class="goal-meta"><text>{{goalPeriod}}</text></view>
-    </view>
-
-    <view class="growth-stats surface-card" aria-label="当前目标累计统计">
-      <view class="growth-stats-head">当前目标累计</view>
-      <view class="growth-stats-row">
-        <view wx:for="{{overviewStats}}" wx:key="label" class="growth-stat">
-          <view class="growth-stat-value">{{item.value}}<text>{{item.unit}}</text></view>
-          <view class="growth-stat-label">{{item.label}}</view>
+      <view class="goal-overview" aria-label="当前目标累计统计">
+        <view class="goal-overview__label">目标累计</view>
+        <view class="growth-stats-row">
+          <view wx:for="{{overviewStats}}" wx:key="label" class="growth-stat">
+            <view class="growth-stat-value">{{item.value}}<text>{{item.unit}}</text></view>
+            <view class="growth-stat-label">{{item.label}}</view>
+          </view>
         </view>
       </view>
     </view>

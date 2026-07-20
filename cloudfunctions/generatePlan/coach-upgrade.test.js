@@ -21,7 +21,10 @@ async function run() {
 
   const records = {
     manual_goals: [{ id: "goal_1", title: "准备考试", status: "active", category: "custom" }],
-    manual_tasks: [{ id: "task_1", goalId: "goal_1", title: "背单词", currentDate: "2026-07-18", status: "completed", estimatedMinutes: 30, actualMinutes: 35 }],
+    manual_tasks: [
+      { id: "task_1", goalId: "goal_1", title: "背单词", currentDate: "2026-07-18", status: "completed", estimatedMinutes: 30, actualMinutes: 35 },
+      { id: "task_carry", goalId: "goal_1", title: "继续昨天的练习", currentDate: "2026-07-19", status: "pending", estimatedMinutes: 25 },
+    ],
     manual_checkins: [{ id: "check_1", goalId: "goal_1", businessDate: "2026-07-18", completedCount: 1, actualMinutes: 35 }],
     manual_archived_goals: [{ id: "old_1", title: "旧目标", status: "archived" }],
     achievement_unlocks: [{ id: "first", unlockedAt: "2026-07-18T01:00:00.000Z" }],
@@ -40,6 +43,12 @@ async function run() {
   assert.strictEqual(context.sourceHash.length, 64);
   const serializedContext = JSON.stringify(context);
   assert.doesNotMatch(serializedContext, /owner-openid|must-not-leak|138\*\*\*\*0000/);
+  const todayContext = await buildUnifiedCoachContext("owner-openid", "day", "2026-07-20", "今天有什么任务", {
+    listOwned: async (name) => records[name] || [],
+    getTeamPage: async () => ({ team: null, members: [] }),
+    getTeamActivityFeed: async () => ({ list: [], total: 0 }),
+  });
+  assert.strictEqual(todayContext.selectedDate.tasks.some((task) => task.id === "task_carry"), true);
   const diagnosisPresentation = buildCoachPresentation(context, "为什么这样判断？", "模型声称完成 999 项、投入 9999 分钟也不能成为模板数据。");
   assert.strictEqual(diagnosisPresentation.kind, "diagnosis");
   assert.deepStrictEqual(diagnosisPresentation.sections.map((item) => item.index), ["依据", "下一步"]);

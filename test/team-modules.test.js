@@ -42,11 +42,23 @@ assert.match(inviteTemplate, /邀请海报/);
 
 const teamPage = read("miniprogram/pages/team/index.ts");
 const teamTemplate = read("miniprogram/pages/team/index.wxml");
+const teamStyles = read("miniprogram/pages/team/index.wxss");
 assert.match(teamPage, /memberDataInconsistent/, "成员计数冲突或本人缺失时必须阻止单双人误判");
 assert.match(teamPage, /小队成员数据暂时不同步，请重新加载/, "成员数据异常必须提供可重试提示");
 assert.doesNotMatch(teamPage, /dailyStats\?\.completionRate/, "成员完成比例不得混用行动平均完成率");
 assert.match(teamTemplate, /teamViewMode === 'solo'/, "小队首页必须有独立单人态");
 assert.match(teamTemplate, /teamViewMode === 'group'/, "小队首页必须有独立多人态");
 assert.match(teamTemplate, /邀请第一位伙伴/, "单人态必须提供真实邀请入口");
+assert.match(teamTemplate, /status === 'empty'[\s\S]*empty-community-card/, "未加入小队时必须展示成长社区入口");
+assert.match(teamTemplate, /empty-team-hero[\s\S]*createLocalTeam[\s\S]*openJoinPopup/, "未加入小队主卡必须保留创建与房间号加入双入口");
+assert.match(teamTemplate, /team-companions-hero\.jpg/, "未加入小队主卡必须保留同行人物插画层");
+assert.match(teamTemplate, /已有多位用户加入/, "小队空状态只能使用克制且不虚构具体人数的加入提示");
+assert.doesNotMatch(teamTemplate, /12,?000|3\.2w|今日新增活跃用户/, "小队空状态不得写入虚构用户规模或活跃数字");
+assert.match(teamTemplate, /community-people\.jpg/, "小队社区入口必须使用真实接入的浅色同行人物插画");
+assert.match(teamTemplate, /show-menu-by-longpress="\{\{true\}\}"/, "小队社区二维码必须支持长按识别");
+assert.match(teamPage, /openGrowthCommunity\(\)/, "小队社区入口必须绑定真实打开事件");
+assert.match(teamPage, /getCommunityEntry/, "小队社区入口必须读取当前社区配置");
+assert.match(teamStyles, /\.empty-community-card/, "小队空状态社区入口必须具有独立卡片样式");
+assert.match(teamStyles, /\.empty-team-benefits/, "小队空状态必须具备清晰的功能利益点布局");
 
 console.log("Team runtime contract、邀请页注册与隐私安全分享契约测试通过");

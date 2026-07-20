@@ -8,6 +8,7 @@ import { getAchievementCollection } from "../../services/achievement";
 import { readManualStore } from "../../services/manualStore";
 import { buildProfileGrowthSummary, ProfileGrowthSummary } from "../../services/profileGrowth";
 import { getCommunityEntry, resolveCommunityQrUrl } from "../../services/profile";
+import { communityExpiryText, getBundledCommunityQr, isCommunityEntryExpired } from "../../services/communityEntry";
 import { getSyncRuntime, SyncRuntimeState } from "../../services/syncStatus";
 import { off, on } from "../../utils/eventBus";
 import { getTabHeaderLayout } from "../../utils/tabHeader";
@@ -68,12 +69,6 @@ function syncPresentation(sync: SyncRuntimeState, usingAccountCache: boolean) {
   return { syncTone: "neutral", syncTitle: "等待首次同步", showSyncNotice: false, syncNoticeText: "" };
 }
 
-function isCommunityEntryExpired(expiresAt?: string): boolean {
-  if (!expiresAt) return false;
-  const expiresAtTime = new Date(expiresAt).getTime();
-  return Number.isFinite(expiresAtTime) && expiresAtTime <= Date.now();
-}
-
 Page({
   data: {
     ...getTabHeaderLayout(),
@@ -114,6 +109,7 @@ Page({
     communityTitle: "成长社区",
     communityDescription: "找到同频伙伴，一起持续行动",
     communityQrUrl: "",
+    communityQrExpiryText: "",
     communityErrorMessage: "",
   },
 
@@ -349,6 +345,7 @@ Page({
       communityTitle: "成长社区",
       communityDescription: "找到同频伙伴，一起持续行动",
       communityQrUrl: "",
+      communityQrExpiryText: "",
       communityErrorMessage: "",
     }, () => this.loadGrowthCommunity());
   },
@@ -367,6 +364,7 @@ Page({
       communitySheetStatus: "loading",
       communityBusy: true,
       communityQrUrl: "",
+      communityQrExpiryText: "",
       communityErrorMessage: "",
     });
     try {
@@ -386,13 +384,26 @@ Page({
         return;
       }
       if (entry.status === "preparing" || !entry.imageFileId) {
+        const bundled = getBundledCommunityQr();
         this.communityRequestActive = false;
+        if (bundled) {
+          this.setData({
+            communitySheetStatus: "ready",
+            communityBusy: false,
+            communityTitle: bundled.title,
+            communityDescription: bundled.description,
+            communityQrUrl: bundled.url,
+            communityQrExpiryText: bundled.expiryText,
+          });
+          return;
+        }
         this.setData({
           communitySheetStatus: "preparing",
           communityBusy: false,
           communityTitle,
           communityDescription,
           communityQrUrl: "",
+          communityQrExpiryText: "",
         });
         return;
       }
@@ -401,14 +412,28 @@ Page({
       if (requestSerial !== this.communityRequestSerial || !this.data.communitySheetVisible) return;
       if (!communityQrUrl) throw new Error("社区二维码暂时无法打开，请稍后重试。");
       this.communityRequestActive = false;
-      this.setData({ communitySheetStatus: "ready", communityBusy: false, communityQrUrl });
+      this.setData({ communitySheetStatus: "ready", communityBusy: false, communityQrUrl, communityQrExpiryText: communityExpiryText(entry.expiresAt) });
     } catch (error) {
       if (requestSerial !== this.communityRequestSerial || !this.data.communitySheetVisible) return;
       this.communityRequestActive = false;
+      const bundled = getBundledCommunityQr();
+      if (bundled) {
+        this.setData({
+          communitySheetStatus: "ready",
+          communityBusy: false,
+          communityTitle: bundled.title,
+          communityDescription: bundled.description,
+          communityQrUrl: bundled.url,
+          communityQrExpiryText: bundled.expiryText,
+          communityErrorMessage: "",
+        });
+        return;
+      }
       this.setData({
         communitySheetStatus: "error",
         communityBusy: false,
         communityQrUrl: "",
+        communityQrExpiryText: "",
         communityErrorMessage: error instanceof Error ? error.message : "社区入口暂时无法读取，请稍后重试。",
       });
     }
@@ -436,6 +461,7 @@ Page({
     this.setData({
       communitySheetStatus: "error",
       communityQrUrl: "",
+      communityQrExpiryText: "",
       communityErrorMessage: "社区二维码加载失败，请检查网络后重试。",
     });
   },

@@ -1,41 +1,48 @@
 <view class="page goal-page" data-theme="{{appTheme}}">
-  <view class="growth-hero goal-hero">
-    <image class="goal-hero__mountain" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" />
+  <view class="goal-hero">
+    <image class="goal-hero__mountain" src="/assets/profile/goal-create-hero-v3.jpg" mode="aspectFill" />
     <view class="goal-hero__veil"></view>
-    <view class="goal-hero__content"><view class="hero-kicker">长期方向</view><view class="hero-title">创建长期目标</view><view class="hero-copy">先定一个方向，再把每天真正想做的行动加进来。</view></view>
+    <view class="goal-hero__content">
+      <view class="hero-kicker"><view class="hero-kicker__line"></view><text>新的成长旅程</text></view>
+      <view class="hero-title">你想先抵达哪里？</view>
+      <view class="hero-copy">选定一个方向，从今天开始积累。</view>
+    </view>
+    <view class="hero-seal">目标</view>
   </view>
 
-  <view wx:if="{{activeGoalCount > 0}}" class="manual-note">
-    <view class="note-mark">✓</view>
-    <view>
-      <view class="note-title">你已有 {{activeGoalCount}} 个进行中目标</view>
-      <view class="helper">新目标会成为当前目标，旧目标仍会保留在“我的目标”里。</view>
+  <view class="direction-section">
+    <view class="section-heading">
+      <view>
+        <view class="section-title">选择目标方向</view>
+        <view class="section-caption">先选一个最想推进的方向</view>
+      </view>
+      <view class="step-badge">01</view>
+    </view>
+    <view class="direction-grid" role="radiogroup" aria-label="目标方向">
+      <view wx:for="{{options}}" wx:key="value" class="direction-card direction-card--{{item.tone}} {{category === item.value ? 'is-selected' : ''}}" data-value="{{item.value}}" bindtap="selectCategory" hover-class="direction-card--pressed" role="radio" aria-checked="{{category === item.value}}">
+        <view class="direction-mark">{{item.mark}}</view>
+        <view class="direction-copy"><text class="direction-label">{{item.label}}</text><text class="direction-note">{{item.note}}</text></view>
+        <view wx:if="{{category === item.value}}" class="direction-check"><t-icon name="check" size="22rpx" /></view>
+      </view>
     </view>
   </view>
 
-  <view class="section-shell">
-    <view class="section-title">选择目标方向</view>
-    <view class="chip-grid">
-      <t-button wx:for="{{options}}" wx:key="value" class="choice-chip {{category === item.value ? 'choice-chip-active' : ''}}" data-value="{{item.value}}" bindtap="selectCategory">{{item.label}}</t-button>
+  <view class="name-section">
+    <view class="field-heading"><view><view class="field-label">目标名称</view><view class="field-caption">清晰的名称，更容易开始第一步</view></view><view class="step-badge">02</view></view>
+    <view class="name-input-shell {{titleFocused ? 'is-focused' : ''}}">
+      <view class="name-input-mark"><t-icon name="flag" size="32rpx" /></view>
+      <input class="name-input" value="{{title}}" focus="{{titleFocused}}" maxlength="30" placeholder="例如：通过英语四级" bindinput="inputTitle" bindfocus="focusTitle" bindblur="blurTitle" cursor-spacing="40" />
+      <text class="name-counter">{{title.length}}/30</text>
     </view>
   </view>
 
-  <view class="card form-card">
-    <view class="field-label">目标名称</view>
-    <t-input class="text-input" value="{{title}}" maxlength="30" placeholder="例如：完成个人博客" bindchange="inputTitle" />
-    <view class="counter">{{title.length}} / 30</view>
-    <view class="field-label field-gap">简单说明（可选）</view>
-    <t-textarea class="description" value="{{description}}" maxlength="150" placeholder="写下你希望达成的结果" bindchange="inputDescription" />
-    <view class="counter">{{description.length}} / 150</view>
+  <view wx:if="{{activeGoalCount > 0}}" class="existing-note">
+    <t-icon name="info-circle" size="26rpx" />
+    <text>已有 {{activeGoalCount}} 个进行中目标，新目标将成为当前目标</text>
   </view>
 
-  <view class="manual-note">
-    <view class="note-mark">+</view>
-    <view>
-      <view class="note-title">目标创建后直接开始行动</view>
-      <view class="helper">先从真实可完成的一步开始，AI 教练会根据后续行动记录提供建议。</view>
-    </view>
-  </view>
-
-  <t-button class="primary-button submit-button" loading="{{submitting}}" disabled="{{submitting || title.length < 2}}" bindtap="submit">{{submitting ? '正在创建' : '创建目标并进入今日'}}</t-button>
+  <button class="submit-button" loading="{{submitting}}" disabled="{{submitting || !category || title.length < 2}}" bindtap="submit" hover-class="submit-button--pressed">
+    <text>{{submitting ? '正在创建' : '创建目标并进入学习'}}</text>
+    <t-icon wx:if="{{!submitting}}" name="arrow-right" size="34rpx" />
+  </button>
 </view>

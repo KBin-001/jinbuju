@@ -14,7 +14,7 @@
       <view class="legal-links"><view bindtap="openPrivacy">阅读隐私政策</view><view bindtap="openTerms">阅读用户协议</view></view>
       <view wx:if="{{agreementsAccepted}}" class="agreement-recorded"><t-icon name="check-circle" size="32rpx" /><text>当前版本已同意；协议版本更新后会再次提示确认。</text></view>
       <block wx:else>
-        <checkbox-group class="agreement-check" bindchange="onConsentChange"><label><checkbox value="agree" checked="{{consentChecked}}" color="#245B4D" /><text>我已分别阅读并同意当前版本的隐私政策与用户协议</text></label></checkbox-group>
+        <checkbox-group class="agreement-check" bindchange="onConsentChange"><label><checkbox value="agree" checked="{{consentChecked}}" color="#668F84" /><text>我已分别阅读并同意当前版本的隐私政策与用户协议</text></label></checkbox-group>
         <t-button class="confirm-button" loading="{{saving}}" disabled="{{!consentChecked || saving}}" bindtap="confirmAgreements">保存同意记录</t-button>
       </block>
       <view wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</view>

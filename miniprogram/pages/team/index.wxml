@@ -24,15 +24,59 @@
     </view>
   </view>
 
-  <view wx:elif="{{status === 'empty'}}" class="team-content team-content--state">
-    <view class="paper-card state-card state-card--empty">
-      <view class="state-seal">伴</view>
-      <view class="state-title">还没有加入小队</view>
-      <view class="state-copy">创建或使用房间号加入，和伙伴一起记录真实行动。</view>
-      <view class="state-actions">
-        <view class="state-action state-action--solid" bindtap="createLocalTeam">{{creating ? '正在创建' : '创建小队'}}</view>
-        <view class="state-action" bindtap="openJoinPopup">房间号加入</view>
+  <view wx:elif="{{status === 'empty'}}" class="team-content team-content--state team-empty-landing">
+    <view class="paper-card empty-team-hero">
+      <image class="empty-team-landscape" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" aria-hidden="true" />
+      <view class="empty-team-glow" aria-hidden="true"></view>
+      <view class="empty-team-sun" aria-hidden="true"></view>
+      <view class="empty-team-copy">
+        <view class="empty-team-title"><text>加入小队，</text><text>行动更容易坚持</text></view>
+        <view class="empty-team-description">创建小队或输入房间号加入，和伙伴一起设定目标、互相鼓励，让每天的行动更有动力。</view>
       </view>
+      <view class="empty-team-visual" aria-hidden="true"><image class="empty-team-people" src="/assets/team/team-companions-hero.jpg" mode="aspectFill" /><view class="empty-team-visual-fade"></view></view>
+
+      <view class="empty-team-actions">
+        <view class="empty-team-button empty-team-button--primary" bindtap="createLocalTeam" hover-class="empty-team-button--pressed" aria-role="button" aria-label="创建我的小队">
+          <image src="/assets/team/icon-invite.svg" mode="aspectFit" aria-hidden="true" />
+          <text>{{creating ? '正在创建' : '创建我的小队'}}</text>
+        </view>
+        <view class="empty-team-button empty-team-button--secondary" bindtap="openJoinPopup" hover-class="empty-team-button--pressed" aria-role="button" aria-label="输入四位房间号加入小队">
+          <view class="empty-team-enter-icon" aria-hidden="true"><view></view></view>
+          <text>输入房间号加入</text>
+        </view>
+      </view>
+
+      <view class="empty-team-benefits">
+        <view class="empty-team-benefit">
+          <view class="empty-benefit-glyph empty-benefit-glyph--companion"><view class="empty-benefit-head"></view><view class="empty-benefit-body"></view></view>
+          <view><text>互相监督</text><text>彼此鼓励不掉队</text></view>
+        </view>
+        <view class="empty-team-benefit">
+          <view class="empty-benefit-glyph empty-benefit-glyph--calendar"><view class="empty-calendar-line"></view><view class="empty-calendar-check"></view></view>
+          <view><text>每日打卡</text><text>行动进度更清晰</text></view>
+        </view>
+        <view class="empty-team-benefit">
+          <view class="empty-benefit-glyph empty-benefit-glyph--target"><view></view></view>
+          <view><text>目标陪跑</text><text>一起成长更长久</text></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-team-proof" aria-label="已有多位用户加入小队">
+      <view class="empty-team-proof-people" aria-hidden="true"><view><t-icon name="user" size="25rpx" /></view><view><t-icon name="user" size="25rpx" /></view><view><t-icon name="user" size="25rpx" /></view></view>
+      <text>已有<text class="empty-team-proof-emphasis">多位用户</text>加入，一起把行动坚持下去</text>
+      <view class="empty-team-proof-branch" aria-hidden="true"></view>
+    </view>
+
+    <view class="paper-card empty-community-card" bindtap="openGrowthCommunity" hover-class="is-pressed" aria-role="button" aria-label="进入成长社区寻找行动伙伴">
+      <image class="empty-community-landscape" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" aria-hidden="true" />
+      <view class="empty-community-visual" aria-hidden="true"><image class="empty-community-people" src="/assets/team/community-people.jpg" mode="aspectFill" /><view class="empty-community-visual-fade"></view></view>
+      <view class="empty-community-copy">
+        <view class="empty-community-heading"><view class="empty-community-title">成长社区</view><text class="empty-community-badge">找队友</text></view>
+        <view class="empty-community-description">认识同频伙伴，发起招募或加入小队</view>
+        <view class="empty-community-benefits">每日交流 · 经验分享 · 共同进步</view>
+      </view>
+      <view class="empty-community-action">进入社区<t-icon name="chevron-right" size="29rpx" /></view>
     </view>
   </view>
 
@@ -208,6 +252,20 @@
         <view class="popup-button popup-button--ghost" bindtap="closeJoinPopup">取消</view>
         <view class="popup-button popup-button--solid" bindtap="submitJoinRoom">{{joining ? '加入中' : '加入小队'}}</view>
       </view>
+    </view>
+  </view>
+
+  <view wx:if="{{communitySheetVisible}}" class="team-community-layer" catchtouchmove="noop">
+    <view class="team-community-mask" catchtap="closeGrowthCommunity"></view>
+    <view class="team-community-panel" catchtap="noop">
+      <view class="team-community-handle"></view>
+      <view class="team-community-head"><view><text class="team-community-kicker">成长社区</text><text class="team-community-title">{{communityTitle}}</text></view><view class="team-community-close" catchtap="closeGrowthCommunity" aria-role="button" aria-label="关闭成长社区"><t-icon name="close" size="34rpx" /></view></view>
+      <view wx:if="{{communitySheetStatus === 'loading'}}" class="team-community-state"><t-loading size="48rpx" theme="circular" /><text class="team-community-state-title">正在读取社区入口</text><text class="team-community-state-copy">请稍候，马上为你确认最新二维码。</text></view>
+      <view wx:elif="{{communitySheetStatus === 'ready'}}" class="team-community-ready"><text class="team-community-description">{{communityDescription}}</text><view class="team-community-qr-frame" bindtap="previewGrowthCommunityQr" hover-class="is-pressed" aria-role="button" aria-label="预览成长社区二维码"><image class="team-community-qr" src="{{communityQrUrl}}" mode="aspectFit" show-menu-by-longpress="{{true}}" binderror="handleGrowthCommunityQrError" /></view><text class="team-community-tip">点击放大，或长按二维码识别</text><text wx:if="{{communityQrExpiryText}}" class="team-community-expiry">{{communityQrExpiryText}}</text></view>
+      <view wx:elif="{{communitySheetStatus === 'expired'}}" class="team-community-state"><t-icon name="time" size="50rpx" /><text class="team-community-state-title">二维码已经过期</text><text class="team-community-state-copy">刷新后会重新获取当前可用的社区入口。</text><view class="team-community-retry" bindtap="retryGrowthCommunity">刷新二维码</view></view>
+      <view wx:elif="{{communitySheetStatus === 'preparing'}}" class="team-community-state"><t-icon name="qrcode" size="50rpx" /><text class="team-community-state-title">社区入口正在准备</text><text class="team-community-state-copy">{{communityDescription}}</text><view class="team-community-retry team-community-retry--outline" bindtap="retryGrowthCommunity">重新检查</view></view>
+      <view wx:else class="team-community-state"><t-icon name="error-circle" size="50rpx" /><text class="team-community-state-title">社区入口暂时无法打开</text><text class="team-community-state-copy">{{communityErrorMessage || '请检查网络后重试。'}}</text><view class="team-community-retry" bindtap="retryGrowthCommunity">重新加载</view></view>
+      <view class="team-community-privacy"><t-icon name="info-circle" size="26rpx" /><text>二维码仅用于加入成长交流社群；小程序不会读取群聊记录或通讯录。</text></view>
     </view>
   </view>
 

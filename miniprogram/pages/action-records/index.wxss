@@ -14,7 +14,7 @@ page { background: var(--color-background, #F7F3EA); }
 .hero-summary { margin-top: 14rpx; display: block; color: var(--color-text-secondary); font-size: 21rpx; line-height: 32rpx; }
 .filter-bar { margin-top: 22rpx; padding: 7rpx; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1rpx solid var(--color-border-soft); border-radius: 28rpx; background: rgba(255,252,246,.76); }
 .filter-item { min-height: 66rpx; display: flex; align-items: center; justify-content: center; border-radius: 23rpx; color: var(--color-text-secondary); font-size: 23rpx; font-weight: 600; }
-.filter-item.is-active { background: var(--color-primary); color: #FFF; box-shadow: 0 7rpx 16rpx rgba(36,91,77,.13); }
+.filter-item.is-active { background: var(--color-action-primary); color: #FFF; box-shadow: 0 7rpx 16rpx rgba(85,127,117,.14); }
 .record-groups { margin-top: 24rpx; }
 .date-group { margin-top: 26rpx; }
 .date-group:first-child { margin-top: 0; }
@@ -44,7 +44,7 @@ page { background: var(--color-background, #F7F3EA); }
 .compact-state { min-height: 290rpx; }
 .state-title { margin-top: 16rpx; color: var(--color-text-main); font-size: 28rpx; font-weight: 700; }
 .state-desc { max-width: 480rpx; margin-top: 9rpx; color: var(--color-text-secondary); font-size: 22rpx; line-height: 34rpx; }
-.state-action { min-height: 68rpx; margin-top: 22rpx; padding: 0 30rpx; display: flex; align-items: center; border-radius: 34rpx; background: var(--color-primary); color: #FFF; font-size: 23rpx; font-weight: 650; }
+.state-action { min-height: 68rpx; margin-top: 22rpx; padding: 0 30rpx; display: flex; align-items: center; border-radius: 34rpx; background: var(--color-action-primary); color: #FFF; font-size: 23rpx; font-weight: 650; }
 .empty-mountain { width: 140rpx; height: 96rpx; border-radius: 50%; opacity: .7; }
 .tap-pressed { opacity: .66; }
 @media (max-width: 350px) { .page-content { padding-right: 24rpx; padding-left: 24rpx; } .date-heading { align-items: flex-start; flex-direction: column; gap: 3rpx; } .record-row { padding-right: 18rpx; padding-left: 18rpx; } }

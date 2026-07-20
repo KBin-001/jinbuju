@@ -13,6 +13,9 @@ assert.match(template, /还没有目标/);
 assert.match(template, /先创建一个想推进的方向/);
 assert.match(template, /当前目标累计/);
 assert.match(template, /overviewStats/);
+assert.match(template, /class="goal-overview"/, "目标累计应合并在顶部目标卡内");
+assert.doesNotMatch(template, /class="growth-stats surface-card"/, "目标累计不应继续使用独立卡片");
+assert.doesNotMatch(template, /goal-hero__landscape|goal-hero__veil/, "目标卡不应与顶部重复叠加山水背景");
 assert.match(template, /\{\{canSwitchGoal \? '切换目标' : '查看目标'\}\}/);
 assert.match(page, /持续目标 · \$\{year\}年\$\{month\}月\$\{day\}日开始/);
 assert.doesNotMatch(template, /goal\.description/, "顶部目标卡只保留目标与起始日期");
@@ -42,7 +45,7 @@ assert.doesNotMatch(template, /trendLine/);
 assert.match(template, /添加今日行动/);
 assert.match(template, /去今日页开始行动/);
 assert(template.indexOf('class="trend-card') < template.indexOf('class="coach-card'), "行动趋势必须排在 AI 入口之前");
-assert((template.match(/progress-mountain-path-v2\.jpg/g) || []).length >= 3, "进度页关键区域必须保留山水品牌层次");
+assert((template.match(/progress-mountain-path-v2\.jpg/g) || []).length >= 2, "进度页顶部与空状态应保留山水品牌层次");
 assert.doesNotMatch(template, /ai-coach-shanshui-v1\.jpg/, "紧凑 AI 入口不应继续使用强背景图");
 
 assert.doesNotMatch(page, /analyzeProgress\s*\(/, "进入进度页不得自动生成 AI 报告");

@@ -4,7 +4,7 @@ const { formatBusinessDate } = require("./date");
 const { getTeamActivityFeed, getTeamPage } = require("./team");
 
 const db = cloud.database();
-const CONTEXT_SCHEMA_VERSION = "coach-context-2026-07-18.1";
+const CONTEXT_SCHEMA_VERSION = "coach-context-2026-07-20.1";
 const MAX_OWNED_RECORDS = 2000;
 
 function withoutDeleted(items) {
@@ -39,9 +39,11 @@ function sanitizeGoal(goal) {
 }
 
 function sanitizeTask(task) {
+  const activityDate = String(task.activityDate || "");
   return {
     id: String(task.id || ""), goalId: String(task.goalId || ""), title: String(task.title || "").slice(0, 100),
-    plannedDate: String(task.plannedDate || task.currentDate || ""), currentDate: String(task.currentDate || ""),
+    plannedDate: String(task.plannedDate || task.currentDate || ""), currentDate: activityDate || String(task.currentDate || ""),
+    activityDate,
     status: String(task.status || "pending"), estimatedMinutes: Math.max(0, Number(task.estimatedMinutes || 0)),
     actualMinutes: Math.max(0, Number(task.actualMinutes || 0)), issueReason: String(task.issueReason || "").slice(0, 80),
     reflection: String(task.reflection || "").slice(0, 300), createdAt: publicTimestamp(task.createdAt), updatedAt: publicTimestamp(task.updatedAt),
@@ -129,8 +131,13 @@ async function buildUnifiedCoachContext(openid, scope, analysisDate, question, d
   const goals = withoutDeleted(rawGoals).map(sanitizeGoal);
   const tasks = withoutDeleted(rawTasks).map(sanitizeTask).sort((a, b) => b.currentDate.localeCompare(a.currentDate) || b.updatedAt.localeCompare(a.updatedAt));
   const checkins = withoutDeleted(rawCheckins).map(sanitizeCheckin).sort((a, b) => b.businessDate.localeCompare(a.businessDate));
-  const matchedTasks = tasks.filter((item) => item.currentDate === date);
-  const recentTasks = tasks.filter((item) => item.currentDate !== date).slice(0, 120);
+  const matchedTasks = tasks.filter((item) => item.currentDate === date || (
+    date === today
+    && item.currentDate < date
+    && (item.status === "pending" || item.status === "partially_completed")
+  ));
+  const matchedTaskIds = new Set(matchedTasks.map((item) => item.id));
+  const recentTasks = tasks.filter((item) => !matchedTaskIds.has(item.id)).slice(0, 120);
   const sourceUpdatedAt = latestSourceUpdate([rawGoals, rawTasks, rawCheckins, rawArchives, rawAchievements, rawSparks, rawReviews]);
   const context = {
     schemaVersion: CONTEXT_SCHEMA_VERSION, scope, analysisDate: date, businessDate: today, sourceUpdatedAt,

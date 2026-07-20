@@ -98,7 +98,11 @@ function buildSnapshot(scope: CoachRange, requestedGoalId?: string, analysisDate
   const inRange = (date: string) => !start || (date >= start && date <= analysisDate);
   const tasks = store.tasks.filter((task) => {
     const businessDate = task.activityDate || task.currentDate;
-    return goalIds.has(task.goalId) && !task.deletedAt && inRange(businessDate);
+    const isTodayCarryOver = scope === "day"
+      && analysisDate === getTodayBusinessDate()
+      && task.currentDate < analysisDate
+      && (task.status === "pending" || task.status === "partially_completed");
+    return goalIds.has(task.goalId) && !task.deletedAt && (inRange(businessDate) || isTodayCarryOver);
   });
   const checkins = store.checkins.filter((item) => goalIds.has(item.goalId) && inRange(item.businessDate));
   const normalizedGoals = goals.map((goal) => ({

@@ -1,6 +1,7 @@
 import { ActionTask, Goal } from "../types/manual";
+import { getTodayBusinessDate } from "../utils/date";
 import { getActiveGoal, getGoal } from "./manualGoal";
-import { getTasksByDate } from "./manualTask";
+import { getTodayPageTasks } from "./manualTask";
 
 export interface DailyCoachTask {
   id: string;
@@ -110,8 +111,9 @@ function buildSuggestions(priority: DailyCoachTask | null, pendingCount: number,
 export function getDailyCoachAnalysis(date: string, requestedGoalId?: string): DailyCoachAnalysis {
   if (!validDate(date)) throw new Error("日期参数无效");
   const goal = chooseGoal(requestedGoalId);
-  // 与今日页统一口径：明确标记“今天不做”的行动不进入完成率分母。
-  const tasks = goal ? getTasksByDate(goal.id, date).filter((task) => task.status !== "skipped") : [];
+  // 与今日页统一口径：今天包含当日行动和过去仍需继续的行动；历史日期只读取当天行动。
+  // 明确标记“今天不做”的行动不进入完成率分母。
+  const tasks = goal ? getTodayPageTasks(goal.id, date, getTodayBusinessDate()).filter((task) => task.status !== "skipped") : [];
   const completedTasks = tasks.filter((task) => task.status === "completed").map(toViewTask);
   const pendingTasks = tasks
     .filter((task) => task.status === "pending" || task.status === "partially_completed")

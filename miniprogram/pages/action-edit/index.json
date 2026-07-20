@@ -1,1 +1,7 @@
-{"navigationBarTitleText":"添加行动","navigationBarBackgroundColor":"#F7F3EA","navigationBarTextStyle":"black","backgroundColor":"#F7F3EA","enablePullDownRefresh":false}
+{
+  "navigationBarTitleText": "",
+  "navigationBarBackgroundColor": "#F7F3EA",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#F7F3EA",
+  "enablePullDownRefresh": false
+}

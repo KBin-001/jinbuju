@@ -1,5 +1,5 @@
 import { getActiveGoal } from "../../services/manualGoal";
-import { getProgressSummary } from "../../services/manualStats";
+import { getProgressSummary, recordDailyCheckin } from "../../services/manualStats";
 import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTaskReminder, updateTaskStatus } from "../../services/manualTask";
 import { getLocalUserProfile } from "../../services/profile";
 import { analyzeProgress, prepareProgressCoach } from "../../services/progressCoach";
@@ -14,6 +14,7 @@ import { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask, sortToday
 import { getTabHeaderLayout } from "../../utils/tabHeader";
 import { buildReminderAt, nextReminderTime, normalizeReminderTime, reminderDateRange } from "../../utils/actionReminder";
 import { ACTION_DURATION_OPTIONS } from "../../config/action";
+import { resolveActionIcon } from "../../utils/actionIcon";
 
 const REASONS: Array<{ label: string; value: ActionIssueReason }> = [{ label: "时间不够", value: "not_enough_time" }, { label: "难度太高", value: "too_difficult" }, { label: "缺少资源", value: "resource_unavailable" }, { label: "身体或状态不适", value: "physical_condition" }, { label: "临时有事", value: "temporary_event" }, { label: "任务不符合实际", value: "not_practical" }, { label: "其他", value: "other" }];
 const DURATION_OPTIONS = ACTION_DURATION_OPTIONS;
@@ -23,7 +24,7 @@ const QUICK_DURATION_OPTIONS = DURATION_OPTIONS
   .map((option, sourceIndex) => ({ ...option, sourceIndex }))
   .filter((option) => QUICK_DURATION_VALUES.has(option.value));
 const EXAMPLE_ACTION_TITLES = ["背单词 30 个", "阅读 30 分钟", "听力练习 20 分钟", "真题复盘 1 套"];
-interface ViewTask extends ActionTask { displayTitle: string; statusLabel: string; statusTone: string; rescheduled: boolean; dateLabel: string; partialHint: boolean; actionSubtext: string; actionIconType: "book" | "audio" | "note"; canComplete: boolean; }
+interface ViewTask extends ActionTask { displayTitle: string; statusLabel: string; statusTone: string; rescheduled: boolean; dateLabel: string; partialHint: boolean; actionSubtext: string; actionIconKey: string; actionIconAsset: string; actionIconTone: string; canComplete: boolean; }
 interface ViewTaskGroup { key: "today" | "continue"; title: string; tasks: ViewTask[]; }
 interface TodayMood { title: string; copy: string; tone: "empty" | "low" | "half" | "done"; mark: string; }
 interface ProactiveInsight { label: string; title: string; body: string; tone: "start" | "progress" | "near" | "done" | "streak"; }
@@ -208,12 +209,6 @@ function displayTaskTitle(task: ActionTask): string {
   const seed = task.id.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
   return EXAMPLE_ACTION_TITLES[seed % EXAMPLE_ACTION_TITLES.length];
 }
-function taskIconType(task: ActionTask): ViewTask["actionIconType"] {
-  const copy = `${task.title} ${task.description || ""}`;
-  if (/听|音频|口语|跟读/.test(copy)) return "audio";
-  if (/背|单词|词汇|记忆/.test(copy)) return "book";
-  return "note";
-}
 function taskSubtext(task: ActionTask): string {
   const base = task.description || `学习 ${task.estimatedMinutes} 分钟`;
   if (task.reminder?.status === "scheduled") return `${base} · ${formatDisplayDate(task.currentDate)} ${task.reminder.time} 提醒`;
@@ -224,6 +219,7 @@ function taskSubtext(task: ActionTask): string {
 function toViewTask(task: ActionTask, selectedDate: string, businessToday = getTodayBusinessDate()): ViewTask {
   const displayStatus = getActionTaskDisplayStatus(task, selectedDate);
   const displayTitle = displayTaskTitle(task);
+  const actionIcon = resolveActionIcon(task.title, task.description, task.iconManual ? task.iconKey : undefined);
   return {
     ...task,
     displayTitle,
@@ -233,7 +229,9 @@ function toViewTask(task: ActionTask, selectedDate: string, businessToday = getT
     dateLabel: task.currentDate === selectedDate ? "今天" : formatDisplayDate(task.currentDate),
     partialHint: displayStatus.badge === "待继续",
     actionSubtext: taskSubtext(task),
-    actionIconType: taskIconType(task),
+    actionIconKey: actionIcon.key,
+    actionIconAsset: actionIcon.asset,
+    actionIconTone: actionIcon.tone,
     canComplete: task.currentDate <= businessToday && task.status !== "rescheduled",
   };
 }
@@ -384,9 +382,10 @@ Page(withAppTheme({
       const goalTasks = goal ? getTasksByGoal(goal.id) : [];
       const sourceTasks = goal ? getTodayPageTasks(goal.id, selectedDate, today) : [];
       const selectedTasks = sourceTasks.filter((task) => task.currentDate === selectedDate);
+      const summaryTasks = selectedDate === today ? sourceTasks : selectedTasks;
       const taskGroups = groupTodayTasks(sourceTasks, selectedDate).map((group) => ({ ...group, tasks: group.tasks.map((task) => toViewTask(task, selectedDate, today)) }));
       const tasks = sortTodayTasksIncompleteFirst(taskGroups.reduce<ViewTask[]>((all, group) => all.concat(group.tasks), []));
-      const summary = calculateTodaySummary(selectedTasks);
+      const summary = calculateTodaySummary(summaryTasks);
       const progress = goal ? getProgressSummary(goal.id, selectedDate) : null;
       const mood = todayMood(summary);
       const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 3);
@@ -410,7 +409,7 @@ Page(withAppTheme({
         flowRemainingPercent: 100 - completionPercent(summary),
         focusPercent: focusPercent(summary),
         remainingCount: remainingCount(summary),
-        statsRhythmBars: buildStatsRhythmBars(selectedTasks),
+        statsRhythmBars: buildStatsRhythmBars(summaryTasks),
         remainingEstimatedMinutes: remainingEstimatedMinutes(tasks, selectedDate),
         progressSegments: progressSegments(summary),
         hiddenActionCount: Math.max(0, tasks.length - visibleTasks.length),
@@ -770,7 +769,9 @@ Page(withAppTheme({
     try {
       const today = getTodayBusinessDate();
       const nextStatus: ActionTaskStatus = task.issueReason ? "partially_completed" : "pending";
-      const updatedTask = toViewTask(updateTaskStatus(task.id, nextStatus, task.actualMinutes), this.data.selectedDate || today);
+      const updated = updateTaskStatus(task.id, nextStatus, task.actualMinutes);
+      recordDailyCheckin(updated.goalId, updated.activityDate || updated.currentDate);
+      const updatedTask = toViewTask(updated, this.data.selectedDate || today);
       this.applyTaskPatch(updatedTask, prevScrollTop);
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
@@ -784,17 +785,22 @@ Page(withAppTheme({
   },
   completeTask(task: ViewTask) {
     try {
-      updateTaskStatus(task.id, "completed");
+      const updated = updateTaskStatus(task.id, "completed");
+      recordDailyCheckin(updated.goalId, updated.activityDate || updated.currentDate);
+      const selectedDate = this.data.selectedDate || getTodayBusinessDate();
+      const updatedTask = toViewTask(updated, selectedDate);
+      const shouldRevealCompleted = this.data.tasks.length > 3 && !this.data.actionListExpanded;
+      if (shouldRevealCompleted) this.setData({ actionListExpanded: true });
+      this.applyTaskPatch(updatedTask, this.scrollTopCache);
       wx.vibrateShort({ type: "light" });
       wx.showToast({ title: "已完成", icon: "success" });
-      this.load();
       if (task.currentDate === getTodayBusinessDate() && this.data.selectedDate === getTodayBusinessDate()) this.openCompletionSheet();
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
     }
   },
   askActual(task: ViewTask, status: "partially_completed", reason?: ActionIssueReason) {
-    wx.showModal({ title: "完成一部分", editable: true, placeholderText: "请输入实际投入分钟数", content: task.actualMinutes ? String(task.actualMinutes) : "", confirmText: "保存", success: (result) => { if (!result.confirm) return; const minutes = Number(String(result.content || "").trim()); if (!Number.isInteger(minutes) || minutes < 1 || minutes > 480) { wx.showToast({ title: "请输入 1～480 的整数分钟", icon: "none" }); return; } try { updateTaskStatus(task.id, status, minutes, reason); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" }); } } });
+    wx.showModal({ title: "完成一部分", editable: true, placeholderText: "请输入实际投入分钟数", content: task.actualMinutes ? String(task.actualMinutes) : "", confirmText: "保存", success: (result) => { if (!result.confirm) return; const minutes = Number(String(result.content || "").trim()); if (!Number.isInteger(minutes) || minutes < 1 || minutes > 480) { wx.showToast({ title: "请输入 1～480 的整数分钟", icon: "none" }); return; } try { const updated = updateTaskStatus(task.id, status, minutes, reason); recordDailyCheckin(updated.goalId, updated.activityDate || updated.currentDate); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" }); } } });
   },
   chooseReason(task: ViewTask, status: "partially_completed" | "skipped") { wx.showActionSheet({ itemList: REASONS.map((item) => item.label), success: ({ tapIndex }) => { const reason = REASONS[tapIndex]?.value; if (!reason) return; if (status === "partially_completed") this.askActual(task, status, reason); else { try { updateTaskStatus(task.id, status, task.actualMinutes, reason); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" }); } } } }); },
   reschedule(task: ViewTask) { try { rescheduleTask(task.id); wx.showToast({ title: "已顺延到明天", icon: "success" }); this.load(); } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : "顺延失败", icon: "none" }); } },

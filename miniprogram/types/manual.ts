@@ -1,7 +1,14 @@
 import { AchievementUnlockRecord } from "./achievement";
 import { SparkCheckin } from "./spark";
 
-export type GoalCategory = "cet" | "teacher" | "postgraduate" | "civil_service" | "ai_learning" | "custom";
+export type GoalCategory =
+  | "cet"
+  | "teacher"
+  | "postgraduate"
+  | "civil_service"
+  | "undergraduate_upgrade"
+  | "ai_learning"
+  | "custom";
 export type GoalStatus = "active" | "completed" | "ended" | "archived";
 
 export interface Goal {
@@ -20,6 +27,7 @@ export interface Goal {
 
 export type ActionTaskStatus = "pending" | "completed" | "partially_completed" | "skipped" | "rescheduled";
 export type ActionIssueReason = "not_enough_time" | "too_difficult" | "resource_unavailable" | "physical_condition" | "temporary_event" | "not_practical" | "other";
+export type ActionIconKey = "study" | "reading" | "language" | "writing" | "exam" | "work" | "coding" | "exercise" | "meal" | "movie" | "creative" | "life";
 
 export type ActionReminderStatus = "pending_authorization" | "scheduled" | "sent" | "cancelled" | "expired" | "failed";
 
@@ -37,6 +45,10 @@ export interface ActionTask {
   plannedDate: string;
   currentDate: string;
   estimatedMinutes: number;
+  /** 行动图标；未手动选择时由标题自动映射。 */
+  iconKey?: ActionIconKey;
+  /** true 表示用户手动固定图标；否则标题变化时继续自动映射。 */
+  iconManual?: boolean;
   actualMinutes?: number;
   /** 当天的感受、收获或困难；用于日详情、AI 分析与历史复盘。 */
   reflection?: string;

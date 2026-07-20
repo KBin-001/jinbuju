@@ -16,12 +16,15 @@ page {
   --color-card-hover: #F3F5F0;
 
   /* Brand */
-  --color-primary: #245B4D;
-  --color-primary-dark: #183F35;
+  --color-primary: #557F75;
+  --color-primary-dark: #3F665D;
   --color-primary-deep: var(--color-primary-dark);
-  --color-primary-soft: #E8F0EB;
-  --color-primary-light: #7F9D91;
-  --color-growth: #557D6E;
+  --color-primary-soft: #EAF1EE;
+  --color-primary-light: #91AAA2;
+  --color-growth: #6B9086;
+  --color-action-primary: #668F84;
+  --color-action-primary-active: #557B71;
+  --color-action-soft: #EAF2EF;
   --color-gold: #C89B4A;
   --color-gold-soft: #F2E6C8;
   --color-accent: var(--color-gold);
@@ -87,7 +90,7 @@ page {
   --shadow-card: 0 6rpx 20rpx rgba(49, 57, 50, .055);
   --shadow-card-soft: 0 3rpx 12rpx rgba(49, 57, 50, .04);
   --shadow-float: 0 18rpx 48rpx rgba(36, 70, 59, .14);
-  --shadow-button: 0 8rpx 18rpx rgba(36, 91, 77, .14);
+  --shadow-button: 0 8rpx 18rpx rgba(85, 127, 117, .16);
   --shadow-button-soft: var(--shadow-card);
   --shadow-button-primary: var(--shadow-button);
 
@@ -95,19 +98,19 @@ page {
   --gradient-card-mint: linear-gradient(135deg, #E8F0EB 0%, #FFFCF6 72%);
   --gradient-card-soft: linear-gradient(135deg, #F1F4EE 0%, #FFFCF6 68%);
   --gradient-card-sun: linear-gradient(135deg, #F8F1DF 0%, #FFFCF6 100%);
-  --gradient-progress: linear-gradient(90deg, #7F9D91 0%, #245B4D 100%);
+  --gradient-progress: linear-gradient(90deg, #9AB1AA 0%, #668F84 100%);
   --gradient-ring: var(--gradient-progress);
   --gradient-hero: var(--gradient-card-mint);
   --gradient-gold: linear-gradient(135deg, #F8F1DF, #C89B4A);
-  --gradient-ai: linear-gradient(135deg, #7F9D91, #245B4D);
+  --gradient-ai: linear-gradient(135deg, #91AAA2, #668F84);
   --gradient-accent-gold: linear-gradient(145deg, #FFFAF0, #F2E6C8);
   --gradient-accent-blue: linear-gradient(145deg, #F4F7F8, #EAF0F2);
   --gradient-accent-purple: linear-gradient(145deg, #F5F3F0, #ECE9E4);
   --gradient-accent-coral: linear-gradient(145deg, #FFF8F5, #F8E9E5);
 
   /* TDesign MiniProgram 1.15.2 theme bridge. */
-  --td-brand-color: var(--color-primary);
-  --td-brand-color-active: var(--color-primary-dark);
+  --td-brand-color: var(--color-action-primary);
+  --td-brand-color-active: var(--color-action-primary-active);
   --td-brand-color-disabled: #B9C7C0;
   --td-brand-color-light: var(--color-primary-soft);
   --td-brand-color-light-active: #DCE8E1;
@@ -131,10 +134,10 @@ page {
   --td-radius-large: var(--radius-card);
 
   --td-button-border-radius: var(--radius-button);
-  --td-button-primary-bg-color: var(--color-primary);
-  --td-button-primary-border-color: var(--color-primary);
-  --td-button-primary-active-bg-color: var(--color-primary-dark);
-  --td-button-primary-active-border-color: var(--color-primary-dark);
+  --td-button-primary-bg-color: var(--color-action-primary);
+  --td-button-primary-border-color: var(--color-action-primary);
+  --td-button-primary-active-bg-color: var(--color-action-primary-active);
+  --td-button-primary-active-border-color: var(--color-action-primary-active);
   --td-button-primary-color: var(--color-text-inverse);
   --td-button-primary-disabled-bg: #B9C7C0;
   --td-button-primary-disabled-border-color: #B9C7C0;
@@ -184,8 +187,8 @@ page {
   --td-loading-text-color: var(--color-text-secondary);
 
   /* Backward-compatible aliases used by existing page styles. */
-  --button-primary-background-color: var(--color-primary);
-  --button-primary-border-color: var(--color-primary);
+  --button-primary-background-color: var(--color-action-primary);
+  --button-primary-border-color: var(--color-action-primary);
   --button-primary-color: var(--color-text-inverse);
   --button-default-background-color: var(--color-bg-card);
   --button-default-border-color: rgba(36, 91, 77, .22);
@@ -239,7 +242,7 @@ page .section-card {
 
 page .primary-button {
   color: var(--color-text-inverse);
-  background: var(--color-primary);
+  background: var(--color-action-primary);
   box-shadow: var(--shadow-button-primary);
 }
 

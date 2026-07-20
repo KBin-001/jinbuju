@@ -1,7 +1,7 @@
 page { background: var(--color-background); }
 .sync-page { color: var(--color-text-main); }
 .sync-hero { position: relative; min-height: 176rpx; padding: 30rpx; display: flex; align-items: center; overflow: hidden; border: 1rpx solid var(--color-border-soft); border-radius: var(--radius-card); background: var(--gradient-card-mint); box-shadow: var(--shadow-card-soft); }
-.sync-hero__icon { width: 88rpx; height: 88rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 28rpx; background: var(--color-primary); color: #fff; }
+.sync-hero__icon { width: 88rpx; height: 88rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 28rpx; background: var(--color-action-soft); color: var(--color-action-primary); }
 .sync-hero__copy { min-width: 0; margin-left: 22rpx; flex: 1; }
 .sync-hero__title { font-family: "Songti SC", STSong, serif; color: var(--color-primary); font-size: 38rpx; font-weight: 700; }
 .sync-hero__subtitle { margin-top: 8rpx; color: var(--color-text-secondary); font-size: 23rpx; }

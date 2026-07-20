@@ -55,6 +55,7 @@ assert.match(chatStyles, /white-space:\s*pre-wrap/, "无模板回复必须保留
 assert.doesNotMatch(chatTemplate, /展开完整回复|item\.(?:summary|insights|advice)/, "共享聊天不得恢复旧版摘要字段和折叠交互");
 assert.doesNotMatch(template, /明日建议|subscribeAiCoachAdvice|notification-optin/);
 assert.doesNotMatch(template, /<button class="(?:nav-back|records-button|send-button|quick-question)/, "易被基础库拉伸的导航和快捷控件不应使用原生 button");
+assert.match(service, /getTodayPageTasks/, "每日教练必须与今日页共用包含待继续任务的取数口径");
 assert.match(service, /status !== "skipped"/, "每日教练完成率应与今日页排除“今天不做”的口径一致");
 assert.equal(config.usingComponents["action-record-editor"], undefined);
 assert.equal(config.usingComponents["t-icon"], "tdesign-miniprogram/icon/icon");
