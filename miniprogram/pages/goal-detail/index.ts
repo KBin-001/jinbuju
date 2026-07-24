@@ -61,6 +61,8 @@ Page(withAppTheme({
     progressText: "还没有行动记录",
     statItems: [] as StatItem[],
     actionRecords: [] as ActionView[],
+    targetDateText: "长期持续",
+    milestoneItems: [] as Array<{ id: string; title: string; dateText: string; statusLabel: string; completed: boolean }>,
     lifecycleSubmitting: false,
   },
 
@@ -100,6 +102,14 @@ Page(withAppTheme({
         progressText: summary.totalTasks > 0
           ? `已完成 ${summary.completedTasks} / ${summary.totalTasks} 项行动`
           : "还没有行动记录",
+        targetDateText: goal.targetDate ? formatDisplayDate(goal.targetDate) : "长期持续",
+        milestoneItems: (goal.milestones || []).map((milestone) => ({
+          id: milestone.id,
+          title: milestone.title,
+          dateText: milestone.targetDate ? formatDisplayDate(milestone.targetDate) : "未设日期",
+          statusLabel: milestone.status === "completed" ? "已完成" : "待推进",
+          completed: milestone.status === "completed",
+        })),
         statItems: [
           { label: "完成行动", value: `${summary.completedTasks}/${summary.totalTasks}` },
           { label: "行动节奏", value: continuityText(summary) },

@@ -1,0 +1,15 @@
+<view class="coach-insight" bindtap="openCoach" hover-class="tap-pressed" aria-role="button">
+  <view class="coach-insight__title">教练观察</view>
+  <view class="coach-insight__body">
+    <view class="coach-score">
+      <t-progress class="coach-progress" theme="circle" percentage="{{insight.score || 0}}" size="154rpx" stroke-width="7" color="#17614F" track-color="#E5E9E4" label="{{false}}" />
+      <view class="coach-score__copy"><text>稳定性</text><view class="coach-score__value">{{insight.score}}<text class="coach-score__unit">%</text></view><text>{{insight.status}}</text></view>
+    </view>
+    <view class="coach-copy">
+      <view class="coach-conclusion">{{insight.conclusion}}</view>
+      <view class="coach-evidence"><text class="coach-evidence__label">图表证据</text><view class="coach-evidence__copy">{{insight.evidence}}</view></view>
+      <view class="coach-advice"><t-icon class="coach-advice__icon" name="target" size="26rpx" /><text class="coach-advice__label">下一步建议</text><view class="coach-advice__copy">{{insight.advice}}</view></view>
+    </view>
+  </view>
+  <view class="coach-link"><text>查看完整分析</text><t-icon name="chevron-right" size="27rpx" /></view>
+</view>

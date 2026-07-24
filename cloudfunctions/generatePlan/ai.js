@@ -27,10 +27,7 @@ async function assertAiOutputSafe(text, dependencies = {}) {
 function getApp() {
   if (!app) {
     app = tcb.init({
-      env: resolveCloudEnv(),
-      timeout: 210000,
-    });
-  }
+      env: reso
   return app;
 }
 

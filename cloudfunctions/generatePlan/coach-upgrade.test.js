@@ -4,6 +4,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const { buildUnifiedCoachContext, sanitizeTeamPage } = require("./coach-context");
 const { buildCoachPresentation, buildModelMessages, buildRollingSummary, conversationIdFor, normalizeScope } = require("./coach-conversation");
 const { buildCoachCommand, extractCreateIntent, extractCreateTaskTitle, extractReminderTime, isExplicitCompletionWrite, isExplicitCreateWrite, reminderLeadMinutes } = require("./progress-coach");
+const { formatBusinessDate } = require("./date");
 
 async function run() {
   const team = sanitizeTeamPage({
@@ -43,7 +44,7 @@ async function run() {
   assert.strictEqual(context.sourceHash.length, 64);
   const serializedContext = JSON.stringify(context);
   assert.doesNotMatch(serializedContext, /owner-openid|must-not-leak|138\*\*\*\*0000/);
-  const todayContext = await buildUnifiedCoachContext("owner-openid", "day", "2026-07-20", "今天有什么任务", {
+  const todayContext = await buildUnifiedCoachContext("owner-openid", "day", formatBusinessDate(), "今天有什么任务", {
     listOwned: async (name) => records[name] || [],
     getTeamPage: async () => ({ team: null, members: [] }),
     getTeamActivityFeed: async () => ({ list: [], total: 0 }),

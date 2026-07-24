@@ -2,14 +2,23 @@ import { getActiveGoal } from "../../services/manualGoal";
 import { getProgressSummary } from "../../services/manualStats";
 import { calculateTodaySummary, getTasksByGoal } from "../../services/manualTask";
 import { getLocalUserProfile } from "../../services/profile";
-import { getTodayBusinessDate } from "../../utils/date";
+import { addBusinessDays, getTodayBusinessDate } from "../../utils/date";
 import { MODAL_CONFIRM_COLORS } from "../../services/theme";
+import { recordProductEvent } from "../../services/productEvents";
 
 const CARD_WIDTH = 690;
 const FONT_FAMILY = '"PingFang SC", "Microsoft YaHei", sans-serif';
 
 type CanvasContext = any;
 type CanvasNode = any;
+type CardMode = "today" | "streak" | "week" | "stage";
+
+function cardPresentation(mode: CardMode, values: { done: number; total: number; focusMinutes: number; streak: number; totalMinutes: number; weekDone: number; weekTotal: number; weekMinutes: number; goalProgress: number }) {
+  if (mode === "streak") return { cardTitle: "连续行动卡", primaryLabel: "连续行动", primaryValue: `${values.streak} 天`, secondaryCopy: `累计真实投入 ${values.totalMinutes} 分钟`, listTitle: "最近完成行动", emptyCopy: "还没有可展示的完成行动", encouragement: "稳定不是每天完美，而是愿意继续。" };
+  if (mode === "week") return { cardTitle: "本周复盘卡", primaryLabel: "本周完成", primaryValue: `${values.weekDone} / ${values.weekTotal}`, secondaryCopy: `本周真实投入 ${values.weekMinutes} 分钟`, listTitle: "本周代表行动", emptyCopy: "本周还没有已完成行动", encouragement: "看见这一周，才能更好地走向下一周。" };
+  if (mode === "stage") return { cardTitle: "阶段目标完成卡", primaryLabel: "目标完成", primaryValue: `${values.goalProgress}%`, secondaryCopy: `累计真实投入 ${values.totalMinutes} 分钟`, listTitle: "阶段代表行动", emptyCopy: "阶段记录暂不可展示", encouragement: "这一程已经完成，下一程从经验出发。" };
+  return { cardTitle: "今日完成卡", primaryLabel: "今日完成", primaryValue: `${values.done} / ${values.total}`, secondaryCopy: `今日实际投入 ${values.focusMinutes} 分钟`, listTitle: "今日完成清单", emptyCopy: "今天还没有已完成行动", encouragement: "每天完成一点，就会靠近一点。" };
+}
 
 function weekdayText(dateValue: string): string {
   const day = new Date(`${dateValue}T00:00:00`).getDay();
@@ -100,6 +109,15 @@ Page({
   data: {
     status: "loading",
     errorMessage: "",
+    cardMode: "today" as CardMode,
+    cardModes: [] as Array<{ value: CardMode; label: string; enabled: boolean }>,
+    cardTitle: "今日完成卡",
+    primaryLabel: "今日完成",
+    primaryValue: "0 / 0",
+    secondaryCopy: "今日实际投入 0 分钟",
+    listTitle: "今日完成清单",
+    emptyCopy: "今天还没有已完成行动",
+    encouragement: "每天完成一点，就会靠近一点。",
     dateText: "",
     weekday: "",
     nickname: "微信用户",
@@ -113,6 +131,9 @@ Page({
     streak: 0,
     totalMinutes: 0,
     completedTasks: [] as Array<{ id: string; title: string }>,
+    weekDone: 0,
+    weekTotal: 0,
+    weekMinutes: 0,
     hideTasks: false,
     saving: false,
     navButtonTop: 52,
@@ -120,7 +141,9 @@ Page({
     contentTop: 122,
   },
 
-  onLoad() {
+  onLoad(query: Record<string, string>) {
+    const requestedMode = ["today", "streak", "week", "stage"].includes(String(query.mode)) ? String(query.mode) as CardMode : "today";
+    this.setData({ cardMode: requestedMode });
     this.setupViewport();
     this.load();
   },
@@ -149,6 +172,16 @@ Page({
       const todayTasks = tasks.filter((task) => task.currentDate === today);
       const summary = calculateTodaySummary(todayTasks);
       const progress = getProgressSummary(goal.id, today);
+      const weekStart = addBusinessDays(today, -6);
+      const weekTasks = tasks.filter((task) => {
+        const date = task.activityDate || task.currentDate;
+        return date >= weekStart && date <= today && task.status !== "skipped" && task.status !== "rescheduled";
+      });
+      const weekDone = weekTasks.filter((task) => task.status === "completed").length;
+      const weekMinutes = weekTasks.reduce((sum, task) => sum + (task.actualMinutes || 0), 0);
+      const goalProgress = progress.totalTasks ? Math.round((progress.completedTasks / progress.totalTasks) * 100) : 0;
+      const requestedMode = this.data.cardMode === "stage" && goalProgress < 100 ? "today" : this.data.cardMode;
+      const presentation = cardPresentation(requestedMode, { done: summary.completedCount, total: summary.totalCount, focusMinutes: summary.actualMinutes, streak: progress.currentStreakDays, totalMinutes: progress.totalActualMinutes, weekDone, weekTotal: weekTasks.length, weekMinutes, goalProgress });
       const profile = getLocalUserProfile();
       const nickname = profile?.nickname || "微信用户";
       this.setData({
@@ -162,9 +195,20 @@ Page({
         done: summary.completedCount,
         total: summary.totalCount,
         focusMinutes: summary.actualMinutes,
-        goalProgress: progress.totalTasks ? Math.round((progress.completedTasks / progress.totalTasks) * 100) : 0,
+        goalProgress,
         streak: progress.currentStreakDays,
         totalMinutes: progress.totalActualMinutes,
+        weekDone,
+        weekTotal: weekTasks.length,
+        weekMinutes,
+        cardMode: requestedMode,
+        cardModes: [
+          { value: "today", label: "今日完成", enabled: true },
+          { value: "streak", label: "连续行动", enabled: progress.currentStreakDays > 0 },
+          { value: "week", label: "周复盘", enabled: weekTasks.length > 0 },
+          { value: "stage", label: "阶段完成", enabled: goalProgress === 100 && progress.totalTasks > 0 },
+        ],
+        ...presentation,
         completedTasks: todayTasks
           .filter((task) => task.status === "completed")
           .slice(0, 3)
@@ -178,6 +222,14 @@ Page({
     }
   },
 
+  selectCardMode(event: { currentTarget: { dataset: { mode?: CardMode } } }) {
+    const mode = event.currentTarget.dataset.mode;
+    const option = this.data.cardModes.find((item) => item.value === mode);
+    if (!mode || !option?.enabled) { wx.showToast({ title: "当前记录还不足以生成这张卡", icon: "none" }); return; }
+    const presentation = cardPresentation(mode, this.data);
+    this.setData({ cardMode: mode, hideTasks: mode !== "today", ...presentation });
+  },
+
   closePage() {
     if (getCurrentPages().length > 1) wx.navigateBack();
     else wx.switchTab({ url: "/pages/index/index" });
@@ -188,6 +240,7 @@ Page({
   },
 
   async drawShareCard(): Promise<{ canvas: CanvasNode; dpr: number; height: number }> {
+    recordProductEvent("share_generated", { type: this.data.cardMode });
     const canvas = await selectCanvas(this as any);
     const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
     const dpr = Math.min(Number(windowInfo.pixelRatio || 2), 3);
@@ -206,7 +259,7 @@ Page({
 
     setFont(ctx, 25, 700);
     ctx.fillStyle = "#FFFFFF";
-    ctx.fillText("今日成长-目标打卡 · 今日完成卡", 36, 61);
+    ctx.fillText(`今日进度｜目标计划打卡 · ${this.data.cardTitle}`, 36, 61);
     setFont(ctx, 21, 400);
     ctx.fillStyle = "rgba(255,255,255,0.78)";
     ctx.textAlign = "right";
@@ -258,16 +311,12 @@ Page({
     fillRounded(ctx, 34, 252, 622, 220, 28, "#FFFFFF");
     setFont(ctx, 22, 400);
     ctx.fillStyle = "#71827A";
-    ctx.fillText("今日完成", 68, 305);
+    ctx.fillText(this.data.primaryLabel, 68, 305);
     setFont(ctx, 52, 800);
     ctx.fillStyle = "#233B34";
-    ctx.fillText(String(this.data.done), 68, 370);
-    const doneWidth = ctx.measureText(String(this.data.done)).width;
-    setFont(ctx, 30, 600);
-    ctx.fillStyle = "#71827A";
-    ctx.fillText(` / ${this.data.total}`, 68 + doneWidth + 2, 370);
+    ctx.fillText(this.data.primaryValue, 68, 370);
     setFont(ctx, 21, 400);
-    ctx.fillText(`今日实际投入 ${this.data.focusMinutes} 分钟`, 68, 418);
+    ctx.fillText(this.data.secondaryCopy, 68, 418);
 
     ctx.fillStyle = "#E9EFEA";
     ctx.fillRect(337, 300, 1, 124);
@@ -299,7 +348,7 @@ Page({
     fillRounded(ctx, 34, listY, 622, listHeight, 28, "#FFFFFF");
     setFont(ctx, 24, 700);
     ctx.fillStyle = "#233B34";
-    ctx.fillText("今日完成清单", 66, listY + 48);
+    ctx.fillText(this.data.listTitle, 66, listY + 48);
     setFont(ctx, 19, 400);
     ctx.fillStyle = "#71827A";
     ctx.textAlign = "right";
@@ -308,7 +357,7 @@ Page({
     if (this.data.hideTasks) {
       setFont(ctx, 24, 700);
       ctx.fillStyle = "#356859";
-      ctx.fillText(`今日完成 ${this.data.done} 项行动`, 66, listY + 100);
+      ctx.fillText(this.data.secondaryCopy, 66, listY + 100);
     } else if (visibleTaskCount > 0) {
       this.data.completedTasks.forEach((task: { title: string }, index: number) => {
         const rowY = listY + 95 + index * 52;
@@ -320,7 +369,7 @@ Page({
     } else {
       setFont(ctx, 23, 600);
       ctx.fillStyle = "#71827A";
-      ctx.fillText("今天还没有已完成行动", 66, listY + 100);
+      ctx.fillText(this.data.emptyCopy, 66, listY + 100);
     }
 
     const growthY = listY + listHeight + 24;
@@ -344,12 +393,12 @@ Page({
     setFont(ctx, 27, 700);
     ctx.fillStyle = "#233B34";
     ctx.textAlign = "center";
-    ctx.fillText("每天完成一点，就会靠近一点。", CARD_WIDTH / 2, encouragementY);
+    ctx.fillText(this.data.encouragement, CARD_WIDTH / 2, encouragementY);
     ctx.fillStyle = "#E6EEE9";
     ctx.fillRect(52, encouragementY + 44, 586, 1);
     setFont(ctx, 20, 400);
     ctx.fillStyle = "#71827A";
-    ctx.fillText("我在「今日成长-目标打卡」记录今天的成长", CARD_WIDTH / 2, encouragementY + 92);
+    ctx.fillText("我在「今日进度」记录今天的成长", CARD_WIDTH / 2, encouragementY + 92);
     ctx.textAlign = "left";
 
     return { canvas, dpr, height: cardHeight };
@@ -408,6 +457,7 @@ Page({
       const filePath = await this.exportCanvas(canvas, dpr, height);
       await this.saveToAlbum(filePath);
       wx.showToast({ title: "已保存到相册", icon: "success" });
+      recordProductEvent("share_saved", { type: this.data.cardMode });
     } catch (error) {
       this.handleAlbumPermission(error);
     } finally {

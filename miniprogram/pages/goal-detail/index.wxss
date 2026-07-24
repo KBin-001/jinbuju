@@ -84,3 +84,11 @@ page { background: var(--color-background, #F7F3EA); }
 @media (prefers-reduced-motion: reduce) {
   .primary-action--pressed { transform: none; }
 }
+.stage-card { margin-top: 24rpx; padding: 28rpx; border: 1rpx solid var(--color-border-soft); border-radius: var(--radius-card); background: var(--color-bg-card); }
+.milestone-list { margin-top: 22rpx; border-top: 1rpx solid var(--color-divider); }
+.milestone-row { min-height: 86rpx; display: flex; align-items: center; gap: 14rpx; border-bottom: 1rpx solid var(--color-divider); }
+.milestone-marker { width: 42rpx; height: 42rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--color-gold-soft); color: var(--color-gold); }
+.milestone-marker.is-complete { background: var(--color-success-soft); color: var(--color-success); }
+.milestone-copy { min-width: 0; flex: 1; display: flex; flex-direction: column; }.milestone-copy text:first-child { color: var(--color-text-main); font-size: 26rpx; }.milestone-copy text:last-child { margin-top: 3rpx; color: var(--color-text-secondary); font-size: 21rpx; }
+.milestone-status { color: var(--color-warning); font-size: 21rpx; }.milestone-status.is-complete { color: var(--color-success); }
+.milestone-empty { margin-top: 18rpx; padding: 18rpx 20rpx; border-radius: var(--radius-input); background: var(--color-surface-soft); color: var(--color-text-secondary); font-size: 23rpx; line-height: 1.55; }

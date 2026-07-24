@@ -27,11 +27,9 @@
   <view wx:elif="{{status === 'empty'}}" class="team-content team-content--state team-empty-landing">
     <view class="paper-card empty-team-hero">
       <image class="empty-team-landscape" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" aria-hidden="true" />
-      <view class="empty-team-glow" aria-hidden="true"></view>
-      <view class="empty-team-sun" aria-hidden="true"></view>
       <view class="empty-team-copy">
         <view class="empty-team-title"><text>加入小队，</text><text>行动更容易坚持</text></view>
-        <view class="empty-team-description">创建小队或输入房间号加入，和伙伴一起设定目标、互相鼓励，让每天的行动更有动力。</view>
+        <view class="empty-team-description">先创建自己的小队，邀请伙伴看见彼此今天的真实行动；已有房间号也可以直接加入。</view>
       </view>
       <view class="empty-team-visual" aria-hidden="true"><image class="empty-team-people" src="/assets/team/team-companions-hero.jpg" mode="aspectFill" /><view class="empty-team-visual-fade"></view></view>
 
@@ -41,42 +39,20 @@
           <text>{{creating ? '正在创建' : '创建我的小队'}}</text>
         </view>
         <view class="empty-team-button empty-team-button--secondary" bindtap="openJoinPopup" hover-class="empty-team-button--pressed" aria-role="button" aria-label="输入四位房间号加入小队">
-          <view class="empty-team-enter-icon" aria-hidden="true"><view></view></view>
+          <t-icon name="login" size="32rpx" />
           <text>输入房间号加入</text>
         </view>
       </view>
-
-      <view class="empty-team-benefits">
-        <view class="empty-team-benefit">
-          <view class="empty-benefit-glyph empty-benefit-glyph--companion"><view class="empty-benefit-head"></view><view class="empty-benefit-body"></view></view>
-          <view><text>互相监督</text><text>彼此鼓励不掉队</text></view>
-        </view>
-        <view class="empty-team-benefit">
-          <view class="empty-benefit-glyph empty-benefit-glyph--calendar"><view class="empty-calendar-line"></view><view class="empty-calendar-check"></view></view>
-          <view><text>每日打卡</text><text>行动进度更清晰</text></view>
-        </view>
-        <view class="empty-team-benefit">
-          <view class="empty-benefit-glyph empty-benefit-glyph--target"><view></view></view>
-          <view><text>目标陪跑</text><text>一起成长更长久</text></view>
-        </view>
-      </view>
-    </view>
-
-    <view class="empty-team-proof" aria-label="已有多位用户加入小队">
-      <view class="empty-team-proof-people" aria-hidden="true"><view><t-icon name="user" size="25rpx" /></view><view><t-icon name="user" size="25rpx" /></view><view><t-icon name="user" size="25rpx" /></view></view>
-      <text>已有<text class="empty-team-proof-emphasis">多位用户</text>加入，一起把行动坚持下去</text>
-      <view class="empty-team-proof-branch" aria-hidden="true"></view>
     </view>
 
     <view class="paper-card empty-community-card" bindtap="openGrowthCommunity" hover-class="is-pressed" aria-role="button" aria-label="进入成长社区寻找行动伙伴">
       <image class="empty-community-landscape" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" aria-hidden="true" />
       <view class="empty-community-visual" aria-hidden="true"><image class="empty-community-people" src="/assets/team/community-people.jpg" mode="aspectFill" /><view class="empty-community-visual-fade"></view></view>
       <view class="empty-community-copy">
-        <view class="empty-community-heading"><view class="empty-community-title">成长社区</view><text class="empty-community-badge">找队友</text></view>
-        <view class="empty-community-description">认识同频伙伴，发起招募或加入小队</view>
-        <view class="empty-community-benefits">每日交流 · 经验分享 · 共同进步</view>
+        <view class="empty-community-heading"><view class="empty-community-title">还没有同行伙伴？</view></view>
+        <view class="empty-community-description">去成长社区寻找同频队友</view>
       </view>
-      <view class="empty-community-action">进入社区<t-icon name="chevron-right" size="29rpx" /></view>
+      <view class="empty-community-action">辅助入口<t-icon name="chevron-right" size="29rpx" /></view>
     </view>
   </view>
 

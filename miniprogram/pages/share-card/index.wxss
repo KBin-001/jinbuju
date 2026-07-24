@@ -63,6 +63,11 @@ page {
   box-sizing: border-box;
   padding: 122px 32rpx calc(env(safe-area-inset-bottom) + 42rpx);
 }
+.template-switch { width: 100%; margin-bottom: 20rpx; white-space: nowrap; }
+.template-switch__inner { display: inline-flex; gap: 12rpx; padding: 0 4rpx; }
+.template-chip { padding: 14rpx 22rpx; border: 1rpx solid rgba(36,91,77,.18); border-radius: 999rpx; background: rgba(255,252,246,.9); color: var(--color-text-secondary); font-size: 23rpx; }
+.template-chip.is-active { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+.template-chip.is-disabled { opacity: .42; }
 
 .share-card {
   width: 100%;

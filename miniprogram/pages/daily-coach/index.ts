@@ -4,8 +4,10 @@ import { executeCoachProposal } from "../../services/manualSync";
 import { getProgressSummary } from "../../services/manualStats";
 import { getCurrentThemeId } from "../../services/theme";
 import { getLocalUserProfile } from "../../services/profile";
+import { bootstrapAccount } from "../../services/account";
 import { getTodayBusinessDate } from "../../utils/date";
 import { ProgressCoachChatMessage } from "../../types/progressCoach";
+import { off, on } from "../../utils/eventBus";
 
 interface DailyChatMessage extends ProgressCoachChatMessage {
   id: string;
@@ -227,16 +229,39 @@ Page({
     conversationId: "", userAvatarUrl: "", scopeMenuOpen: false,
     quickQuestions: ["为什么这样建议", "今日总结", "找出今日卡点"],
   },
+  profileHandler: null as null | (() => void),
 
   onLoad(query: Record<string, string>) {
+    this.profileHandler = () => this.refreshUserProfile();
+    on("profile:update", this.profileHandler);
     const requestedDate = /^\d{4}-\d{2}-\d{2}$/.test(String(query.date || "")) ? String(query.date) : getTodayBusinessDate();
-    this.setData({ requestedDate, requestedGoalId: String(query.goalId || ""), messages: [], conversationId: "", chatError: "", failedQuestion: "", userAvatarUrl: getLocalUserProfile()?.avatarUrl || "", scopeMenuOpen: false });
-    this.loadAnalysis();
+    const requestedGoalId = String(query.goalId || "");
+    const goalQuery = requestedGoalId ? `&goalId=${encodeURIComponent(requestedGoalId)}` : "";
+    wx.redirectTo({
+      url: `/pages/ai-coach/index?scope=day&date=${encodeURIComponent(requestedDate)}${goalQuery}`,
+      fail: () => {
+        this.setData({ requestedDate, requestedGoalId, messages: [], conversationId: "", chatError: "", failedQuestion: "", userAvatarUrl: getLocalUserProfile()?.avatarUrl || "", scopeMenuOpen: false });
+        this.loadAnalysis();
+      },
+    });
   },
 
   onShow() {
-    this.setData({ appTheme: getCurrentThemeId(), ...getNavigationMetrics(), userAvatarUrl: getLocalUserProfile()?.avatarUrl || "" });
+    this.setData({ appTheme: getCurrentThemeId(), ...getNavigationMetrics() });
+    this.refreshUserProfile();
+    bootstrapAccount().catch(() => undefined).then(() => this.refreshUserProfile());
     if (this.data.status === "ready") this.refreshAnalysis(false);
+  },
+
+  onUnload() {
+    if (this.profileHandler) {
+      off("profile:update", this.profileHandler);
+      this.profileHandler = null;
+    }
+  },
+
+  refreshUserProfile() {
+    this.setData({ userAvatarUrl: getLocalUserProfile()?.avatarUrl || "" });
   },
 
   loadAnalysis() {

@@ -4,7 +4,7 @@
 
   <view wx:if="{{status === 'loading'}}" class="welcome-state">
     <t-loading size="44rpx" theme="circular" />
-    <view class="state-title">正在准备今日成长-目标打卡</view>
+    <view class="state-title">正在准备今日进度</view>
     <view class="state-description">马上就好</view>
   </view>
 
@@ -16,61 +16,42 @@
   </view>
 
   <view wx:else class="welcome-content">
-    <view class="brand" aria-label="今日成长-目标打卡">
-      <view class="brand-mark" aria-hidden="true">
-        <view class="brand-step brand-step-small"></view>
-        <view class="brand-step brand-step-medium"></view>
-        <view class="brand-step brand-step-large"></view>
-      </view>
+    <view class="brand" aria-label="今日进度｜目标计划打卡">
+      <image class="brand-mark" src="/assets/profile/journey-mark.svg" mode="aspectFit" aria-hidden="true" />
       <view class="brand-copy">
-        <text class="brand-name">今日成长-目标打卡</text>
+        <text class="brand-name">今日进度</text>
+        <text class="brand-subname">目标计划打卡</text>
       </view>
     </view>
 
     <view class="hero">
-      <view class="hero-label">把目标变成行动</view>
+      <view class="hero-label">记录今日行动，看见目标进度。</view>
       <view class="hero-title"><text>把长期目标，</text><text>变成今天就能完成的行动</text></view>
-      <view class="hero-subtitle">记录今日行动，看见目标进度。创建长期目标，拆解每日任务，记录真实投入与完成情况。</view>
+      <view class="hero-subtitle">先完成一件具体的小事，再让真实记录慢慢汇成成长路径。</view>
     </view>
 
-    <view class="showcase" aria-label="目标与行动界面示例，数据仅作功能演示">
+    <view class="showcase" aria-label="示例目标与任务进度，数据仅作功能演示">
       <view class="showcase-label">界面示例 · 数据仅作功能演示</view>
       <view class="goal-demo-card">
         <view class="goal-demo-head">
-          <view class="goal-demo-icon"><t-icon name="flag" size="38rpx" /></view>
-          <view class="goal-demo-copy">
-            <view class="goal-demo-title">准备公务员考试</view>
-            <view class="goal-demo-meta">示例目标 · 2026.12.31</view>
-          </view>
-          <view class="progress-ring"><text>72%</text><view>总进度</view></view>
+          <view class="goal-demo-icon"><t-icon name="flag" size="34rpx" /></view>
+          <view class="goal-demo-copy"><text>准备公务员考试</text><text>当前目标 · 12 周</text></view>
+          <view class="goal-demo-rate">72%</view>
         </view>
-        <view class="goal-demo-progress">
-          <view class="progress-copy"><text>今日进度</text><text>3/6 项已完成</text></view>
-          <view class="progress-track"><view class="progress-fill"></view></view>
-        </view>
-        <view class="goal-demo-stats">
-          <view><text class="stat-label">今日投入</text><text class="stat-value">165<text> 分钟</text></text></view>
-          <view><text class="stat-label">连续行动</text><text class="stat-value">28<text> 天</text></text></view>
-          <view><text class="stat-label">累计投入</text><text class="stat-value">1,248<text> 分钟</text></text></view>
-        </view>
-        <view class="goal-demo-note"><t-icon name="check-circle-filled" size="28rpx" /><text>今日感受　专注是通往目标最好的路。</text></view>
+        <view class="progress-track"><view class="progress-fill"></view></view>
       </view>
-
       <view class="task-demo-card">
-        <view class="task-demo-head"><text>今日任务</text><text>3/6</text></view>
-        <view class="task-demo-item task-demo-item--done"><t-icon name="check-circle-filled" size="24rpx" /><view><text>申论素材整理</text><text>45 分钟</text></view></view>
-        <view class="task-demo-item task-demo-item--done"><t-icon name="check-circle-filled" size="24rpx" /><view><text>行测数量练习</text><text>30 分钟</text></view></view>
-        <view class="task-demo-item"><view class="task-dot"></view><view><text>申论真题训练</text><text>60 分钟</text></view></view>
+        <view class="task-demo-head"><text>今天先做</text><text>45 分钟</text></view>
+        <view class="task-demo-title">完成一组申论真题</view>
+        <view class="task-demo-action"><t-icon name="play-circle" size="28rpx" /><text>开始行动</text></view>
       </view>
     </view>
-
 
     <view class="capability-grid" aria-label="核心能力">
-      <view class="capability-card"><view class="capability-icon"><t-icon name="flag" size="46rpx" /></view><view><text class="capability-title">长期目标管理</text><view class="capability-desc"><text>设定清晰目标</text><text>拆解可执行计划</text></view></view></view>
-      <view class="capability-card"><view class="capability-icon"><t-icon name="calendar" size="46rpx" /></view><view><text class="capability-title">每日行动打卡</text><view class="capability-desc"><text>按计划行动打卡</text><text>培养稳定习惯</text></view></view></view>
-      <view class="capability-card"><view class="capability-icon"><t-icon name="chart-bar" size="46rpx" /></view><view><text class="capability-title">真实投入记录</text><view class="capability-desc"><text>记录投入时长</text><text>看见真实进步</text></view></view></view>
+      <view class="capability-item"><t-icon name="flag" size="30rpx" /><text>长期目标管理</text></view>
+      <view class="capability-item"><t-icon name="calendar" size="30rpx" /><text>每日行动打卡</text></view>
+      <view class="capability-item"><t-icon name="chart-bar" size="30rpx" /><text>真实投入记录</text></view>
     </view>
-
 
     <view class="welcome-actions">
       <checkbox-group class="agreement-check" bindchange="onConsentChange">
@@ -78,8 +59,8 @@
         <view class="agreement-links"><text catchtap="openPrivacy">《隐私政策》</text><text catchtap="openTerms">《用户协议》</text></view>
       </checkbox-group>
       <view wx:if="{{errorMessage}}" class="agreement-error">{{errorMessage}}</view>
-      <view class="action-button-shell"><button class="start-button" hover-class="welcome-button--pressed" loading="{{submitting}}" disabled="{{!consentChecked || submitting}}" bindtap="startPlanning">{{submitting ? '正在保存同意记录' : '开始创建目标'}}</button></view>
-      <view class="action-button-shell"><button class="example-button" hover-class="welcome-button--pressed" disabled="{{submitting}}" bindtap="toggleExample">{{showExample ? '收起示例说明' : '先看看示例'}}</button></view>
+      <view class="action-button-shell"><button class="start-button" hover-class="welcome-button--pressed" loading="{{submitting}}" disabled="{{!consentChecked || submitting}}" bindtap="startPlanning">{{submitting ? '正在保存' : '开始创建目标'}}</button></view>
+      <view class="action-button-shell"><button class="example-button" hover-class="welcome-button--pressed" disabled="{{submitting}}" bindtap="toggleExample">{{showExample ? '收起示例说明' : '先看看怎么用'}}</button></view>
     </view>
   </view>
 
@@ -88,7 +69,7 @@
     <view class="example-sheet" catchtap="noop">
       <view class="example-sheet-handle"></view>
       <view class="example-sheet-head"><view><text class="example-sheet-kicker">使用示例</text><text class="example-sheet-title">把目标拆成今天能完成的行动</text></view><view class="example-sheet-close" catchtap="toggleExample" aria-role="button" aria-label="关闭示例说明"><t-icon name="close" size="32rpx" /></view></view>
-      <view class="example-sheet-copy">先建立长期目标，再拆成当天能完成的具体任务。完成后记录实际投入，目标进度会随真实行动更新。</view>
+      <view class="example-sheet-copy">建立长期目标后，只安排今天能做完的一小步。完成时记录实际投入，进度会随真实行动更新。</view>
       <view class="example-sheet-steps"><view><text>1</text><view><text>创建目标</text><text>明确想达成的结果</text></view></view><view><text>2</text><view><text>安排行动</text><text>确定今天具体做什么</text></view></view><view><text>3</text><view><text>记录完成</text><text>保存真实投入和进度</text></view></view></view>
       <button class="example-sheet-action" bindtap="toggleExample">我知道了</button>
     </view>

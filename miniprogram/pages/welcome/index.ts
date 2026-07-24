@@ -1,6 +1,7 @@
 import { bootstrapAccount, completeCloudOnboarding } from "../../services/account";
 import { recordConsents } from "../../services/privacy";
 import { withAppTheme } from "../../services/theme";
+import { recordProductEvent } from "../../services/productEvents";
 
 type WelcomeStatus = "loading" | "ready" | "error";
 const WELCOME_COMPLETED_KEY = "welcomeCompleted";
@@ -29,6 +30,7 @@ Page(withAppTheme({
         return;
       }
       this.setData({ status: "ready" });
+      recordProductEvent("onboarding_started");
     } catch (_) {
       this.setData({ status: "error", errorMessage: "启动信息读取失败，请重试。" });
     }
@@ -50,6 +52,7 @@ Page(withAppTheme({
       })
       .then(({ returning }) => {
         wx.setStorageSync(WELCOME_COMPLETED_KEY, true);
+        recordProductEvent("onboarding_completed", { returning });
         if (returning) {
           wx.switchTab({ url: "/pages/index/index" });
           return;

@@ -213,6 +213,7 @@
 
   <view class="coach-chat__composer">
     <view class="coach-chat__input-bar">
+      <view class="coach-chat__composer-guide" aria-hidden="true"><t-icon name="star-filled" size="27rpx" /></view>
       <textarea
         class="coach-chat__input"
         value="{{question}}"
@@ -229,7 +230,8 @@
         bindconfirm="sendQuestion"
       ></textarea>
       <view class="coach-chat__send {{asking || !question ? 'is-disabled' : ''}}" bindtap="sendQuestion" role="button" aria-label="发送">
-        <t-icon name="arrow-up" size="34rpx" />
+        <t-icon name="chevron-up" size="40rpx" />
+        <view class="coach-chat__send-accent" aria-hidden="true"></view>
       </view>
     </view>
   </view>

@@ -10,6 +10,7 @@ const COLLECTIONS = {
   tasks: "manual_tasks",
   checkins: "manual_checkins",
   archivedGoals: "manual_archived_goals",
+  actionSessions: "manual_action_sessions",
   achievementUnlocks: "achievement_unlocks",
   sparkCheckins: "spark_checkins",
   proposals: "coach_action_proposals",
@@ -67,6 +68,7 @@ function cleanRecord(raw, kind) {
     if (!validBusinessDate(raw.currentDate)) throw createError("MANUAL_SYNC_INVALID", "行动日期无效。");
     if (!["pending", "completed", "partially_completed", "skipped", "rescheduled"].includes(raw.status)) throw createError("MANUAL_SYNC_INVALID", "行动状态无效。");
     if (!Number.isInteger(raw.estimatedMinutes) || raw.estimatedMinutes < 5 || raw.estimatedMinutes > 240) throw createError("MANUAL_SYNC_INVALID", "行动预计时间无效。");
+    if (raw.executionMode !== undefined && !["direct", "focus", "ask"].includes(raw.executionMode)) throw createError("MANUAL_SYNC_INVALID", "行动执行方式无效。");
     if (raw.iconKey !== undefined && !ACTION_ICON_KEYS.has(raw.iconKey)) throw createError("MANUAL_SYNC_INVALID", "行动图标无效。");
     if (raw.iconManual !== undefined && typeof raw.iconManual !== "boolean") throw createError("MANUAL_SYNC_INVALID", "行动图标设置无效。");
     if (raw.actualMinutes !== undefined && (!Number.isInteger(raw.actualMinutes) || raw.actualMinutes < 0 || raw.actualMinutes > 480)) throw createError("MANUAL_SYNC_INVALID", "行动实际时间无效。");
@@ -81,6 +83,17 @@ function cleanRecord(raw, kind) {
   }
   if (kind === "打卡" && (typeof raw.goalId !== "string" || !raw.goalId || !validBusinessDate(raw.businessDate))) {
     throw createError("MANUAL_SYNC_INVALID", "打卡数据无效。");
+  }
+  if (kind === "计时") {
+    if (typeof raw.goalId !== "string" || !raw.goalId || typeof raw.taskId !== "string" || !raw.taskId || !validBusinessDate(raw.businessDate)) {
+      throw createError("MANUAL_SYNC_INVALID", "行动计时归属无效。");
+    }
+    if (!["stopwatch", "countdown"].includes(raw.mode) || !["running", "paused", "completed", "abandoned"].includes(raw.status)) {
+      throw createError("MANUAL_SYNC_INVALID", "行动计时状态无效。");
+    }
+    if (!Number.isInteger(raw.elapsedSeconds) || raw.elapsedSeconds < 0 || raw.elapsedSeconds > 172800) {
+      throw createError("MANUAL_SYNC_INVALID", "行动计时时长无效。");
+    }
   }
   return { ...raw, id, updatedAt };
 }
@@ -185,17 +198,20 @@ async function syncManualData(openid, event) {
     prepareCollectionMerge(openid, COLLECTIONS.tasks, store.tasks, "行动"),
     prepareCollectionMerge(openid, COLLECTIONS.checkins, store.checkins, "打卡"),
     prepareCollectionMerge(openid, COLLECTIONS.archivedGoals, store.archivedGoals, "归档目标"),
+    prepareCollectionMerge(openid, COLLECTIONS.actionSessions, store.actionSessions, "计时"),
     prepareCollectionMerge(openid, COLLECTIONS.achievementUnlocks,
       (store.achievementUnlocks || []).map((item) => ({ ...item, id: item.achievementId, updatedAt: item.celebratedAt || item.unlockedAt })), "成就"),
     prepareCollectionMerge(openid, COLLECTIONS.sparkCheckins,
       (store.sparkCheckins || []).map((item) => ({ ...item, id: item.businessDate, updatedAt: item.checkedAt })), "火花签到"),
   ]);
-  const [goalMerge, taskMerge, checkinMerge, archivedMerge, achievementMerge, sparkMerge] = prepared;
+  const [goalMerge, taskMerge, checkinMerge, archivedMerge, sessionMerge, achievementMerge, sparkMerge] = prepared;
   const goals = goalMerge.items;
   const tasks = taskMerge.items;
   const checkins = checkinMerge.items;
   const goalIds = new Set(goals.map((item) => item.id));
-  if (tasks.some((item) => !item.deletedAt && !goalIds.has(item.goalId)) || checkins.some((item) => !item.deletedAt && !goalIds.has(item.goalId))) {
+  const taskIds = new Set(tasks.map((item) => item.id));
+  if (tasks.some((item) => !item.deletedAt && !goalIds.has(item.goalId)) || checkins.some((item) => !item.deletedAt && !goalIds.has(item.goalId))
+    || sessionMerge.items.some((item) => !goalIds.has(item.goalId) || !taskIds.has(item.taskId))) {
     throw createError("MANUAL_SYNC_INVALID", "行动或打卡不属于当前目标。");
   }
   await Promise.all([
@@ -203,6 +219,7 @@ async function syncManualData(openid, event) {
     persistCollectionChanges(openid, account.userId, COLLECTIONS.tasks, taskMerge.changes),
     persistCollectionChanges(openid, account.userId, COLLECTIONS.checkins, checkinMerge.changes),
     persistCollectionChanges(openid, account.userId, COLLECTIONS.archivedGoals, archivedMerge.changes),
+    persistCollectionChanges(openid, account.userId, COLLECTIONS.actionSessions, sessionMerge.changes),
     persistCollectionChanges(openid, account.userId, COLLECTIONS.achievementUnlocks, achievementMerge.changes),
     persistCollectionChanges(openid, account.userId, COLLECTIONS.sparkCheckins, sparkMerge.changes),
   ]);
@@ -258,6 +275,7 @@ async function syncManualData(openid, event) {
     tasks,
     checkins,
     archivedGoals: archivedMerge.items,
+    actionSessions: sessionMerge.items,
     achievementUnlocks: achievementMerge.items,
     sparkCheckins: sparkMerge.items,
   };

@@ -1,7 +1,7 @@
 <view class="insight-page" data-theme="{{appTheme}}">
   <view class="status-mask" style="height: {{statusBarHeight}}px;" aria-hidden="true"></view>
 
-  <view class="insight-hero">
+  <view class="insight-hero {{scopeMenuOpen ? 'is-menu-open' : ''}}">
     <image class="hero-landscape" src="/assets/ai-coach-shanshui-v2.jpg" mode="widthFix" aria-hidden="true" />
     <view class="hero-veil"></view>
     <view class="insight-nav" style="top: {{navTop}}px; height: {{navHeight}}px; padding-right: {{menuRightInset}}px;">
@@ -16,7 +16,7 @@
       <text>{{scopeLabel}}</text><t-icon name="chevron-down" size="28rpx" />
     </view>
     <view wx:if="{{scopeMenuOpen}}" class="scope-popover" style="top: {{scopeMenuTop}}px;">
-      <view class="scope-option" data-scope="day" bindtap="selectCoachScope"><view><text>今日复盘</text><text>查看今天的行动与投入</text></view></view>
+      <view class="scope-option {{scope === 'day' ? 'is-active' : ''}}" data-scope="day" bindtap="selectCoachScope"><view><text>今日复盘</text><text>查看今天的行动与投入</text></view><t-icon wx:if="{{scope === 'day'}}" name="check" size="28rpx" /></view>
       <view class="scope-option {{scope === 'week' ? 'is-active' : ''}}" data-scope="week" bindtap="selectCoachScope"><view><text>本周复盘</text><text>回顾最近 7 天的节奏</text></view><t-icon wx:if="{{scope === 'week'}}" name="check" size="28rpx" /></view>
       <view class="scope-option {{scope === 'month' ? 'is-active' : ''}}" data-scope="month" bindtap="selectCoachScope"><view><text>本月观察</text><text>查看本月行动趋势</text></view><t-icon wx:if="{{scope === 'month'}}" name="check" size="28rpx" /></view>
       <view class="scope-option {{scope === 'overall' ? 'is-active' : ''}}" data-scope="overall" bindtap="selectCoachScope"><view><text>长期洞察</text><text>结合全部目标和成长记录</text></view><t-icon wx:if="{{scope === 'overall'}}" name="check" size="28rpx" /></view>
@@ -32,8 +32,9 @@
   <view class="insight-content">
     <view class="metric-grid">
       <view wx:for="{{metricCards}}" wx:key="key" class="metric-card metric-card--{{item.tone}}">
+        <image class="metric-texture metric-texture--{{item.key}}" src="/assets/ai-coach-shanshui-v2.jpg" mode="aspectFill" aria-hidden="true" />
         <view class="metric-icon metric-icon--{{item.tone}}"><t-icon name="{{item.icon}}" size="36rpx" /></view>
-        <view class="metric-value">{{item.value}}<text>{{item.unit}}</text></view>
+        <view class="metric-value {{item.value >= 1000 ? 'is-compact' : item.value >= 100 ? 'is-dense' : ''}}">{{item.value}}<text>{{item.unit}}</text></view>
         <view class="metric-label">{{item.label}}</view>
         <view wx:if="{{item.progress !== undefined}}" class="metric-progress"><view style="width: {{item.progress}}%;"></view></view>
         <view class="metric-note">{{item.note}}</view>
@@ -45,7 +46,7 @@
       <view class="advice-content">
         <view class="advice-heading">
           <view class="advice-spark"><t-icon name="star-filled" size="33rpx" /></view>
-          <text class="advice-title">{{scope === 'week' ? '本周建议' : scope === 'month' ? '本月建议' : '长期建议'}}</text>
+          <text class="advice-title">{{scope === 'day' ? '今日建议' : scope === 'week' ? '本周建议' : scope === 'month' ? '本月建议' : '长期建议'}}</text>
           <text class="advice-badge">AI</text>
         </view>
         <view class="advice-copy">{{bottleneck}}</view>
@@ -58,17 +59,49 @@
       </view>
     </view>
 
-    <view class="rhythm-card">
+    <view wx:if="{{scope === 'day'}}" class="diagnosis-card">
+      <image class="diagnosis-watermark" src="/assets/ai-coach-shanshui-v2.jpg" mode="aspectFill" aria-hidden="true" />
+      <view class="diagnosis-heading">
+        <view class="diagnosis-title-row">
+          <view class="section-title">今日闭环诊断</view>
+          <t-icon name="info-circle" size="27rpx" />
+        </view>
+        <view class="diagnosis-score">
+          <text>综合评分</text>
+          <text class="diagnosis-score-value">{{loopDiagnosis.score}}</text>
+          <text>分</text>
+          <text class="diagnosis-grade">{{loopDiagnosis.grade}}</text>
+        </view>
+      </view>
+      <view class="diagnosis-grid">
+        <view wx:for="{{loopDiagnosis.items}}" wx:key="key" class="diagnosis-item diagnosis-item--{{item.tone}}">
+          <view class="diagnosis-item-label"><t-icon name="{{item.icon}}" size="27rpx" /><text>{{item.label}}</text></view>
+          <view class="diagnosis-item-value">{{item.value}}</view>
+          <view class="diagnosis-item-detail">{{item.detail}}</view>
+          <view wx:if="{{item.meta}}" class="diagnosis-item-meta">{{item.meta}}</view>
+        </view>
+      </view>
+      <view class="diagnosis-quote"><text class="diagnosis-quote-mark">“</text><text>{{loopDiagnosis.quote}}</text></view>
+    </view>
+
+    <view wx:else class="rhythm-card">
       <view class="section-heading">
         <view><view class="section-title">{{rhythmTitle}}</view><view class="section-subtitle">{{rhythmSubtitle}}</view></view>
-        <view class="rhythm-legend"><view></view><text>真实投入</text></view>
+        <view class="rhythm-total"><text class="rhythm-total-unit">共</text><text class="rhythm-total-value">{{rhythmTotalMinutes}}</text><text class="rhythm-total-unit">分钟</text></view>
       </view>
-      <view class="rhythm-chart">
-        <view wx:for="{{rhythmPoints}}" wx:key="key" class="rhythm-column {{item.isCurrent ? 'is-current' : ''}} {{item.isFuture ? 'is-future' : ''}}">
-          <view class="rhythm-value">{{item.minutes ? item.minutes : ''}}</view>
-          <view class="rhythm-track"><view class="rhythm-bar" style="height: {{item.height}}%;"></view></view>
-          <view class="rhythm-label">{{item.label}}</view>
-          <view class="rhythm-count">{{item.completed ? item.completed + '项' : ''}}</view>
+      <view wx:if="{{rhythmSegments.length}}" class="rhythm-strip" aria-hidden="true">
+        <view wx:for="{{rhythmSegments}}" wx:key="key" class="rhythm-segment" style="flex-grow: {{item.minutes}}; background: {{item.color}};"></view>
+      </view>
+      <view wx:else class="rhythm-strip-empty">还没有真实投入记录，完成一项行动后会自动呈现节奏</view>
+      <view class="rhythm-cells">
+        <view wx:for="{{rhythmPoints}}" wx:key="key" class="rhythm-cell {{item.isCurrent ? 'is-current' : ''}} {{item.isFuture ? 'is-future' : ''}} {{item.minutes ? '' : 'is-rest'}}">
+          <view class="rhythm-cell-icon" style="color: {{item.color}}; background: {{item.tint}};">
+            <t-icon wx:if="{{item.icon}}" name="{{item.icon}}" size="30rpx" />
+            <view wx:else class="rhythm-cell-dot" style="background: {{item.color}};"></view>
+          </view>
+          <view class="rhythm-cell-value">{{item.minutes ? item.minutes : '—'}}</view>
+          <view class="rhythm-cell-label">{{item.label}}</view>
+          <view class="rhythm-cell-count">{{item.completed ? item.completed + '项' : ''}}</view>
         </view>
       </view>
     </view>

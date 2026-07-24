@@ -9,6 +9,7 @@
   "subpackages": [
     { "root": "pages/goal-create", "pages": ["index"] },
     { "root": "pages/action-edit", "pages": ["index"] },
+    { "root": "pages/action-session", "pages": ["index"] },
     { "root": "pages/action-records", "pages": ["index"] },
     { "root": "pages/growth-records", "pages": ["index"] },
     { "root": "pages/goal-generate", "pages": ["index"] },
@@ -44,6 +45,7 @@
       "network": "all",
       "packages": [
         "pages/action-edit",
+        "pages/action-session",
         "pages/checkin",
         "pages/daily-coach",
         "pages/ai-coach",
@@ -88,7 +90,7 @@
     "backgroundColor": "#F7F3EA",
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#F7F3EA",
-    "navigationBarTitleText": "今日成长-目标打卡",
+    "navigationBarTitleText": "今日进度｜目标计划打卡",
     "navigationBarTextStyle": "black"
   },
   "lazyCodeLoading": "requiredComponents",

@@ -10,7 +10,7 @@
 
   <view wx:if="{{status === 'loading'}}" class="share-state">
     <view class="state-dot"></view>
-    <text>正在整理今日成长-目标打卡</text>
+    <text>正在整理今日进度</text>
   </view>
 
   <view wx:elif="{{status === 'error'}}" class="share-state">
@@ -21,9 +21,14 @@
 
   <scroll-view wx:else class="share-scroll" scroll-y enhanced show-scrollbar="{{false}}">
     <view class="share-content" style="padding-top: {{contentTop}}px;">
+      <scroll-view class="template-switch" scroll-x enhanced show-scrollbar="{{false}}">
+        <view class="template-switch__inner">
+          <view wx:for="{{cardModes}}" wx:key="value" class="template-chip {{cardMode === item.value ? 'is-active' : ''}} {{item.enabled ? '' : 'is-disabled'}}" data-mode="{{item.value}}" bindtap="selectCardMode">{{item.label}}</view>
+        </view>
+      </scroll-view>
       <view class="share-card">
         <view class="share-brand-bar">
-          <view class="brand-name"><text class="brand-mark"></text>今日成长-目标打卡 · 今日完成卡</view>
+          <view class="brand-name"><text class="brand-mark"></text>今日进度｜目标计划打卡 · {{cardTitle}}</view>
           <view class="brand-date">{{dateText}} {{weekday}}</view>
         </view>
 
@@ -44,9 +49,9 @@
 
           <view class="share-core-card">
             <view class="core-left">
-              <view class="core-label">今日完成</view>
-              <view class="core-count"><text>{{done}}</text><text class="core-total"> / {{total}}</text></view>
-              <view class="core-minutes">今日实际投入 {{focusMinutes}} 分钟</view>
+              <view class="core-label">{{primaryLabel}}</view>
+              <view class="core-count"><text>{{primaryValue}}</text></view>
+              <view class="core-minutes">{{secondaryCopy}}</view>
             </view>
             <view class="core-divider"></view>
             <view class="goal-ring" style="background: conic-gradient(#356859 0% {{goalProgress}}%, #DDEBDD {{goalProgress}}% 100%);">
@@ -59,20 +64,20 @@
 
           <view class="share-list-card">
             <view class="list-head">
-              <view class="list-title">今日完成清单</view>
+              <view class="list-title">{{listTitle}}</view>
               <view class="privacy-control">
                 <text>{{hideTasks ? '已隐藏' : '隐藏内容'}}</text>
                 <t-switch value="{{hideTasks}}" color="#356859" bindchange="toggleTaskPrivacy" />
               </view>
             </view>
-            <view wx:if="{{hideTasks}}" class="hidden-summary">今日完成 {{done}} 项行动</view>
+            <view wx:if="{{hideTasks}}" class="hidden-summary">{{secondaryCopy}}</view>
             <view wx:elif="{{completedTasks.length > 0}}" class="completed-list">
               <view wx:for="{{completedTasks}}" wx:key="id" class="completed-item">
                 <view class="completed-check">✓</view>
                 <text>{{item.title}}</text>
               </view>
             </view>
-            <view wx:else class="hidden-summary">今天还没有已完成行动</view>
+            <view wx:else class="hidden-summary">{{emptyCopy}}</view>
           </view>
 
           <view class="share-growth-strip">
@@ -89,8 +94,8 @@
             </view>
           </view>
 
-          <view class="share-encouragement">每天完成一点，就会靠近一点。</view>
-          <view class="share-signature"><text class="signature-mark"></text>我在「今日成长-目标打卡」记录今天的成长</view>
+          <view class="share-encouragement">{{encouragement}}</view>
+          <view class="share-signature"><text class="signature-mark"></text>我在「今日进度」记录今天的成长</view>
         </view>
       </view>
 

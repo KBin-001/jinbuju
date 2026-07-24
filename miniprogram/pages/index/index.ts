@@ -1,13 +1,14 @@
 import { getActiveGoal } from "../../services/manualGoal";
 import { getProgressSummary, recordDailyCheckin } from "../../services/manualStats";
-import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTaskReminder, updateTaskStatus } from "../../services/manualTask";
+import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTaskExecutionMode, updateTaskReminder, updateTaskStatus } from "../../services/manualTask";
 import { getLocalUserProfile } from "../../services/profile";
+import { bootstrapAccount } from "../../services/account";
 import { analyzeProgress, prepareProgressCoach } from "../../services/progressCoach";
 import { getCurrentThemeId, MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
 import { syncManualData } from "../../services/manualSync";
 import { InAppMessage, listInAppMessages, readInAppMessage, requestNotificationAuthorization, requestNotificationAuthorizationWithReceipt, upsertTaskReminder } from "../../services/notification";
 import { isNotificationConfigured } from "../../config/notification";
-import { ActionIssueReason, ActionTask, ActionTaskStatus, Goal, TodaySummary } from "../../types/manual";
+import { ActionExecutionMode, ActionIssueReason, ActionSession, ActionTask, ActionTaskStatus, Goal, TodaySummary } from "../../types/manual";
 import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate, getTimeGreeting } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
 import { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask, sortTodayTasksIncompleteFirst } from "../../utils/taskStatus";
@@ -15,6 +16,7 @@ import { getTabHeaderLayout } from "../../utils/tabHeader";
 import { buildReminderAt, nextReminderTime, normalizeReminderTime, reminderDateRange } from "../../utils/actionReminder";
 import { ACTION_DURATION_OPTIONS } from "../../config/action";
 import { resolveActionIcon } from "../../utils/actionIcon";
+import { finishActionSession, getActiveActionSession, pauseActionSession, resumeActionSession, startActionSession } from "../../services/actionSession";
 
 const REASONS: Array<{ label: string; value: ActionIssueReason }> = [{ label: "时间不够", value: "not_enough_time" }, { label: "难度太高", value: "too_difficult" }, { label: "缺少资源", value: "resource_unavailable" }, { label: "身体或状态不适", value: "physical_condition" }, { label: "临时有事", value: "temporary_event" }, { label: "任务不符合实际", value: "not_practical" }, { label: "其他", value: "other" }];
 const DURATION_OPTIONS = ACTION_DURATION_OPTIONS;
@@ -24,12 +26,32 @@ const QUICK_DURATION_OPTIONS = DURATION_OPTIONS
   .map((option, sourceIndex) => ({ ...option, sourceIndex }))
   .filter((option) => QUICK_DURATION_VALUES.has(option.value));
 const EXAMPLE_ACTION_TITLES = ["背单词 30 个", "阅读 30 分钟", "听力练习 20 分钟", "真题复盘 1 套"];
-interface ViewTask extends ActionTask { displayTitle: string; statusLabel: string; statusTone: string; rescheduled: boolean; dateLabel: string; partialHint: boolean; actionSubtext: string; actionIconKey: string; actionIconAsset: string; actionIconTone: string; canComplete: boolean; }
+type TaskPrimaryAction = "complete" | "focus" | "active" | "result";
+interface ViewTask extends ActionTask {
+  displayTitle: string;
+  statusLabel: string;
+  statusTone: string;
+  rescheduled: boolean;
+  dateLabel: string;
+  partialHint: boolean;
+  actionSubtext: string;
+  actionTimeText: string;
+  actionIconKey: string;
+  actionIconAsset: string;
+  actionIconTone: string;
+  canComplete: boolean;
+  primaryAction: TaskPrimaryAction;
+  primaryActionLabel: string;
+  primaryActionShortLabel: string;
+  primaryActionIcon: string;
+  primaryActionTone: "plain" | "focus" | "success";
+  promptExecution: boolean;
+  isRecommendedAction: boolean;
+}
 interface ViewTaskGroup { key: "today" | "continue"; title: string; tasks: ViewTask[]; }
 interface TodayMood { title: string; copy: string; tone: "empty" | "low" | "half" | "done"; mark: string; }
 interface ProactiveInsight { label: string; title: string; body: string; tone: "start" | "progress" | "near" | "done" | "streak"; }
 interface ProgressSegment { active: boolean; }
-interface StatsRhythmBar { key: string; height: number; active: boolean; }
 interface WeekDayView { label: string; date: string; day: string; isToday: boolean; isSelected: boolean; isCurrentMonth: boolean; }
 interface CalendarDayView extends WeekDayView { hasAction: boolean; isCompleted: boolean; }
 interface CalendarView { title: string; days: CalendarDayView[]; }
@@ -63,21 +85,22 @@ function progressSegments(summary: TodaySummary): ProgressSegment[] {
   const activeCount = summary.completedCount + summary.partialCount;
   return Array.from({ length: total }, (_, index) => ({ active: index < activeCount }));
 }
-function buildStatsRhythmBars(tasks: ActionTask[]): StatsRhythmBar[] {
-  const buckets = Array.from({ length: 12 }, () => 0);
-  tasks.forEach((task) => {
-    const minutes = Math.max(0, Number(task.actualMinutes || 0));
-    if (!minutes) return;
-    const timestamp = new Date(task.completedAt || task.updatedAt || task.createdAt);
-    const bucketIndex = Number.isNaN(timestamp.getTime()) ? 0 : Math.min(11, Math.floor(timestamp.getHours() / 2));
-    buckets[bucketIndex] += minutes;
-  });
-  const maxMinutes = Math.max(0, ...buckets);
-  return buckets.map((minutes, index) => ({
-    key: `rhythm-${index}`,
-    active: minutes > 0,
-    height: minutes > 0 && maxMinutes > 0 ? Math.max(12, Math.round((minutes / maxMinutes) * 42)) : 5,
-  }));
+function sessionClock(seconds: number): string {
+  const safe = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  const rest = safe % 60;
+  const pair = (value: number) => String(value).padStart(2, "0");
+  return hours > 0 ? `${pair(hours)}:${pair(minutes)}:${pair(rest)}` : `${pair(minutes)}:${pair(rest)}`;
+}
+
+function sessionMinutes(session: ActionSession | null): number {
+  return session ? Math.max(0, Math.floor(session.elapsedSeconds / 60)) : 0;
+}
+
+function sessionProgress(session: ActionSession | null): number {
+  if (!session?.targetSeconds) return 0;
+  return Math.min(100, Math.round((session.elapsedSeconds / session.targetSeconds) * 100));
 }
 function todayMood(summary: TodaySummary): TodayMood {
   const percent = completionPercent(summary);
@@ -216,6 +239,19 @@ function taskSubtext(task: ActionTask): string {
   return base;
 }
 
+function taskTimeText(task: ActionTask): string {
+  const reminderTime = task.reminder?.status === "scheduled" ? `${task.reminder.time} · ` : "";
+  return `${reminderTime}预计 ${task.estimatedMinutes} 分钟`;
+}
+
+function buildCoachTip(insight: ProactiveInsight, activeTask: ViewTask | null, activeMinutes: number): string {
+  if (activeTask) {
+    const invested = Math.max(0, activeMinutes);
+    return `已经专注 ${invested} 分钟，先完成“${activeTask.displayTitle}”的 ${activeTask.estimatedMinutes} 分钟目标，再开始下一项。`;
+  }
+  return insight.body || insight.title;
+}
+
 function toViewTask(task: ActionTask, selectedDate: string, businessToday = getTodayBusinessDate()): ViewTask {
   const displayStatus = getActionTaskDisplayStatus(task, selectedDate);
   const displayTitle = displayTaskTitle(task);
@@ -229,11 +265,82 @@ function toViewTask(task: ActionTask, selectedDate: string, businessToday = getT
     dateLabel: task.currentDate === selectedDate ? "今天" : formatDisplayDate(task.currentDate),
     partialHint: displayStatus.badge === "待继续",
     actionSubtext: taskSubtext(task),
+    actionTimeText: taskTimeText(task),
     actionIconKey: actionIcon.key,
     actionIconAsset: actionIcon.asset,
     actionIconTone: actionIcon.tone,
     canComplete: task.currentDate <= businessToday && task.status !== "rescheduled",
+    primaryAction: "focus",
+    primaryActionLabel: "开始专注",
+    primaryActionShortLabel: "专注",
+    primaryActionIcon: "play-circle",
+    primaryActionTone: "focus",
+    promptExecution: false,
+    isRecommendedAction: false,
   };
+}
+
+function decorateTaskAction(task: ViewTask, activeTaskId: string, activeStatus: string): ViewTask {
+  if (task.status === "completed") {
+    return {
+      ...task,
+      primaryAction: "result",
+      primaryActionLabel: "查看行动记录",
+      primaryActionShortLabel: "记录",
+      primaryActionIcon: "check-circle",
+      primaryActionTone: "success",
+      promptExecution: false,
+    };
+  }
+  if (activeTaskId === task.id) {
+    const paused = activeStatus === "paused";
+    return {
+      ...task,
+      primaryAction: paused ? "focus" : "active",
+      primaryActionLabel: paused ? "继续专注" : "专注中",
+      primaryActionShortLabel: paused ? "继续" : "计时中",
+      primaryActionIcon: paused ? "play-circle" : "time",
+      primaryActionTone: "focus",
+      promptExecution: false,
+    };
+  }
+  if (task.status === "partially_completed") {
+    return {
+      ...task,
+      primaryAction: "focus",
+      primaryActionLabel: "继续专注",
+      primaryActionShortLabel: "继续",
+      primaryActionIcon: "play-circle",
+      primaryActionTone: "focus",
+      promptExecution: false,
+    };
+  }
+  const mode = task.executionMode || "ask";
+  const recommendedAction: TaskPrimaryAction = task.estimatedMinutes <= 15 ? "complete" : "focus";
+  const primaryAction: TaskPrimaryAction = mode === "direct" ? "complete" : mode === "focus" ? "focus" : recommendedAction;
+  const promptExecution = mode === "ask";
+  return {
+    ...task,
+    primaryAction,
+    primaryActionLabel: promptExecution ? "选择执行方式" : primaryAction === "complete" ? "完成行动" : "开始专注",
+    primaryActionShortLabel: promptExecution ? "开始" : primaryAction === "complete" ? "完成" : "专注",
+    primaryActionIcon: primaryAction === "complete" ? "check-circle" : "play-circle",
+    primaryActionTone: primaryAction === "complete" ? "success" : "focus",
+    promptExecution,
+  };
+}
+
+function markRecommendedAction(tasks: ViewTask[], enabled: boolean): ViewTask[] {
+  let recommendationAssigned = false;
+  return tasks.map((task) => {
+    const isRecommendedAction = enabled
+      && !recommendationAssigned
+      && task.canComplete
+      && task.status !== "completed"
+      && task.primaryAction !== "active";
+    if (isRecommendedAction) recommendationAssigned = true;
+    return task.isRecommendedAction === isRecommendedAction ? task : { ...task, isRecommendedAction };
+  });
 }
 
 Page(withAppTheme({
@@ -246,14 +353,24 @@ Page(withAppTheme({
     displayAvatarUrl: "",
     goal: null as Goal | null,
     tasks: [] as ViewTask[],
+    activeSessionId: "",
+    activeSessionTaskId: "",
+    activeSessionStatus: "",
+    activeSessionTask: null as ViewTask | null,
+    activeSessionElapsedSeconds: 0,
+    activeSessionElapsedMinutes: 0,
+    activeSessionDisplay: "00:00",
+    activeSessionProgress: 0,
+    timerSubmitting: false,
     taskGroups: [] as ViewTaskGroup[],
     visibleTasks: [] as ViewTask[],
     summary: emptySummary(),
     completionPercent: 0,
-    flowRemainingPercent: 100,
     focusPercent: 0,
     remainingCount: 0,
-    statsRhythmBars: buildStatsRhythmBars([]) as StatsRhythmBar[],
+    todayTargetMinutes: 0,
+    todayActualMinutes: 0,
+    todayMinuteProgress: 0,
     remainingEstimatedMinutes: 0,
     progressSegments: [] as ProgressSegment[],
     actionListExpanded: false,
@@ -269,6 +386,7 @@ Page(withAppTheme({
     currentStreakDays: 0,
     coachStatus: "idle" as "idle" | "loading" | "ready" | "error",
     proactiveInsight: { label: "AI 主动观察", title: "先添加一项今日行动", body: "我会根据完成状态、实际投入和连续天数，主动提醒你下一步。", tone: "start" } as ProactiveInsight,
+    coachTipText: "先添加一项今日行动，我会根据真实投入给出下一步建议。",
     weekday: "",
     weekdayShort: "",
     selectedDate: "",
@@ -286,6 +404,7 @@ Page(withAppTheme({
     quickAddVisible: false,
     quickAddTitle: "",
     quickAddMinutes: 30,
+    quickAddExecutionMode: "ask" as ActionExecutionMode,
     quickAddDate: getTodayBusinessDate(),
     quickAddDateEnd: reminderDateRange().end,
     quickAddReminderEnabled: false,
@@ -314,6 +433,7 @@ Page(withAppTheme({
   profileHandler: null as null | (() => void),
   focusGoalHandler: null as null | (() => void),
   completionSheetTimer: null as ReturnType<typeof setTimeout> | null,
+  sessionTicker: null as ReturnType<typeof setInterval> | null,
   coachRequestKey: "",
   coachRequestGeneration: 0,
   scrollTopCache: 0,
@@ -326,7 +446,10 @@ Page(withAppTheme({
     on("profile:update", this.profileHandler);
     on("goal:focus:update", this.focusGoalHandler);
   },
+  onReady() {},
+  onHide() { this.stopSessionTicker(); },
   onUnload() {
+    this.stopSessionTicker();
     if (this.completionSheetTimer) {
       clearTimeout(this.completionSheetTimer);
       this.completionSheetTimer = null;
@@ -345,6 +468,8 @@ Page(withAppTheme({
     this.setData({ appTheme: getCurrentThemeId() });
     // 先立即加载本地数据，让页面马上显示内容
     this.load();
+    // 今日页不能依赖用户先打开“我的”页；缓存会立即生效，云端完成后由 profile:update 再刷新。
+    bootstrapAccount().catch(() => undefined).then(() => this.load());
     // 再后台同步云端数据，完成后刷新一次
     syncManualData().catch(() => undefined).then(() => this.load());
     this.loadInAppMessage();
@@ -383,12 +508,30 @@ Page(withAppTheme({
       const sourceTasks = goal ? getTodayPageTasks(goal.id, selectedDate, today) : [];
       const selectedTasks = sourceTasks.filter((task) => task.currentDate === selectedDate);
       const summaryTasks = selectedDate === today ? sourceTasks : selectedTasks;
-      const taskGroups = groupTodayTasks(sourceTasks, selectedDate).map((group) => ({ ...group, tasks: group.tasks.map((task) => toViewTask(task, selectedDate, today)) }));
-      const tasks = sortTodayTasksIncompleteFirst(taskGroups.reduce<ViewTask[]>((all, group) => all.concat(group.tasks), []));
+      const activeSession = selectedDate === today ? getActiveActionSession() : null;
+      const baseTaskGroups = groupTodayTasks(sourceTasks, selectedDate).map((group) => ({
+        ...group,
+        tasks: group.tasks.map((task) => decorateTaskAction(toViewTask(task, selectedDate, today), activeSession?.taskId || "", activeSession?.status || "")),
+      }));
+      const tasks = markRecommendedAction(
+        sortTodayTasksIncompleteFirst(baseTaskGroups.reduce<ViewTask[]>((all, group) => all.concat(group.tasks), [])),
+        selectedDate === today,
+      );
+      const taskById = new Map(tasks.map((task) => [task.id, task]));
+      const taskGroups = baseTaskGroups.map((group) => ({
+        ...group,
+        tasks: group.tasks.map((task) => taskById.get(task.id) || task),
+      }));
+      const activeRawTask = activeSession ? goalTasks.find((task) => task.id === activeSession.taskId) : null;
+      const activeSessionTask = activeRawTask ? toViewTask(activeRawTask, selectedDate, today) : null;
       const summary = calculateTodaySummary(summaryTasks);
+      const activeMinutes = sessionMinutes(activeSession);
+      const todayTargetMinutes = summary.estimatedMinutes;
+      const todayActualMinutes = summary.actualMinutes + activeMinutes;
+      const todayMinuteProgress = todayTargetMinutes > 0 ? Math.min(100, Math.round(todayActualMinutes / todayTargetMinutes * 100)) : 0;
       const progress = goal ? getProgressSummary(goal.id, selectedDate) : null;
       const mood = todayMood(summary);
-      const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 3);
+      const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 4);
       const week = buildWeekDays(today, selectedDate, this.data.weekOffset);
       const calendarMonth = this.data.calendarMonth || monthStart(selectedDate);
       const calendar = buildCalendar(today, selectedDate, calendarMonth, goalTasks);
@@ -397,19 +540,28 @@ Page(withAppTheme({
         displayName,
         displayAvatarUrl,
         greetingText: timeGreeting.greeting,
-        greetingSubtitle: timeGreeting.subtitle,
+        greetingSubtitle: selectedDate === today ? "回顾今天，收住节奏" : timeGreeting.subtitle,
         goal,
         selectedDate,
         todayDate: today,
         tasks,
+        activeSessionId: activeSession?.id || "",
+        activeSessionTaskId: activeSession?.taskId || "",
+        activeSessionStatus: activeSession?.status || "",
+        activeSessionTask,
+        activeSessionElapsedSeconds: activeSession?.elapsedSeconds || 0,
+        activeSessionElapsedMinutes: activeMinutes,
+        activeSessionDisplay: sessionClock(activeSession?.elapsedSeconds || 0),
+        activeSessionProgress: sessionProgress(activeSession),
         taskGroups,
         visibleTasks,
         summary,
         completionPercent: completionPercent(summary),
-        flowRemainingPercent: 100 - completionPercent(summary),
         focusPercent: focusPercent(summary),
         remainingCount: remainingCount(summary),
-        statsRhythmBars: buildStatsRhythmBars(summaryTasks),
+        todayTargetMinutes,
+        todayActualMinutes,
+        todayMinuteProgress,
         remainingEstimatedMinutes: remainingEstimatedMinutes(tasks, selectedDate),
         progressSegments: progressSegments(summary),
         hiddenActionCount: Math.max(0, tasks.length - visibleTasks.length),
@@ -421,6 +573,7 @@ Page(withAppTheme({
         todayMoodMark: mood.mark,
         currentStreakDays: progress?.currentStreakDays || 0,
         proactiveInsight: buildProactiveInsight(summary, tasks, progress, selectedDate, today),
+        coachTipText: buildCoachTip(buildProactiveInsight(summary, tasks, progress, selectedDate, today), activeSessionTask, activeMinutes),
         weekday: copy.weekday,
         weekdayShort: copy.weekday.replace("星期", "周"),
         weekTitle: week.weekTitle,
@@ -431,11 +584,44 @@ Page(withAppTheme({
         calendarDays: calendar.days,
         navigating: false,
       }, () => {
+        this.syncSessionTicker();
         this.prepareTodayCoach();
       });
     } catch (error) { this.setData({ status: "error", errorMessage: error instanceof Error ? error.message : "本地数据读取失败" }); }
   },
   useDefaultAvatar() { this.setData({ displayAvatarUrl: "" }); },
+  syncSessionTicker() {
+    this.stopSessionTicker();
+    if (!this.data.activeSessionId || this.data.activeSessionStatus !== "running") return;
+    this.sessionTicker = setInterval(() => this.refreshActiveSession(), 1000);
+  },
+  stopSessionTicker() {
+    if (!this.sessionTicker) return;
+    clearInterval(this.sessionTicker);
+    this.sessionTicker = null;
+  },
+  refreshActiveSession() {
+    const session = getActiveActionSession();
+    if (!session || session.id !== this.data.activeSessionId) {
+      this.load();
+      return;
+    }
+    const activeMinutes = sessionMinutes(session);
+    const todayActualMinutes = this.data.summary.actualMinutes + activeMinutes;
+    const todayMinuteProgress = this.data.todayTargetMinutes > 0
+      ? Math.min(100, Math.round(todayActualMinutes / this.data.todayTargetMinutes * 100))
+      : 0;
+    this.setData({
+      activeSessionStatus: session.status,
+      activeSessionElapsedSeconds: session.elapsedSeconds,
+      activeSessionElapsedMinutes: activeMinutes,
+      activeSessionDisplay: sessionClock(session.elapsedSeconds),
+      activeSessionProgress: sessionProgress(session),
+      todayActualMinutes,
+      todayMinuteProgress,
+      coachTipText: buildCoachTip(this.data.proactiveInsight, this.data.activeSessionTask, activeMinutes),
+    });
+  },
   prepareTodayCoach() {
     const goal = this.data.goal;
     if (!goal?.id) { this.coachRequestKey = ""; this.setData({ coachStatus: "idle" }); return; }
@@ -448,7 +634,12 @@ Page(withAppTheme({
       .then(() => analyzeProgress(goal.id, "day", analysisDate))
       .then((analysis) => {
         if (this.coachRequestKey !== requestKey || this.coachRequestGeneration !== generation) return;
-        this.setData({ coachStatus: "ready", proactiveInsight: buildAiPriorityInsight(analysis, this.data.proactiveInsight) });
+        const proactiveInsight = buildAiPriorityInsight(analysis, this.data.proactiveInsight);
+        this.setData({
+          coachStatus: "ready",
+          proactiveInsight,
+          coachTipText: buildCoachTip(proactiveInsight, this.data.activeSessionTask, this.data.activeSessionElapsedMinutes),
+        });
       }, () => {
         if (this.coachRequestKey === requestKey && this.coachRequestGeneration === generation) this.setData({ coachStatus: "error" });
       });
@@ -456,7 +647,7 @@ Page(withAppTheme({
   retry() { this.load(); },
   toggleActionList() {
     const actionListExpanded = !this.data.actionListExpanded;
-    const visibleTasks = actionListExpanded ? this.data.tasks : this.data.tasks.slice(0, 3);
+    const visibleTasks = actionListExpanded ? this.data.tasks : this.data.tasks.slice(0, 4);
     this.setData({ actionListExpanded, visibleTasks, hiddenActionCount: Math.max(0, this.data.tasks.length - visibleTasks.length) });
   },
   switchWeek(event: { currentTarget: { dataset: { direction?: string | number } } }) {
@@ -506,6 +697,123 @@ Page(withAppTheme({
     this.load();
   },
   goCreateGoal() { if (this.data.navigating) return; this.setData({ navigating: true }); wx.navigateTo({ url: "/pages/goal-create/index", fail: () => this.setData({ navigating: false }) }); },
+  handleTaskPrimary(event: { detail?: { id?: string }; currentTarget?: { dataset?: { id?: string } } }) {
+    const taskId = String(event.detail?.id || event.currentTarget?.dataset?.id || "");
+    const task = this.data.tasks.find((item) => item.id === taskId);
+    if (!task) return;
+    if (!task.canComplete && task.primaryAction === "complete") {
+      wx.showToast({ title: "未来行动到当天后再记录完成", icon: "none" });
+      return;
+    }
+    if (task.primaryAction === "result") {
+      wx.navigateTo({ url: `/pages/action-edit/index?id=${task.id}` });
+      return;
+    }
+    if (task.primaryAction === "active") {
+      wx.showToast({ title: "当前行动正在专注", icon: "none" });
+      return;
+    }
+    if (task.promptExecution) {
+      wx.showActionSheet({
+        itemList: ["直接完成", "开始专注"],
+        success: ({ tapIndex }) => {
+          if (tapIndex === 0) this.completeTask(task);
+          else if (tapIndex === 1) this.startTask({ detail: { id: task.id } });
+        },
+      });
+      return;
+    }
+    if (task.primaryAction === "complete") this.completeTask(task);
+    else this.startTask({ detail: { id: task.id } });
+  },
+  openExecutionPreference() {
+    wx.showActionSheet({
+      itemList: ["直接完成：轻任务优先打卡", "专注计时：长任务优先计时", "每次询问：按任务灵活选择"],
+      success: ({ tapIndex }) => {
+        const mode: ActionExecutionMode = tapIndex === 0 ? "direct" : tapIndex === 1 ? "focus" : "ask";
+        this.setData({ quickAddExecutionMode: mode });
+        wx.showToast({ title: mode === "direct" ? "新增行动默认直接完成" : mode === "focus" ? "新增行动默认专注计时" : "新增行动将每次询问", icon: "none" });
+      },
+    });
+  },
+  setTaskExecutionMode(task: ViewTask) {
+    wx.showActionSheet({
+      itemList: ["直接完成", "专注计时", "每次询问"],
+      success: ({ tapIndex }) => {
+        const mode: ActionExecutionMode = tapIndex === 0 ? "direct" : tapIndex === 1 ? "focus" : "ask";
+        try {
+          updateTaskExecutionMode(task.id, mode);
+          this.load();
+          wx.showToast({ title: "执行方式已更新", icon: "success" });
+        } catch (error) {
+          wx.showToast({ title: error instanceof Error ? error.message : "设置失败", icon: "none" });
+        }
+      },
+    });
+  },
+  async startTask(event: { detail?: { id?: string }; currentTarget?: { dataset?: { id?: string } } }) {
+    const taskId = String(event.detail?.id || event.currentTarget?.dataset?.id || "");
+    if (!taskId) return;
+    if (this.data.timerSubmitting) return;
+    try {
+      const active = getActiveActionSession();
+      if (active && active.taskId !== taskId) {
+        wx.showToast({ title: "请先结束当前计时", icon: "none" });
+        return;
+      }
+      if (active?.status === "paused") resumeActionSession(active.id);
+      else if (!active) startActionSession(taskId, "countdown");
+      this.load();
+      wx.showToast({ title: active?.status === "paused" ? "继续计时" : "开始计时", icon: "none" });
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "计时启动失败", icon: "none" });
+    }
+  },
+  toggleActiveTimer() {
+    if (!this.data.activeSessionId || this.data.timerSubmitting) return;
+    try {
+      if (this.data.activeSessionStatus === "paused") resumeActionSession(this.data.activeSessionId);
+      else pauseActionSession(this.data.activeSessionId);
+      this.refreshActiveSession();
+      this.syncSessionTicker();
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "计时状态更新失败", icon: "none" });
+    }
+  },
+  requestFinishTimer() {
+    if (!this.data.activeSessionId || this.data.timerSubmitting) return;
+    try {
+      if (this.data.activeSessionStatus === "running") pauseActionSession(this.data.activeSessionId);
+      this.refreshActiveSession();
+    } catch (_error) {
+      // 弹窗仍可继续，最终保存会再次校验会话状态。
+    }
+    const minutes = Math.max(1, Math.round(this.data.activeSessionElapsedSeconds / 60));
+    const taskTitle = this.data.activeSessionTask?.displayTitle || "当前行动";
+    wx.showModal({
+      title: "结束本次计时",
+      content: `本次专注 ${minutes} 分钟，是否同时完成“${taskTitle}”？`,
+      cancelText: "仅结束计时",
+      confirmText: "标记完成",
+      confirmColor: MODAL_CONFIRM_COLORS.confirm,
+      success: (result) => this.finishActiveTimer(Boolean(result.confirm)),
+    });
+  },
+  async finishActiveTimer(markTaskCompleted: boolean) {
+    if (!this.data.activeSessionId || this.data.timerSubmitting) return;
+    this.setData({ timerSubmitting: true });
+    try {
+      finishActionSession(this.data.activeSessionId, markTaskCompleted);
+      await syncManualData().catch(() => undefined);
+      this.stopSessionTicker();
+      this.setData({ timerSubmitting: false });
+      this.load();
+      wx.showToast({ title: markTaskCompleted ? "计时已保存，行动已完成" : "本次投入已保存", icon: "none" });
+    } catch (error) {
+      this.setData({ timerSubmitting: false });
+      wx.showToast({ title: error instanceof Error ? error.message : "计时保存失败", icon: "none" });
+    }
+  },
   openTodayDataDetails() {
     if (!this.data.goal) return;
     const date = this.data.selectedDate || getTodayBusinessDate();
@@ -518,14 +826,14 @@ Page(withAppTheme({
     if (!this.data.goal) return;
     const date = this.data.selectedDate || getTodayBusinessDate();
     wx.navigateTo({
-      url: `/pages/daily-coach/index?date=${encodeURIComponent(date)}&goalId=${encodeURIComponent(this.data.goal.id)}`,
+      url: `/pages/ai-coach/index?scope=day&date=${encodeURIComponent(date)}&goalId=${encodeURIComponent(this.data.goal.id)}`,
       fail: () => wx.showToast({ title: "每日教练打开失败", icon: "none" }),
     });
   },
   addTask() {
     if (!this.data.goal) { this.goCreateGoal(); return; }
     const range = reminderDateRange();
-    this.setData({ quickAddVisible: true, quickAddTitle: "", quickAddMinutes: 30, quickAddDate: range.start, quickAddDateEnd: range.end, quickAddReminderEnabled: false, quickAddReminderTime: nextReminderTime(), quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX, quickDurationVisible: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
+    this.setData({ quickAddVisible: true, quickAddTitle: "", quickAddMinutes: 30, quickAddExecutionMode: "ask", quickAddDate: range.start, quickAddDateEnd: range.end, quickAddReminderEnabled: false, quickAddReminderTime: nextReminderTime(), quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX, quickDurationVisible: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
   },
   closeQuickAdd() {
     if (this.data.quickAddSubmitting) return;
@@ -535,6 +843,11 @@ Page(withAppTheme({
   },
   noop() {},
   inputQuickAddTitle(event: { detail: { value?: string } }) { this.setData({ quickAddTitle: String(event.detail.value || "").slice(0, 40) }); },
+  selectQuickExecutionMode(event: { currentTarget: { dataset: { mode?: ActionExecutionMode } } }) {
+    const mode = event.currentTarget.dataset.mode;
+    if (!mode || !["direct", "focus", "ask"].includes(mode)) return;
+    this.setData({ quickAddExecutionMode: mode });
+  },
   changeQuickAddDate(event: { detail: { value?: string } }) {
     this.setData({ quickAddDate: String(event.detail.value || getTodayBusinessDate()) });
   },
@@ -631,6 +944,7 @@ Page(withAppTheme({
         goalId: goal.id,
         title: this.data.quickAddTitle,
         estimatedMinutes: Number(this.data.quickAddMinutes || 30),
+        executionMode: this.data.quickAddExecutionMode,
         currentDate: this.data.quickAddDate,
         reminder: accepted ? { time: this.data.quickAddReminderTime, remindAt, status: "pending_authorization" } : undefined,
       });
@@ -649,39 +963,71 @@ Page(withAppTheme({
         ? "行动已添加"
         : reminderScheduled ? "行动与提醒已设置" : "行动已保存，提醒未开启";
       wx.showToast({ title: toastTitle, icon: reminderScheduled || !this.data.quickAddReminderEnabled ? "success" : "none" });
-      this.setData({ quickAddVisible: false, quickAddTitle: "", quickAddMinutes: 30, quickAddReminderEnabled: false, quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX, quickDurationVisible: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
+      this.setData({ quickAddVisible: false, quickAddTitle: "", quickAddMinutes: 30, quickAddExecutionMode: "ask", quickAddReminderEnabled: false, quickAddMinuteIndex: DEFAULT_QUICK_ADD_MINUTE_INDEX, quickDurationVisible: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
       this.load();
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
       this.setData({ quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
     }
   },
-  openTask(event: { currentTarget: { dataset: { id?: string } } }) {
-    const id = String(event.currentTarget.dataset.id || ""); const task = this.data.tasks.find((item) => item.id === id); if (!task) return;
-    wx.showActionSheet({ itemList: ["标记完成", "完成一部分", "顺延到明天", "今天不做", "编辑", "删除"], success: ({ tapIndex }) => {
-      if (tapIndex === 0) this.completeTask(task); else if (tapIndex === 1) this.chooseReason(task, "partially_completed"); else if (tapIndex === 2) this.reschedule(task); else if (tapIndex === 3) this.chooseReason(task, "skipped"); else if (tapIndex === 4) wx.navigateTo({ url: `/pages/action-edit/index?id=${task.id}` }); else if (tapIndex === 5) this.remove(task);
-    } });
+  openTask(event: { detail?: { id?: string }; currentTarget?: { dataset?: { id?: string } } }) {
+    const id = String(event.detail?.id || event.currentTarget?.dataset?.id || "");
+    const task = this.data.tasks.find((item) => item.id === id);
+    if (!task) return;
+    wx.navigateTo({ url: `/pages/action-edit/index?id=${task.id}` });
+  },
+  openTaskMenu(event: { detail?: { id?: string }; currentTarget?: { dataset?: { id?: string } } }) {
+    const id = String(event.detail?.id || event.currentTarget?.dataset?.id || "");
+    const task = this.data.tasks.find((item) => item.id === id);
+    if (!task) return;
+    const items: string[] = [];
+    const actions: Array<() => void> = [];
+    const push = (label: string, action: () => void) => { items.push(label); actions.push(action); };
+    if (task.status === "completed") {
+      push("取消完成", () => this.toggleTaskDone({ detail: { id: task.id } }));
+    } else {
+      if (this.data.activeSessionTaskId !== task.id) {
+        push("开始专注", () => this.startTask({ detail: { id: task.id } }));
+      }
+      push("直接完成", () => this.completeTask(task));
+      push("完成一部分", () => this.chooseReason(task, "partially_completed"));
+      push("设置执行方式", () => this.setTaskExecutionMode(task));
+      push("顺延到明天", () => this.reschedule(task));
+      push("今天不做", () => this.chooseReason(task, "skipped"));
+    }
+    push("编辑行动", () => wx.navigateTo({ url: `/pages/action-edit/index?id=${task.id}` }));
+    push("删除行动", () => this.remove(task));
+    wx.showActionSheet({ itemList: items, success: ({ tapIndex }) => actions[tapIndex]?.() });
   },
   applyTaskPatch(updatedTask: ViewTask, prevScrollTop: number) {
     const today = getTodayBusinessDate();
     const selectedDate = this.data.selectedDate || today;
-    const tasks = sortTodayTasksIncompleteFirst<ViewTask>(this.data.tasks.map((item) => (item.id === updatedTask.id ? updatedTask : item)));
-    const taskGroups = this.data.taskGroups.map((group) => ({ ...group, tasks: group.tasks.map((item) => (item.id === updatedTask.id ? updatedTask : item)) }));
+    const decoratedTask = decorateTaskAction(updatedTask, this.data.activeSessionTaskId, this.data.activeSessionStatus);
+    const tasks = markRecommendedAction(
+      sortTodayTasksIncompleteFirst<ViewTask>(this.data.tasks.map((item) => (item.id === decoratedTask.id ? decoratedTask : item))),
+      selectedDate === today,
+    );
+    const taskById = new Map(tasks.map((task) => [task.id, task]));
+    const taskGroups = this.data.taskGroups.map((group) => ({
+      ...group,
+      tasks: group.tasks.map((item) => taskById.get(item.id) || item),
+    }));
     const todayTasks = tasks.filter((item) => item.currentDate === selectedDate);
     const summary = calculateTodaySummary(todayTasks);
     const progress = this.data.goal ? getProgressSummary(this.data.goal.id, selectedDate) : null;
     const mood = todayMood(summary);
-    const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 3);
+    const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 4);
     this.setData({
       tasks,
       taskGroups,
       visibleTasks,
       summary,
       completionPercent: completionPercent(summary),
-      flowRemainingPercent: 100 - completionPercent(summary),
       focusPercent: focusPercent(summary),
       remainingCount: remainingCount(summary),
-      statsRhythmBars: buildStatsRhythmBars(todayTasks),
+      todayTargetMinutes: summary.estimatedMinutes,
+      todayActualMinutes: summary.actualMinutes + this.data.activeSessionElapsedMinutes,
+      todayMinuteProgress: summary.estimatedMinutes > 0 ? Math.min(100, Math.round((summary.actualMinutes + this.data.activeSessionElapsedMinutes) / summary.estimatedMinutes * 100)) : 0,
       remainingEstimatedMinutes: remainingEstimatedMinutes(tasks, selectedDate),
       progressSegments: progressSegments(summary),
       hiddenActionCount: Math.max(0, tasks.length - visibleTasks.length),
@@ -692,8 +1038,10 @@ Page(withAppTheme({
       todayMoodMark: mood.mark,
       currentStreakDays: progress?.currentStreakDays || 0,
       proactiveInsight: buildProactiveInsight(summary, tasks, progress, selectedDate, today),
+      coachTipText: buildCoachTip(buildProactiveInsight(summary, tasks, progress, selectedDate, today), this.data.activeSessionTask, this.data.activeSessionElapsedMinutes),
+    }, () => {
+      wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 });
     });
-    wx.nextTick(() => wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 }));
   },
   openCompletionSheet() {
     const goal = this.data.goal;
@@ -753,8 +1101,8 @@ Page(withAppTheme({
       this.setData({ notificationAuthorizing: false });
     }
   },
-  toggleTaskDone(event: { currentTarget: { dataset: { id?: string } } }) {
-    const id = String(event.currentTarget.dataset.id || "");
+  toggleTaskDone(event: { detail?: { id?: string }; currentTarget?: { dataset?: { id?: string } } }) {
+    const id = String(event.detail?.id || event.currentTarget?.dataset?.id || "");
     const task = this.data.tasks.find((item) => item.id === id);
     if (!task || task.status === "rescheduled") return;
     if (!task.canComplete) {
@@ -784,12 +1132,16 @@ Page(withAppTheme({
     this.completeTask(task);
   },
   completeTask(task: ViewTask) {
+    if (this.data.activeSessionTaskId === task.id) {
+      wx.showToast({ title: "请先结束计时，再决定是否完成行动", icon: "none" });
+      return;
+    }
     try {
       const updated = updateTaskStatus(task.id, "completed");
       recordDailyCheckin(updated.goalId, updated.activityDate || updated.currentDate);
       const selectedDate = this.data.selectedDate || getTodayBusinessDate();
       const updatedTask = toViewTask(updated, selectedDate);
-      const shouldRevealCompleted = this.data.tasks.length > 3 && !this.data.actionListExpanded;
+      const shouldRevealCompleted = this.data.tasks.length > 4 && !this.data.actionListExpanded;
       if (shouldRevealCompleted) this.setData({ actionListExpanded: true });
       this.applyTaskPatch(updatedTask, this.scrollTopCache);
       wx.vibrateShort({ type: "light" });

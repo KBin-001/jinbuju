@@ -1,0 +1,18 @@
+:host { display: block; margin-top: 24rpx; }
+.coach-insight { position: relative; padding: 28rpx 30rpx 20rpx; border: 1rpx solid var(--progress-border,#ede5d8); border-radius: var(--progress-radius,28rpx); background: var(--progress-surface,#fffdf8); box-shadow: var(--progress-shadow,0 10rpx 30rpx rgba(61,48,28,.045)); font-family: var(--font-family-sans); }
+.coach-insight__title { color: var(--progress-text,#27352f); font-size: 33rpx; font-weight: 600; line-height: 44rpx; }
+.coach-insight__body { margin-top: 18rpx; display: flex; align-items: center; gap: 30rpx; }
+.coach-score { position: relative; width: 154rpx; height: 154rpx; flex: 0 0 auto; }
+.coach-score__copy { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #5f6a65; font-size: 17rpx; line-height: 26rpx; }
+.coach-score__value { color: var(--progress-primary,#17614f); font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 38rpx; font-weight: 600; line-height: 44rpx; }
+.coach-score__unit { font-size: 20rpx; }
+.coach-copy { min-width: 0; flex: 1; }
+.coach-conclusion { display: -webkit-box; overflow: hidden; color: #34423d; font-size: 25rpx; font-weight: 500; line-height: 39rpx; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.coach-evidence { margin-top: 12rpx; padding: 11rpx 14rpx; display: flex; align-items: flex-start; gap: 9rpx; border: 0; border-radius: 12rpx; color: #586660; background: rgba(248,243,233,.72); font-size: 20rpx; line-height: 31rpx; }
+.coach-evidence__label { flex: 0 0 auto; color: #8d682a; font-weight: 600; }
+.coach-evidence__copy,.coach-advice__copy { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.coach-advice { margin-top: 12rpx; display: grid; grid-template-columns: auto auto 1fr; align-items: start; gap: 7rpx; color: #4f615b; font-size: 20rpx; line-height: 31rpx; }
+.coach-advice__icon { color: var(--progress-primary,#17614f); }.coach-advice__label { color: var(--progress-primary,#17614f); font-weight: 600; white-space: nowrap; }
+.coach-link { min-height: 50rpx; margin-top: 10rpx; display: flex; align-items: center; justify-content: flex-end; color: #8e6728; font-size: 19rpx; font-weight: 600; }
+.tap-pressed { opacity: .76; }
+@media (max-width: 350px) { .coach-insight { padding-right: 22rpx; padding-left: 22rpx; }.coach-insight__body { align-items: flex-start; gap: 18rpx; }.coach-score { width: 124rpx; height: 124rpx; }.coach-progress { transform: scale(.805); transform-origin: left top; }.coach-score__copy { width: 124rpx; height: 124rpx; }.coach-score__value { font-size: 31rpx; }.coach-conclusion { font-size: 22rpx; line-height: 34rpx; }.coach-evidence { display: block; font-size: 18rpx; line-height: 28rpx; }.coach-evidence__copy { margin-top: 4rpx; }.coach-advice { font-size: 18rpx; line-height: 28rpx; } }

@@ -19,7 +19,7 @@ assert.match(template, /bindconfirm="sendQuestion"/);
 assert.match(template, /coach-chat__send/);
 assert.doesNotMatch(template, /t-chat-sender|开始对话|emoji|表情|name="add"|name="plus"/, "输入区不得恢复重型聊天输入器、开始按钮、表情或加号");
 assert.doesNotMatch(template, /coach-chat__composer-brand/, "输入框左侧不得保留品牌图标");
-assert.match(template, /name="arrow-up"/, "发送按钮应使用明确的向上箭头指引");
+assert.match(template, /name="chevron-up"/, "发送按钮应使用明确的向上箭头指引");
 assert.doesNotMatch(template, /send-filled/, "发送按钮不得继续使用填充图标");
 assert.match(template, /adjust-position="\{\{true\}\}"/);
 assert.doesNotMatch(template, /coach-chat__input-note/);
@@ -51,7 +51,8 @@ assert.doesNotMatch(styles, /@import\s+["']\.\.\/\.\.\/styles\/theme\.wxss/, "�
 assert.match(styles, /coach-chat__composer/);
 assert.match(styles, /\.coach-chat__composer\s*\{[^}]*position:\s*fixed[^}]*bottom:\s*calc\(16rpx \+ env\(safe-area-inset-bottom\)\)/s, "输入区必须吸附在安全区上方");
 assert.match(styles, /\.coach-chat__anchor\s*\{[^}]*160rpx/s, "页面末尾必须给吸底输入区预留遮挡空间");
-assert.match(styles, /\.coach-chat__send\s*\{[^}]*border:\s*2rpx solid[^}]*background:\s*rgba\(255, 253, 248, \.74\)/s, "发送按钮应为轻量描边，不使用实心填充");
+assert.match(styles, /\.coach-chat__send\s*\{[^}]*border:\s*none[^}]*background:\s*var\(--color-primary/s, "发送按钮应为圆形墨绿色主操作");
+assert.match(styles, /\.coach-chat__send-accent\s*\{[^}]*background:\s*#d5aa58/s, "发送按钮保留克制的金色细节");
 assert.match(template, /教练正在等你/);
 assert.match(template, /随时聊聊你的困惑与下一步/);
 assert.match(component, /scrollToLatest\(\)/);

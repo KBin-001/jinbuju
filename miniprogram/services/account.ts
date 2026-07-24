@@ -47,6 +47,20 @@ function readAccountCache(): AccountRuntimeState | null {
   return { ...normalized, ready: true, source: "cache" };
 }
 
+function emitRuntimeUpdates(value: AccountRuntimeState | null): void {
+  emit("account:update", value);
+  emit("profile:update", value?.profile || null);
+}
+
+function hydrateAccountCache(): AccountRuntimeState | null {
+  if (runtime) return runtime;
+  const cached = readAccountCache();
+  if (!cached) return null;
+  runtime = cached;
+  hydrateSyncRuntime(cached.sync.lastSuccessfulAt, true);
+  return runtime;
+}
+
 function call<T>(action: string, data: Record<string, unknown> = {}, timeout = 20000): Promise<T> {
   return new Promise<any>((resolve, reject) => {
     const timer = setTimeout(() => reject(Object.assign(new Error("网络连接较慢，请稍后重试。"), { code: "REQUEST_TIMEOUT" })), timeout);
@@ -152,7 +166,8 @@ async function migrateLegacy(base: AccountBootstrapResult): Promise<ManualDataSt
 }
 
 export function bootstrapAccount(force = false): Promise<AccountRuntimeState> {
-  if (runtime?.ready && !force) return Promise.resolve(runtime);
+  hydrateAccountCache();
+  if (runtime?.ready && runtime.source === "cloud" && !force) return Promise.resolve(runtime);
   if (bootPromise && !force) return bootPromise;
   const pending = call<AccountBootstrapResult>("bootstrapAccount").then(async (rawBase) => {
     const base = normalizeBootstrap(rawBase);
@@ -161,26 +176,29 @@ export function bootstrapAccount(force = false): Promise<AccountRuntimeState> {
     runtime = { ...refreshed, ready: true, source: "cloud" };
     persistAccountCache(runtime);
     hydrateSyncRuntime(refreshed.sync.lastSuccessfulAt, false);
-    emit("account:update", runtime);
+    emitRuntimeUpdates(runtime);
     return runtime;
   }).catch((error) => {
-    const cached = readAccountCache();
+    const cached = runtime?.source === "cache" ? runtime : readAccountCache();
     if (!cached) throw error;
     runtime = cached;
     hydrateSyncRuntime(cached.sync.lastSuccessfulAt, true);
     markSyncCached(error as { code?: string; message?: string });
-    emit("account:update", runtime);
+    emitRuntimeUpdates(runtime);
     return runtime;
   });
   bootPromise = pending.then((value) => { bootPromise = null; return value; }, (error) => { bootPromise = null; throw error; });
   return bootPromise;
 }
 
-export function getAccountRuntime(): AccountRuntimeState | null { return runtime; }
+export function getAccountRuntime(): AccountRuntimeState | null { return runtime || hydrateAccountCache(); }
 
 export async function updateCloudProfile(profile: Omit<CloudUserProfile, "updatedAt">): Promise<CloudUserProfile> {
   const updated = await call<CloudUserProfile>("updateCloudProfile", { profile });
-  if (runtime) runtime = { ...runtime, profile: updated };
+  if (runtime) {
+    runtime = { ...runtime, profile: updated };
+    persistAccountCache(runtime);
+  }
   emit("profile:update", updated);
   return updated;
 }
@@ -230,5 +248,5 @@ export async function deleteCloudAccount(): Promise<void> {
   loadManualStoreIntoMemory();
   wx.removeStorageSync(ACCOUNT_CACHE_KEY);
   resetSyncRuntime();
-  emit("account:update", null);
+  emitRuntimeUpdates(null);
 }

@@ -1,0 +1,9 @@
+<view class="metrics-card" aria-label="目标累计统计">
+  <view wx:for="{{items}}" wx:key="label" class="metric-item">
+    <view class="metric-main">
+      <view class="metric-icon"><t-icon name="{{item.icon}}" size="36rpx" /></view>
+      <view class="metric-value {{item.value.length >= 4 ? 'is-long' : ''}}"><text class="metric-number">{{item.value}}</text><text class="metric-unit">{{item.unit}}</text></view>
+    </view>
+    <view class="metric-label">{{item.label}}</view>
+  </view>
+</view>

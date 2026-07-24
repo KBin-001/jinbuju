@@ -32,6 +32,7 @@ const { createTask, deleteTask, getTask, getTaskHistoryByGoal, getTasksByDate, g
 const { getProgressSummary, recordDailyCheckin } = require("../services/manualStats.ts");
 const { addBusinessDays, getTodayBusinessDate } = require("../utils/date.ts");
 const { getDailyCoachAnalysis } = require("../services/dailyCoach.ts");
+const { abandonActionSession, completeActionSession, finishActionSession, getActionSession, getActiveActionSession, pauseActionSession, resumeActionSession, startActionSession } = require("../services/actionSession.ts");
 
 const today = "2026-06-21";
 const blogGoal = createGoal({ title: "完成个人博客", category: "custom" });
@@ -187,6 +188,50 @@ const explicitDurationCompletion = createTask({ goalId: durationGoal.id, title: 
 updateTaskStatus(explicitDurationCompletion.id, "completed", 25);
 assert.equal(getTask(explicitDurationCompletion.id).actualMinutes, 25);
 assert.throws(() => updateTaskStatus(explicitDurationCompletion.id, "completed", 0));
+
+const sessionGoal = createGoal({
+  title: "完成行动计时闭环",
+  category: "custom",
+  targetDate: "2026-07-31",
+  milestones: [{ id: "milestone_timer", title: "完成首轮验证", status: "pending" }],
+  onboardingCompletedAt: "2026-06-21T00:00:00.000Z",
+});
+const timedTask = createTask({ goalId: sessionGoal.id, title: "专注实现计时功能", currentDate: today, estimatedMinutes: 45 });
+const sessionStart = new Date("2026-06-21T10:00:00+08:00");
+const session = startActionSession(timedTask.id, "countdown", sessionStart);
+assert.equal(session.targetSeconds, 2700);
+assert.equal(getActiveActionSession(new Date("2026-06-21T10:01:30+08:00")).elapsedSeconds, 90);
+const pausedSession = pauseActionSession(session.id, new Date("2026-06-21T10:01:30+08:00"));
+assert.equal(pausedSession.status, "paused");
+assert.equal(pausedSession.elapsedSeconds, 90);
+resumeActionSession(session.id, new Date("2026-06-21T10:03:00+08:00"));
+completeActionSession(session.id, 3, "比预计更快进入状态", false, new Date("2026-06-21T10:04:00+08:00"));
+assert.equal(getActionSession(session.id).status, "completed");
+assert.equal(getTask(timedTask.id).status, "completed");
+assert.equal(getTask(timedTask.id).actualMinutes, 3);
+assert.equal(getTask(timedTask.id).reflection, "比预计更快进入状态");
+completeActionSession(session.id, 3, "重复提交不会重复结算", false, new Date("2026-06-21T10:05:00+08:00"));
+assert.equal(getTask(timedTask.id).reflection, "比预计更快进入状态");
+
+const abandonedTask = createTask({ goalId: sessionGoal.id, title: "记录部分投入", currentDate: today, estimatedMinutes: 30 });
+const abandonedSession = startActionSession(abandonedTask.id, "stopwatch", new Date("2026-06-21T11:00:00+08:00"));
+abandonActionSession(abandonedSession.id, true, new Date("2026-06-21T11:02:00+08:00"));
+assert.equal(getActionSession(abandonedSession.id).status, "abandoned");
+assert.equal(getTask(abandonedTask.id).status, "partially_completed");
+assert.equal(getTask(abandonedTask.id).actualMinutes, 2);
+
+const lightweightTimerTask = createTask({ goalId: sessionGoal.id, title: "验证首页轻量计时", currentDate: today, estimatedMinutes: 30 });
+const firstLightweightSession = startActionSession(lightweightTimerTask.id, "countdown", new Date("2026-06-21T12:00:00+08:00"));
+finishActionSession(firstLightweightSession.id, false, new Date("2026-06-21T12:02:00+08:00"));
+assert.equal(getTask(lightweightTimerTask.id).status, "partially_completed");
+assert.equal(getTask(lightweightTimerTask.id).actualMinutes, 2);
+assert.equal(getActiveActionSession(), null);
+const secondLightweightSession = startActionSession(lightweightTimerTask.id, "countdown", new Date("2026-06-21T12:10:00+08:00"));
+finishActionSession(secondLightweightSession.id, true, new Date("2026-06-21T12:13:00+08:00"));
+assert.equal(getTask(lightweightTimerTask.id).status, "completed");
+assert.equal(getTask(lightweightTimerTask.id).actualMinutes, 5);
+finishActionSession(secondLightweightSession.id, true, new Date("2026-06-21T12:14:00+08:00"));
+assert.equal(getTask(lightweightTimerTask.id).actualMinutes, 5, "重复结束不得重复累计投入");
 
 const legacyDurationCompletion = createTask({ goalId: durationGoal.id, title: "兼容历史零时长", currentDate: today, estimatedMinutes: 60 });
 const legacyStore = readManualStore();

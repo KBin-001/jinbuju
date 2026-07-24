@@ -20,7 +20,7 @@ export const NOTIFICATION_DEFINITIONS: Record<NotificationScene, NotificationCli
   ai_coach_advice: {
     scene: "ai_coach_advice",
     templateId: "saJM8i1xbgv_oH6uTevI08_8F8u_1lFyLvvhxNEPLW8",
-    page: "/pages/daily-coach/index",
+    page: "/pages/ai-coach/index?scope=day",
     title: "AI 教练建议",
     serviceCategoryConfirmed: true,
   },

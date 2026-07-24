@@ -2,12 +2,14 @@ import { getActiveGoal, getActiveGoals, getArchivedGoals, getGoal } from "../../
 import { getTaskHistoryByGoal } from "../../services/manualTask";
 import { getProgressSummary } from "../../services/manualStats";
 import { getLocalUserProfile } from "../../services/profile";
+import { bootstrapAccount } from "../../services/account";
 import { askProgressCoach } from "../../services/progressCoach";
 import { executeCoachProposal } from "../../services/manualSync";
 import { getCurrentThemeId } from "../../services/theme";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
 import { ActionTask, Goal } from "../../types/manual";
 import { CoachActionProposal, CoachRange, ProgressCoachChatMessage } from "../../types/progressCoach";
+import { off, on } from "../../utils/eventBus";
 
 interface ChatMessage extends ProgressCoachChatMessage {
   id: string;
@@ -37,9 +39,28 @@ interface RhythmPoint {
   label: string;
   minutes: number;
   completed: number;
-  height: number;
+  color: string;
+  tint: string;
+  icon?: string;
   isCurrent: boolean;
   isFuture?: boolean;
+}
+
+interface LoopDiagnosisItem {
+  key: "rhythm" | "quality" | "focus";
+  icon: string;
+  label: string;
+  value: string;
+  detail: string;
+  meta?: string;
+  tone: "gold" | "mint" | "paper";
+}
+
+interface LoopDiagnosis {
+  score: number;
+  grade: string;
+  quote: string;
+  items: LoopDiagnosisItem[];
 }
 
 interface ReviewItem {
@@ -64,7 +85,7 @@ interface GoalInsightItem {
 }
 
 function normalizeScope(value?: string): CoachRange {
-  if (value === "week" || value === "month") return value;
+  if (value === "day" || value === "week" || value === "month") return value;
   return "overall";
 }
 
@@ -74,6 +95,7 @@ function toDate(value: string): Date {
 
 function periodStart(scope: CoachRange, today: string): string | undefined {
   const date = toDate(today);
+  if (scope === "day") return today;
   if (scope === "week") return formatDate(addDays(date, -((date.getDay() + 6) % 7)));
   if (scope === "month") return formatDate(new Date(date.getFullYear(), date.getMonth(), 1));
   return undefined;
@@ -141,17 +163,45 @@ function reviewItems(tasks: ActionTask[]): ReviewItem[] {
     });
 }
 
-function normalizeHeights(points: Omit<RhythmPoint, "height">[]): RhythmPoint[] {
-  const maxMinutes = Math.max(1, ...points.map((point) => point.minutes));
-  return points.map((point) => ({ ...point, height: point.minutes ? Math.max(22, Math.round((point.minutes / maxMinutes) * 100)) : 8 }));
+const RHYTHM_PALETTE = [
+  { color: "#9DBBAE", tint: "rgba(157,187,174,.2)" },
+  { color: "#7FA393", tint: "rgba(127,163,147,.2)" },
+  { color: "#4F7D6A", tint: "rgba(79,125,106,.22)" },
+  { color: "#245B4D", tint: "rgba(36,91,77,.18)" },
+];
+const RHYTHM_CURRENT_TONE = { color: "#C89B4A", tint: "rgba(200,155,74,.22)" };
+const DAY_PERIOD_ICONS: Record<string, string> = { morning: "sun-rising", afternoon: "sunny", evening: "sun-fall", night: "moon" };
+
+function decorateRhythm(points: Array<Omit<RhythmPoint, "color" | "tint">>): RhythmPoint[] {
+  return points.map((point, index) => {
+    const tone = point.isCurrent ? RHYTHM_CURRENT_TONE : RHYTHM_PALETTE[index % RHYTHM_PALETTE.length];
+    return { ...point, color: tone.color, tint: tone.tint };
+  });
 }
 
 function buildRhythm(scope: CoachRange, today: string, tasks: ActionTask[]): RhythmPoint[] {
   const todayDate = toDate(today);
+  if (scope === "day") {
+    const periods = [
+      { key: "morning", label: "上午", start: 5, end: 12 },
+      { key: "afternoon", label: "下午", start: 12, end: 18 },
+      { key: "evening", label: "晚上", start: 18, end: 24 },
+      { key: "night", label: "夜间", start: 0, end: 5 },
+    ];
+    return decorateRhythm(periods.map((period) => {
+      const bucket = tasks.filter((task) => {
+        if (!task.completedAt) return period.key === "evening";
+        const value = new Date(task.completedAt);
+        const hour = new Date(value.getTime() + 8 * 60 * 60 * 1000).getUTCHours();
+        return hour >= period.start && hour < period.end;
+      });
+      return { key: period.key, label: period.label, minutes: bucket.reduce((sum, task) => sum + (task.actualMinutes || 0), 0), completed: bucket.filter((task) => task.status === "completed").length, icon: DAY_PERIOD_ICONS[period.key], isCurrent: false };
+    }));
+  }
   if (scope === "week") {
     const startDate = toDate(periodStart("week", today) || today);
     const labels = ["一", "二", "三", "四", "五", "六", "日"];
-    return normalizeHeights(labels.map((label, index) => {
+    return decorateRhythm(labels.map((label, index) => {
       const date = formatDate(addDays(startDate, index));
       const dayTasks = tasks.filter((task) => businessDate(task) === date);
       return {
@@ -167,7 +217,7 @@ function buildRhythm(scope: CoachRange, today: string, tasks: ActionTask[]): Rhy
   if (scope === "month") {
     const daysInMonth = new Date(todayDate.getFullYear(), todayDate.getMonth() + 1, 0).getDate();
     const monthPrefix = today.slice(0, 7);
-    const points: Omit<RhythmPoint, "height">[] = [];
+    const points: Array<Omit<RhythmPoint, "color" | "tint">> = [];
     for (let startDay = 1; startDay <= daysInMonth; startDay += 7) {
       const endDay = Math.min(daysInMonth, startDay + 6);
       const startDate = `${monthPrefix}-${String(startDay).padStart(2, "0")}`;
@@ -182,9 +232,9 @@ function buildRhythm(scope: CoachRange, today: string, tasks: ActionTask[]): Rhy
         isFuture: startDate > today,
       });
     }
-    return normalizeHeights(points);
+    return decorateRhythm(points);
   }
-  const points: Omit<RhythmPoint, "height">[] = [];
+  const points: Array<Omit<RhythmPoint, "color" | "tint">> = [];
   for (let offset = 5; offset >= 0; offset -= 1) {
     const cursor = new Date(todayDate.getFullYear(), todayDate.getMonth() - offset, 1);
     const next = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
@@ -199,7 +249,7 @@ function buildRhythm(scope: CoachRange, today: string, tasks: ActionTask[]): Rhy
       isCurrent: offset === 0,
     });
   }
-  return normalizeHeights(points);
+  return decorateRhythm(points);
 }
 
 function goalInsightItems(activeGoals: Goal[], activeTasks: ActionTask[], archivedGoals: ReturnType<typeof getArchivedGoals>): GoalInsightItem[] {
@@ -251,6 +301,13 @@ function getNavigationMetrics() {
 }
 
 function scopeCopy(scope: CoachRange) {
+  if (scope === "day") return {
+    label: "今日复盘",
+    subtitle: "只分析今天的真实行动与投入",
+    reportName: "今日完成情况",
+    prompt: "帮我分析一下今天的完成情况",
+    questions: ["为什么这样建议", "今日总结", "找出今日卡点"],
+  };
   if (scope === "week") return {
     label: "本周复盘",
     subtitle: "只分析本周行动，不做长期评价",
@@ -288,6 +345,59 @@ function bottleneck(stats: PeriodStats, streakDays: number): string {
   if (pending > 0) return `还有 ${pending} 项行动待推进，建议先处理最接近完成的一项。`;
   if (!stats.minutes) return "行动已完成但尚未记录实际投入，补充时间后分析会更准确。";
   return streakDays > 0 ? `已经连续行动 ${streakDays} 天，注意保持节奏，不必临时加码。` : "当前没有明显卡点，继续保持稳定投入。";
+}
+
+function loopDiagnosis(stats: PeriodStats, streakDays: number, rhythmPoints: RhythmPoint[]): LoopDiagnosis {
+  const focusPoint = rhythmPoints
+    .filter((point) => point.minutes > 0)
+    .slice()
+    .sort((left, right) => right.minutes - left.minutes)[0];
+  const focusWindow: Record<string, string> = {
+    morning: "05:00–12:00",
+    afternoon: "12:00–18:00",
+    evening: "18:00–24:00",
+    night: "00:00–05:00",
+  };
+  const completionScore = Math.round(stats.completionRate * 0.5);
+  const investmentScore = Math.round(Math.min(25, (stats.minutes / 45) * 25));
+  const continuityScore = Math.round(Math.min(25, (streakDays / 4) * 25));
+  const score = stats.totalActions ? Math.min(100, completionScore + investmentScore + continuityScore) : 0;
+  const grade = score >= 90 ? "优秀" : score >= 75 ? "良好" : score >= 55 ? "稳步推进" : "待建立";
+  const rhythmValue = stats.completionRate === 100 ? "稳定" : stats.completionRate >= 60 ? "推进中" : stats.completedActions ? "已启动" : "待启动";
+  const qualityValue = stats.completedActions && stats.minutes ? "高质量" : stats.completedActions ? "已完成" : "待记录";
+  return {
+    score,
+    grade,
+    quote: score >= 75 ? "继续保持当前节奏，微小复利，持续累积。" : "先完成一个清晰的小步骤，让节奏重新流动。",
+    items: [
+      {
+        key: "rhythm",
+        icon: "chart-pulse",
+        label: "节奏状态",
+        value: rhythmValue,
+        detail: stats.totalActions ? `完成 ${stats.completedActions}/${stats.totalActions} 项，节奏${stats.completionRate >= 60 ? "良好" : "仍可收紧"}` : "暂无计划内行动记录",
+        tone: "gold",
+      },
+      {
+        key: "quality",
+        icon: "shield",
+        label: "完成质量",
+        value: qualityValue,
+        detail: stats.completedActions ? `完成 ${stats.completedActions} 项，真实投入 ${stats.minutes} 分钟` : "完成行动后生成质量判断",
+        meta: stats.completedActions ? `${Math.min(5, Math.max(1, Math.round(stats.completionRate / 20)))} / 5` : "0 / 5",
+        tone: "mint",
+      },
+      {
+        key: "focus",
+        icon: "sunny",
+        label: "专注时段",
+        value: focusPoint?.label || "待形成",
+        detail: focusPoint ? `${focusPoint.minutes} 分钟投入最集中` : "记录投入后识别高效时段",
+        meta: focusPoint ? focusWindow[focusPoint.key] || "" : "",
+        tone: "gold",
+      },
+    ],
+  };
 }
 
 function errorMessage(rawError: unknown): string {
@@ -329,6 +439,9 @@ Page({
     rhythmTitle: "成长轨迹",
     rhythmSubtitle: "根据真实投入记录生成",
     rhythmPoints: [] as RhythmPoint[],
+    rhythmSegments: [] as RhythmPoint[],
+    rhythmTotalMinutes: 0,
+    loopDiagnosis: { score: 0, grade: "待建立", quote: "先完成一个清晰的小步骤，让节奏重新流动。", items: [] } as LoopDiagnosis,
     reviewTitle: "阶段行动回顾",
     reviewSubtitle: "优先展示需要继续推进的行动",
     reviewItems: [] as ReviewItem[],
@@ -343,8 +456,11 @@ Page({
     conversationId: "",
     scopeMenuOpen: false,
   },
+  profileHandler: null as null | (() => void),
 
   onLoad(query: Record<string, string>) {
+    this.profileHandler = () => this.refreshUserProfile();
+    on("profile:update", this.profileHandler);
     const scope = normalizeScope(query.scope || query.range);
     const copy = scopeCopy(scope);
     this.setData({
@@ -366,7 +482,21 @@ Page({
   },
 
   onShow() {
-    this.setData({ appTheme: getCurrentThemeId(), ...getNavigationMetrics(), userAvatarUrl: getLocalUserProfile()?.avatarUrl || "" });
+    this.setData({ appTheme: getCurrentThemeId(), ...getNavigationMetrics() });
+    this.refreshUserProfile();
+    bootstrapAccount().catch(() => undefined).then(() => this.refreshUserProfile());
+  },
+
+  onUnload() {
+    if (this.profileHandler) {
+      off("profile:update", this.profileHandler);
+      this.profileHandler = null;
+    }
+  },
+
+  refreshUserProfile() {
+    const profile = getLocalUserProfile();
+    this.setData({ displayName: profile?.nickname || "微信用户", userAvatarUrl: profile?.avatarUrl || "" });
   },
 
   loadLocalOverview() {
@@ -390,10 +520,15 @@ Page({
     const profile = getLocalUserProfile();
     const title = goals.length > 1 ? `${goals.length} 个进行中目标` : goals[0]?.title || "当前目标";
     const isOverall = this.data.scope === "overall";
-    const rhythmTitle = this.data.scope === "week" ? "本周行动节奏" : this.data.scope === "month" ? "本月周节奏" : "近半年成长轨迹";
-    const rhythmSubtitle = this.data.scope === "week" ? "按自然周展示每天的真实投入" : this.data.scope === "month" ? "按本月每七天观察投入变化" : "只统计已经发生的行动记录";
-    const reviewTitle = this.data.scope === "week" ? "本周行动回顾" : this.data.scope === "month" ? "本月行动回顾" : "目标全景";
-    const reviewSubtitle = isOverall ? `进行中 ${activeGoals.length} 个 · 已归档 ${archivedGoals.length} 个` : "优先展示仍需要继续推进的行动";
+    const rhythmTitle = this.data.scope === "day" ? "今日投入分布" : this.data.scope === "week" ? "本周行动节奏" : this.data.scope === "month" ? "本月周节奏" : "近半年成长轨迹";
+    const rhythmSubtitle = this.data.scope === "day" ? "按实际完成时间理解今天的行动节奏" : this.data.scope === "week" ? "按自然周展示每天的真实投入" : this.data.scope === "month" ? "按本月每七天观察投入变化" : "只统计已经发生的行动记录";
+    const reviewTitle = this.data.scope === "day" ? "今日行动回顾" : this.data.scope === "week" ? "本周行动回顾" : this.data.scope === "month" ? "本月行动回顾" : "目标全景";
+    const reviewSubtitle = isOverall
+      ? `进行中 ${activeGoals.length} 个 · 已归档 ${archivedGoals.length} 个`
+      : this.data.scope === "day"
+        ? "优先展示仍需要复盘输出的行动"
+        : "优先展示仍需要继续推进的行动";
+    const rhythmPoints = buildRhythm(this.data.scope, today, tasks);
     this.setData({
       goalId: isOverall ? "" : selectedGoal?.id || "",
       displayName: profile?.nickname || "微信用户",
@@ -411,7 +546,10 @@ Page({
       metricCards: metricCards(this.data.scope, stats, activeDates.length, streakDays, activeGoals.length, archivedGoals.length),
       rhythmTitle,
       rhythmSubtitle,
-      rhythmPoints: buildRhythm(this.data.scope, today, tasks),
+      rhythmPoints,
+      rhythmSegments: rhythmPoints.filter((point) => point.minutes > 0),
+      rhythmTotalMinutes: rhythmPoints.reduce((sum, point) => sum + point.minutes, 0),
+      loopDiagnosis: loopDiagnosis(stats, streakDays, rhythmPoints),
       reviewTitle,
       reviewSubtitle,
       reviewItems: isOverall ? [] : reviewItems(tasks),
@@ -429,12 +567,6 @@ Page({
   selectCoachScope(event: { currentTarget: { dataset: { scope?: string } } }) {
     const nextScope = String(event.currentTarget.dataset.scope || "overall");
     this.setData({ scopeMenuOpen: false });
-    if (nextScope === "day") {
-      const targetGoalId = this.data.goalId || this.data.requestedGoalId;
-      const goalQuery = targetGoalId ? `?goalId=${encodeURIComponent(targetGoalId)}` : "";
-      wx.redirectTo({ url: `/pages/daily-coach/index${goalQuery}` });
-      return;
-    }
     const scope = normalizeScope(nextScope);
     if (scope === this.data.scope) return;
     const copy = scopeCopy(scope);

@@ -48,7 +48,7 @@
     "disableSWC": true
   },
   "appid": "wx43cef9423fe2f523",
-  "projectname": "今日成长-目标打卡",
+  "projectname": "今日进度-目标计划打卡",
   "libVersion": "3.16.1",
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
   "condition": {
@@ -79,32 +79,32 @@
   "packOptions": {
     "ignore": [
       {
-        "type": "folder",
-        "value": "node_modules"
+        "value": "node_modules",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": "tests"
+        "value": "tests",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": "typings"
+        "value": "typings",
+        "type": "folder"
       },
       {
-        "type": "folder",
-        "value": "pages/example"
+        "value": "pages/example",
+        "type": "folder"
       },
       {
-        "type": "file",
-        "value": "package.json"
+        "value": "package.json",
+        "type": "file"
       },
       {
-        "type": "file",
-        "value": "package-lock.json"
+        "value": "package-lock.json",
+        "type": "file"
       },
       {
-        "type": "file",
-        "value": "tsconfig.json"
+        "value": "tsconfig.json",
+        "type": "file"
       }
     ],
     "include": []

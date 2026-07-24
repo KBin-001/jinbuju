@@ -1,4 +1,4 @@
-import { ActionTask, ArchivedGoal, ArchivedGoalStats, Goal, GoalCategory } from "../types/manual";
+import { ActionTask, ArchivedGoal, ArchivedGoalStats, Goal, GoalCategory, GoalMilestone } from "../types/manual";
 import { emit } from "../utils/eventBus";
 import { createLocalId, readManualStore, writeManualStore } from "./manualStore";
 
@@ -6,6 +6,9 @@ export interface CreateGoalInput {
   title: string;
   category: GoalCategory;
   description?: string;
+  targetDate?: string;
+  milestones?: GoalMilestone[];
+  onboardingCompletedAt?: string;
 }
 
 function sortActiveGoals(goals: Goal[]): Goal[] {
@@ -81,6 +84,8 @@ function createArchivedGoal(goal: Goal, actions: ActionTask[], now: string, stat
     title: goal.title,
     category: goal.category,
     description: goal.description,
+    targetDate: goal.targetDate,
+    milestones: goal.milestones?.map((milestone) => ({ ...milestone })),
     status,
     createdAt: goal.createdAt,
     startedAt: goal.startedAt || goal.createdAt,
@@ -140,6 +145,8 @@ export function restoreArchivedGoal(goalId: string): Goal {
       title: archived.title,
       category: archived.category || "custom",
       description: archived.description,
+      targetDate: archived.targetDate,
+      milestones: archived.milestones?.map((milestone) => ({ ...milestone })),
       status: "active",
       createdAt: archived.createdAt,
       startedAt: archived.startedAt || now,
@@ -150,6 +157,8 @@ export function restoreArchivedGoal(goalId: string): Goal {
     goal.title = archived.title;
     goal.category = archived.category || goal.category || "custom";
     goal.description = archived.description;
+    goal.targetDate = archived.targetDate;
+    goal.milestones = archived.milestones?.map((milestone) => ({ ...milestone }));
     goal.status = "active";
     goal.deletedAt = undefined;
     goal.endedAt = undefined;
@@ -222,6 +231,9 @@ export function createGoal(input: CreateGoalInput): Goal {
     title,
     category: input.category,
     description: input.description?.trim() || undefined,
+    targetDate: input.targetDate || undefined,
+    milestones: input.milestones?.map((milestone) => ({ ...milestone })),
+    onboardingCompletedAt: input.onboardingCompletedAt,
     status: "active",
     createdAt: now,
     startedAt: now,

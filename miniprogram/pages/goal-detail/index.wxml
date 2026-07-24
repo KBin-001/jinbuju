@@ -35,6 +35,21 @@
         </view>
       </view>
 
+      <view class="stage-card">
+        <view class="section-heading">
+          <view><text class="section-kicker">目标结果与阶段</text><text class="section-title">{{targetDateText}}</text></view>
+          <text class="section-note">{{goal.targetDate ? '目标日期' : '时间边界'}}</text>
+        </view>
+        <view wx:if="{{milestoneItems.length}}" class="milestone-list">
+          <view wx:for="{{milestoneItems}}" wx:key="id" class="milestone-row">
+            <view class="milestone-marker {{item.completed ? 'is-complete' : ''}}"><t-icon name="{{item.completed ? 'check' : 'flag'}}" size="24rpx" /></view>
+            <view class="milestone-copy"><text>{{item.title}}</text><text>{{item.dateText}}</text></view>
+            <text class="milestone-status {{item.completed ? 'is-complete' : ''}}">{{item.statusLabel}}</text>
+          </view>
+        </view>
+        <view wx:else class="milestone-empty">尚未设置阶段里程碑。目标仍按长期结果与每日行动持续推进。</view>
+      </view>
+
       <view class="rhythm-card">
         <view class="section-heading">
           <view>

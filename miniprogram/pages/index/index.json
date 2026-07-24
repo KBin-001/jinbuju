@@ -1,5 +1,11 @@
 {
   "navigationBarTitleText": "",
   "navigationStyle": "custom",
-  "enablePullDownRefresh": false
+  "enablePullDownRefresh": false,
+  "usingComponents": {
+    "today-action-list": "/components/today-action-list/index",
+    "daily-progress": "/components/daily-progress/index",
+    "ai-coach-tip": "/components/ai-coach-tip/index",
+    "active-timer-bar": "/components/active-timer-bar/index"
+  }
 }

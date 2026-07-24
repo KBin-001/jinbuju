@@ -5,6 +5,7 @@ import { getCurrentThemeId, MODAL_CONFIRM_COLORS, withAppTheme } from "../../ser
 import { getTabHeaderLayout } from "../../utils/tabHeader";
 import { isNotificationConfigured } from "../../config/notification";
 import { requestNotificationAuthorization } from "../../services/notification";
+import { recordProductEvent } from "../../services/productEvents";
 import { getCommunityEntry, resolveCommunityQrUrl } from "../../services/profile";
 import { communityExpiryText, getBundledCommunityQr, isCommunityEntryExpired } from "../../services/communityEntry";
 import { canShowNotificationPrompt, recordNotificationPrompt } from "../../utils/notificationPreference";
@@ -597,7 +598,7 @@ Page(withAppTheme({
     const team = this.data.team;
     const inviteReady = Boolean(team?.roomCode && this.data.canInviteFriends && this.data.inviterMemberId);
     return {
-      title: inviteReady && team ? `${team.name} 邀请你一起行动` : "今日成长-目标打卡 · 一起自律，各自成长",
+      title: inviteReady && team ? `${team.name} 邀请你一起行动` : "今日进度｜目标计划打卡 · 一起行动，各自成长",
       path: inviteReady && team
         ? `/pages/team/index?roomCode=${encodeURIComponent(team.roomCode)}&from=invite&inviterMemberId=${encodeURIComponent(this.data.inviterMemberId)}`
         : "/pages/team/index",
@@ -784,6 +785,7 @@ Page(withAppTheme({
         todayStatus: snapshot.todayStatus,
       });
       this.applyTeamData(data);
+      recordProductEvent("team_created");
       wx.showToast({ title: "小队已创建", icon: "success" });
     } catch (error) {
       this.setData({ creating: false });
@@ -903,6 +905,7 @@ Page(withAppTheme({
       this.applyTeamData(data);
       this.setData({ joinPopupVisible: false, roomCodeInput: "", teamNotificationPromptVisible: this.data.teamNotificationAvailable });
       if (this.data.teamNotificationAvailable) recordNotificationPrompt("team_activity");
+      recordProductEvent("team_joined");
       wx.showToast({ title: "已加入小队", icon: "success" });
     } catch (error) {
       this.setData({ joining: false });
@@ -968,6 +971,7 @@ Page(withAppTheme({
     }
     wx.navigateTo({
       url: `/pages/team-invite/index?roomCode=${encodeURIComponent(roomCode)}&inviterMemberId=${encodeURIComponent(inviterMemberId)}`,
+      success: () => recordProductEvent("team_invited"),
       fail: () => wx.showToast({ title: "邀请页打开失败，请重试", icon: "none" }),
     });
   },

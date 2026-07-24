@@ -33,6 +33,7 @@ const editPage = read("miniprogram/pages/action-edit/index.ts");
 const editTemplate = read("miniprogram/pages/action-edit/index.wxml");
 const todayPage = read("miniprogram/pages/index/index.ts");
 const todayTemplate = read("miniprogram/pages/index/index.wxml");
+const todayActionListTemplate = read("miniprogram/components/today-action-list/index.wxml");
 const cloudSync = read("cloudfunctions/generatePlan/manual-sync.js");
 
 assert.match(typeSource, /iconKey\?: ActionIconKey/);
@@ -46,9 +47,10 @@ assert.match(editTemplate, /<image src="\{\{item\.asset\}\}"/, "图标选择器�
 assert.doesNotMatch(editTemplate, /<t-icon name="\{\{item\.icon\}\}"/, "图标选择器不得依赖被裁剪的动态图标字体");
 assert.match(editPage, /selectedIconKey: this\.data\.iconManual \? this\.data\.selectedIconKey : inferActionIconKey/);
 assert.match(todayPage, /resolveActionIcon\(task\.title, task\.description, task\.iconManual \? task\.iconKey : undefined\)/);
-assert.match(todayTemplate, /<image src="\{\{task\.actionIconAsset\}\}"/);
-assert.doesNotMatch(todayTemplate, /task\.actionIconName/, "任务分类图标不得再依赖运行时动态图标字体");
-assert.doesNotMatch(todayTemplate, /icon-book\.svg|icon-headphone\.svg|icon-doc\.svg/, "今日任务不应继续使用旧的三图标占位方案");
+assert.match(todayTemplate, /<today-action-list/);
+assert.match(todayActionListTemplate, /<image[^>]+src="\{\{item\.actionIconAsset\}\}"/);
+assert.doesNotMatch(todayActionListTemplate, /item\.actionIconName/, "任务分类图标不得再依赖运行时动态图标字体");
+assert.doesNotMatch(todayActionListTemplate, /icon-book\.svg|icon-headphone\.svg|icon-doc\.svg/, "今日任务不应继续使用旧的三图标占位方案");
 assert.match(cloudSync, /ACTION_ICON_KEYS/);
 assert.match(cloudSync, /行动图标无效/);
 

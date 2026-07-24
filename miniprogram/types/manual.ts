@@ -11,6 +11,14 @@ export type GoalCategory =
   | "custom";
 export type GoalStatus = "active" | "completed" | "ended" | "archived";
 
+export interface GoalMilestone {
+  id: string;
+  title: string;
+  targetDate?: string;
+  status: "pending" | "completed";
+  completedAt?: string;
+}
+
 export interface Goal {
   id: string;
   title: string;
@@ -19,6 +27,9 @@ export interface Goal {
   status: GoalStatus;
   createdAt: string;
   startedAt?: string;
+  targetDate?: string;
+  milestones?: GoalMilestone[];
+  onboardingCompletedAt?: string;
   endedAt?: string;
   archivedAt?: string;
   deletedAt?: string;
@@ -26,6 +37,22 @@ export interface Goal {
 }
 
 export type ActionTaskStatus = "pending" | "completed" | "partially_completed" | "skipped" | "rescheduled";
+export type ActionExecutionMode = "direct" | "focus" | "ask";
+export type ActionSessionStatus = "running" | "paused" | "completed" | "abandoned";
+
+export interface ActionSession {
+  id: string;
+  goalId: string;
+  taskId: string;
+  businessDate: string;
+  mode: "stopwatch" | "countdown";
+  targetSeconds?: number;
+  elapsedSeconds: number;
+  status: ActionSessionStatus;
+  startedAt: string;
+  updatedAt: string;
+  endedAt?: string;
+}
 export type ActionIssueReason = "not_enough_time" | "too_difficult" | "resource_unavailable" | "physical_condition" | "temporary_event" | "not_practical" | "other";
 export type ActionIconKey = "study" | "reading" | "language" | "writing" | "exam" | "work" | "coding" | "exercise" | "meal" | "movie" | "creative" | "life";
 
@@ -45,6 +72,8 @@ export interface ActionTask {
   plannedDate: string;
   currentDate: string;
   estimatedMinutes: number;
+  /** 执行方式：直接打卡、专注计时，或每次开始时询问。 */
+  executionMode?: ActionExecutionMode;
   /** 行动图标；未手动选择时由标题自动映射。 */
   iconKey?: ActionIconKey;
   /** true 表示用户手动固定图标；否则标题变化时继续自动映射。 */
@@ -153,6 +182,8 @@ export interface ArchivedGoal {
   title: string;
   category?: GoalCategory;
   description?: string;
+  targetDate?: string;
+  milestones?: GoalMilestone[];
   status: "completed" | "ended" | "archived";
   createdAt: string;
   startedAt?: string;
@@ -173,6 +204,7 @@ export interface ManualDataStore {
   tasks: ActionTask[];
   checkins: DailyCheckin[];
   archivedGoals: ArchivedGoal[];
+  actionSessions?: ActionSession[];
   achievementUnlocks?: AchievementUnlockRecord[];
   sparkCheckins?: SparkCheckin[];
 }

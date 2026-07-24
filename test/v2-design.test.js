@@ -22,7 +22,7 @@ for (const [name, file, asset] of pages) {
 
 const app = read("miniprogram/app.wxss");
 const theme = read("miniprogram/styles/theme.wxss");
-for (const color of ["#F7F3EA", "#FFFCF6", "#557F75", "#668F84", "#91AAA2", "#C89B4A", "#24312D"]) {
+for (const color of ["#F7F3EA", "#FFFCF6", "#F1F4EE", "#245B4D", "#1B483D", "#7F9D91", "#C89B4A", "#24312D"]) {
   assert(app.includes(color) || theme.includes(color), `全局设计系统缺少 ${color}`);
 }
 

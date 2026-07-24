@@ -88,6 +88,7 @@ export function syncManualData(): Promise<ManualDataStore> {
       tasks: mergeRecords(remote.tasks || [], current.tasks || [], (item) => item.id, (item) => item.updatedAt || item.createdAt || ""),
       checkins: mergeRecords(remote.checkins || [], current.checkins || [], (item) => item.id, (item) => item.updatedAt || item.createdAt || ""),
       archivedGoals: mergeRecords(remote.archivedGoals || [], current.archivedGoals || [], (item) => item.id, (item) => item.updatedAt || item.archivedAt || item.endedAt || ""),
+      actionSessions: mergeRecords(remote.actionSessions || [], current.actionSessions || [], (item) => item.id, (item) => item.updatedAt || item.startedAt || ""),
       achievementUnlocks: mergeRecords(remote.achievementUnlocks || [], current.achievementUnlocks || [], (item) => item.achievementId, (item) => item.celebratedAt || item.unlockedAt || ""),
       sparkCheckins: mergeRecords(remote.sparkCheckins || [], current.sparkCheckins || [], (item) => item.businessDate, (item) => item.checkedAt || "")
         .sort((a, b) => a.businessDate.localeCompare(b.businessDate)),

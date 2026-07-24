@@ -3,46 +3,80 @@
     <image class="goal-hero__mountain" src="/assets/profile/goal-create-hero-v3.jpg" mode="aspectFill" />
     <view class="goal-hero__veil"></view>
     <view class="goal-hero__content">
-      <view class="hero-kicker"><view class="hero-kicker__line"></view><text>新的成长旅程</text></view>
-      <view class="hero-title">你想先抵达哪里？</view>
-      <view class="hero-copy">选定一个方向，从今天开始积累。</view>
+      <text class="hero-kicker">创建成长目标</text>
+      <text class="hero-title">先看清要去哪里，再开始今天</text>
+      <text class="hero-copy">三步完成目标、周期与第一项行动</text>
     </view>
-    <view class="hero-seal">目标</view>
   </view>
 
-  <view class="direction-section">
-    <view class="section-heading">
-      <view>
-        <view class="section-title">选择目标方向</view>
-        <view class="section-caption">先选一个最想推进的方向</view>
-      </view>
-      <view class="step-badge">01</view>
+  <view class="stepper" aria-label="创建进度">
+    <view wx:for="{{[1,2,3]}}" wx:key="*this" class="stepper__item {{step >= item ? 'is-active' : ''}}">
+      <view class="stepper__dot">{{item}}</view>
+      <text>{{item === 1 ? '目标' : item === 2 ? '周期' : '行动'}}</text>
     </view>
-    <view class="direction-grid" role="radiogroup" aria-label="目标方向">
-      <view wx:for="{{options}}" wx:key="value" class="direction-card direction-card--{{item.tone}} {{category === item.value ? 'is-selected' : ''}}" data-value="{{item.value}}" bindtap="selectCategory" hover-class="direction-card--pressed" role="radio" aria-checked="{{category === item.value}}">
-        <view class="direction-mark">{{item.mark}}</view>
+  </view>
+
+  <view wx:if="{{step === 1}}" class="form-section">
+    <view class="section-title">你想达成什么结果？</view>
+    <view class="section-caption">目标描述长期结果，不写成今天的待办</view>
+    <view class="direction-grid" role="radiogroup">
+      <view wx:for="{{options}}" wx:key="value" class="direction-row {{category === item.value ? 'is-selected' : ''}}" data-value="{{item.value}}" bindtap="selectCategory" hover-class="pressed" role="radio" aria-checked="{{category === item.value}}">
         <view class="direction-copy"><text class="direction-label">{{item.label}}</text><text class="direction-note">{{item.note}}</text></view>
-        <view wx:if="{{category === item.value}}" class="direction-check"><t-icon name="check" size="22rpx" /></view>
+        <t-icon name="{{category === item.value ? 'check-circle-filled' : 'chevron-right'}}" size="34rpx" />
       </view>
     </view>
-  </view>
-
-  <view class="name-section">
-    <view class="field-heading"><view><view class="field-label">目标名称</view><view class="field-caption">清晰的名称，更容易开始第一步</view></view><view class="step-badge">02</view></view>
-    <view class="name-input-shell {{titleFocused ? 'is-focused' : ''}}">
-      <view class="name-input-mark"><t-icon name="flag" size="32rpx" /></view>
-      <input class="name-input" value="{{title}}" focus="{{titleFocused}}" maxlength="30" placeholder="例如：通过英语四级" bindinput="inputTitle" bindfocus="focusTitle" bindblur="blurTitle" cursor-spacing="40" />
-      <text class="name-counter">{{title.length}}/30</text>
+    <view class="field-shell">
+      <text class="field-label">目标结果</text>
+      <input class="text-input" value="{{title}}" maxlength="30" placeholder="例如：通过英语六级考试" bindinput="inputTitle" cursor-spacing="32" />
+      <text class="field-count">{{title.length}}/30</text>
     </view>
   </view>
 
-  <view wx:if="{{activeGoalCount > 0}}" class="existing-note">
-    <t-icon name="info-circle" size="26rpx" />
-    <text>已有 {{activeGoalCount}} 个进行中目标，新目标将成为当前目标</text>
+  <view wx:elif="{{step === 2}}" class="form-section">
+    <view class="section-title">给目标一个时间边界</view>
+    <view class="section-caption">暂时不确定也没关系，可按“长期持续”开始</view>
+    <picker mode="date" value="{{targetDate}}" start="{{today}}" end="{{dateEnd}}" bindchange="changeTargetDate">
+      <view class="choice-row">
+        <view><text class="choice-label">目标日期</text><text class="choice-note">{{targetDate || '长期持续'}}</text></view>
+        <t-icon name="calendar" size="34rpx" />
+      </view>
+    </picker>
+    <view wx:if="{{targetDate}}" class="text-link" bindtap="clearTargetDate">改为长期持续</view>
+    <view class="field-shell">
+      <text class="field-label">首个里程碑（可选）</text>
+      <input class="text-input" value="{{milestoneTitle}}" maxlength="30" placeholder="例如：完成第一轮核心词汇" bindinput="inputMilestone" cursor-spacing="32" />
+      <text class="field-help">里程碑用于确认阶段变化，不会替代每日行动</text>
+    </view>
+    <view wx:if="{{activeGoalCount > 0}}" class="inline-note"><t-icon name="info-circle" size="28rpx" /><text>你已有 {{activeGoalCount}} 个进行中目标，新目标会成为当前目标。</text></view>
   </view>
 
-  <button class="submit-button" loading="{{submitting}}" disabled="{{submitting || !category || title.length < 2}}" bindtap="submit" hover-class="submit-button--pressed">
-    <text>{{submitting ? '正在创建' : '创建目标并进入学习'}}</text>
-    <t-icon wx:if="{{!submitting}}" name="arrow-right" size="34rpx" />
-  </button>
+  <view wx:else class="form-section">
+    <view class="section-title">创建第一项今日行动</view>
+    <view class="section-caption">写下今天可以直接开始、能够判断完成的事情</view>
+    <view class="field-shell">
+      <text class="field-label">行动内容</text>
+      <input class="text-input" value="{{actionTitle}}" maxlength="40" placeholder="例如：完成 30 道听力练习" bindinput="inputAction" cursor-spacing="64" />
+    </view>
+    <view class="field-block">
+      <text class="field-label">预计投入</text>
+      <view class="duration-list">
+        <view wx:for="{{durationOptions}}" wx:key="*this" class="duration-chip {{estimatedMinutes === item ? 'is-selected' : ''}}" data-value="{{item}}" bindtap="selectDuration">{{item}} 分钟</view>
+      </view>
+    </view>
+    <view class="choice-row reminder-row">
+      <view><text class="choice-label">行动提醒</text><text class="choice-note">只提醒这项行动</text></view>
+      <t-switch value="{{reminderEnabled}}" bindchange="toggleReminder" />
+    </view>
+    <picker wx:if="{{reminderEnabled}}" mode="time" value="{{reminderTime}}" bindchange="changeReminderTime">
+      <view class="choice-row time-row"><text class="choice-label">提醒时间</text><text class="choice-note">{{reminderTime}}</text></view>
+    </picker>
+    <view class="result-preview"><t-icon name="play-circle" size="40rpx" /><view><text>创建后将直接进入今日页</text><text>这项行动会成为首要操作，可立即开始计时。</text></view></view>
+  </view>
+
+  <view wx:if="{{errorMessage}}" class="error-message"><t-icon name="error-circle" size="28rpx" /><text>{{errorMessage}}</text></view>
+  <view class="footer-actions">
+    <button wx:if="{{step > 1}}" class="secondary-button" disabled="{{submitting}}" bindtap="previousStep">上一步</button>
+    <button wx:if="{{step < 3}}" class="primary-button" bindtap="nextStep">继续</button>
+    <button wx:else class="primary-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submit">{{createdGoalId ? '重试创建行动' : '创建并开始今天'}}</button>
+  </view>
 </view>

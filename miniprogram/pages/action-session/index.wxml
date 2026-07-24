@@ -1,0 +1,43 @@
+<view class="session-page" data-theme="{{appTheme}}">
+  <view wx:if="{{loading}}" class="state-view"><t-loading size="48rpx" text="正在准备行动" /></view>
+  <view wx:elif="{{errorMessage}}" class="state-view">
+    <t-icon name="error-circle" size="64rpx" />
+    <text class="state-title">暂时无法开始</text><text class="state-copy">{{errorMessage}}</text>
+    <button class="secondary-button" bindtap="goBack">返回今日</button>
+  </view>
+  <block wx:else>
+    <view class="session-head"><text class="goal-label">{{goalTitle}}</text><text class="mode-label">{{session.mode === 'countdown' ? '按预计投入倒计时' : '自由正计时'}}</text></view>
+    <view class="focus-area">
+      <text class="task-title">{{task.title}}</text>
+      <t-progress
+        class="session-progress"
+        theme="circle"
+        percentage="{{session.mode === 'countdown' ? progressPercent : 0}}"
+        label="{{false}}"
+        stroke-width="14rpx"
+        color="{{session.status === 'paused' ? '#C89B4A' : '#245B4D'}}"
+        track-color="#DCE7E1"
+        aria-label="{{session.status === 'paused' ? '行动已暂停' : '行动计时中'}}"
+      >
+        <view slot="label" class="timer-ring__inner"><text class="timer-value">{{displayTime}}</text><text class="timer-hint">{{session.status === 'paused' ? '已暂停' : remainingText}}</text></view>
+      </t-progress>
+      <text class="focus-copy">把注意力放在这一件事上。退出小程序后，计时仍会按时间戳恢复。</text>
+    </view>
+    <view class="session-actions">
+      <button wx:if="{{session.status === 'running'}}" class="secondary-button" bindtap="pause"><t-icon name="pause-circle" size="34rpx" />暂停</button>
+      <button wx:else class="secondary-button" bindtap="resume"><t-icon name="play-circle" size="34rpx" />继续</button>
+      <button class="primary-button" bindtap="prepareComplete">提前完成</button>
+    </view>
+    <view class="danger-link" bindtap="abandon">放弃本次行动</view>
+  </block>
+
+  <view wx:if="{{completionVisible}}" class="sheet-mask" catchtap="closeCompletion"></view>
+  <view class="completion-sheet {{completionVisible ? 'is-visible' : ''}}">
+    <view class="sheet-handle"></view>
+    <view class="sheet-title">记录这次真实投入</view>
+    <view class="sheet-copy">计时结果为 {{elapsedResultText}}，你可以修正最终统计分钟数。</view>
+    <view class="minutes-field"><text>实际投入</text><input type="number" value="{{actualMinutes}}" bindinput="inputMinutes" /><text>分钟</text></view>
+    <t-textarea value="{{reflection}}" maxlength="200" placeholder="写下收获或遇到的困难（可选）" bindchange="inputReflection" />
+    <button class="primary-button sheet-submit" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitComplete">完成并保存</button>
+  </view>
+</view>

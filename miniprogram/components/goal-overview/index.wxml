@@ -1,0 +1,28 @@
+<view class="goal-overview">
+  <view class="goal-overview__visual" aria-hidden="true">
+    <image class="goal-overview__image" src="/assets/progress-mountain-path-v2.jpg" mode="aspectFill" />
+    <view class="goal-overview__flag"><t-icon name="flag" size="29rpx" /></view>
+  </view>
+  <view class="goal-overview__content">
+    <view class="goal-overview__top">
+      <view class="goal-overview__eyebrow">当前目标</view>
+      <view class="goal-overview__switch" bindtap="handleSwitch" hover-class="tap-pressed" aria-role="button">
+        <text>{{switchLabel}}</text><t-icon name="chevron-right" size="28rpx" />
+      </view>
+    </view>
+    <view class="goal-overview__title">{{goal.title}}</view>
+    <view class="goal-overview__period">{{period}}</view>
+    <view class="goal-stage" wx:if="{{stage}}">
+      <view class="goal-stage__labels"><text>{{stage.startLabel}}</text><text>{{stage.endLabel}}</text></view>
+      <view class="goal-stage__track">
+        <view class="goal-stage__fill" style="width: {{stage.progressPercent}}%;"></view>
+        <view class="goal-stage__node is-start"></view>
+        <view class="goal-stage__node is-mid-one"></view>
+        <view class="goal-stage__node is-mid-two"></view>
+        <view class="goal-stage__node is-end"></view>
+        <view class="goal-stage__current" style="left: {{stage.progressPercent}}%;"></view>
+      </view>
+      <view class="goal-stage__caption">{{stage.caption}}</view>
+    </view>
+  </view>
+</view>

@@ -54,7 +54,7 @@ assert(page.includes("wx.previewImage") && page.includes("previewCustomerService
 assert(styles.includes(".manage-contact-row") && styles.includes(".customer-service-sheet-panel"), "客服入口与二维码承接层需要保持完整样式");
 assert(styles.includes(".customer-service-qr-frame { width: 612rpx; height: 897rpx"), "客服竖版二维码必须使用接近全宽的大图展示");
 
-assert(page.includes("this.loadProfile();\n    bootstrapAccount()"), "页面应先展示本地记录，再刷新云端账号");
+assert(/this\.loadProfile\(\);\s+bootstrapAccount\(\)/.test(page), "页面应先展示本地记录，再刷新云端账号");
 assert(page.includes('on("sync:state"') && page.includes('off("sync:state"'), "页面应订阅并清理同步状态监听");
 assert(page.includes('sync.phase === "syncing"') && page.includes('sync.phase === "synced"'), "同步状态必须区分同步中与已同步");
 

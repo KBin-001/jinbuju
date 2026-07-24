@@ -1,11 +1,11 @@
-import { ActionTask, ArchivedGoal, DailyCheckin, Goal, ManualDataStore } from "../types/manual";
+import { ActionSession, ActionTask, ArchivedGoal, DailyCheckin, Goal, ManualDataStore } from "../types/manual";
 import { emit } from "../utils/eventBus";
 
 const STORAGE_KEY = "JINBUJU_MANUAL_MVP_V1";
 const SNAPSHOT_KEY = "JINBUJU_MANUAL_SNAPSHOT_V1";
 
 function emptyStore(): ManualDataStore {
-  return { version: 1, goals: [], tasks: [], checkins: [], archivedGoals: [], achievementUnlocks: [], sparkCheckins: [] };
+  return { version: 1, goals: [], tasks: [], checkins: [], archivedGoals: [], actionSessions: [], achievementUnlocks: [], sparkCheckins: [] };
 }
 
 let memoryStore: ManualDataStore = emptyStore();
@@ -83,6 +83,7 @@ function normalizeStore(value: Partial<ManualDataStore>): ManualDataStore {
         updatedAt: goal.updatedAt || goal.archivedAt || goal.endedAt || goal.createdAt,
       }))
       : [],
+    actionSessions: Array.isArray(value.actionSessions) ? value.actionSessions as ActionSession[] : [],
     achievementUnlocks: Array.isArray(value.achievementUnlocks) ? value.achievementUnlocks : [],
     sparkCheckins: Array.isArray(value.sparkCheckins) ? value.sparkCheckins : [],
   };

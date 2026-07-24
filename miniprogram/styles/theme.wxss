@@ -1,4 +1,4 @@
-/* 今日成长-目标打卡 · 唯一发布主题：现代东方山水 */
+/* 今日进度｜目标计划打卡 · 唯一发布主题：现代东方山水 */
 page {
   /* Surface */
   --color-bg-page: #F7F3EA;
@@ -12,18 +12,20 @@ page {
   --color-card: var(--color-bg-card);
   --color-surface: var(--color-bg-card);
   --color-card-soft: var(--color-bg-soft);
+  --color-surface-soft: var(--color-bg-soft);
   --color-card-soft-2: #E8F0EB;
   --color-card-hover: #F3F5F0;
 
   /* Brand */
-  --color-primary: #557F75;
-  --color-primary-dark: #3F665D;
+  --color-primary: #245B4D;
+  --color-primary-dark: #1B483D;
   --color-primary-deep: var(--color-primary-dark);
   --color-primary-soft: #EAF1EE;
   --color-primary-light: #91AAA2;
+  --color-secondary: #7F9D91;
   --color-growth: #6B9086;
-  --color-action-primary: #668F84;
-  --color-action-primary-active: #557B71;
+  --color-action-primary: #245B4D;
+  --color-action-primary-active: #1B483D;
   --color-action-soft: #EAF2EF;
   --color-gold: #C89B4A;
   --color-gold-soft: #F2E6C8;
@@ -38,6 +40,7 @@ page {
   --color-text-disabled: #A9B0AD;
   --color-text-light: #9B9F9B;
   --color-text-muted: var(--color-text-light);
+  --color-text-weak: var(--color-text-light);
   --color-text-inverse: #FFFFFF;
   --font-page-title: 40rpx;
   --font-data: 44rpx;
@@ -46,10 +49,14 @@ page {
   --font-body: 27rpx;
   --font-caption: 23rpx;
   --font-tag: 21rpx;
+  --font-family-brand: "Songti SC", "STSong", "SimSun", serif;
+  --font-family-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", sans-serif;
+  --font-family-numeric: "DIN Alternate", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
 
   /* Semantic colors */
   --color-border: rgba(36, 91, 77, .12);
   --color-border-soft: rgba(36, 91, 77, .08);
+  --color-border-strong: rgba(36, 91, 77, .22);
   --color-divider: rgba(36, 91, 77, .08);
   --color-success: #39745F;
   --color-success-soft: #E7F0EB;
@@ -58,9 +65,12 @@ page {
   --color-info: #587A86;
   --color-info-soft: #EAF0F2;
   --color-danger: #B86152;
+  --color-error: var(--color-danger);
   --color-danger-soft: #F8E9E5;
   --color-danger-light: var(--color-danger-soft);
   --color-mask: rgba(25, 35, 31, .46);
+  --color-disabled-bg: #D7DFDA;
+  --color-disabled-text: #8F9A95;
 
   /* Shape and spacing */
   --radius-hero: 28rpx;
@@ -68,10 +78,10 @@ page {
   --radius-card: 24rpx;
   --radius-card-small: 18rpx;
   --radius-card-sm: var(--radius-card);
-  --radius-input: 20rpx;
+  --radius-input: 18rpx;
   --radius-sheet: 32rpx;
   --radius-pill: 999rpx;
-  --radius-button: var(--radius-pill);
+  --radius-button: 18rpx;
   --radius-tag: 18rpx;
   --space-page-x: 32rpx;
   --space-page-top: 24rpx;
