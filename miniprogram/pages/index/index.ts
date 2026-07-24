@@ -16,7 +16,7 @@ import { getTabHeaderLayout } from "../../utils/tabHeader";
 import { buildReminderAt, nextReminderTime, normalizeReminderTime, reminderDateRange } from "../../utils/actionReminder";
 import { ACTION_DURATION_OPTIONS } from "../../config/action";
 import { resolveActionIcon } from "../../utils/actionIcon";
-import { finishActionSession, getActiveActionSession, getActiveActionSessionContext, pauseActionSession, resumeActionSession, startActionSession } from "../../services/actionSession";
+import { abandonActionSession, finishActionSession, getActiveActionSession, getActiveActionSessionContext, pauseActionSession, resumeActionSession, startActionSession } from "../../services/actionSession";
 
 const REASONS: Array<{ label: string; value: ActionIssueReason }> = [{ label: "时间不够", value: "not_enough_time" }, { label: "难度太高", value: "too_difficult" }, { label: "缺少资源", value: "resource_unavailable" }, { label: "身体或状态不适", value: "physical_condition" }, { label: "临时有事", value: "temporary_event" }, { label: "任务不符合实际", value: "not_practical" }, { label: "其他", value: "other" }];
 const DURATION_OPTIONS = ACTION_DURATION_OPTIONS;
@@ -361,6 +361,7 @@ Page(withAppTheme({
     activeSessionElapsedMinutes: 0,
     activeSessionDisplay: "00:00",
     activeSessionProgress: 0,
+    activeSessionOrphan: false,
     timerSubmitting: false,
     taskGroups: [] as ViewTaskGroup[],
     visibleTasks: [] as ViewTask[],
@@ -432,6 +433,7 @@ Page(withAppTheme({
   },
   profileHandler: null as null | (() => void),
   focusGoalHandler: null as null | (() => void),
+  sessionUpdateHandler: null as null | (() => void),
   completionSheetTimer: null as ReturnType<typeof setTimeout> | null,
   sessionTicker: null as ReturnType<typeof setInterval> | null,
   coachRequestKey: "",
@@ -443,8 +445,10 @@ Page(withAppTheme({
   onLoad() {
     this.profileHandler = () => this.load();
     this.focusGoalHandler = () => this.load();
+    this.sessionUpdateHandler = () => this.refreshActiveSession();
     on("profile:update", this.profileHandler);
     on("goal:focus:update", this.focusGoalHandler);
+    on("action-session:update", this.sessionUpdateHandler);
   },
   onReady() {},
   onHide() { this.stopSessionTicker(); },
@@ -461,6 +465,10 @@ Page(withAppTheme({
     if (this.focusGoalHandler) {
       off("goal:focus:update", this.focusGoalHandler);
       this.focusGoalHandler = null;
+    }
+    if (this.sessionUpdateHandler) {
+      off("action-session:update", this.sessionUpdateHandler);
+      this.sessionUpdateHandler = null;
     }
   },
   onShow() {
@@ -526,6 +534,7 @@ Page(withAppTheme({
         tasks: group.tasks.map((task) => taskById.get(task.id) || task),
       }));
       const activeRawTask = activeContext && activeContext.task ? activeContext.task : null;
+      const activeSessionOrphan = Boolean(activeContext && activeContext.task === null && activeSession);
       const activeSessionTask = activeRawTask ? toViewTask(activeRawTask, selectedDate, today) : null;
       const summary = calculateTodaySummary(summaryTasks);
       const activeMinutes = sessionMinutes(activeSession);
@@ -553,6 +562,7 @@ Page(withAppTheme({
         activeSessionTaskId: activeSession?.taskId || "",
         activeSessionStatus: activeSession?.status || "",
         activeSessionTask,
+        activeSessionOrphan,
         activeSessionElapsedSeconds: activeSession?.elapsedSeconds || 0,
         activeSessionElapsedMinutes: activeMinutes,
         activeSessionDisplay: sessionClock(activeSession?.elapsedSeconds || 0),
@@ -787,9 +797,27 @@ Page(withAppTheme({
     }
   },
   requestFinishTimer() {
-    if (!this.data.activeSessionId || this.data.timerSubmitting) return;
+    if (this.data.timerSubmitting) { wx.showToast({ title: "正在保存，请稍候", icon: "none" }); return; }
+    // 页面丢失会话引用时，先从全局重新获取活跃会话再继续，而非静默返回。
+    let sessionId = this.data.activeSessionId;
+    if (!sessionId) {
+      const context = getActiveActionSessionContext();
+      if (!context || !context.session) { wx.showToast({ title: "当前没有进行中的计时", icon: "none" }); return; }
+      sessionId = context.session.id;
+      this.setData({
+        activeSessionId: context.session.id,
+        activeSessionTaskId: context.session.taskId,
+        activeSessionStatus: context.session.status,
+        activeSessionElapsedSeconds: context.session.elapsedSeconds,
+        activeSessionDisplay: sessionClock(context.session.elapsedSeconds),
+        activeSessionProgress: sessionProgress(context.session),
+        activeSessionElapsedMinutes: sessionMinutes(context.session),
+        activeSessionOrphan: context.task === null,
+        activeSessionTask: context.task ? toViewTask(context.task, this.data.selectedDate || getTodayBusinessDate()) : null,
+      });
+    }
     try {
-      if (this.data.activeSessionStatus === "running") pauseActionSession(this.data.activeSessionId);
+      if (this.data.activeSessionStatus === "running") pauseActionSession(sessionId);
       this.refreshActiveSession();
     } catch (_error) {
       // 弹窗仍可继续，最终保存会再次校验会话状态。
@@ -806,10 +834,17 @@ Page(withAppTheme({
     });
   },
   async finishActiveTimer(markTaskCompleted: boolean) {
-    if (!this.data.activeSessionId || this.data.timerSubmitting) return;
+    if (this.data.timerSubmitting) { wx.showToast({ title: "正在保存，请稍候", icon: "none" }); return; }
+    // 页面丢失会话引用时，先从全局重新获取活跃会话再继续，而非静默返回。
+    let sessionId = this.data.activeSessionId;
+    if (!sessionId) {
+      const context = getActiveActionSessionContext();
+      if (!context || !context.session) { wx.showToast({ title: "当前没有进行中的计时", icon: "none" }); return; }
+      sessionId = context.session.id;
+    }
     this.setData({ timerSubmitting: true });
     try {
-      finishActionSession(this.data.activeSessionId, markTaskCompleted);
+      finishActionSession(sessionId, markTaskCompleted);
       await syncManualData().catch(() => undefined);
       this.stopSessionTicker();
       this.setData({ timerSubmitting: false });
@@ -819,6 +854,32 @@ Page(withAppTheme({
       this.setData({ timerSubmitting: false });
       wx.showToast({ title: error instanceof Error ? error.message : "计时保存失败", icon: "none" });
     }
+  },
+  cleanupOrphanSession() {
+    const sessionId = this.data.activeSessionId;
+    if (!sessionId) { wx.showToast({ title: "当前没有需要清理的计时", icon: "none" }); return; }
+    if (this.data.timerSubmitting) { wx.showToast({ title: "正在处理，请稍候", icon: "none" }); return; }
+    wx.showModal({
+      title: "结束并清理",
+      content: "关联的行动已删除，结束并清理残留计时后可开始新的专注。",
+      cancelText: "取消",
+      confirmText: "结束并清理",
+      confirmColor: MODAL_CONFIRM_COLORS.danger,
+      success: (result) => {
+        if (!result.confirm) return;
+        this.setData({ timerSubmitting: true });
+        try {
+          abandonActionSession(sessionId, false);
+          this.stopSessionTicker();
+          this.setData({ timerSubmitting: false });
+          this.load();
+          wx.showToast({ title: "已清理，可开始新计时", icon: "none" });
+        } catch (error) {
+          this.setData({ timerSubmitting: false });
+          wx.showToast({ title: error instanceof Error ? error.message : "清理失败", icon: "none" });
+        }
+      },
+    });
   },
   openTodayDataDetails() {
     if (!this.data.goal) return;

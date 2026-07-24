@@ -12,6 +12,12 @@
 .timer-bar__action--pressed { opacity: .68; }
 .timer-bar__action--toggle { width: 82rpx; }
 .timer-bar__action--finish { width: 114rpx; color: #3e4c47; }
+.timer-bar--orphan { border-color: rgba(193, 96, 76, .3); }
+.timer-bar--orphan .timer-bar__icon { background: #f6e8e4; }
+.timer-bar--orphan .timer-bar__icon::after { display: none; }
+.timer-bar--orphan .timer-bar__title { color: #8a4a3e; }
+.timer-bar--orphan .timer-bar__clock { color: #6b3a30; }
+.timer-bar__action--cleanup { width: 140rpx; color: #b54a38; }
 @media (max-width: 350px) {
   .timer-bar {
     right: 22rpx;
@@ -29,4 +35,5 @@
   .timer-bar__action { height: 52rpx; padding: 0; gap: 1rpx; font-size: 15rpx; line-height: 52rpx; }
   .timer-bar__action--toggle { width: 82rpx; }
   .timer-bar__action--finish { width: 118rpx; }
+  .timer-bar__action--cleanup { width: 144rpx; }
 }

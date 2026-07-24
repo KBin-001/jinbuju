@@ -1,16 +1,24 @@
-<view wx:if="{{visible}}" class="timer-bar" role="region" aria-label="{{taskTitle + '计时控制'}}">
+<view wx:if="{{visible}}" class="timer-bar {{orphan ? 'timer-bar--orphan' : ''}}" role="region" aria-label="{{taskTitle + '计时控制'}}">
   <view class="timer-bar__identity">
-    <view class="timer-bar__icon"><image class="timer-bar__icon-image" src="{{iconAsset}}" mode="aspectFit" /></view>
+    <view class="timer-bar__icon"><image wx:if="{{iconAsset}}" class="timer-bar__icon-image" src="{{iconAsset}}" mode="aspectFit" /><t-icon wx:else name="error-circle" size="36rpx" /></view>
     <text class="timer-bar__title">{{taskTitle}}</text>
   </view>
   <view class="timer-bar__clock">{{displayTime}}</view>
-  <view class="timer-bar__track"><view class="timer-bar__fill" style="width: {{progressPercent}}%;"></view></view>
-  <view class="timer-bar__action timer-bar__action--toggle" role="button" catchtap="toggleTimer" aria-label="{{status === 'paused' ? '继续计时' : '暂停计时'}}" hover-class="timer-bar__action--pressed">
-    <t-icon name="{{status === 'paused' ? 'play-circle' : 'pause-circle'}}" size="34rpx" />
-    <text>{{status === 'paused' ? '继续' : '暂停'}}</text>
-  </view>
-  <view class="timer-bar__action timer-bar__action--finish" role="button" catchtap="finishTimer" aria-label="结束计时" hover-class="timer-bar__action--pressed">
-    <t-icon name="stop-circle" size="34rpx" />
-    <text>结束计时</text>
-  </view>
+  <block wx:if="{{!orphan}}">
+    <view class="timer-bar__track"><view class="timer-bar__fill" style="width: {{progressPercent}}%;"></view></view>
+    <view class="timer-bar__action timer-bar__action--toggle" role="button" catchtap="toggleTimer" aria-label="{{status === 'paused' ? '继续计时' : '暂停计时'}}" hover-class="timer-bar__action--pressed">
+      <t-icon name="{{status === 'paused' ? 'play-circle' : 'pause-circle'}}" size="34rpx" />
+      <text>{{status === 'paused' ? '继续' : '暂停'}}</text>
+    </view>
+    <view class="timer-bar__action timer-bar__action--finish" role="button" catchtap="finishTimer" aria-label="结束计时" hover-class="timer-bar__action--pressed">
+      <t-icon name="stop-circle" size="34rpx" />
+      <text>结束计时</text>
+    </view>
+  </block>
+  <block wx:else>
+    <view class="timer-bar__action timer-bar__action--cleanup" role="button" catchtap="cleanupOrphan" aria-label="结束并清理" hover-class="timer-bar__action--pressed">
+      <t-icon name="delete" size="34rpx" />
+      <text>结束并清理</text>
+    </view>
+  </block>
 </view>

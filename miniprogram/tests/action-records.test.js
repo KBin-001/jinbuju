@@ -44,4 +44,33 @@ assert.doesNotMatch(quickAdd, /visible="\{\{\!\!activeSessionId && \!\!activeSes
 // 非今日日期下今日摘要不误叠加活跃会话的进行中投入。
 assert.match(todaySource, /selectedDate === today \? activeMinutes : 0/, "非今日日期下今日摘要不应叠加活跃会话进行中投入");
 
+// === 孤儿会话恢复态（规格 03）===
+// 活跃会话存在但任务被软删除时，悬浮计时条进入恢复态而非隐藏。
+const timerBarTs = fs.readFileSync(path.join(root, "components/active-timer-bar/index.ts"), "utf8");
+const timerBarWxml = fs.readFileSync(path.join(root, "components/active-timer-bar/index.wxml"), "utf8");
+assert.match(timerBarTs, /orphan:\s*\{\s*type:\s*Boolean,\s*value:\s*false\s*\}/, "计时条组件应声明 orphan 属性");
+assert.match(timerBarTs, /cleanupOrphan\(\)/, "计时条组件应提供 cleanupOrphan 事件触发");
+assert.match(timerBarWxml, /timer-bar--orphan/, "恢复态应有独立样式类");
+assert.match(timerBarWxml, /catchtap="cleanupOrphan"/, "恢复态应绑定 cleanupOrphan 操作");
+assert.match(quickAdd, /orphan="\{\{activeSessionOrphan\}\}"/, "今日页应向计时条传递 orphan 状态");
+assert.match(quickAdd, /行动已删除/, "恢复态应显示「行动已删除」提示");
+assert.match(quickAdd, /bind:cleanup="cleanupOrphanSession"/, "今日页应绑定 cleanup 事件到 cleanupOrphanSession");
+assert.match(todaySource, /cleanupOrphanSession\(\)/, "今日页应实现 cleanupOrphanSession 方法");
+assert.match(todaySource, /abandonActionSession\(sessionId,\s*false\)/, "清理孤儿会话应调用 abandonActionSession(keepTime=false)");
+assert.match(todaySource, /activeSessionOrphan/, "今日页应维护 activeSessionOrphan 状态");
+
+// === 结束计时永不静默失败（规格 04）===
+// requestFinishTimer / finishActiveTimer 在会话引用缺失时从全局重新获取，而非静默 return。
+assert.match(todaySource, /requestFinishTimer\(\)/, "今日页应实现 requestFinishTimer");
+assert.doesNotMatch(todaySource, /if \(!this\.data\.activeSessionId \|\| this\.data\.timerSubmitting\) return;\s*\n\s*try \{\s*\n\s*if \(this\.data\.activeSessionStatus === "running"\) pauseActionSession\(this\.data\.activeSessionId\);/, "requestFinishTimer 不应直接 return");
+assert.match(todaySource, /let sessionId = this\.data\.activeSessionId;\s*\n\s*if \(!sessionId\) \{[\s\S]*getActiveActionSessionContext/, "requestFinishTimer 应在会话引用缺失时从全局重新获取");
+assert.match(todaySource, /当前没有进行中的计时/, "无活跃会话时应给出明确反馈");
+assert.match(todaySource, /正在保存，请稍候/, "timerSubmitting 守卫拦截时应给出反馈");
+
+// === 订阅会话变更事件（规格 05）===
+// 今日页 onLoad 订阅 action-session:update，onUnload 取消订阅。
+assert.match(todaySource, /on\("action-session:update",\s*this\.sessionUpdateHandler\)/, "onLoad 应订阅 action-session:update 事件");
+assert.match(todaySource, /off\("action-session:update",\s*this\.sessionUpdateHandler\)/, "onUnload 应取消订阅 action-session:update 事件");
+assert.match(todaySource, /this\.sessionUpdateHandler = \(\) => this\.refreshActiveSession\(\)/, "事件回调应调用 refreshActiveSession 刷新活跃会话状态");
+
 console.log("action records tests passed");

@@ -102,13 +102,15 @@
 
   <active-timer-bar
     visible="{{!!activeSessionId}}"
-    task-title="{{activeSessionTask ? activeSessionTask.displayTitle : '当前行动'}}"
-    icon-asset="{{activeSessionTask ? activeSessionTask.actionIconAsset : ''}}"
+    task-title="{{activeSessionOrphan ? '行动已删除' : (activeSessionTask ? activeSessionTask.displayTitle : '当前行动')}}"
+    icon-asset="{{activeSessionOrphan ? '' : (activeSessionTask ? activeSessionTask.actionIconAsset : '')}}"
     status="{{activeSessionStatus}}"
     display-time="{{activeSessionDisplay}}"
     progress-percent="{{activeSessionProgress}}"
+    orphan="{{activeSessionOrphan}}"
     bind:toggle="toggleActiveTimer"
     bind:finish="requestFinishTimer"
+    bind:cleanup="cleanupOrphanSession"
   />
 
   <view wx:if="{{calendarVisible}}" class="calendar-layer" catchtouchmove="noop">
