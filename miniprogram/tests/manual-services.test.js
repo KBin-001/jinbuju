@@ -32,7 +32,7 @@ const { createTask, deleteTask, getTask, getTaskHistoryByGoal, getTasksByDate, g
 const { getProgressSummary, recordDailyCheckin } = require("../services/manualStats.ts");
 const { addBusinessDays, getTodayBusinessDate } = require("../utils/date.ts");
 const { getDailyCoachAnalysis } = require("../services/dailyCoach.ts");
-const { abandonActionSession, completeActionSession, finishActionSession, getActionSession, getActiveActionSession, pauseActionSession, resumeActionSession, startActionSession } = require("../services/actionSession.ts");
+const { abandonActionSession, completeActionSession, finishActionSession, getActionSession, getActiveActionSession, getActiveActionSessionContext, pauseActionSession, resumeActionSession, startActionSession } = require("../services/actionSession.ts");
 
 const today = "2026-06-21";
 const blogGoal = createGoal({ title: "完成个人博客", category: "custom" });
@@ -240,5 +240,71 @@ legacyTask.status = "completed";
 legacyTask.actualMinutes = 0;
 writeManualStore(legacyStore);
 assert.equal(getTask(legacyDurationCompletion.id).actualMinutes, 60);
+
+// === 活跃会话上下文解析器 getActiveActionSessionContext（规格 01）===
+// 服务层把「活跃会话 + 其任务」的解析下沉为单一职责：不经过目标作用域过滤，
+// 顺延/跨目标任务仍能锚定，孤儿会话可识别，且不依赖「选中日期」。
+
+// 5. 无活跃会话时返回 null
+assert.equal(getActiveActionSessionContext(), null, "无活跃会话时应返回 null");
+
+const contextGoal = createGoal({ title: "会话上下文解析", category: "custom" });
+const contextOtherGoal = createGoal({ title: "跨目标验证", category: "custom" });
+
+// 1 & 2. 正常：活跃会话及其任务均存在，按 taskId 直接解析，已耗时物化
+const ctxNormalTask = createTask({ goalId: contextGoal.id, title: "解析正常会话", currentDate: today, estimatedMinutes: 30 });
+const ctxNormalSession = startActionSession(ctxNormalTask.id, "countdown", new Date("2026-06-21T13:00:00+08:00"));
+const normalContext = getActiveActionSessionContext(new Date("2026-06-21T13:00:30+08:00"));
+assert.equal(normalContext !== null, true, "活跃会话存在时应返回上下文");
+assert.equal(normalContext.session.id, ctxNormalSession.id, "上下文会话应为当前全局活跃会话");
+assert.equal(normalContext.task.id, ctxNormalTask.id, "上下文任务应按会话 taskId 直接解析");
+assert.equal(normalContext.task.goalId, contextGoal.id, "任务应携带原始 goalId，不经过目标过滤");
+assert.equal(normalContext.session.elapsedSeconds, 30, "上下文会话应已物化已耗时");
+
+// 6. 全局单活跃会话不变式：已有 running 会话时，对其他任务调用 startActionSession 抛错
+const ctxOtherTask = createTask({ goalId: contextGoal.id, title: "另一项行动", currentDate: today, estimatedMinutes: 30 });
+assert.throws(() => startActionSession(ctxOtherTask.id, "countdown", new Date("2026-06-21T13:00:35+08:00")), /已有一项行动正在进行/, "已有活跃会话时对其他任务开始应抛错");
+// 同一任务重复开始应返回同一会话（幂等，不变式允许继续当前计时）
+assert.equal(startActionSession(ctxNormalTask.id, "countdown", new Date("2026-06-21T13:00:36+08:00")).id, ctxNormalSession.id, "同一任务重复开始应返回原会话");
+
+// 3. 顺延：会话关联的任务被顺延后，上下文仍返回该任务（不丢失）
+finishActionSession(ctxNormalSession.id, false, new Date("2026-06-21T13:02:00+08:00"));
+const ctxRolloverTask = createTask({ goalId: contextGoal.id, title: "将被顺延的计时任务", currentDate: today, estimatedMinutes: 45 });
+const ctxRolloverSession = startActionSession(ctxRolloverTask.id, "countdown", new Date("2026-06-21T14:00:00+08:00"));
+rescheduleTask(ctxRolloverTask.id, today);
+assert.equal(getTask(ctxRolloverTask.id).status, "rescheduled", "顺延后原任务状态应为 rescheduled");
+const rolloverContext = getActiveActionSessionContext(new Date("2026-06-21T14:00:10+08:00"));
+assert.equal(rolloverContext.task.id, ctxRolloverTask.id, "任务被顺延后上下文仍应返回该任务");
+assert.equal(rolloverContext.task.status, "rescheduled", "上下文返回的应是顺延后的原任务");
+
+// 7. 顺延任务的会话经 finishActionSession 结束后，任务进入 partially_completed/completed，投入正确累计
+finishActionSession(ctxRolloverSession.id, false, new Date("2026-06-21T14:01:00+08:00"));
+const rolloverFinished = getTask(ctxRolloverTask.id);
+assert.equal(rolloverFinished.status, "partially_completed", "仅结束计时应保留为完成一部分");
+assert.equal(rolloverFinished.actualMinutes, 1, "投入应按会话已耗时取整累计（1 分钟）");
+
+// 3.b 跨目标：会话关联的任务属于非当前激活目标时，上下文仍返回会话 + 该任务
+const ctxCrossTask = createTask({ goalId: contextOtherGoal.id, title: "跨目标计时任务", currentDate: today, estimatedMinutes: 30 });
+const ctxCrossSession = startActionSession(ctxCrossTask.id, "countdown", new Date("2026-06-21T15:00:00+08:00"));
+// 把激活目标切到 contextGoal，使会话任务处于「非当前激活目标」
+assert.equal(setCurrentGoal(contextGoal.id).id, contextGoal.id, "切换激活目标到 contextGoal");
+const crossContext = getActiveActionSessionContext(new Date("2026-06-21T15:00:20+08:00"));
+assert.equal(crossContext.task.id, ctxCrossTask.id, "跨目标任务仍应被上下文返回");
+assert.equal(crossContext.task.goalId, contextOtherGoal.id, "任务应保留原 goalId，不被激活目标过滤");
+// 切回以便后续清理
+setCurrentGoal(contextOtherGoal.id);
+finishActionSession(ctxCrossSession.id, true, new Date("2026-06-21T15:01:00+08:00"));
+assert.equal(getTask(ctxCrossTask.id).status, "completed", "标记完成后跨目标任务应进入 completed");
+
+// 4. 孤儿：会话关联的任务被软删除后，上下文返回 { session, task: null }
+const ctxOrphanTask = createTask({ goalId: contextGoal.id, title: "将被删除的计时任务", currentDate: today, estimatedMinutes: 30 });
+const ctxOrphanSession = startActionSession(ctxOrphanTask.id, "countdown", new Date("2026-06-21T16:00:00+08:00"));
+deleteTask(ctxOrphanTask.id);
+const orphanContext = getActiveActionSessionContext(new Date("2026-06-21T16:00:10+08:00"));
+assert.equal(orphanContext.session.id, ctxOrphanSession.id, "孤儿会话仍应返回会话");
+assert.equal(orphanContext.task, null, "任务软删除后上下文应返回 task: null（孤儿可识别）");
+// 恢复态：用 abandonActionSession(keepTime=false) 清除残留会话，消除死锁
+abandonActionSession(ctxOrphanSession.id, false, new Date("2026-06-21T16:00:15+08:00"));
+assert.equal(getActiveActionSessionContext(), null, "清理孤儿会话后应无活跃会话");
 
 console.log("manual service tests passed");

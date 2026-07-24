@@ -27,6 +27,29 @@ export function getActiveActionSession(now = new Date()): ActionSession | null {
   return session ? materialize(session, now) : null;
 }
 
+export type ActiveActionSessionContext =
+  | { session: ActionSession; task: ActionTask }
+  | { session: ActionSession; task: null }
+  | null;
+
+/**
+ * 返回全局唯一的活跃会话（running 或 paused）及其按 taskId 直接解析的任务，
+ * 作为页面解析悬浮计时条数据的唯一入口。
+ *
+ * 与 getActiveActionSession 的关键区别：任务解析不经过目标作用域过滤，
+ * 因此任务被顺延（rescheduled）或属于其他目标时仍能锚定；任务被软删除时
+ * 返回 { session, task: null }（孤儿），交由页面决定恢复态展示。该函数不依赖
+ * 「选中日期」——活跃会话是全局概念，与日历无关。
+ */
+export function getActiveActionSessionContext(now = new Date()): ActiveActionSessionContext {
+  const store = readManualStore();
+  const session = activeSession(store.actionSessions || []);
+  if (!session) return null;
+  const materializedSession = materialize(session, now);
+  const task = store.tasks.find((item) => item.id === session.taskId && !item.deletedAt) || null;
+  return task ? { session: materializedSession, task } : { session: materializedSession, task: null };
+}
+
 export function startActionSession(taskId: string, mode: ActionSession["mode"] = "countdown", now = new Date()): ActionSession {
   const store = readManualStore();
   const task = store.tasks.find((item) => item.id === taskId && !item.deletedAt);
