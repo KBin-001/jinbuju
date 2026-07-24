@@ -16,7 +16,7 @@ import { getTabHeaderLayout } from "../../utils/tabHeader";
 import { buildReminderAt, nextReminderTime, normalizeReminderTime, reminderDateRange } from "../../utils/actionReminder";
 import { ACTION_DURATION_OPTIONS } from "../../config/action";
 import { resolveActionIcon } from "../../utils/actionIcon";
-import { finishActionSession, getActiveActionSession, pauseActionSession, resumeActionSession, startActionSession } from "../../services/actionSession";
+import { finishActionSession, getActiveActionSession, getActiveActionSessionContext, pauseActionSession, resumeActionSession, startActionSession } from "../../services/actionSession";
 
 const REASONS: Array<{ label: string; value: ActionIssueReason }> = [{ label: "时间不够", value: "not_enough_time" }, { label: "难度太高", value: "too_difficult" }, { label: "缺少资源", value: "resource_unavailable" }, { label: "身体或状态不适", value: "physical_condition" }, { label: "临时有事", value: "temporary_event" }, { label: "任务不符合实际", value: "not_practical" }, { label: "其他", value: "other" }];
 const DURATION_OPTIONS = ACTION_DURATION_OPTIONS;
@@ -508,7 +508,10 @@ Page(withAppTheme({
       const sourceTasks = goal ? getTodayPageTasks(goal.id, selectedDate, today) : [];
       const selectedTasks = sourceTasks.filter((task) => task.currentDate === selectedDate);
       const summaryTasks = selectedDate === today ? sourceTasks : selectedTasks;
-      const activeSession = selectedDate === today ? getActiveActionSession() : null;
+      // 活跃会话是全局概念：不依赖选中日期，也不经过目标作用域过滤。
+      // 通过服务层上下文函数按会话 taskId 直接解析任务，顺延/跨目标任务仍能锚定。
+      const activeContext = getActiveActionSessionContext();
+      const activeSession = activeContext ? activeContext.session : null;
       const baseTaskGroups = groupTodayTasks(sourceTasks, selectedDate).map((group) => ({
         ...group,
         tasks: group.tasks.map((task) => decorateTaskAction(toViewTask(task, selectedDate, today), activeSession?.taskId || "", activeSession?.status || "")),
@@ -522,12 +525,13 @@ Page(withAppTheme({
         ...group,
         tasks: group.tasks.map((task) => taskById.get(task.id) || task),
       }));
-      const activeRawTask = activeSession ? goalTasks.find((task) => task.id === activeSession.taskId) : null;
+      const activeRawTask = activeContext && activeContext.task ? activeContext.task : null;
       const activeSessionTask = activeRawTask ? toViewTask(activeRawTask, selectedDate, today) : null;
       const summary = calculateTodaySummary(summaryTasks);
       const activeMinutes = sessionMinutes(activeSession);
       const todayTargetMinutes = summary.estimatedMinutes;
-      const todayActualMinutes = summary.actualMinutes + activeMinutes;
+      // 活跃会话的进行中投入只在「今日摘要」场景叠加，非今日日期的历史摘要不误算入。
+      const todayActualMinutes = summary.actualMinutes + (selectedDate === today ? activeMinutes : 0);
       const todayMinuteProgress = todayTargetMinutes > 0 ? Math.min(100, Math.round(todayActualMinutes / todayTargetMinutes * 100)) : 0;
       const progress = goal ? getProgressSummary(goal.id, selectedDate) : null;
       const mood = todayMood(summary);
@@ -607,7 +611,9 @@ Page(withAppTheme({
       return;
     }
     const activeMinutes = sessionMinutes(session);
-    const todayActualMinutes = this.data.summary.actualMinutes + activeMinutes;
+    // 活跃会话的进行中投入只在「今日摘要」场景叠加，非今日日期的历史摘要不误算入。
+    const isTodayView = this.data.selectedDate === this.data.todayDate;
+    const todayActualMinutes = this.data.summary.actualMinutes + (isTodayView ? activeMinutes : 0);
     const todayMinuteProgress = this.data.todayTargetMinutes > 0
       ? Math.min(100, Math.round(todayActualMinutes / this.data.todayTargetMinutes * 100))
       : 0;
@@ -1026,8 +1032,8 @@ Page(withAppTheme({
       focusPercent: focusPercent(summary),
       remainingCount: remainingCount(summary),
       todayTargetMinutes: summary.estimatedMinutes,
-      todayActualMinutes: summary.actualMinutes + this.data.activeSessionElapsedMinutes,
-      todayMinuteProgress: summary.estimatedMinutes > 0 ? Math.min(100, Math.round((summary.actualMinutes + this.data.activeSessionElapsedMinutes) / summary.estimatedMinutes * 100)) : 0,
+      todayActualMinutes: summary.actualMinutes + (selectedDate === today ? this.data.activeSessionElapsedMinutes : 0),
+      todayMinuteProgress: summary.estimatedMinutes > 0 ? Math.min(100, Math.round((summary.actualMinutes + (selectedDate === today ? this.data.activeSessionElapsedMinutes : 0)) / summary.estimatedMinutes * 100)) : 0,
       remainingEstimatedMinutes: remainingEstimatedMinutes(tasks, selectedDate),
       progressSegments: progressSegments(summary),
       hiddenActionCount: Math.max(0, tasks.length - visibleTasks.length),

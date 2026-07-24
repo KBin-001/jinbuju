@@ -101,8 +101,8 @@
   </block>
 
   <active-timer-bar
-    visible="{{!!activeSessionId && !!activeSessionTask}}"
-    task-title="{{activeSessionTask ? activeSessionTask.displayTitle : ''}}"
+    visible="{{!!activeSessionId}}"
+    task-title="{{activeSessionTask ? activeSessionTask.displayTitle : '当前行动'}}"
     icon-asset="{{activeSessionTask ? activeSessionTask.actionIconAsset : ''}}"
     status="{{activeSessionStatus}}"
     display-time="{{activeSessionDisplay}}"
