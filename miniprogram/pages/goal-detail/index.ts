@@ -193,7 +193,7 @@ Page(withAppTheme({
       title: "更换目标？",
       content: "当前目标会完整保存到历史目标，再进入新目标创建流程，不会覆盖已有数据。",
       cancelText: "暂不更换",
-      confirmText: "保留并更换",
+      confirmText: "保留更换",
       confirmColor: MODAL_CONFIRM_COLORS.confirm,
       success: (result) => {
         if (!result.confirm) return;

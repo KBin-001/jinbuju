@@ -826,11 +826,11 @@ Page(withAppTheme({
     const taskTitle = this.data.activeSessionTask?.displayTitle || "当前行动";
     wx.showModal({
       title: "结束本次计时",
-      content: `本次专注 ${minutes} 分钟，是否同时完成“${taskTitle}”？`,
-      cancelText: "仅结束计时",
+      content: `本次专注 ${minutes} 分钟，是否同时完成"${taskTitle}"？`,
+      cancelText: "仅结束",
       confirmText: "标记完成",
       confirmColor: MODAL_CONFIRM_COLORS.confirm,
-      success: (result) => this.finishActiveTimer(Boolean(result.confirm)),
+      success: (result) => { this.finishActiveTimer(Boolean(result.confirm)); },
     });
   },
   async finishActiveTimer(markTaskCompleted: boolean) {
@@ -863,7 +863,7 @@ Page(withAppTheme({
       title: "结束并清理",
       content: "关联的行动已删除，结束并清理残留计时后可开始新的专注。",
       cancelText: "取消",
-      confirmText: "结束并清理",
+      confirmText: "结束清理",
       confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: (result) => {
         if (!result.confirm) return;

@@ -38,7 +38,7 @@ Page(withAppTheme({
     wx.showModal({
       title: "清除并从云端恢复？",
       content: "只清除当前设备缓存。目标、行动和收藏不会从云端删除；操作需要保持联网。",
-      confirmText: "清除并恢复",
+      confirmText: "清除恢复",
       success: (result) => {
         if (!result.confirm) return;
         this.setData({ localClearing: true, errorMessage: "" });

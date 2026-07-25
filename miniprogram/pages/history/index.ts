@@ -158,7 +158,7 @@ Page(withAppTheme({
     wx.showModal({
       title: "移到最近删除？",
       content: `“${title}”会离开历史列表，之后仍可恢复或彻底删除。`,
-      confirmText: "移到最近删除",
+      confirmText: "移至删除",
       confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: (result) => {
         if (!result.confirm) return;
