@@ -246,6 +246,15 @@ function failure(error) {
       message: error && error.message ? String(error.message).slice(0, 200) : "",
     });
   }
+  if (code === "CONTENT_SECURITY_UNAVAILABLE") {
+    console.error("content security unavailable", {
+      cause: error && error.cause ? {
+        errCode: error.cause.errCode ?? error.cause.errcode,
+        errMsg: String(error.cause.errMsg || error.cause.message || "").slice(0, 200),
+        errorType: error.cause.constructor && error.cause.constructor.name,
+      } : null,
+    });
+  }
   const messages = {
     INVALID_ARGUMENT: error.message,
     INVALID_PLAN_DURATION: error.message,

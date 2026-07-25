@@ -171,15 +171,19 @@ function readEnvNumber(name, fallback) {
 // side (5xxxx) errors are retried. Logs a `warn` on each retry and an `error`
 // when all retries are exhausted, so developers can diagnose root cause from
 // cloud function logs.
+// When `degradeOnUnavailable` is true and all retries are exhausted on a
+// transient error, the function degrades (fail-open): it logs an audit `warn`
+// and returns a synthetic pass response instead of throwing. Content risk
+// rejections are NEVER degraded — they always throw regardless of this flag.
 async function callMsgSecCheck(securityApi, payload, config) {
-  const { openid, scene, maxRetries, retryBaseDelayMs } = config;
+  const { openid, scene, maxRetries, retryBaseDelayMs, degradeOnUnavailable } = config;
   let lastError;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await securityApi.msgSecCheck(payload);
     } catch (error) {
       lastError = error;
-      // Content risk rejections are never retried.
+      // Content risk rejections are never retried and never degraded.
       if (isRiskyApiError(error)) {
         throw contentSecurityError("CONTENT_SECURITY_REJECTED", "内容未通过安全检测，请修改后重试。", error);
       }
@@ -199,7 +203,18 @@ async function callMsgSecCheck(securityApi, payload, config) {
         await sleep(retryBaseDelayMs * retryNumber);
         continue;
       }
-      // All retries exhausted — log the underlying cause for diagnosis.
+      // All retries exhausted on a transient error.
+      if (degradeOnUnavailable) {
+        // Degrade (fail-open): log audit warning and return a synthetic pass.
+        console.warn("content security check degraded", {
+          openid: openidPrefix(openid),
+          scene,
+          errCode: error.errCode ?? error.errcode,
+          contentLength: String(payload.content || "").length,
+        });
+        return { result: { suggest: "pass" } };
+      }
+      // Fail-closed: log the underlying cause for diagnosis.
       console.error("content security check unavailable", {
         openid: openidPrefix(openid),
         scene,
@@ -215,18 +230,15 @@ async function callMsgSecCheck(securityApi, payload, config) {
 async function assertSafeText(openid, values, scene = 4, securityApi = cloud.openapi.security, options = {}) {
   // Retry and degradation config. Options take precedence over env vars,
   // which take precedence over built-in defaults.
-  // Degradation (fail-open) is implemented in ticket 03; for now
-  // degradeOnUnavailable is accepted but not yet acted upon.
   const degradeOnUnavailable = options.degradeOnUnavailable ?? false;
   const maxRetries = options.maxRetries ?? readEnvNumber("CONTENT_SECURITY_MAX_RETRIES", 2);
   const retryBaseDelayMs = options.retryBaseDelayMs ?? readEnvNumber("CONTENT_SECURITY_RETRY_BASE_DELAY_MS", 500);
-  void degradeOnUnavailable;
   const unique = [...new Set((values || []).map(normalizeText).filter(Boolean))];
   for (const content of chunkTexts(unique)) {
     const response = await callMsgSecCheck(
       securityApi,
       { content, version: 2, scene, openid },
-      { openid, scene, maxRetries, retryBaseDelayMs },
+      { openid, scene, maxRetries, retryBaseDelayMs, degradeOnUnavailable },
     );
     const suggest = responseSuggest(response);
     if (responseErrorCode(response) !== 0 || (suggest && suggest !== "pass")) {
@@ -300,11 +312,17 @@ async function assertSafeAvatar(openid, fileId, dependencies = {}) {
   void openid;
 }
 
-async function assertEventContentSafe(openid, action, event) {
+async function assertEventContentSafe(openid, action, event, securityApi, options = {}) {
   if (!ACTIONS_REQUIRING_TEXT_CHECK.has(action)) return;
   const texts = collectContentText(event);
   const scene = action === "updateCloudProfile" || action === "importLegacyProfile" ? 1 : 4;
-  await assertSafeText(openid, texts, scene);
+  // Only AI coach conversations degrade on content-security unavailability;
+  // all other write operations stay fail-closed.
+  const degradeOnUnavailable = action === "askProgressCoach";
+  await assertSafeText(openid, texts, scene, securityApi, {
+    ...options,
+    degradeOnUnavailable,
+  });
 }
 
 module.exports = {

@@ -2,6 +2,7 @@ const assert = require("assert");
 const test = require("node:test");
 
 const {
+  assertEventContentSafe,
   assertSafeAvatar,
   assertSafeText,
   chunkTexts,
@@ -379,3 +380,122 @@ test("explicit options.maxRetries takes precedence over env var", withEnv("CONTE
   // options.maxRetries=1 overrides env var 5: 1 initial + 1 retry = 2 total.
   assert.strictEqual(calls.length, 2);
 }));
+
+test("assertSafeText degrades (fail-open) when all retries fail and degradeOnUnavailable is true", async () => {
+  const calls = [];
+  const consoleCapture = captureConsole();
+  try {
+    // Should NOT throw — degradation means the check passes.
+    await assertSafeText("openid_test", ["内容"], 4, {
+      msgSecCheck: async () => {
+        calls.push(1);
+        throw Object.assign(new Error("network"), { errCode: -1 });
+      },
+    }, { degradeOnUnavailable: true, retryBaseDelayMs: 0 });
+    // All 3 attempts made (1 initial + 2 retries).
+    assert.strictEqual(calls.length, 3);
+    // Audit warn log recorded.
+    assert.strictEqual(consoleCapture.calls.warn.length, 3);
+    const degradeLog = consoleCapture.calls.warn[2][1];
+    assert.strictEqual(degradeLog.openid, "openid_t");
+    assert.strictEqual(degradeLog.scene, 4);
+    assert.strictEqual(degradeLog.errCode, -1);
+    assert.ok(typeof degradeLog.contentLength === "number");
+    // No error log (we degraded, not failed).
+    assert.strictEqual(consoleCapture.calls.error.length, 0);
+  } finally {
+    consoleCapture.restore();
+  }
+});
+
+test("assertSafeText does NOT degrade on explicit content rejection even with degradeOnUnavailable true", async () => {
+  const calls = [];
+  await assert.rejects(
+    assertSafeText("openid", ["风险内容"], 4, {
+      msgSecCheck: async () => {
+        calls.push(1);
+        return { result: { suggest: "review" } };
+      },
+    }, { degradeOnUnavailable: true, retryBaseDelayMs: 0 }),
+    (error) => error.code === "CONTENT_SECURITY_REJECTED",
+  );
+  // No retry for response-level rejection (not a thrown error).
+  assert.strictEqual(calls.length, 1);
+});
+
+test("assertSafeText does NOT degrade on 87014 even with degradeOnUnavailable true", async () => {
+  const calls = [];
+  await assert.rejects(
+    assertSafeText("openid", ["风险内容"], 4, {
+      msgSecCheck: async () => {
+        calls.push(1);
+        throw Object.assign(new Error("risky"), { errCode: 87014 });
+      },
+    }, { degradeOnUnavailable: true, retryBaseDelayMs: 0 }),
+    (error) => error.code === "CONTENT_SECURITY_REJECTED",
+  );
+  assert.strictEqual(calls.length, 1);
+});
+
+test("assertSafeText still fails closed on transient errors when degradeOnUnavailable is false", async () => {
+  const calls = [];
+  await assert.rejects(
+    assertSafeText("openid", ["内容"], 4, {
+      msgSecCheck: async () => {
+        calls.push(1);
+        throw Object.assign(new Error("network"), { errCode: -1 });
+      },
+    }, { degradeOnUnavailable: false, retryBaseDelayMs: 0 }),
+    (error) => error.code === "CONTENT_SECURITY_UNAVAILABLE",
+  );
+  assert.strictEqual(calls.length, 3);
+});
+
+test("assertEventContentSafe degrades for askProgressCoach on transient failure", async () => {
+  // askProgressCoach: degradation enabled — should not throw on transient failure.
+  const coachCalls = [];
+  const coachApi = {
+    msgSecCheck: async () => {
+      coachCalls.push(1);
+      throw Object.assign(new Error("network"), { errCode: -1 });
+    },
+  };
+  const event = { question: "今天怎么安排？" };
+  await assertEventContentSafe("openid_test", "askProgressCoach", event, coachApi, { retryBaseDelayMs: 0 });
+  // All 3 attempts made (1 initial + 2 retries).
+  assert.strictEqual(coachCalls.length, 3);
+});
+
+test("assertEventContentSafe keeps fail-closed for non-coach actions", async () => {
+  // createManualTask: should remain fail-closed (no degradation).
+  const calls = [];
+  const api = {
+    msgSecCheck: async () => {
+      calls.push(1);
+      throw Object.assign(new Error("network"), { errCode: -1 });
+    },
+  };
+  const event = { title: "任务内容" };
+  await assert.rejects(
+    assertEventContentSafe("openid", "createManualTask", event, api, { retryBaseDelayMs: 0 }),
+    (error) => error.code === "CONTENT_SECURITY_UNAVAILABLE",
+  );
+  assert.strictEqual(calls.length, 3);
+});
+
+test("assertEventContentSafe still rejects risky content for askProgressCoach", async () => {
+  // Even with degradation, explicit content rejection must still throw.
+  const calls = [];
+  const api = {
+    msgSecCheck: async () => {
+      calls.push(1);
+      throw Object.assign(new Error("risky"), { errCode: 87014 });
+    },
+  };
+  const event = { question: "风险内容" };
+  await assert.rejects(
+    assertEventContentSafe("openid", "askProgressCoach", event, api, { retryBaseDelayMs: 0 }),
+    (error) => error.code === "CONTENT_SECURITY_REJECTED",
+  );
+  assert.strictEqual(calls.length, 1);
+});
