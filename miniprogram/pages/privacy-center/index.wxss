@@ -2,7 +2,7 @@ page { background: var(--color-background); }
 .privacy-page { color: var(--color-text-main); }
 .privacy-hero { min-height: 170rpx; padding: 30rpx; display: flex; align-items: center; gap: 22rpx; border: 1rpx solid var(--color-border-soft); border-radius: var(--radius-card); background: var(--gradient-card-sun); box-shadow: var(--shadow-card-soft); }
 .privacy-hero__mark { width: 88rpx; height: 88rpx; display: flex; align-items: center; justify-content: center; border-radius: 28rpx; background: var(--color-action-soft); color: var(--color-action-primary); }
-.privacy-hero__title { color: var(--color-primary); font-family: "Songti SC", STSong, serif; font-size: 38rpx; font-weight: 700; }
+.privacy-hero__title { color: var(--color-primary); font-family: var(--font-family-brand); font-size: 38rpx; font-weight: var(--font-weight-title); }
 .privacy-hero__subtitle { margin-top: 8rpx; color: var(--color-text-secondary); font-size: 23rpx; line-height: 34rpx; }
 .version-card, .list-card, .rights-card, .notification-card { margin-top: var(--gap-card); }
 .section-title { font-size: 30rpx; font-weight: 700; }

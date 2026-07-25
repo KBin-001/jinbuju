@@ -12,7 +12,7 @@ page { background: var(--color-background, #F7F3EA); }
 .hero-copy { position: relative; z-index: 1; padding: 34rpx; }
 .hero-eyebrow { display: block; color: var(--color-accent); font-size: 22rpx; font-weight: 650; letter-spacing: 2rpx; }
 .hero-count-row { margin-top: 10rpx; display: flex; align-items: baseline; }
-.hero-title { color: var(--color-primary); font-family: "Songti SC", STSong, serif; font-size: 34rpx; font-weight: 700; }
+.hero-title { color: var(--color-primary); font-family: var(--font-family-brand); font-size: 34rpx; font-weight: var(--font-weight-title); }
 .hero-count { margin-left: 14rpx; color: var(--color-accent); font-size: 48rpx; line-height: 56rpx; font-weight: 750; }
 .hero-unit { margin-left: 6rpx; color: var(--color-text-secondary); font-size: 23rpx; }
 .hero-subtitle { max-width: 75%; margin-top: 10rpx; display: block; overflow: hidden; color: var(--color-text-secondary); font-size: 23rpx; line-height: 34rpx; text-overflow: ellipsis; white-space: nowrap; }
@@ -23,7 +23,7 @@ page { background: var(--color-background, #F7F3EA); }
 .goal-card--current { border-color: rgba(36,91,77,.22); box-shadow: 0 10rpx 28rpx rgba(36,91,77,.08); }
 .goal-card__wash { position: absolute; top: -100rpx; right: -70rpx; width: 250rpx; height: 210rpx; border-radius: 50%; background: radial-gradient(circle, rgba(127,157,145,.15), rgba(127,157,145,0) 68%); }
 .goal-head { position: relative; padding: 28rpx 28rpx 0; display: flex; align-items: flex-start; gap: 18rpx; }
-.goal-index { width: 58rpx; height: 58rpx; flex: none; display: flex; align-items: center; justify-content: center; border: 1rpx solid rgba(36,91,77,.13); border-radius: 19rpx; background: var(--color-primary-soft); color: var(--color-primary); font-family: "Songti SC", STSong, serif; font-size: 27rpx; font-weight: 700; }
+.goal-index { width: 58rpx; height: 58rpx; flex: none; display: flex; align-items: center; justify-content: center; border: 1rpx solid rgba(36,91,77,.13); border-radius: 19rpx; background: var(--color-primary-soft); color: var(--color-primary); font-family: var(--font-family-brand); font-size: 27rpx; font-weight: var(--font-weight-title); }
 .goal-info { min-width: 0; flex: 1; }
 .goal-title-row { display: flex; align-items: flex-start; gap: 14rpx; }
 .goal-title { min-width: 0; flex: 1; display: -webkit-box; overflow: hidden; color: var(--color-text-main); font-size: 30rpx; line-height: 40rpx; font-weight: 700; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }

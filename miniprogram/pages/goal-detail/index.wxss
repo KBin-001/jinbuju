@@ -10,7 +10,7 @@ page { background: var(--color-background, #F7F3EA); }
 .hero-eyebrow, .section-kicker { display: block; color: var(--color-accent, #C89B4A); font-size: 21rpx; line-height: 30rpx; font-weight: 650; letter-spacing: 2rpx; }
 .goal-status { min-height: 40rpx; padding: 5rpx 16rpx; flex: none; border-radius: 20rpx; background: var(--color-card-soft); color: var(--color-text-secondary); font-size: 20rpx; line-height: 30rpx; }
 .goal-status--current { background: var(--color-success-soft); color: var(--color-success); }
-.hero-title { max-width: 82%; margin-top: 24rpx; display: -webkit-box; overflow: hidden; color: var(--color-primary, #557F75); font-family: "Songti SC", STSong, serif; font-size: 42rpx; line-height: 54rpx; font-weight: 700; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.hero-title { max-width: 82%; margin-top: 24rpx; display: -webkit-box; overflow: hidden; color: var(--color-primary, #557F75); font-family: var(--font-family-brand); font-size: 42rpx; line-height: 54rpx; font-weight: var(--font-weight-title); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .hero-description { max-width: 78%; margin-top: 10rpx; display: -webkit-box; overflow: hidden; color: var(--color-text-secondary, #7C817D); font-size: 23rpx; line-height: 34rpx; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .hero-progress-copy { max-width: 82%; margin-top: 34rpx; display: flex; justify-content: space-between; gap: 20rpx; color: var(--color-text-secondary); font-size: 22rpx; }
 .hero-progress-copy text:last-child { color: var(--color-primary); font-size: 25rpx; font-weight: 750; }
@@ -20,7 +20,7 @@ page { background: var(--color-background, #F7F3EA); }
 .rhythm-card, .record-section, .management-card, .state-card { margin-top: 24rpx; border: 1rpx solid var(--color-border-soft); border-radius: 28rpx; background: var(--color-card, #FFFCF6); box-shadow: var(--shadow-card-soft); }
 .rhythm-card, .record-section, .management-card { padding: 30rpx; }
 .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20rpx; }
-.section-title { margin-top: 6rpx; display: block; color: var(--color-text-main); font-family: "Songti SC", STSong, serif; font-size: 30rpx; line-height: 40rpx; font-weight: 700; }
+.section-title { margin-top: 6rpx; display: block; color: var(--color-text-main); font-family: var(--font-family-brand); font-size: 30rpx; line-height: 40rpx; font-weight: var(--font-weight-title); }
 .section-note { flex: none; color: var(--color-text-tertiary, #969A96); font-size: 20rpx; }
 .records-link { min-height: 56rpx; display: flex; align-items: center; color: var(--color-primary); font-size: 21rpx; font-weight: 650; }
 .stat-grid { margin-top: 26rpx; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1rpx solid var(--color-divider); border-left: 1rpx solid var(--color-divider); }

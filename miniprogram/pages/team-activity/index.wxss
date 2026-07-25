@@ -84,9 +84,9 @@
 
 .nav-title {
   color: var(--ink);
-  font-family: "Songti SC", "STSong", serif;
+  font-family: var(--font-family-brand);
   font-size: 38rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   line-height: 44rpx;
   letter-spacing: 4rpx;
 }
@@ -128,9 +128,9 @@
 .date-header {
   margin: 12rpx 28rpx 18rpx;
   color: var(--gold);
-  font-family: "Songti SC", "STSong", serif;
+  font-family: var(--font-family-brand);
   font-size: 30rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   line-height: 38rpx;
 }
 
@@ -366,9 +366,9 @@
 .empty-title {
   margin-top: 22rpx;
   color: var(--ink);
-  font-family: "Songti SC", "STSong", serif;
+  font-family: var(--font-family-brand);
   font-size: 34rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
 }
 
 .empty-copy {
@@ -473,9 +473,9 @@
 
 .detail-action {
   color: var(--ink);
-  font-family: "Songti SC", "STSong", serif;
+  font-family: var(--font-family-brand);
   font-size: 38rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   line-height: 48rpx;
 }
 

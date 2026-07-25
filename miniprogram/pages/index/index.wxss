@@ -13,7 +13,7 @@ page { background: #f7f3ea; }
   box-sizing: border-box;
   color: var(--ink);
   background: #f7f3ea;
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-family-sans);
 }
 
 .today-page--timing { padding-bottom: calc(270rpx + env(safe-area-inset-bottom)); }
@@ -22,14 +22,14 @@ page { background: #f7f3ea; }
 .today-hero__veil { background: rgba(247,243,234,.34); }
 .today-profile-row { position: relative; z-index: 2; min-height: 116rpx; margin-top: 12rpx; padding: 8rpx 8rpx 12rpx; display: flex; align-items: center; }
 .today-avatar { width: 76rpx; height: 76rpx; flex: none; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 3rpx solid rgba(255,253,248,.9); border-radius: 50%; background: #ecefe8; box-sizing: border-box; }
-.today-avatar--text { color: var(--green); font-family: "Songti SC", STSong, serif; font-size: 48rpx; font-weight: 700; }
+.today-avatar--text { color: var(--green); font-family: var(--font-family-brand); font-size: 48rpx; font-weight: var(--font-weight-title); }
 .today-greeting-copy { min-width: 0; margin-left: 18rpx; display: flex; flex: 1; flex-direction: column; }
-.today-greeting { overflow: hidden; color: #1f4d40; font-family: "Songti SC", STSong, SimSun, serif; font-size: 31rpx; line-height: 40rpx; font-weight: 700; letter-spacing: 1rpx; text-overflow: ellipsis; white-space: nowrap; }
-.today-subtitle { margin-top: 7rpx; color: #77746d; font-family: "Songti SC", STSong, serif; font-size: 23rpx; line-height: 32rpx; }
+.today-greeting { overflow: hidden; color: #1f4d40; font-family: var(--font-family-brand); font-size: 31rpx; line-height: 40rpx; font-weight: var(--font-weight-title); letter-spacing: 1rpx; text-overflow: ellipsis; white-space: nowrap; }
+.today-subtitle { margin-top: 7rpx; color: #77746d; font-family: var(--font-family-brand); font-size: 23rpx; line-height: 32rpx; }
 
 .action-streak { width: 112rpx; min-height: 68rpx; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1rpx solid rgba(200,155,74,.24); border-radius: 20rpx; background: rgba(255,252,246,.9); }
-.action-streak__value { color: #8d682d; font-family: Georgia, serif; font-size: 32rpx; line-height: 38rpx; }
-.action-streak__value text { margin-left: 3rpx; font-family: sans-serif; font-size: 18rpx; }
+.action-streak__value { color: #8d682d; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 32rpx; line-height: 38rpx; }
+.action-streak__value text { margin-left: 3rpx; font-family: var(--font-family-sans); font-size: 18rpx; }
 .action-streak__label { margin-top: 2rpx; color: #7c817d; font-size: 18rpx; }
 
 .paper-card, .week-card, .stats-card, .reference-coach-entry, .today-task-row, .state-card, .empty-card { position: relative; overflow: hidden; box-sizing: border-box; border: 1rpx solid rgba(129,114,86,.13); border-radius: 28rpx; background: #fffcf6; box-shadow: 0 6rpx 20rpx rgba(75,62,40,.045); }
@@ -37,13 +37,13 @@ page { background: #f7f3ea; }
 
 .week-card { min-height: 188rpx; margin-top: 10rpx; padding: 22rpx 28rpx 18rpx; }
 .week-head { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; }
-.week-title { color: #1f4d40; font-family: "Songti SC", STSong, SimSun, serif; font-size: 31rpx; line-height: 42rpx; font-weight: 700; letter-spacing: 1rpx; }
-.week-switch { min-height: 52rpx; display: flex; align-items: center; gap: 12rpx; color: #77746d; font-family: "Songti SC", STSong, serif; font-size: 23rpx; }
-.week-chevron { color: #8f8b82; font-family: sans-serif; font-size: 35rpx; font-weight: 300; }
+.week-title { color: #1f4d40; font-family: var(--font-family-brand); font-size: 31rpx; line-height: 42rpx; font-weight: var(--font-weight-title); letter-spacing: 1rpx; }
+.week-switch { min-height: 52rpx; display: flex; align-items: center; gap: 12rpx; color: #77746d; font-family: var(--font-family-brand); font-size: 23rpx; }
+.week-chevron { color: #8f8b82; font-family: var(--font-family-sans); font-size: 35rpx; font-weight: 300; }
 .week-grid { position: relative; z-index: 2; margin-top: 13rpx; display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); }
 .week-day { position: relative; min-width: 0; height: 88rpx; display: flex; flex-direction: column; align-items: center; color: #484b48; }
-.week-label { font-family: "Songti SC", STSong, serif; font-size: 20rpx; line-height: 30rpx; }
-.week-number { width: 52rpx; height: 52rpx; margin-top: 3rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-family: Georgia, "Songti SC", serif; font-size: 28rpx; line-height: 52rpx; }
+.week-label { font-family: var(--font-family-brand); font-size: 20rpx; line-height: 30rpx; }
+.week-number { width: 52rpx; height: 52rpx; margin-top: 3rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 28rpx; line-height: 52rpx; }
 .week-day.is-selected .week-number { background: #31584b; color: #fffdf8; box-shadow: 0 7rpx 16rpx rgba(49,88,75,.17); }
 .week-day.is-today:not(.is-selected) .week-number { color: #31584b; box-shadow: inset 0 0 0 2rpx rgba(49,88,75,.28); }
 .week-day.is-muted { opacity: .36; }
@@ -55,16 +55,16 @@ page { background: #f7f3ea; }
 .stats-column--done { padding-left: 10rpx; }
 .stats-column--progress { padding-right: 10rpx; }
 .stats-column + .stats-column::before { position: absolute; top: 1rpx; bottom: 1rpx; left: 0; width: 1rpx; background: rgba(102,118,109,.14); content: ""; }
-.stats-label { min-height: 30rpx; display: flex; align-items: center; gap: 8rpx; color: #747c77; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; font-size: 20rpx; line-height: 28rpx; white-space: nowrap; }
+.stats-label { min-height: 30rpx; display: flex; align-items: center; gap: 8rpx; color: #747c77; font-family: var(--font-family-sans); font-size: 20rpx; line-height: 28rpx; white-space: nowrap; }
 .stats-icon { width: 29rpx; height: 29rpx; flex: none; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
 .stats-icon--solid { border-radius: 50%; color: #fffdf8; background: #4f8a68; }
 .stats-icon--time { color: #9a7633; }
 .stats-icon--flow { color: #245b4d; }
-.stats-value { min-height: 52rpx; margin-top: 10rpx; display: flex; align-items: baseline; color: #27332f; font-family: Georgia, "Songti SC", serif; font-size: 47rpx; font-weight: 400; line-height: 1; white-space: nowrap; }
+.stats-value { min-height: 52rpx; margin-top: 10rpx; display: flex; align-items: baseline; color: #27332f; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 47rpx; font-weight: 400; line-height: 1; white-space: nowrap; }
 .stats-value--done { color: #245b4d; }
-.stats-done-total { margin-left: 7rpx; color: #6f7c76; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; font-size: 18rpx; font-weight: 500; }
+.stats-done-total { margin-left: 7rpx; color: #6f7c76; font-family: var(--font-family-sans); font-size: 18rpx; font-weight: 500; }
 .stats-value--minutes, .stats-value--progress { font-size: 47rpx; }
-.stats-value-unit { margin-left: 5rpx; color: #68736d; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; font-size: 17rpx; }
+.stats-value-unit { margin-left: 5rpx; color: #68736d; font-family: var(--font-family-sans); font-size: 17rpx; }
 .stats-value-unit--percent { font-size: 25rpx; }
 .stats-meta-row { height: 47rpx; margin-top: 7rpx; display: flex; align-items: flex-start; gap: 6rpx; color: #789085; font-size: 17rpx; line-height: 24rpx; white-space: nowrap; }
 .stats-meta-row.is-complete { color: #4f7c62; font-weight: 600; }
@@ -92,7 +92,7 @@ page { background: #f7f3ea; }
 .task-section--primary { margin-top: 32rpx; }
 .task-section-head { min-height: 64rpx; display: flex; align-items: center; justify-content: space-between; gap: 18rpx; }
 .task-section-heading { min-width: 0; display: flex; align-items: center; gap: 14rpx; }
-.task-section-title { flex: none; color: #1f4d40; font-family: "Songti SC", STSong, SimSun, serif; font-size: 34rpx; line-height: 44rpx; font-weight: 700; letter-spacing: 2rpx; }
+.task-section-title { flex: none; color: #1f4d40; font-family: var(--font-family-brand); font-size: 34rpx; line-height: 44rpx; font-weight: var(--font-weight-title); letter-spacing: 2rpx; }
 .habit-recommend { min-width: 0; display: flex; align-items: center; gap: 4rpx; color: #9a7332; font-size: 18rpx; line-height: 30rpx; white-space: nowrap; }
 .task-section-tools { flex: none; display: flex; align-items: center; gap: 10rpx; }
 .task-section-add { height: 58rpx; padding: 0 20rpx; display: flex; align-items: center; justify-content: center; border: 1rpx solid rgba(36,91,77,.22); border-radius: 999rpx; color: #245b4d; background: rgba(255,253,248,.72); font-size: 21rpx; font-weight: 650; }
@@ -119,7 +119,7 @@ page { background: #f7f3ea; }
 .today-task-row.is-done .reference-task-icon { opacity: .9; }
 .task-copy { position: relative; z-index: 2; min-width: 0; flex: 1; }
 .task-title-line { min-width: 0; display: flex; align-items: center; gap: 14rpx; }
-.task-title { min-width: 0; flex: 1; overflow: hidden; color: #263e36; font-family: "Songti SC", STSong, serif; font-size: 27rpx; line-height: 36rpx; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.task-title { min-width: 0; flex: 1; overflow: hidden; color: #263e36; font-family: var(--font-family-brand); font-size: 27rpx; line-height: 36rpx; font-weight: var(--font-weight-title); text-overflow: ellipsis; white-space: nowrap; }
 .task-duration { flex: none; color: #777b76; font-size: 18rpx; line-height: 28rpx; white-space: nowrap; }
 .task-meta-actual { color: #527064; font-size: 18rpx; line-height: 26rpx; }
 .task-status-line { min-height: 28rpx; margin-top: 5rpx; display: flex; align-items: center; gap: 10rpx; }
@@ -135,15 +135,15 @@ page { background: #f7f3ea; }
 .task-tail-check .t-icon { font-size: 28rpx; }
 .action-list-toggle { min-height: 54rpx; padding: 10rpx 0 0; display: flex; align-items: center; justify-content: center; color: #8f793f; font-size: 20rpx; text-align: center; }
 .action-empty-inline { padding: 42rpx 28rpx; border: 1rpx dashed rgba(49,88,75,.2); border-radius: 25rpx; background: rgba(255,253,248,.72); color: #31584b; text-align: center; }
-.action-empty-inline > view { font-family: "Songti SC", STSong, serif; font-size: 27rpx; }
+.action-empty-inline > view { font-family: var(--font-family-brand); font-size: 27rpx; }
 .action-empty-inline text { display: block; margin-top: 8rpx; color: #817e77; font-size: 20rpx; }
 .action-empty-button { width: 236rpx; min-height: 64rpx; margin: 22rpx auto 0; padding: 0 22rpx; display: flex; align-items: center; justify-content: center; border-radius: 32rpx; color: #fff; background: #31584b; font-family: inherit !important; font-size: 22rpx !important; font-weight: 650; }
 
 .state-card, .empty-card { margin-top: 20rpx; padding: 58rpx 32rpx; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .loading-dot { width: 26rpx; height: 26rpx; margin-bottom: 20rpx; border: 5rpx solid rgba(49,88,75,.18); border-top-color: #31584b; border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.state-mark, .empty-mark { width: 72rpx; height: 72rpx; margin-bottom: 18rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #eef2ec; color: #31584b; font-family: "Songti SC", serif; font-size: 26rpx; }
-.state-title { color: #234b40; font-family: "Songti SC", STSong, serif; font-size: 30rpx; font-weight: 700; }
+.state-mark, .empty-mark { width: 72rpx; height: 72rpx; margin-bottom: 18rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #eef2ec; color: #31584b; font-family: var(--font-family-brand); font-size: 26rpx; }
+.state-title { color: #234b40; font-family: var(--font-family-brand); font-size: 30rpx; font-weight: var(--font-weight-title); }
 .state-description { max-width: 520rpx; margin-top: 12rpx; color: #7d7970; font-size: 21rpx; line-height: 32rpx; }
 .primary-button { min-width: 230rpx; height: 72rpx; margin-top: 24rpx; border-radius: 36rpx; background: #31584b; color: #fff; font-size: 25rpx; line-height: 72rpx; }
 .primary-button::after { border: 0; }
@@ -154,14 +154,14 @@ page { background: #f7f3ea; }
 .calendar-mask, .quick-add-mask, .completion-mask { position: absolute; inset: 0; background: rgba(29,48,41,.34); backdrop-filter: blur(4rpx); -webkit-backdrop-filter: blur(4rpx); }
 .calendar-panel, .quick-add-panel, .quick-duration-panel, .completion-panel { position: absolute; right: 0; bottom: 0; left: 0; padding: 18rpx 30rpx calc(30rpx + env(safe-area-inset-bottom)); border-radius: 34rpx 34rpx 0 0; background: #faf8f1; box-shadow: 0 -18rpx 48rpx rgba(31,65,54,.16); }
 .calendar-head, .quick-add-header, .quick-duration-header { min-height: 68rpx; display: flex; align-items: center; justify-content: space-between; }
-.calendar-title, .quick-add-title, .quick-duration-title { color: #234b40; font-family: "Songti SC", STSong, serif; font-size: 32rpx; font-weight: 700; }
+.calendar-title, .quick-add-title, .quick-duration-title { color: #234b40; font-family: var(--font-family-brand); font-size: 32rpx; font-weight: var(--font-weight-title); }
 .calendar-nav, .quick-add-close { width: 58rpx; height: 58rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #eef1eb; color: #51665d; font-size: 31rpx; }
 .calendar-week-row, .calendar-grid { display: grid; grid-template-columns: repeat(7,1fr); }
 .calendar-week-row { margin-top: 14rpx; }
 .calendar-week-label { color: #8a877f; font-size: 19rpx; text-align: center; }
 .calendar-grid { margin-top: 10rpx; row-gap: 7rpx; }
 .calendar-day { position: relative; height: 72rpx; display: flex; align-items: center; justify-content: center; }
-.calendar-day-number { width: 54rpx; height: 54rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #4d514e; font-family: Georgia, serif; font-size: 23rpx; }
+.calendar-day-number { width: 54rpx; height: 54rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #4d514e; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 23rpx; }
 .calendar-day.is-outside { opacity: .28; }
 .calendar-day.is-today:not(.is-selected) .calendar-day-number { box-shadow: inset 0 0 0 2rpx rgba(49,88,75,.28); }
 .calendar-day.is-selected .calendar-day-number { background: #31584b; color: #fff; }
@@ -215,13 +215,13 @@ page { background: #f7f3ea; }
 .completion-layer.is-visible .completion-panel { transform: translateY(0); }
 .completion-celebration { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .completion-badge { position: relative; width: 86rpx; height: 86rpx; display: flex; align-items: center; justify-content: center; border: 2rpx solid #c7a15a; border-radius: 50%; background: #f5ecd7; color: #31584b; }
-.completion-title { margin-top: 15rpx; color: #234b40; font-family: "Songti SC", STSong, serif; font-size: 34rpx; font-weight: 700; }
+.completion-title { margin-top: 15rpx; color: #234b40; font-family: var(--font-family-brand); font-size: 34rpx; font-weight: var(--font-weight-title); }
 .completion-copy { margin-top: 7rpx; color: #7d7970; font-size: 21rpx; }
 .completion-stats { margin-top: 22rpx; display: grid; grid-template-columns: repeat(2,1fr); gap: 12rpx; }
 .completion-stat-card { min-height: 102rpx; padding: 16rpx; display: flex; align-items: center; gap: 13rpx; border: 1rpx solid #e0e5de; border-radius: 20rpx; background: #fffdf8; }
 .completion-stat-icon { width: 48rpx; height: 48rpx; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #e9f0eb; color: #31584b; font-size: 19rpx; }
 .completion-stat-icon.is-yellow { background: #f5ecd7; color: #9d762f; }
-.completion-stat-value { color: #234b40; font-family: Georgia, serif; font-size: 27rpx; }
+.completion-stat-value { color: #234b40; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 27rpx; }
 .completion-stat-label { margin-top: 3rpx; color: #85827b; font-size: 18rpx; }
 .completion-actions { margin-top: 20rpx; display: flex; gap: 14rpx; }
 .completion-share-button, .completion-continue-button { flex: 1; height: 72rpx; border-radius: 36rpx; font-size: 23rpx; line-height: 72rpx; }

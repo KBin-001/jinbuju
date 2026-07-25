@@ -86,7 +86,7 @@
 .nav-back-arrow {
   margin-top: -4rpx;
   color: var(--ink);
-  font-family: Georgia, serif;
+  font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums;
   font-size: 48rpx;
   font-weight: 400;
   line-height: 1;
@@ -101,9 +101,9 @@
 
 .nav-title {
   color: var(--ink);
-  font-family: "Songti SC", "STSong", serif;
+  font-family: var(--font-family-brand);
   font-size: 38rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   line-height: 43rpx;
   letter-spacing: 4rpx;
   text-shadow: 0 2rpx 8rpx rgba(255, 253, 248, 0.8);
@@ -159,9 +159,9 @@
   margin-top: 7rpx;
   overflow: hidden;
   color: var(--ink);
-  font-family: "Songti SC", "STSong", serif;
+  font-family: var(--font-family-brand);
   font-size: 38rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   line-height: 48rpx;
   letter-spacing: 2rpx;
   text-overflow: ellipsis;
@@ -189,9 +189,9 @@
   background: linear-gradient(145deg, #edf2ea, #dce8de);
   box-shadow: 0 5rpx 15rpx rgba(35, 76, 62, 0.11);
   color: var(--ink);
-  font-family: "Songti SC", serif;
+  font-family: var(--font-family-brand);
   font-size: 30rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
 }
 
 .hero-seal image { width: 100%; height: 100%; }
@@ -221,7 +221,7 @@
 .hero-stat-value {
   margin-top: 3rpx;
   color: var(--ink-deep);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums;
   font-size: 39rpx;
   line-height: 45rpx;
 }
@@ -229,7 +229,7 @@
 .hero-stat-value text {
   margin-left: 4rpx;
   color: #716d67;
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  font-family: var(--font-family-sans);
   font-size: 19rpx;
 }
 
@@ -348,9 +348,9 @@
 
 .member-section-title {
   color: var(--ink);
-  font-family: "Songti SC", "STSong", serif;
+  font-family: var(--font-family-brand);
   font-size: 33rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   line-height: 44rpx;
   letter-spacing: 2rpx;
 }
@@ -386,8 +386,8 @@
   border: 3rpx solid rgba(255, 253, 248, 0.96);
   border-radius: 50%;
   color: #fffdf8;
-  font-family: "Songti SC", serif;
-  font-weight: 700;
+  font-family: var(--font-family-brand);
+  font-weight: var(--font-weight-title);
   box-shadow: 0 5rpx 14rpx rgba(45, 74, 63, 0.10);
 }
 
@@ -492,7 +492,7 @@
 
 .member-minutes {
   color: #1c3630;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums;
   font-size: 31rpx;
   line-height: 34rpx;
   white-space: nowrap;
@@ -501,7 +501,7 @@
 .member-minutes text {
   margin-left: 3rpx;
   color: #686963;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-family-sans);
   font-size: 17rpx;
 }
 
@@ -541,8 +541,8 @@
 }
 
 .empty-state--large { margin-top: 140rpx; }
-.empty-seal { display: flex; align-items: center; justify-content: center; width: 78rpx; height: 78rpx; border: 1rpx solid rgba(183,129,41,.50); border-radius: 50%; background: rgba(247,235,209,.66); color: #a87629; font-family: "Songti SC", serif; font-size: 31rpx; }
-.empty-title { margin-top: 21rpx; color: var(--ink); font-family: "Songti SC", serif; font-size: 31rpx; font-weight: 700; }
+.empty-seal { display: flex; align-items: center; justify-content: center; width: 78rpx; height: 78rpx; border: 1rpx solid rgba(183,129,41,.50); border-radius: 50%; background: rgba(247,235,209,.66); color: #a87629; font-family: var(--font-family-brand); font-size: 31rpx; }
+.empty-title { margin-top: 21rpx; color: var(--ink); font-family: var(--font-family-brand); font-size: 31rpx; font-weight: var(--font-weight-title); }
 .empty-copy { margin-top: 11rpx; color: #817b72; font-size: 23rpx; line-height: 34rpx; }
 .empty-action { display: flex; align-items: center; justify-content: center; height: 58rpx; margin-top: 26rpx; padding: 0 27rpx; border-radius: 30rpx; background: var(--ink); color: #fff; font-size: 23rpx; }
 .bottom-safe-area { height: 30rpx; }
@@ -623,7 +623,7 @@
 }
 
 .detail-profile-main { min-width: 0; flex: 1; padding-right: 54rpx; }
-.detail-name { max-width: 210rpx; overflow: hidden; color: var(--ink); font-family: "Songti SC", serif; font-size: 34rpx; font-weight: 700; line-height: 43rpx; text-overflow: ellipsis; white-space: nowrap; }
+.detail-name { max-width: 210rpx; overflow: hidden; color: var(--ink); font-family: var(--font-family-brand); font-size: 34rpx; font-weight: var(--font-weight-title); line-height: 43rpx; text-overflow: ellipsis; white-space: nowrap; }
 .detail-update { margin-top: 5rpx; color: #948d83; font-size: 19rpx; }
 .detail-status-copy { margin-top: 8rpx; color: #716d66; font-size: 22rpx; line-height: 31rpx; }
 
@@ -635,12 +635,12 @@
 
 .detail-stat { display: flex; align-items: center; justify-content: center; flex: 1; flex-direction: column; min-width: 0; }
 .detail-stat-divider { width: 1rpx; height: 67rpx; background: rgba(203,194,178,.56); }
-.detail-stat-value { color: var(--ink-deep); font-family: Georgia, "Times New Roman", serif; font-size: 36rpx; line-height: 43rpx; }
-.detail-stat-value text { margin-left: 3rpx; color: #6f6c66; font-family: -apple-system, sans-serif; font-size: 17rpx; }
+.detail-stat-value { color: var(--ink-deep); font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 36rpx; line-height: 43rpx; }
+.detail-stat-value text { margin-left: 3rpx; color: #6f6c66; font-family: var(--font-family-sans); font-size: 17rpx; }
 .detail-stat-label { margin-top: 5rpx; color: #807a72; font-size: 20rpx; }
 
 .detail-section { margin-top: 27rpx; }
-.detail-section-title { padding: 0 4rpx; color: var(--ink); font-family: "Songti SC", serif; font-size: 30rpx; font-weight: 700; letter-spacing: 1rpx; }
+.detail-section-title { padding: 0 4rpx; color: var(--ink); font-family: var(--font-family-brand); font-size: 30rpx; font-weight: var(--font-weight-title); letter-spacing: 1rpx; }
 .detail-action-list { margin-top: 13rpx; }
 .detail-action-row { display: flex; align-items: center; min-height: 83rpx; margin-top: 11rpx; padding: 14rpx 18rpx; border-radius: 18rpx; }
 .detail-action-mark { width: 15rpx; height: 15rpx; flex: 0 0 15rpx; margin-right: 15rpx; border: 2rpx solid #aeb8b0; border-radius: 50%; }

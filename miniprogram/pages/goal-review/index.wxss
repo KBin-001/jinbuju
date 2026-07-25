@@ -13,7 +13,7 @@ page { background: var(--color-background, #F7F3EA); }
 .hero-topline { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
 .hero-eyebrow, .section-eyebrow { display: block; color: var(--color-accent, #C89B4A); font-size: 21rpx; line-height: 30rpx; font-weight: 650; letter-spacing: 2rpx; }
 .hero-chip { min-height: 40rpx; padding: 5rpx 16rpx; flex: none; border-radius: 20rpx; background: var(--color-success-soft); color: var(--color-success); font-size: 20rpx; line-height: 30rpx; }
-.hero-title { max-width: 86%; margin-top: 20rpx; display: -webkit-box; overflow: hidden; color: var(--color-primary); font-family: "Songti SC", STSong, serif; font-size: 42rpx; line-height: 54rpx; font-weight: 700; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.hero-title { max-width: 86%; margin-top: 20rpx; display: -webkit-box; overflow: hidden; color: var(--color-primary); font-family: var(--font-family-brand); font-size: 42rpx; line-height: 54rpx; font-weight: var(--font-weight-title); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .hero-date { margin-top: 7rpx; display: block; color: var(--color-text-secondary); font-size: 22rpx; }
 .review-summary { max-width: 92%; margin-top: 30rpx; padding: 24rpx; display: flex; align-items: center; gap: 24rpx; border: 1rpx solid rgba(200,155,74,.2); border-radius: 24rpx; background: rgba(255,252,246,.9); }
 .summary-rate { width: 112rpx; height: 112rpx; flex: none; display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; border: 8rpx solid rgba(200,155,74,.62); border-radius: 50%; background: rgba(255,252,246,.9); color: var(--color-primary); }
@@ -35,7 +35,7 @@ page { background: var(--color-background, #F7F3EA); }
 .section-card, .next-section, .evidence-empty, .state-card { margin-top: 24rpx; border: 1rpx solid var(--color-border-soft); border-radius: 28rpx; background: var(--color-card, #FFFCF6); box-shadow: var(--shadow-card-soft); }
 .section-card, .next-section { padding: 30rpx; }
 .section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20rpx; }
-.section-title { margin-top: 6rpx; display: block; color: var(--color-text-main); font-family: "Songti SC", STSong, serif; font-size: 30rpx; line-height: 40rpx; font-weight: 700; }
+.section-title { margin-top: 6rpx; display: block; color: var(--color-text-main); font-family: var(--font-family-brand); font-size: 30rpx; line-height: 40rpx; font-weight: var(--font-weight-title); }
 .section-count { min-height: 36rpx; padding: 3rpx 13rpx; flex: none; border-radius: 18rpx; background: var(--color-card-soft); color: var(--color-text-secondary); font-size: 19rpx; line-height: 30rpx; }
 .section-subtitle { margin-top: 5rpx; display: block; color: var(--color-text-secondary); font-size: 20rpx; line-height: 30rpx; }
 .empty-note { margin-top: 22rpx; padding: 24rpx; border-radius: 20rpx; background: rgba(247,243,234,.54); color: var(--color-text-secondary); font-size: 22rpx; line-height: 34rpx; }
@@ -52,7 +52,7 @@ page { background: var(--color-background, #F7F3EA); }
 .action-list { margin-top: 18rpx; }
 .action-row { min-height: 84rpx; padding: 14rpx 0; display: flex; align-items: center; gap: 14rpx; border-bottom: 1rpx solid var(--color-divider); }
 .action-row:last-child { border-bottom: 0; }
-.action-index { width: 42rpx; height: 42rpx; flex: none; display: flex; align-items: center; justify-content: center; border: 1rpx solid rgba(36,91,77,.14); border-radius: 14rpx; background: var(--color-primary-soft); color: var(--color-primary); font-family: "Songti SC", STSong, serif; font-size: 21rpx; font-weight: 700; }
+.action-index { width: 42rpx; height: 42rpx; flex: none; display: flex; align-items: center; justify-content: center; border: 1rpx solid rgba(36,91,77,.14); border-radius: 14rpx; background: var(--color-primary-soft); color: var(--color-primary); font-family: var(--font-family-brand); font-size: 21rpx; font-weight: var(--font-weight-title); }
 .action-main { min-width: 0; flex: 1; }
 .action-title { display: -webkit-box; overflow: hidden; color: var(--color-text-main); font-size: 24rpx; line-height: 34rpx; font-weight: 650; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .action-date { margin-top: 4rpx; display: block; color: var(--color-text-tertiary, #969A96); font-size: 19rpx; }
@@ -73,7 +73,7 @@ page { background: var(--color-background, #F7F3EA); }
 .trend-footnote { margin-top: 15rpx; display: block; color: var(--color-text-tertiary, #969A96); font-size: 18rpx; line-height: 28rpx; }
 
 .next-section { background: rgba(255,252,246,.8); }
-.next-title { margin-top: 7rpx; display: block; color: var(--color-text-main); font-family: "Songti SC", STSong, serif; font-size: 30rpx; line-height: 40rpx; font-weight: 700; }
+.next-title { margin-top: 7rpx; display: block; color: var(--color-text-main); font-family: var(--font-family-brand); font-size: 30rpx; line-height: 40rpx; font-weight: var(--font-weight-title); }
 .insight-card { margin-top: 20rpx; padding: 24rpx; display: flex; align-items: flex-start; gap: 18rpx; border: 1rpx solid rgba(36,91,77,.1); border-radius: 22rpx; background: var(--color-primary-soft); }
 .insight-card--warm { border-color: rgba(200,155,74,.18); background: rgba(247,238,219,.65); }
 .insight-mark { width: 54rpx; height: 54rpx; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 18rpx; background: rgba(36,91,77,.1); color: var(--color-primary); }

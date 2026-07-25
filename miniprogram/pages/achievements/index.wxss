@@ -1,5 +1,5 @@
 page { height: 100%; overflow: hidden; background: #f7f3ea; }
-.achievement-page { position: relative; box-sizing: border-box; height: 100vh; overflow: hidden; background: linear-gradient(180deg, #fbf8f1, #f5f3eb 56%, #f7f3ea); color: #24312d; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; }
+.achievement-page { position: relative; box-sizing: border-box; height: 100vh; overflow: hidden; background: linear-gradient(180deg, #fbf8f1, #f5f3eb 56%, #f7f3ea); color: #24312d; font-family: var(--font-family-sans); }
 .achievement-ambient { position: absolute; border-radius: 50%; pointer-events: none; }
 .achievement-ambient--one { top: -240rpx; right: -200rpx; width: 430rpx; height: 430rpx; background: radial-gradient(circle, rgba(200,155,74,.08), transparent 68%); }
 .achievement-ambient--two { top: 620rpx; left: -300rpx; width: 460rpx; height: 460rpx; background: radial-gradient(circle, rgba(127,157,145,.1), transparent 68%); }

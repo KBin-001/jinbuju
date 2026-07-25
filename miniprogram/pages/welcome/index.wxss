@@ -12,12 +12,12 @@ page { background: #F7F3EA; }
 .brand { width: 300rpx; min-height: 72rpx; display: flex; align-items: center; }
 .brand-mark { width: 66rpx; height: 66rpx; flex: none; }
 .brand-copy { min-width: 0; margin-left: 14rpx; display: flex; flex-direction: column; }
-.brand-name { color: #245B4D; font-family: "Songti SC", STSong, serif; font-size: 31rpx; font-weight: 700; line-height: 1.1; letter-spacing: 2rpx; white-space: nowrap; }
+.brand-name { color: #245B4D; font-family: var(--font-family-brand); font-size: 31rpx; font-weight: var(--font-weight-title); line-height: 1.1; letter-spacing: 2rpx; white-space: nowrap; }
 .brand-subname { margin-top: 5rpx; color: #6C7772; font-size: 18rpx; line-height: 1; letter-spacing: 1rpx; white-space: nowrap; }
 
 .hero { margin-top: 34rpx; }
 .hero-label { color: #8B682D; font-size: 22rpx; font-weight: 650; }
-.hero-title { margin-top: 18rpx; color: #173F35; font-family: "Songti SC", STSong, serif; font-size: 48rpx; font-weight: 700; line-height: 1.32; letter-spacing: 1rpx; }
+.hero-title { margin-top: 18rpx; color: #173F35; font-family: var(--font-family-brand); font-size: 48rpx; font-weight: var(--font-weight-title); line-height: 1.32; letter-spacing: 1rpx; }
 .hero-title text { display: block; }
 .hero-subtitle { max-width: 620rpx; margin-top: 15rpx; color: #5F6964; font-size: 24rpx; line-height: 1.6; }
 
@@ -30,7 +30,7 @@ page { background: #F7F3EA; }
 .goal-demo-copy { min-width: 0; margin-left: 13rpx; display: flex; flex-direction: column; }
 .goal-demo-copy text:first-child { color: #24312D; font-size: 25rpx; font-weight: 700; }
 .goal-demo-copy text:last-child { margin-top: 5rpx; color: #7C817D; font-size: 18rpx; }
-.goal-demo-rate { margin-left: auto; color: #245B4D; font-family: Georgia, serif; font-size: 31rpx; font-weight: 700; }
+.goal-demo-rate { margin-left: auto; color: #245B4D; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 31rpx; font-weight: var(--font-weight-numeric); }
 .progress-track { height: 8rpx; margin-top: 18rpx; overflow: hidden; border-radius: 999rpx; background: #E3E9E5; }
 .progress-fill { width: 72%; height: 100%; border-radius: inherit; background: #245B4D; }
 .task-demo-card { position: absolute; z-index: 3; right: 0; bottom: 0; width: 312rpx; min-height: 142rpx; padding: 22rpx 18rpx 22rpx 42rpx; border-radius: 22rpx; }

@@ -10,7 +10,7 @@ page { background: var(--color-background, #F7F3EA); }
 .hero-veil { position: absolute; inset: 0; background: linear-gradient(100deg, rgba(255,252,246,.99), rgba(255,252,246,.9) 64%, rgba(255,252,246,.34)); }
 .hero-content { position: relative; z-index: 1; padding: 26rpx 30rpx; }
 .hero-eyebrow { color: var(--color-accent); font-size: 21rpx; font-weight: 650; letter-spacing: 2rpx; }
-.hero-title { max-width: 82%; margin-top: 10rpx; display: -webkit-box; overflow: hidden; color: var(--color-primary); font-family: "Songti SC", STSong, serif; font-size: 36rpx; line-height: 48rpx; font-weight: 700; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.hero-title { max-width: 82%; margin-top: 10rpx; display: -webkit-box; overflow: hidden; color: var(--color-primary); font-family: var(--font-family-brand); font-size: 36rpx; line-height: 48rpx; font-weight: var(--font-weight-title); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .hero-summary { margin-top: 14rpx; display: block; color: var(--color-text-secondary); font-size: 21rpx; line-height: 32rpx; }
 .filter-bar { margin-top: 22rpx; padding: 7rpx; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1rpx solid var(--color-border-soft); border-radius: 28rpx; background: rgba(255,252,246,.76); }
 .filter-item { min-height: 66rpx; display: flex; align-items: center; justify-content: center; border-radius: 23rpx; color: var(--color-text-secondary); font-size: 23rpx; font-weight: 600; }

@@ -132,4 +132,46 @@ assert.match(appTs, /initCloud\s*\(/, "onLaunch 必须保留 initCloud() 调用"
 assert.match(appTs, /bootstrapAccount\s*\(/, "onLaunch 必须保留 bootstrapAccount() 调用");
 assert.match(appTs, /applyGlobalTheme\s*\(/, "onLaunch 必须保留 applyGlobalTheme() 调用");
 
-console.log("typography contract tests passed (issues 01 & 02)");
+// ── Issue 03: no hardcoded font-family in pages/ WXSS files ──────────────────
+
+const pagesDir = path.join(root, "miniprogram", "pages");
+const hardcodedFontPatterns = [
+  { re: /"Songti SC"/, label: '"Songti SC"' },
+  { re: /STSong/, label: "STSong" },
+  { re: /SimSun/, label: "SimSun" },
+  { re: /\bGeorgia\b/, label: "Georgia" },
+  { re: /"Times New Roman"/, label: '"Times New Roman"' },
+  { re: /font-family:\s*-apple-system/, label: "-apple-system inline stack" },
+];
+
+function listWxss(dir) {
+  const results = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      results.push(...listWxss(full));
+    } else if (entry.name.endsWith(".wxss")) {
+      results.push(full);
+    }
+  }
+  return results;
+}
+
+const pageWxssFiles = listWxss(pagesDir);
+const violations = [];
+for (const file of pageWxssFiles) {
+  const content = fs.readFileSync(file, "utf8");
+  const rel = path.relative(root, file).replace(/\\/g, "/");
+  for (const { re, label } of hardcodedFontPatterns) {
+    if (re.test(content)) {
+      violations.push(`${rel}: 残留硬编码 ${label}`);
+    }
+  }
+}
+assert.equal(
+  violations.length,
+  0,
+  `pages/ 下 WXSS 文件不得残留硬编码字体族:\n${violations.join("\n")}`,
+);
+
+console.log("typography contract tests passed (issues 01, 02 & 03)");

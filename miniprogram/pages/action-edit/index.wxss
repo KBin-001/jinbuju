@@ -2,7 +2,7 @@ page { background: var(--color-bg-page, #f7f3ea); }
 .edit-page { min-height: 100vh; box-sizing: border-box; padding: 30rpx 32rpx calc(176rpx + env(safe-area-inset-bottom)); overflow: hidden; color: var(--color-text-main, #24312d); background: radial-gradient(circle at 92% 0, rgba(127,157,145,.11), transparent 420rpx), linear-gradient(180deg,#faf7ef 0%,#f7f3ea 100%); }
 .page-header { margin-bottom: 26rpx; padding: 4rpx 4rpx 0; }
 .page-eyebrow { color: #9b7432; font-size: 20rpx; font-weight: 650; line-height: 30rpx; letter-spacing: 3rpx; }
-.page-title { margin-top: 5rpx; color: #24312d; font-family: "Songti SC", "STSong", SimSun, serif; font-size: 42rpx; font-weight: 700; line-height: 56rpx; letter-spacing: 2rpx; }
+.page-title { margin-top: 5rpx; color: #24312d; font-family: var(--font-family-brand); font-size: 42rpx; font-weight: var(--font-weight-title); line-height: 56rpx; letter-spacing: 2rpx; }
 .page-subtitle { max-width: 620rpx; margin-top: 8rpx; color: #747c78; font-size: 23rpx; line-height: 36rpx; }
 .surface-card { border: 1rpx solid rgba(93,108,100,.11); border-radius: 28rpx; background: rgba(255,252,246,.94); box-shadow: 0 10rpx 30rpx rgba(54,70,63,.045); }
 .form-section { padding: 28rpx 26rpx; }

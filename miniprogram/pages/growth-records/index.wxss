@@ -56,10 +56,10 @@ page {
 .nav-title {
   position: relative;
   color: var(--color-primary, #557F75);
-  font-family: "Songti SC", STSong, serif;
+  font-family: var(--font-family-brand);
   font-size: 36rpx;
   line-height: 48rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   letter-spacing: 3rpx;
 }
 
@@ -137,10 +137,10 @@ page {
   display: block;
   overflow: hidden;
   color: var(--color-primary, #557F75);
-  font-family: "Songti SC", STSong, serif;
+  font-family: var(--font-family-brand);
   font-size: 36rpx;
   line-height: 48rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -191,10 +191,10 @@ page {
   max-width: 100%;
   overflow: hidden;
   color: var(--color-primary, #557F75);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums;
   font-size: 34rpx;
   line-height: 42rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-numeric);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -227,10 +227,10 @@ page {
 
 .filter-heading text:first-child {
   color: var(--color-text-main, #24312D);
-  font-family: "Songti SC", STSong, serif;
+  font-family: var(--font-family-brand);
   font-size: 27rpx;
   line-height: 36rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   letter-spacing: 1rpx;
 }
 
@@ -367,10 +367,10 @@ page {
   min-width: 0;
   overflow: hidden;
   color: var(--color-text-main, #24312D);
-  font-family: "Songti SC", STSong, serif;
+  font-family: var(--font-family-brand);
   font-size: 26rpx;
   line-height: 36rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -627,10 +627,10 @@ page {
 .state-title {
   margin-top: 19rpx;
   color: var(--color-text-main, #24312D);
-  font-family: "Songti SC", STSong, serif;
+  font-family: var(--font-family-brand);
   font-size: 30rpx;
   line-height: 42rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
 }
 
 .state-desc {

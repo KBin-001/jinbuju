@@ -78,9 +78,9 @@
   min-width: 0;
   overflow: hidden;
   color: var(--ink);
-  font-family: "Songti SC", "STSong", serif;
+  font-family: var(--font-family-brand);
   font-size: 42rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   line-height: 54rpx;
   letter-spacing: 2rpx;
   text-overflow: ellipsis;
@@ -95,16 +95,16 @@
 .hero-settings--pressed { background: rgba(200,155,74,.10); }
 
 .hero-today { margin-top: 28rpx; padding: 30rpx 30rpx 24rpx; border: 1rpx solid rgba(200,155,74,.30); border-radius: 28rpx; background: linear-gradient(150deg,rgba(255,253,248,.92),rgba(250,247,239,.84)); }
-.hero-today-heading { display: flex; align-items: center; gap: 12rpx; color: #245B4D; font-family: "Songti SC", "STSong", serif; font-size: 31rpx; font-weight: 700; letter-spacing: 2rpx; }
+.hero-today-heading { display: flex; align-items: center; gap: 12rpx; color: #245B4D; font-family: var(--font-family-brand); font-size: 31rpx; font-weight: var(--font-weight-title); letter-spacing: 2rpx; }
 .hero-stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12rpx; margin-top: 24rpx; }
 .hero-stat-item { min-width: 0; padding: 18rpx 8rpx 16rpx; border: 1rpx solid rgba(93, 117, 105, .12); border-radius: 18rpx; background: rgba(255, 253, 248, .70); text-align: center; }
 .hero-stat-value, .hero-stat-label { display: block; }
-.hero-stat-value { overflow: hidden; color: #245B4D; font-family: Georgia, "Times New Roman", serif; font-size: 31rpx; font-weight: 700; line-height: 40rpx; text-overflow: ellipsis; white-space: nowrap; }
+.hero-stat-value { overflow: hidden; color: #245B4D; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 31rpx; font-weight: var(--font-weight-numeric); line-height: 40rpx; text-overflow: ellipsis; white-space: nowrap; }
 .hero-stat-label { margin-top: 5rpx; color: #777D79; font-size: 18rpx; line-height: 27rpx; }
 .hero-progress-head { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 24rpx; }
 .hero-progress-value { display: flex; align-items: baseline; color: #53605B; font-size: 24rpx; }
-.hero-progress-value > text:first-child { margin-right: 12rpx; color: #245B4D; font-family: Georgia,"Times New Roman",serif; font-size: 58rpx; line-height: 62rpx; }
-.hero-progress-rate { color: #245B4D; font-family: Georgia,"Times New Roman",serif; font-size: 40rpx; line-height: 50rpx; }
+.hero-progress-value > text:first-child { margin-right: 12rpx; color: #245B4D; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 58rpx; line-height: 62rpx; }
+.hero-progress-rate { color: #245B4D; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 40rpx; line-height: 50rpx; }
 .hero-progress-rate text { margin-left: 2rpx; font-size: 22rpx; }
 .hero-progress-track { height: 15rpx; margin-top: 20rpx; border-radius: 15rpx; background: #EDE7DC; }
 .hero-progress-fill { position: relative; min-width: 0; max-width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#2C715E,#245B4D); transition: width 240ms ease; }
@@ -173,9 +173,9 @@
 .hero-primary-title {
   overflow: hidden;
   color: var(--color-primary-dark, #183F35);
-  font-family: "Songti SC", "STSong", serif;
+  font-family: var(--font-family-brand);
   font-size: 29rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   line-height: 39rpx;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -254,9 +254,9 @@
   background: #e9eee7;
   box-shadow: 0 3rpx 10rpx rgba(38, 71, 60, 0.14);
   color: var(--ink);
-  font-family: "Songti SC", serif;
+  font-family: var(--font-family-brand);
   font-size: 23rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
 }
 
 .hero-avatar:first-child { margin-left: 0; }
@@ -270,14 +270,14 @@
 .hero-room--pressed { opacity: .60; }
 
 .solo-invite { margin-top: 28rpx; padding: 30rpx; border: 1rpx solid rgba(200,155,74,.30); border-radius: 28rpx; background: linear-gradient(150deg,rgba(255,253,248,.94),rgba(248,244,233,.88)); }
-.solo-invite-heading { color: #245B4D; font-family: "Songti SC", "STSong", serif; font-size: 32rpx; font-weight: 700; line-height: 43rpx; }
+.solo-invite-heading { color: #245B4D; font-family: var(--font-family-brand); font-size: 32rpx; font-weight: var(--font-weight-title); line-height: 43rpx; }
 .solo-invite-copy { margin-top: 10rpx; color: #737871; font-size: 22rpx; line-height: 34rpx; }
 .solo-member-line { display: flex; align-items: center; justify-content: space-between; min-height: 66rpx; margin-top: 22rpx; color: #606961; font-size: 22rpx; }
 .solo-invite-button { display: flex; align-items: center; justify-content: center; height: 72rpx; margin-top: 22rpx; border-radius: 36rpx; background: #245B4D; color: #fff; font-size: 24rpx; font-weight: 650; box-shadow: 0 9rpx 22rpx rgba(36,91,77,.15); }
 .solo-invite-button image { width: 30rpx; height: 30rpx; margin-right: 10rpx; filter: brightness(0) invert(1); }
 .solo-invite-unavailable { margin-top: 22rpx; padding: 18rpx; border-radius: 18rpx; background: rgba(235, 232, 224, .72); color: #7C817D; font-size: 22rpx; text-align: center; }
 .solo-action-card { margin-top: 22rpx; padding: 27rpx 24rpx 24rpx; }
-.solo-action-eyebrow { padding: 0 6rpx; color: #245B4D; font-family: "Songti SC", "STSong", serif; font-size: 30rpx; font-weight: 700; }
+.solo-action-eyebrow { padding: 0 6rpx; color: #245B4D; font-family: var(--font-family-brand); font-size: 30rpx; font-weight: var(--font-weight-title); }
 
 /* Companion progress */
 .companion-card {
@@ -295,9 +295,9 @@
 
 .section-title {
   color: var(--ink);
-  font-family: "Songti SC", "STSong", serif;
+  font-family: var(--font-family-brand);
   font-size: 35rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   line-height: 48rpx;
   letter-spacing: 2rpx;
 }
@@ -363,8 +363,8 @@
   border-radius: 50%;
   background: #e7eee8;
   color: var(--ink);
-  font-family: "Songti SC", serif;
-  font-weight: 700;
+  font-family: var(--font-family-brand);
+  font-weight: var(--font-weight-title);
 }
 
 .companion-avatar { width: 66rpx; height: 66rpx; flex: 0 0 66rpx; margin-right: 16rpx; border: 2rpx solid rgba(255,255,255,.92); box-shadow: 0 3rpx 10rpx rgba(37, 71, 59, 0.10); font-size: 23rpx; }
@@ -390,8 +390,8 @@
 .companion-progress-fill--missed { background: #AEB9B2; }
 
 .companion-metric { width: 104rpx; flex: 0 0 104rpx; margin-left: 14rpx; text-align: right; }
-.companion-minutes { color: #1c342f; font-family: Georgia, "Times New Roman", serif; font-size: 34rpx; line-height: 38rpx; white-space: nowrap; }
-.companion-minutes text { margin-left: 3rpx; color: #5e605d; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 18rpx; }
+.companion-minutes { color: #1c342f; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 34rpx; line-height: 38rpx; white-space: nowrap; }
+.companion-minutes text { margin-left: 3rpx; color: #5e605d; font-family: var(--font-family-sans); font-size: 18rpx; }
 .companion-percent { margin-top: 4rpx; color: #4f5d57; font-size: 20rpx; line-height: 26rpx; white-space: nowrap; }
 .companion-empty { margin: 20rpx 8rpx 8rpx; padding: 35rpx 24rpx; border: 1rpx dashed rgba(87, 113, 101, 0.24); border-radius: 18rpx; color: #89837a; font-size: 23rpx; line-height: 34rpx; text-align: center; }
 
@@ -438,8 +438,8 @@
 
 /* State */
 .state-card { display: flex; align-items: center; flex-direction: column; padding: 55rpx 38rpx 48rpx; text-align: center; }
-.state-seal { display: flex; align-items: center; justify-content: center; width: 76rpx; height: 76rpx; border: 1rpx solid rgba(185, 131, 47, 0.50); border-radius: 50%; background: rgba(247, 235, 208, 0.62); color: var(--gold-deep); font-family: "Songti SC", serif; font-size: 34rpx; }
-.state-title { margin-top: 24rpx; color: var(--ink); font-family: "Songti SC", serif; font-size: 32rpx; font-weight: 700; }
+.state-seal { display: flex; align-items: center; justify-content: center; width: 76rpx; height: 76rpx; border: 1rpx solid rgba(185, 131, 47, 0.50); border-radius: 50%; background: rgba(247, 235, 208, 0.62); color: var(--gold-deep); font-family: var(--font-family-brand); font-size: 34rpx; }
+.state-title { margin-top: 24rpx; color: var(--ink); font-family: var(--font-family-brand); font-size: 32rpx; font-weight: var(--font-weight-title); }
 .state-copy { max-width: 520rpx; margin-top: 13rpx; color: #7b756c; font-size: 24rpx; line-height: 36rpx; }
 .state-actions { display: flex; gap: 17rpx; margin-top: 31rpx; }
 .state-action { display: flex; align-items: center; justify-content: center; min-width: 180rpx; height: 62rpx; margin-top: 28rpx; padding: 0 24rpx; border: 1rpx solid rgba(188, 129, 38, 0.65); border-radius: 32rpx; color: var(--gold-deep); font-size: 24rpx; }
@@ -451,7 +451,7 @@
 .empty-team-sun { position: absolute; z-index: 1; top: 44rpx; right: 69rpx; width: 76rpx; height: 76rpx; border-radius: 50%; background: radial-gradient(circle at 42% 40%, rgba(248,219,164,.48), rgba(244,205,135,.12) 68%, transparent 72%); }
 .empty-team-copy { position: relative; z-index: 3; max-width: 560rpx; }
 .empty-team-eyebrow { display: inline-flex; min-height: 42rpx; padding: 0 17rpx; align-items: center; border: 1rpx solid rgba(196,151,77,.26); border-radius: 22rpx; background: rgba(250,242,224,.74); color: #a7772e; font-size: 19rpx; font-weight: 650; letter-spacing: 1rpx; }
-.empty-team-title { color: #24312d; font-family: "Songti SC", STSong, serif; font-size: 51rpx; font-weight: 700; line-height: 66rpx; letter-spacing: 1rpx; text-shadow: 0 1rpx 0 rgba(255,255,255,.9); }
+.empty-team-title { color: #24312d; font-family: var(--font-family-brand); font-size: 51rpx; font-weight: var(--font-weight-title); line-height: 66rpx; letter-spacing: 1rpx; text-shadow: 0 1rpx 0 rgba(255,255,255,.9); }
 .empty-team-title text { display: block; }
 .empty-team-title text:last-child { color: #245b4d; }
 .empty-team-description { width: 346rpx; margin-top: 23rpx; color: #666b67; font-size: 22rpx; line-height: 39rpx; }
@@ -500,7 +500,7 @@
 .empty-community-visual-fade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(240,247,242,.98) 0%, rgba(240,247,242,.18) 26%, transparent 48%), linear-gradient(0deg, rgba(244,247,241,.92) 0%, transparent 20%); pointer-events: none; }
 .empty-community-copy { position: relative; z-index: 2; min-width: 0; width: 405rpx; }
 .empty-community-heading { display: flex; align-items: center; gap: 12rpx; }
-.empty-community-title { color: #285f50; font-family: "Songti SC", STSong, serif; font-size: 37rpx; font-weight: 700; line-height: 48rpx; letter-spacing: 1rpx; }
+.empty-community-title { color: #285f50; font-family: var(--font-family-brand); font-size: 37rpx; font-weight: var(--font-weight-title); line-height: 48rpx; letter-spacing: 1rpx; }
 .empty-community-badge { padding: 4rpx 12rpx; border-radius: 16rpx; background: #c7933c; color: #fffdf7; font-size: 17rpx; line-height: 27rpx; }
 .empty-community-description, .empty-community-benefits { display: block; }
 .empty-community-description { max-width: 350rpx; margin-top: 10rpx; color: #586a63; font-size: 21rpx; line-height: 33rpx; }
@@ -520,10 +520,10 @@
 .team-community-head > view:first-child { min-width: 0; flex: 1; }
 .team-community-kicker, .team-community-title { display: block; }
 .team-community-kicker { color: #7F9D91; font-size: 20rpx; line-height: 28rpx; letter-spacing: 2rpx; }
-.team-community-title { margin-top: 3rpx; overflow: hidden; color: #24312D; font-family: "Songti SC",STSong,serif; font-size: 34rpx; line-height: 44rpx; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.team-community-title { margin-top: 3rpx; overflow: hidden; color: #24312D; font-family: var(--font-family-brand); font-size: 34rpx; line-height: 44rpx; font-weight: var(--font-weight-title); text-overflow: ellipsis; white-space: nowrap; }
 .team-community-close { width: 72rpx; height: 72rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 50%; background: #EEE9DD; color: #65716C; }
 .team-community-state { min-height: 390rpx; padding: 44rpx 24rpx 34rpx; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #668F84; text-align: center; }
-.team-community-state-title { margin-top: 19rpx; color: #24312D; font-family: "Songti SC",STSong,serif; font-size: 30rpx; line-height: 42rpx; font-weight: 700; }
+.team-community-state-title { margin-top: 19rpx; color: #24312D; font-family: var(--font-family-brand); font-size: 30rpx; line-height: 42rpx; font-weight: var(--font-weight-title); }
 .team-community-state-copy { max-width: 500rpx; margin-top: 8rpx; color: #7C817D; font-size: 22rpx; line-height: 35rpx; }
 .team-community-retry { min-width: 188rpx; min-height: 70rpx; margin-top: 23rpx; padding: 0 30rpx; display: flex; align-items: center; justify-content: center; border-radius: 35rpx; background: #668F84; color: #FFF; font-size: 22rpx; font-weight: 650; }
 .team-community-retry--outline { border: 1rpx solid rgba(102,143,132,.26); background: rgba(255,252,246,.82); color: #557D6E; }
@@ -539,7 +539,7 @@
 .popup-handle { width: 70rpx; height: 7rpx; margin: 0 auto 26rpx; border-radius: 4rpx; background: #d4cec1; }
 .popup-eyebrow,
 .settings-eyebrow { color: var(--gold); font-size: 18rpx; font-weight: 700; letter-spacing: 3rpx; }
-.popup-title { color: var(--ink); font-family: "Songti SC", serif; font-size: 34rpx; font-weight: 700; line-height: 44rpx; }
+.popup-title { color: var(--ink); font-family: var(--font-family-brand); font-size: 34rpx; font-weight: var(--font-weight-title); line-height: 44rpx; }
 .popup-copy { margin-top: 12rpx; color: #7c766d; font-size: 23rpx; line-height: 35rpx; }
 .room-input { display: block; margin-top: 25rpx; --td-input-bg-color: rgba(255,255,255,.72); --td-input-border-radius: 18rpx; }
 .popup-actions { display: flex; gap: 18rpx; margin-top: 28rpx; }
@@ -551,14 +551,14 @@
 /* Settings */
 .team-settings-dialog { position: absolute; right: 0; bottom: 0; left: 0; display: flex; flex-direction: column; box-sizing: border-box; height: min(88vh, 1180rpx); border-radius: 34rpx 34rpx 0 0; background: #fbf7ee; box-shadow: 0 -20rpx 55rpx rgba(35, 44, 40, 0.18); }
 .settings-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 31rpx 36rpx 23rpx; border-bottom: 1rpx solid rgba(207, 198, 181, 0.56); }
-.settings-title { margin-top: 6rpx; color: var(--ink); font-family: "Songti SC", serif; font-size: 34rpx; font-weight: 700; }
+.settings-title { margin-top: 6rpx; color: var(--ink); font-family: var(--font-family-brand); font-size: 34rpx; font-weight: var(--font-weight-title); }
 .settings-close { display: flex; align-items: center; justify-content: center; width: 54rpx; height: 54rpx; border-radius: 50%; background: #efebe2; color: #777169; font-size: 35rpx; }
 .settings-scroll { min-height: 0; flex: 1; padding: 0 30rpx; box-sizing: border-box; }
 .settings-readonly-tip { margin: 24rpx 0 0; padding: 18rpx 20rpx; border: 1rpx solid rgba(190, 145, 70, 0.22); border-radius: 16rpx; background: rgba(248, 235, 208, 0.54); color: #846d48; font-size: 22rpx; line-height: 33rpx; }
 .settings-section { margin-top: 25rpx; padding: 25rpx; border: 1rpx solid rgba(207, 199, 184, 0.58); border-radius: 22rpx; background: rgba(255, 253, 248, 0.78); }
 .settings-section:last-child { margin-bottom: 26rpx; }
 .settings-section--readonly { opacity: 0.74; }
-.settings-section-title { margin-bottom: 20rpx; color: var(--ink); font-family: "Songti SC", serif; font-size: 28rpx; font-weight: 700; }
+.settings-section-title { margin-bottom: 20rpx; color: var(--ink); font-family: var(--font-family-brand); font-size: 28rpx; font-weight: var(--font-weight-title); }
 .team-profile-setting { display: flex; align-items: center; }
 .team-avatar-picker { display: flex; align-items: center; justify-content: center; width: 88rpx !important; height: 88rpx !important; min-width: 88rpx !important; overflow: hidden; padding: 0 !important; border: 2rpx solid #fff !important; border-radius: 50% !important; background: #e8efe9 !important; color: var(--ink) !important; box-shadow: 0 4rpx 12rpx rgba(39, 72, 60, 0.10); }
 .avatar-edit-mark { position: absolute; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; width: 30rpx; height: 30rpx; border-radius: 50%; background: var(--gold); color: #fff; font-size: 15rpx; }
@@ -566,7 +566,7 @@
 .setting-label { color: #354b43; font-size: 24rpx; font-weight: 600; line-height: 33rpx; }
 .settings-input { display: block; margin-top: 9rpx; --td-input-bg-color: #f4f1e9; }
 .room-code-card { display: flex; align-items: center; justify-content: space-between; margin-top: 22rpx; padding: 18rpx 20rpx; border-radius: 15rpx; background: #f4f0e7; }
-.room-code-value { margin-top: 5rpx; color: var(--gold-deep); font-family: Georgia, serif; font-size: 28rpx; letter-spacing: 2rpx; }
+.room-code-value { margin-top: 5rpx; color: var(--gold-deep); font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 28rpx; letter-spacing: 2rpx; }
 .copy-code-button { display: flex; align-items: center; justify-content: center; height: 48rpx; padding: 0 20rpx; border: 1rpx solid rgba(188,129,38,.56); border-radius: 25rpx; color: var(--gold-deep); font-size: 22rpx; }
 .setting-block + .setting-toggle-row { margin-top: 22rpx; }
 .setting-segments { display: flex; gap: 10rpx; margin-top: 12rpx; padding: 6rpx; border-radius: 18rpx; background: #f0ede5; }
@@ -604,7 +604,7 @@
 .soft-tag--gold { background: #f7ecd6; color: #9a6e29; }
 .task-detail-section,
 .detail-private-card { margin-top: 25rpx; padding: 22rpx; border: 1rpx solid rgba(207,199,184,.54); border-radius: 18rpx; background: rgba(255,253,248,.72); }
-.detail-section-title { color: var(--ink); font-family: "Songti SC", serif; font-size: 27rpx; font-weight: 700; }
+.detail-section-title { color: var(--ink); font-family: var(--font-family-brand); font-size: 27rpx; font-weight: var(--font-weight-title); }
 .detail-empty { padding: 25rpx 0 5rpx; color: #918a80; font-size: 22rpx; text-align: center; }
 .task-detail-item { padding: 17rpx 0; border-bottom: 1rpx solid rgba(211,204,190,.48); }
 .task-detail-item:last-child { border-bottom: 0; }
@@ -679,7 +679,7 @@
   width: 62rpx;
   background: #e7eee8;
   color: #245b4d;
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  font-family: var(--font-family-sans);
   font-size: 20rpx;
 }
 
@@ -697,7 +697,7 @@
 
 .team-info-dialog { max-height: 76vh; }
 .team-info-scroll { max-height: 720rpx; padding: 22rpx 34rpx; box-sizing: border-box; }
-.team-info-name { color: #245b4d; font-family: "Songti SC", STSong, serif; font-size: 38rpx; font-weight: 700; }
+.team-info-name { color: #245b4d; font-family: var(--font-family-brand); font-size: 38rpx; font-weight: var(--font-weight-title); }
 .team-info-slogan { margin-top: 8rpx; margin-bottom: 18rpx; color: #7c817d; font-size: 23rpx; line-height: 34rpx; }
 .team-info-row { min-height: 76rpx; display: flex; align-items: center; justify-content: space-between; gap: 28rpx; border-top: 1rpx solid rgba(103,94,77,.12); font-size: 23rpx; }
 .team-info-row > text:first-child { color: #7c817d; }
