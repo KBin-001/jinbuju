@@ -12,6 +12,7 @@ import { ActionExecutionMode, ActionIssueReason, ActionSession, ActionTask, Acti
 import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate, getTimeGreeting } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
 import { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask, sortTodayTasksIncompleteFirst } from "../../utils/taskStatus";
+import { groupTasksByPriority, PriorityContext, PriorityReason } from "../../utils/taskPriority";
 import { getTabHeaderLayout } from "../../utils/tabHeader";
 import { buildReminderAt, nextReminderTime, normalizeReminderTime, reminderDateRange } from "../../utils/actionReminder";
 import { ACTION_DURATION_OPTIONS } from "../../config/action";
@@ -47,15 +48,16 @@ interface ViewTask extends ActionTask {
   primaryActionTone: "plain" | "focus" | "success";
   promptExecution: boolean;
   isRecommendedAction: boolean;
+  priorityReasons?: PriorityReason[];
 }
 interface ViewTaskGroup { key: "today" | "continue"; title: string; tasks: ViewTask[]; }
 interface ActionPresentationGroup {
-  key: "priority" | "quick" | "later";
+  key: "focus" | "quick" | "later";
   title: string;
   hint: string;
   icon: string;
   tone: "gold" | "green" | "muted";
-  tasks: ViewTask[];
+  tasks: Array<ViewTask & { priorityReasons: PriorityReason[] }>;
 }
 interface TodayMood { title: string; copy: string; tone: "empty" | "low" | "half" | "done"; mark: string; }
 interface ProactiveInsight { label: string; title: string; body: string; tone: "start" | "progress" | "near" | "done" | "streak"; }
@@ -95,49 +97,12 @@ function progressSegments(summary: TodaySummary): ProgressSegment[] {
 }
 
 /**
- * 仅用于首页视觉编排：不写回任务优先级，也不改变任务原始顺序。
- * 第一项可执行行动承接页面已有的推荐规则；随后两项作为轻量启动入口；
- * 其余行动收在「稍后处理」，让四项以上的列表保持接近设计稿的阅读节奏。
+ * 今日行动智能分组：委托 groupTasksByPriority 纯函数，基于多维评分自动分入
+ * "今日重点""快速推进""稍后安排"三段。上下文从 getProgressSummary 获取。
  */
-function buildActionPresentationGroups(tasks: ViewTask[]): ActionPresentationGroup[] {
+function buildActionPresentationGroups(tasks: ViewTask[], context: PriorityContext): ActionPresentationGroup[] {
   if (!tasks.length) return [];
-
-  const recommendationIndex = tasks.findIndex((task) => task.isRecommendedAction);
-  const priorityIndex = recommendationIndex >= 0 ? recommendationIndex : 0;
-  const priorityTask = tasks[priorityIndex];
-  const remaining = tasks.filter((_, index) => index !== priorityIndex);
-  const quickTasks = remaining.slice(0, 2);
-  const laterTasks = remaining.slice(2);
-  const groups: ActionPresentationGroup[] = [{
-    key: "priority",
-    title: "优先完成",
-    hint: "聚焦高价值",
-    icon: "flag",
-    tone: "gold",
-    tasks: [priorityTask],
-  }];
-
-  if (quickTasks.length) {
-    groups.push({
-      key: "quick",
-      title: "可快速开始",
-      hint: "快速推进",
-      icon: "thunder",
-      tone: "green",
-      tasks: quickTasks,
-    });
-  }
-  if (laterTasks.length) {
-    groups.push({
-      key: "later",
-      title: "稍后处理",
-      hint: "安排在专注时段后",
-      icon: "time",
-      tone: "muted",
-      tasks: laterTasks,
-    });
-  }
-  return groups;
+  return groupTasksByPriority(tasks, context) as ActionPresentationGroup[];
 }
 function sessionClock(seconds: number): string {
   const safe = Math.max(0, Math.floor(seconds));
@@ -494,6 +459,7 @@ Page(withAppTheme({
   coachRequestKey: "",
   coachRequestGeneration: 0,
   scrollTopCache: 0,
+  priorityContext: { today: "", currentStreakDays: 0 } as PriorityContext,
   onPageScroll(event: { scrollTop: number }) {
     this.scrollTopCache = event.scrollTop;
   },
@@ -600,7 +566,9 @@ Page(withAppTheme({
       const progress = goal ? getProgressSummary(goal.id, selectedDate) : null;
       const mood = todayMood(summary);
       const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 4);
-      const visibleTaskGroups = buildActionPresentationGroups(visibleTasks);
+      const priorityContext: PriorityContext = { today, goalTargetDate: goal?.targetDate, currentStreakDays: progress?.currentStreakDays || 0 };
+      this.priorityContext = priorityContext;
+      const visibleTaskGroups = buildActionPresentationGroups(visibleTasks, priorityContext);
       const week = buildWeekDays(today, selectedDate, this.data.weekOffset);
       const calendarMonth = this.data.calendarMonth || monthStart(selectedDate);
       const calendar = buildCalendar(today, selectedDate, calendarMonth, goalTasks);
@@ -724,7 +692,7 @@ Page(withAppTheme({
     this.setData({
       actionListExpanded,
       visibleTasks,
-      visibleTaskGroups: buildActionPresentationGroups(visibleTasks),
+      visibleTaskGroups: buildActionPresentationGroups(visibleTasks, this.priorityContext || { today: getTodayBusinessDate(), currentStreakDays: 0 }),
       hiddenActionCount: Math.max(0, this.data.tasks.length - visibleTasks.length),
     });
   },
@@ -1146,7 +1114,9 @@ Page(withAppTheme({
     const progress = this.data.goal ? getProgressSummary(this.data.goal.id, selectedDate) : null;
     const mood = todayMood(summary);
     const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 4);
-    const visibleTaskGroups = buildActionPresentationGroups(visibleTasks);
+    const priorityContext: PriorityContext = { today, goalTargetDate: this.data.goal?.targetDate, currentStreakDays: progress?.currentStreakDays || 0 };
+    this.priorityContext = priorityContext;
+    const visibleTaskGroups = buildActionPresentationGroups(visibleTasks, priorityContext);
     this.setData({
       tasks,
       taskGroups,
