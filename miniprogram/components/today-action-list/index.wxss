@@ -201,6 +201,17 @@
   line-height: 24rpx;
 }
 
+.reason-tag {
+  padding: 0 8rpx;
+  border: 1rpx solid rgba(200,155,74,.16);
+  border-radius: 999rpx;
+  color: #a66b22;
+  background: rgba(247,239,228,.6);
+  font-size: 15rpx;
+  line-height: 24rpx;
+  white-space: nowrap;
+}
+
 .action-control {
   width: 132rpx;
   flex: none;

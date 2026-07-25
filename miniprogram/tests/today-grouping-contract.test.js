@@ -68,4 +68,21 @@ assert.match(taskPriority, /later.*稍后安排.*已为你安排到专注时段/
 // Issue 02: priorityOverride reason is "手动置顶"
 assert.match(taskPriority, /手动置顶/, "priorityOverride 任务理由应为'手动置顶'");
 
+// Issue 04: today-action-list WXML contains priorityReasons data binding
+const actionListWxml = fs.readFileSync(path.join(root, "components/today-action-list/index.wxml"), "utf8");
+assert.match(actionListWxml, /priorityReasons/, "today-action-list WXML 应包含 priorityReasons 数据绑定");
+assert.match(actionListWxml, /reason-tag/, "today-action-list WXML 应包含 reason-tag 样式类");
+
+// Issue 04: habit-recommend element is clickable (catchtap)
+assert.match(indexWxml, /habit-recommend[^>]*catchtap/, "按习惯推荐元素应包含 catchtap 绑定");
+
+// Issue 04: openRecommendInfo method exists in page logic
+assert.match(indexLogic, /openRecommendInfo\s*\(/, "页面应包含 openRecommendInfo 方法");
+assert.match(indexLogic, /根据截止时间、预计时长和你的行动习惯自动排序/, "openRecommendInfo 应包含推荐说明文案");
+assert.match(indexLogic, /知道了/, "openRecommendInfo 确认按钮文案应为'知道了'");
+
+// Issue 04: reason label max 2 (trimReasons function exists)
+assert.match(taskPriority, /trimReasons/, "taskPriority.ts 应包含 trimReasons 函数限制理由数量");
+assert.match(taskPriority, /MAX_DISPLAY_REASONS/, "taskPriority.ts 应定义 MAX_DISPLAY_REASONS 常量");
+
 console.log("today grouping contract tests passed");

@@ -18,6 +18,28 @@ export interface PriorityReason {
   label: string;
 }
 
+/** 理由标签展示优先级（数值越小越靠前） */
+const REASON_PRIORITY: Record<string, number> = {
+  manual_pin: 0,
+  due_today: 1,
+  core_goal: 2,
+  blocks_others: 3,
+  required: 4,
+  streak: 5,
+  rollover: 6,
+};
+
+/** 每个任务最多展示的理由标签数量 */
+const MAX_DISPLAY_REASONS = 2;
+
+/** 按优先级截取理由标签，最多保留 MAX_DISPLAY_REASONS 个 */
+function trimReasons(reasons: PriorityReason[]): PriorityReason[] {
+  return reasons
+    .slice()
+    .sort((a, b) => (REASON_PRIORITY[a.key] ?? 99) - (REASON_PRIORITY[b.key] ?? 99))
+    .slice(0, MAX_DISPLAY_REASONS);
+}
+
 /** 评分上下文 */
 export interface PriorityContext {
   /** 今日业务日期 YYYY-MM-DD */
@@ -175,6 +197,15 @@ export function groupTasksByPriority<T extends PriorityScorableTask>(
 
   const manualPinReason: PriorityReason = { key: "manual_pin", label: "手动置顶" };
 
+  // 为 override 任务生成额外理由（如连续行动标签），只保留展示类理由
+  function buildOverrideReasons(task: PriorityScorableTask, context: PriorityContext): PriorityReason[] {
+    const extra: PriorityReason[] = [];
+    if (context.currentStreakDays >= 6) {
+      extra.push({ key: "streak", label: `已连续行动 ${context.currentStreakDays} 天` });
+    }
+    return extra;
+  }
+
   // 分离 override 任务和普通任务
   const overrideBuckets: Record<"focus" | "quick" | "later", T[]> = { focus: [], quick: [], later: [] };
   const normalTasks: T[] = [];
@@ -197,23 +228,23 @@ export function groupTasksByPriority<T extends PriorityScorableTask>(
 
   // 先放置 override 任务（手动覆盖优先于自动评分）
   for (const task of overrideBuckets.focus) {
-    const augmented = { ...task, priorityReasons: [manualPinReason] } as T & { priorityReasons: PriorityReason[] };
+    const augmented = { ...task, priorityReasons: trimReasons([manualPinReason, ...buildOverrideReasons(task, context)]) } as T & { priorityReasons: PriorityReason[] };
     if (focusTasks.length < FOCUS_MAX) focusTasks.push(augmented);
     else if (task.estimatedMinutes <= QUICK_MAX_MINUTES && quickTasks.length < QUICK_MAX) quickTasks.push(augmented);
     else laterTasks.push(augmented);
   }
   for (const task of overrideBuckets.quick) {
-    const augmented = { ...task, priorityReasons: [manualPinReason] } as T & { priorityReasons: PriorityReason[] };
+    const augmented = { ...task, priorityReasons: trimReasons([manualPinReason, ...buildOverrideReasons(task, context)]) } as T & { priorityReasons: PriorityReason[] };
     if (quickTasks.length < QUICK_MAX) quickTasks.push(augmented);
     else laterTasks.push(augmented);
   }
   for (const task of overrideBuckets.later) {
-    laterTasks.push({ ...task, priorityReasons: [manualPinReason] } as T & { priorityReasons: PriorityReason[] });
+    laterTasks.push({ ...task, priorityReasons: trimReasons([manualPinReason, ...buildOverrideReasons(task, context)]) } as T & { priorityReasons: PriorityReason[] });
   }
 
   // 再放置评分任务
   for (const { task, score, reasons } of scored) {
-    const augmented = { ...task, priorityReasons: reasons } as T & { priorityReasons: PriorityReason[] };
+    const augmented = { ...task, priorityReasons: trimReasons(reasons) } as T & { priorityReasons: PriorityReason[] };
     if (focusTasks.length < FOCUS_MAX && score >= FOCUS_THRESHOLD) {
       focusTasks.push(augmented);
     } else if (quickTasks.length < QUICK_MAX && score >= QUICK_THRESHOLD && task.estimatedMinutes <= QUICK_MAX_MINUTES) {

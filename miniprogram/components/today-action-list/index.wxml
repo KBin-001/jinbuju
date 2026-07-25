@@ -48,6 +48,7 @@
               <text wx:elif="{{item.status === 'completed' && item.actualMinutes}}">实际 {{item.actualMinutes}} 分钟</text>
               <text wx:else>{{item.actionTimeText}}</text>
               <text wx:if="{{item.rescheduled}}" class="carry-badge">顺延任务</text>
+              <text wx:if="{{group.key === 'focus' && item.priorityReasons.length}}" wx:for="{{item.priorityReasons}}" wx:for-item="reason" wx:key="key" class="reason-tag">{{reason.label}}</text>
             </view>
           </view>
 

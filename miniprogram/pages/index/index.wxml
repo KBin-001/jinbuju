@@ -60,7 +60,7 @@
         <view class="task-section-head">
           <view class="task-section-heading">
             <view class="task-section-title">今日行动</view>
-            <view class="habit-recommend"><t-icon name="sparkles" size="20rpx" /> 按习惯推荐</view>
+            <view class="habit-recommend" catchtap="openRecommendInfo" role="button" aria-label="了解推荐机制"><t-icon name="sparkles" size="20rpx" /> 按习惯推荐</view>
           </view>
           <view class="task-section-tools">
             <view class="task-section-add task-section-add--icon" catchtap="addTask" role="button" aria-label="添加行动"><t-icon name="add" size="27rpx" /></view>

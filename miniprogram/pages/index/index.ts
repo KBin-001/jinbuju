@@ -929,6 +929,15 @@ Page(withAppTheme({
       fail: () => wx.showToast({ title: "每日教练打开失败", icon: "none" }),
     });
   },
+  openRecommendInfo() {
+    wx.showModal({
+      title: "按习惯推荐",
+      content: "根据截止时间、预计时长和你的行动习惯自动排序，你可以随时调整。",
+      showCancel: false,
+      confirmText: "知道了",
+      confirmColor: MODAL_CONFIRM_COLORS.confirm,
+    });
+  },
   addTask() {
     if (!this.data.goal) { this.goCreateGoal(); return; }
     const range = reminderDateRange();

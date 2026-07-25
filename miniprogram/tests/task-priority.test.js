@@ -173,7 +173,7 @@ assert.ok(
 
 // 15. 理由标签：currentStreakDays >= 6 时理由包含"已连续行动 N 天"
 const streakContext = { today, currentStreakDays: 7 };
-const streakTask = makeTask({ id: "streak_task", importance: "required", currentDate: today });
+const streakTask = makeTask({ id: "streak_task", priorityOverride: "focus" });
 const streakGroups = groupTasksByPriority([streakTask], streakContext);
 const streakFocusTask = streakGroups[0].tasks[0];
 assert.ok(
@@ -213,6 +213,27 @@ assert.ok(
 assert.ok(
   clearedGroups[0].tasks[0].priorityReasons.some((r) => r.label === "必须完成"),
   "清除覆盖后理由应包含'必须完成'",
+);
+
+// 18. 理由标签最多 2 个（即使触发多个条件）
+const multiReasonTask = makeTask({
+  id: "multi_reason",
+  importance: "required",
+  currentDate: today,
+  source: "ai",
+  blocksOthers: true,
+});
+const multiContext = { today, currentStreakDays: 7, goalTargetDate: "2026-07-28" };
+const multiGroups = groupTasksByPriority([multiReasonTask], multiContext);
+const multiTask = multiGroups[0].tasks[0];
+assert.ok(
+  multiTask.priorityReasons.length <= 2,
+  "理由标签最多 2 个，实际为 " + multiTask.priorityReasons.length,
+);
+// "手动置顶"不存在（非 override），"今天截止"应优先于"推进核心目标"
+assert.ok(
+  multiTask.priorityReasons.some((r) => r.label === "今天截止"),
+  "多条件任务理由应包含'今天截止'（优先级高）",
 );
 
 console.log("task priority tests passed");
