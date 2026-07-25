@@ -35,9 +35,9 @@
 .action-title {
   overflow: hidden;
   color: #234b40;
-  font-family: "Songti SC", STSong, serif;
+  font-family: var(--font-family-brand);
   font-size: 29rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   line-height: 39rpx;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -160,7 +160,7 @@
 .task-more view { width: 5rpx; height: 5rpx; border-radius: 50%; background: #999b96; }
 .task-more--pressed { background: rgba(36,91,77,.08); }
 .action-empty { padding: 42rpx 28rpx; color: #60736b; text-align: center; }
-.action-empty__title { margin-top: 12rpx; color: #234b40; font-family: "Songti SC", STSong, serif; font-size: 27rpx; font-weight: 700; }
+.action-empty__title { margin-top: 12rpx; color: #234b40; font-family: var(--font-family-brand); font-size: 27rpx; font-weight: var(--font-weight-title); }
 .action-empty__copy { margin-top: 7rpx; color: #817e77; font-size: 20rpx; line-height: 30rpx; }
 @media (max-width: 350px) {
   .action-row { min-height: 116rpx; gap: 10rpx; }

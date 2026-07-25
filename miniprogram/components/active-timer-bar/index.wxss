@@ -5,7 +5,7 @@
 .timer-bar__icon::after { position: absolute; top: -3rpx; right: -3rpx; width: 10rpx; height: 10rpx; border: 2rpx solid #fffdf8; border-radius: 50%; background: #c89b4a; content: ""; }
 .timer-bar__icon-image { width: 36rpx; height: 36rpx; }
 .timer-bar__title { min-width: 0; max-width: 126rpx; flex: 1; overflow: hidden; color: #283a34; font-size: 22rpx; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-.timer-bar__clock { width: 84rpx; flex: none; color: #245b4d; font-family: Georgia, "Songti SC", serif; font-size: 28rpx; font-variant-numeric: tabular-nums; line-height: 40rpx; text-align: center; }
+.timer-bar__clock { width: 84rpx; flex: none; color: #245b4d; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 28rpx; line-height: 40rpx; text-align: center; }
 .timer-bar__track { width: 58rpx; height: 7rpx; flex: none; overflow: hidden; border-radius: 999rpx; background: #e8e2d7; }
 .timer-bar__fill { height: 100%; border-radius: inherit; background: #31705e; }
 .timer-bar__action { min-width: 0; height: 62rpx; margin: 0; padding: 0 3rpx; box-sizing: border-box; flex: none; display: flex; align-items: center; justify-content: center; gap: 2rpx; border: 0; color: #245b4d; background: transparent; font-size: 18rpx; line-height: 62rpx; white-space: nowrap; }

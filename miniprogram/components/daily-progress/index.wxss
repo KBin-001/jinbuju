@@ -5,4 +5,4 @@
 .daily-progress__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .daily-progress__track { height: 8rpx; margin-top: 25rpx; margin-right: 54rpx; overflow: hidden; border-radius: 999rpx; background: #e9e3d8; }
 .daily-progress__fill { height: 100%; min-width: 0; border-radius: inherit; background: #4f8172; transition: width .2s ease; }
-.daily-progress__percent { position: absolute; right: 26rpx; bottom: 23rpx; color: #9b7532; font-family: Georgia, "Songti SC", serif; font-size: 24rpx; }
+.daily-progress__percent { position: absolute; right: 26rpx; bottom: 23rpx; color: #9b7532; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 24rpx; }

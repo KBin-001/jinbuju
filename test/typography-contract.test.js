@@ -174,4 +174,34 @@ assert.equal(
   `pages/ 下 WXSS 文件不得残留硬编码字体族:\n${violations.join("\n")}`,
 );
 
-console.log("typography contract tests passed (issues 01, 02 & 03)");
+// ── Issue 04: no hardcoded font-family in components/ + styles/ + custom-tab-bar/ ─
+
+const issue04Dirs = [
+  path.join(root, "miniprogram", "components"),
+  path.join(root, "miniprogram", "styles"),
+  path.join(root, "miniprogram", "custom-tab-bar"),
+];
+const issue04Exempt = ["miniprogram/styles/theme.wxss"]; // 变量定义处允许硬编码
+
+const issue04Files = [];
+for (const dir of issue04Dirs) {
+  issue04Files.push(...listWxss(dir));
+}
+const issue04Violations = [];
+for (const file of issue04Files) {
+  const rel = path.relative(root, file).replace(/\\/g, "/");
+  if (issue04Exempt.includes(rel)) continue;
+  const content = fs.readFileSync(file, "utf8");
+  for (const { re, label } of hardcodedFontPatterns) {
+    if (re.test(content)) {
+      issue04Violations.push(`${rel}: 残留硬编码 ${label}`);
+    }
+  }
+}
+assert.equal(
+  issue04Violations.length,
+  0,
+  `components/ + styles/ + custom-tab-bar/ 下 WXSS 文件不得残留硬编码字体族:\n${issue04Violations.join("\n")}`,
+);
+
+console.log("typography contract tests passed (issues 01, 02, 03 & 04)");

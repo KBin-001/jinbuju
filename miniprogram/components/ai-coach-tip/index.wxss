@@ -1,6 +1,6 @@
 :host { display: block; }
 .coach-tip { padding: 16rpx 8rpx 24rpx; }
 .coach-tip--pressed { opacity: .74; }
-.coach-tip__head { display: flex; align-items: center; gap: 8rpx; color: #a17630; font-family: "Songti SC", STSong, serif; font-size: 23rpx; font-weight: 700; line-height: 32rpx; }
+.coach-tip__head { display: flex; align-items: center; gap: 8rpx; color: #a17630; font-family: var(--font-family-brand); font-size: 23rpx; font-weight: var(--font-weight-title); line-height: 32rpx; }
 .coach-tip__text { margin-top: 12rpx; color: #4f5753; font-size: 22rpx; line-height: 34rpx; }
 .coach-tip__state { margin-top: 6rpx; color: #98938a; font-size: 17rpx; }

@@ -17,9 +17,9 @@
 
 .legal-title {
   color: var(--color-primary);
-  font-family: "Songti SC", STSong, serif;
+  font-family: var(--font-family-brand);
   font-size: 44rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   letter-spacing: 2rpx;
   line-height: 1.35;
 }
@@ -140,8 +140,8 @@
   display: inline-block;
   margin-right: 10rpx;
   color: var(--color-gold);
-  font-family: "Songti SC", STSong, serif;
-  font-weight: 700;
+  font-family: var(--font-family-brand);
+  font-weight: var(--font-weight-title);
 }
 
 .legal-copy {

@@ -29,7 +29,7 @@
 .trend-highlight + .trend-highlight { border-left: 1rpx solid rgba(102,113,106,.12); }
 .trend-highlight__title { display: flex; align-items: center; gap: 7rpx; color: #98712e; font-size: 19rpx; line-height: 27rpx; white-space: nowrap; }
 .trend-highlight__value { margin-top: 10rpx; color: var(--progress-primary,#17614f); font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 34rpx; font-weight: 600; line-height: 40rpx; white-space: nowrap; }
-.trend-highlight__unit { margin-left: 5rpx; color: #65716c; font-family: -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif; font-size: 18rpx; }
+.trend-highlight__unit { margin-left: 5rpx; color: #65716c; font-family: var(--font-family-sans); font-size: 18rpx; }
 .trend-highlight__label { margin-top: 4rpx; overflow: hidden; color: #747c77; font-size: 18rpx; line-height: 26rpx; text-overflow: ellipsis; white-space: nowrap; }
 .history-link { min-height: 78rpx; padding-top: 3rpx; display: flex; align-items: center; justify-content: flex-end; color: #8e6728; font-size: 21rpx; font-weight: 500; }
 .trend-empty { min-height: 360rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
