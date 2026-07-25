@@ -9,6 +9,35 @@ const {
   isTransientError,
 } = require("./content-security");
 
+function captureConsole() {
+  const calls = { warn: [], error: [] };
+  const originalWarn = console.warn;
+  const originalError = console.error;
+  console.warn = (...args) => calls.warn.push(args);
+  console.error = (...args) => calls.error.push(args);
+  return {
+    calls,
+    restore() {
+      console.warn = originalWarn;
+      console.error = originalError;
+    },
+  };
+}
+
+function withEnv(key, value, fn) {
+  return async () => {
+    const previous = process.env[key];
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+    try {
+      await fn();
+    } finally {
+      if (previous === undefined) delete process.env[key];
+      else process.env[key] = previous;
+    }
+  };
+}
+
 test("collectContentText only collects user-authored fields", () => {
   const event = {
     action: "syncManualData",
@@ -49,12 +78,15 @@ test("assertSafeText accepts pass and rejects review", async () => {
 });
 
 test("assertSafeText fails closed when the API is unavailable", async () => {
+  const calls = [];
   await assert.rejects(
     assertSafeText("openid", ["内容"], 4, {
-      msgSecCheck: async () => { throw Object.assign(new Error("network"), { errCode: -1 }); },
-    }),
+      msgSecCheck: async () => { calls.push(1); throw Object.assign(new Error("network"), { errCode: -1 }); },
+    }, { retryBaseDelayMs: 0 }),
     (error) => error.code === "CONTENT_SECURITY_UNAVAILABLE",
   );
+  // Default maxRetries is 2: 1 initial attempt + 2 retries = 3 total calls.
+  assert.strictEqual(calls.length, 3);
 });
 
 test("assertSafeAvatar sends Buffer media and rejects risky images", async () => {
@@ -188,11 +220,162 @@ test("assertSafeText accepts an options argument without changing default behavi
   }, { degradeOnUnavailable: false, maxRetries: 2, retryBaseDelayMs: 500 });
   assert.strictEqual(secondCalls.length, 1);
 
-  // Default options still fail closed on transient errors.
+  // Default options still fail closed on transient errors (with retries).
   await assert.rejects(
     assertSafeText("openid", ["内容"], 4, {
       msgSecCheck: async () => { throw Object.assign(new Error("network"), { errCode: -1 }); },
-    }, { degradeOnUnavailable: false }),
+    }, { degradeOnUnavailable: false, retryBaseDelayMs: 0 }),
     (error) => error.code === "CONTENT_SECURITY_UNAVAILABLE",
   );
 });
+
+test("assertSafeText retries transient errors and succeeds on a later attempt", async () => {
+  const calls = [];
+  await assertSafeText("openid", ["安全内容"], 4, {
+    msgSecCheck: async () => {
+      calls.push(1);
+      if (calls.length === 1) {
+        throw Object.assign(new Error("network"), { errCode: -1 });
+      }
+      return { result: { suggest: "pass" } };
+    },
+  }, { retryBaseDelayMs: 0 });
+  assert.strictEqual(calls.length, 2);
+});
+
+test("assertSafeText fails closed after exhausting all retries on transient errors", async () => {
+  const calls = [];
+  await assert.rejects(
+    assertSafeText("openid", ["内容"], 4, {
+      msgSecCheck: async () => {
+        calls.push(1);
+        throw Object.assign(new Error("server error"), { errCode: 50001 });
+      },
+    }, { retryBaseDelayMs: 0 }),
+    (error) => error.code === "CONTENT_SECURITY_UNAVAILABLE",
+  );
+  // Default maxRetries is 2: 1 initial + 2 retries = 3 total calls.
+  assert.strictEqual(calls.length, 3);
+});
+
+test("assertSafeText does not retry content risk rejections (87014)", async () => {
+  const calls = [];
+  await assert.rejects(
+    assertSafeText("openid", ["风险内容"], 4, {
+      msgSecCheck: async () => {
+        calls.push(1);
+        throw Object.assign(new Error("risky"), { errCode: 87014 });
+      },
+    }, { retryBaseDelayMs: 0 }),
+    (error) => error.code === "CONTENT_SECURITY_REJECTED",
+  );
+  assert.strictEqual(calls.length, 1);
+});
+
+test("assertSafeText does not retry TypeError", async () => {
+  const calls = [];
+  await assert.rejects(
+    assertSafeText("openid", ["内容"], 4, {
+      msgSecCheck: async () => {
+        calls.push(1);
+        throw new TypeError("cannot read property of undefined");
+      },
+    }, { retryBaseDelayMs: 0 }),
+    (error) => error.code === "CONTENT_SECURITY_UNAVAILABLE",
+  );
+  assert.strictEqual(calls.length, 1);
+});
+
+test("assertSafeText logs retry warnings and final error on exhaustion", async () => {
+  const consoleCapture = captureConsole();
+  try {
+    await assert.rejects(
+      assertSafeText("openid_test", ["内容"], 4, {
+        msgSecCheck: async () => {
+          throw Object.assign(new Error("network"), { errCode: -1 });
+        },
+      }, { retryBaseDelayMs: 0 }),
+      (error) => error.code === "CONTENT_SECURITY_UNAVAILABLE",
+    );
+    // Two retry warnings (retry 1 and retry 2).
+    assert.strictEqual(consoleCapture.calls.warn.length, 2);
+    assert.strictEqual(consoleCapture.calls.warn[0][1].retry, 1);
+    assert.strictEqual(consoleCapture.calls.warn[1][1].retry, 2);
+    assert.strictEqual(consoleCapture.calls.warn[0][1].openid, "openid_t");
+    assert.strictEqual(consoleCapture.calls.warn[0][1].scene, 4);
+    assert.strictEqual(consoleCapture.calls.warn[0][1].errCode, -1);
+    // One final error log with underlying cause.
+    assert.strictEqual(consoleCapture.calls.error.length, 1);
+    const errorPayload = consoleCapture.calls.error[0][1];
+    assert.strictEqual(errorPayload.cause.errCode, -1);
+    assert.ok(String(errorPayload.cause.errMsg).includes("network"));
+    assert.strictEqual(errorPayload.cause.errorType, "Error");
+  } finally {
+    consoleCapture.restore();
+  }
+});
+
+test("assertSafeText does not log error for non-retried failures", async () => {
+  const consoleCapture = captureConsole();
+  try {
+    // TypeError is non-transient: no retry, no warn, no error log.
+    await assert.rejects(
+      assertSafeText("openid", ["内容"], 4, {
+        msgSecCheck: async () => { throw new TypeError("boom"); },
+      }, { retryBaseDelayMs: 0 }),
+      (error) => error.code === "CONTENT_SECURITY_UNAVAILABLE",
+    );
+    assert.strictEqual(consoleCapture.calls.warn.length, 0);
+    assert.strictEqual(consoleCapture.calls.error.length, 0);
+  } finally {
+    consoleCapture.restore();
+  }
+});
+
+test("assertSafeText respects CONTENT_SECURITY_MAX_RETRIES env var", withEnv("CONTENT_SECURITY_MAX_RETRIES", "1", async () => {
+  const calls = [];
+  await assert.rejects(
+    assertSafeText("openid", ["内容"], 4, {
+      msgSecCheck: async () => {
+        calls.push(1);
+        throw Object.assign(new Error("network"), { errCode: -1 });
+      },
+    }, { retryBaseDelayMs: 0 }),
+    (error) => error.code === "CONTENT_SECURITY_UNAVAILABLE",
+  );
+  // maxRetries=1 from env: 1 initial + 1 retry = 2 total.
+  assert.strictEqual(calls.length, 2);
+}));
+
+test("assertSafeText respects CONTENT_SECURITY_RETRY_BASE_DELAY_MS env var", withEnv("CONTENT_SECURITY_RETRY_BASE_DELAY_MS", "0", async () => {
+  const calls = [];
+  const start = Date.now();
+  await assert.rejects(
+    assertSafeText("openid", ["内容"], 4, {
+      msgSecCheck: async () => {
+        calls.push(1);
+        throw Object.assign(new Error("network"), { errCode: -1 });
+      },
+    }),
+    (error) => error.code === "CONTENT_SECURITY_UNAVAILABLE",
+  );
+  // Default maxRetries=2: 3 total calls.
+  assert.strictEqual(calls.length, 3);
+  // Env var set delay to 0, so total elapsed should be well under 500ms.
+  assert.ok(Date.now() - start < 500, "retry delay should be near zero from env var");
+}));
+
+test("explicit options.maxRetries takes precedence over env var", withEnv("CONTENT_SECURITY_MAX_RETRIES", "5", async () => {
+  const calls = [];
+  await assert.rejects(
+    assertSafeText("openid", ["内容"], 4, {
+      msgSecCheck: async () => {
+        calls.push(1);
+        throw Object.assign(new Error("network"), { errCode: -1 });
+      },
+    }, { maxRetries: 1, retryBaseDelayMs: 0 }),
+    (error) => error.code === "CONTENT_SECURITY_UNAVAILABLE",
+  );
+  // options.maxRetries=1 overrides env var 5: 1 initial + 1 retry = 2 total.
+  assert.strictEqual(calls.length, 2);
+}));

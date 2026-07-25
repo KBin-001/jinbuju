@@ -141,25 +141,93 @@ function isTransientError(error) {
   return false;
 }
 
-async function assertSafeText(openid, values, scene = 4, securityApi = cloud.openapi.security, options = {}) {
-  // Retry and degradation are wired in by subsequent tickets (02, 03).
-  // Defaults preserve the current single-call, fail-closed behavior so this
-  // is a pure signature extension with no external behavior change.
-  const { degradeOnUnavailable = false, maxRetries = 2, retryBaseDelayMs = 500 } = options;
-  void degradeOnUnavailable;
-  void maxRetries;
-  void retryBaseDelayMs;
-  const unique = [...new Set((values || []).map(normalizeText).filter(Boolean))];
-  for (const content of chunkTexts(unique)) {
-    let response;
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function openidPrefix(openid) {
+  return String(openid || "").slice(0, 8);
+}
+
+function underlyingErrorInfo(error) {
+  if (!error) return null;
+  return {
+    errCode: error.errCode ?? error.errcode,
+    errMsg: String(error.errMsg || error.message || "").slice(0, 200),
+    errorType: error.constructor && error.constructor.name,
+  };
+}
+
+function readEnvNumber(name, fallback) {
+  const raw = process.env[name];
+  if (raw === undefined || raw === null || raw === "") return fallback;
+  const value = Number(raw);
+  return Number.isFinite(value) && value >= 0 ? value : fallback;
+}
+
+// Calls `msgSecCheck` with retry and backoff for transient errors.
+// Content risk rejections (87014/87015) and non-transient errors (TypeError,
+// 4xxxx) are thrown immediately without retry. Only network (-1) and server-
+// side (5xxxx) errors are retried. Logs a `warn` on each retry and an `error`
+// when all retries are exhausted, so developers can diagnose root cause from
+// cloud function logs.
+async function callMsgSecCheck(securityApi, payload, config) {
+  const { openid, scene, maxRetries, retryBaseDelayMs } = config;
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      response = await securityApi.msgSecCheck({ content, version: 2, scene, openid });
+      return await securityApi.msgSecCheck(payload);
     } catch (error) {
+      lastError = error;
+      // Content risk rejections are never retried.
       if (isRiskyApiError(error)) {
         throw contentSecurityError("CONTENT_SECURITY_REJECTED", "内容未通过安全检测，请修改后重试。", error);
       }
+      // Non-transient errors are never retried.
+      if (!isTransientError(error)) {
+        throw contentSecurityError("CONTENT_SECURITY_UNAVAILABLE", "内容安全检测暂不可用，请稍后重试。", error);
+      }
+      // Transient error: retry if attempts remain.
+      if (attempt < maxRetries) {
+        const retryNumber = attempt + 1;
+        console.warn("content security check retrying", {
+          openid: openidPrefix(openid),
+          scene,
+          errCode: error.errCode ?? error.errcode,
+          retry: retryNumber,
+        });
+        await sleep(retryBaseDelayMs * retryNumber);
+        continue;
+      }
+      // All retries exhausted — log the underlying cause for diagnosis.
+      console.error("content security check unavailable", {
+        openid: openidPrefix(openid),
+        scene,
+        cause: underlyingErrorInfo(error),
+      });
       throw contentSecurityError("CONTENT_SECURITY_UNAVAILABLE", "内容安全检测暂不可用，请稍后重试。", error);
     }
+  }
+  // Defensive fallback — should not be reached.
+  throw contentSecurityError("CONTENT_SECURITY_UNAVAILABLE", "内容安全检测暂不可用，请稍后重试。", lastError);
+}
+
+async function assertSafeText(openid, values, scene = 4, securityApi = cloud.openapi.security, options = {}) {
+  // Retry and degradation config. Options take precedence over env vars,
+  // which take precedence over built-in defaults.
+  // Degradation (fail-open) is implemented in ticket 03; for now
+  // degradeOnUnavailable is accepted but not yet acted upon.
+  const degradeOnUnavailable = options.degradeOnUnavailable ?? false;
+  const maxRetries = options.maxRetries ?? readEnvNumber("CONTENT_SECURITY_MAX_RETRIES", 2);
+  const retryBaseDelayMs = options.retryBaseDelayMs ?? readEnvNumber("CONTENT_SECURITY_RETRY_BASE_DELAY_MS", 500);
+  void degradeOnUnavailable;
+  const unique = [...new Set((values || []).map(normalizeText).filter(Boolean))];
+  for (const content of chunkTexts(unique)) {
+    const response = await callMsgSecCheck(
+      securityApi,
+      { content, version: 2, scene, openid },
+      { openid, scene, maxRetries, retryBaseDelayMs },
+    );
     const suggest = responseSuggest(response);
     if (responseErrorCode(response) !== 0 || (suggest && suggest !== "pass")) {
       throw contentSecurityError("CONTENT_SECURITY_REJECTED", "内容未通过安全检测，请修改后重试。");
