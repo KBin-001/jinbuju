@@ -1,30 +1,48 @@
 import { addBusinessDays, getTodayBusinessDate } from "../utils/date";
-import { DailyActionSummary, DailyCheckin, GrowthBadge, GrowthHeatmapDay, ProgressSummary } from "../types/manual";
+import { ActionTask, DailyActionSummary, DailyCheckin, GrowthBadge, GrowthHeatmapDay, ProgressSummary } from "../types/manual";
 import { createLocalId, readManualStore, writeManualStore } from "./manualStore";
 import { calculateTodaySummary } from "./manualTask";
 
+/** 真实推进判定：与 profileGrowth.ts hasRealProgress 保持一致。 */
+function hasRealProgress(task: ActionTask): boolean {
+  return task.status === "completed"
+    || task.status === "partially_completed"
+    || (task.status === "rescheduled" && task.statusBeforeReschedule === "partially_completed");
+}
+
+/** 统计归属日期：有真实推进的任务按 activityDate 归属，否则按 currentDate。与 recordDailyCheckin 和 plan/index.ts taskBusinessDate 口径一致。 */
+function effectiveDate(task: ActionTask): string {
+  return hasRealProgress(task) ? (task.activityDate || task.currentDate) : task.currentDate;
+}
+
+/** 统计完成状态：顺延的原行动按顺延前状态归属。 */
+function effectiveStatus(task: ActionTask): ActionTask["status"] {
+  if (task.status === "rescheduled" && task.statusBeforeReschedule === "partially_completed") {
+    return "partially_completed";
+  }
+  return task.status;
+}
+
 export function getProgressSummary(goalId: string, today = getTodayBusinessDate()): ProgressSummary {
   const allTasks = readManualStore().tasks.filter((task) => task.goalId === goalId && !task.deletedAt);
-  const tasks = allTasks.filter((task) => task.status !== "rescheduled" && task.status !== "skipped");
-  const todayTasks = tasks.filter((task) => task.currentDate === today);
+  // 统计口径：排除 skipped 和纯顺延（无真实投入）任务；
+  // “完成一部分后顺延”的原行动仍属于历史真实推进，纳入行动天数与连续天数。
+  const tasks = allTasks.filter((task) => task.status !== "skipped" && (task.status !== "rescheduled" || hasRealProgress(task)));
+  // 今日统计口径：已完成/部分完成的任务按 activityDate 归属（含顺延后今天完成的行动），待开始按 currentDate。
+  const todayTasks = tasks.filter((task) => effectiveDate(task) === today);
   const recentDays: DailyActionSummary[] = [];
   for (let offset = 0; offset >= -6; offset -= 1) {
     const date = addBusinessDays(today, offset);
-    const dayTasks = tasks.filter((task) => task.currentDate === date);
-    recentDays.push({ date, label: offset === 0 ? "今天" : `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`, completedCount: dayTasks.filter((task) => task.status === "completed").length, partialCount: dayTasks.filter((task) => task.status === "partially_completed").length, totalCount: dayTasks.length, isToday: offset === 0 });
+    const dayTasks = tasks.filter((task) => effectiveDate(task) === date);
+    recentDays.push({ date, label: offset === 0 ? "今天" : `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`, completedCount: dayTasks.filter((task) => effectiveStatus(task) === "completed").length, partialCount: dayTasks.filter((task) => effectiveStatus(task) === "partially_completed").length, totalCount: dayTasks.length, isToday: offset === 0 });
   }
-    // 行动天数：completed 或 partially_completed 都算有行动记录
-  const actionDateOf = (task: typeof tasks[number]) => task.activityDate || task.currentDate;
-  const actionDates = new Set(tasks.filter((task) => task.status === "completed" || task.status === "partially_completed").map(actionDateOf));
+  // 行动天数：有真实推进的任务都算有行动记录
+  const actionDateOf = (task: ActionTask) => task.activityDate || task.currentDate;
+  const actionDates = new Set(tasks.filter(hasRealProgress).map(actionDateOf));
   // 低压力连续行动：完成或完成一部分都算真实推进。
   const streakDates = new Set(actionDates);
   const completedTasks = tasks.filter((task) => task.status === "completed").length;
-  const totalActualMinutes = allTasks.reduce((sum, task) => {
-    const hasValidEffort = task.status === "completed"
-      || task.status === "partially_completed"
-      || (task.status === "rescheduled" && task.statusBeforeReschedule === "partially_completed");
-    return sum + (hasValidEffort ? (task.actualMinutes || 0) : 0);
-  }, 0);
+  const totalActualMinutes = allTasks.reduce((sum, task) => sum + (hasRealProgress(task) ? (task.actualMinutes || 0) : 0), 0);
   let currentStreakDays = 0;
   const streakAnchor = streakDates.has(today) ? today : addBusinessDays(today, -1);
   for (let offset = 0; offset > -365; offset -= 1) {
@@ -45,9 +63,9 @@ export function getProgressSummary(goalId: string, today = getTodayBusinessDate(
   const heatmapDays: GrowthHeatmapDay[] = [];
   for (let offset = -27; offset <= 0; offset += 1) {
     const date = addBusinessDays(today, offset);
-    const dayTasks = tasks.filter((task) => task.currentDate === date);
-    const dayCompleted = dayTasks.filter((task) => task.status === "completed").length;
-    const dayPartial = dayTasks.filter((task) => task.status === "partially_completed").length;
+    const dayTasks = tasks.filter((task) => effectiveDate(task) === date);
+    const dayCompleted = dayTasks.filter((task) => effectiveStatus(task) === "completed").length;
+    const dayPartial = dayTasks.filter((task) => effectiveStatus(task) === "partially_completed").length;
     const activeCount = dayCompleted + dayPartial;
     // 热力图完成率：completed 权重 1，partially_completed 权重 0.5
     const completionRate = dayTasks.length ? Math.round(((dayCompleted + dayPartial * 0.5) / dayTasks.length) * 100) : 0;
@@ -77,7 +95,7 @@ export function getProgressSummary(goalId: string, today = getTodayBusinessDate(
     { key: "streak_7", title: "一周稳住", description: "连续行动 7 天", unlocked: currentStreakDays >= 7, progressText: currentStreakDays >= 7 ? "已解锁" : `${currentStreakDays}/7 天` },
     { key: "minutes_600", title: "十小时养成", description: "累计投入 600 分钟", unlocked: totalActualMinutes >= 600, progressText: totalActualMinutes >= 600 ? "已解锁" : `${Math.min(totalActualMinutes, 600)}/600 分钟` },
   ];
-  return { totalTasks: tasks.length, completedTasks, totalActualMinutes, totalActionDays: actionDates.size, todayCompleted: todayTasks.filter((task) => task.status === "completed").length, todayTotal: todayTasks.length, currentStreakDays, longestStreakDays, recentDays, heatmapWeeks, badges, unfinishedTasks: tasks.filter((task) => task.status === "pending" || task.status === "partially_completed").sort((a, b) => a.currentDate.localeCompare(b.currentDate)).slice(0, 8) };
+  return { totalTasks: tasks.length, completedTasks, totalActualMinutes, totalActionDays: actionDates.size, todayCompleted: todayTasks.filter((task) => effectiveStatus(task) === "completed").length, todayTotal: todayTasks.length, currentStreakDays, longestStreakDays, recentDays, heatmapWeeks, badges, unfinishedTasks: tasks.filter((task) => task.status === "pending" || task.status === "partially_completed").sort((a, b) => a.currentDate.localeCompare(b.currentDate)).slice(0, 8) };
 }
 
 export function recordDailyCheckin(goalId: string, businessDate: string): DailyCheckin {

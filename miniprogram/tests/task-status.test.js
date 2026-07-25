@@ -14,7 +14,7 @@ const today = "2026-06-21";
 
 assert.equal(getTodayBusinessDate(new Date("2026-06-20T16:00:00.000Z")), today);
 
-assert.deepEqual(getActionTaskDisplayStatus({ currentDate: today, status: "pending" }, today), { text: "待开始", tone: "success" });
+assert.deepEqual(getActionTaskDisplayStatus({ currentDate: today, status: "pending" }, today), { text: "待开始", tone: "neutral" });
 assert.deepEqual(getActionTaskDisplayStatus({ currentDate: "2026-06-22", status: "pending" }, today), { text: "未到日期", tone: "muted" });
 assert.deepEqual(getActionTaskDisplayStatus({ currentDate: "2026-06-20", status: "pending" }, today), { text: "待继续", tone: "warning" });
 assert.deepEqual(getActionTaskDisplayStatus({ currentDate: today, status: "completed" }, today), { text: "已完成", tone: "success" });
@@ -24,7 +24,7 @@ assert.deepEqual(getActionTaskDisplayStatus({ currentDate: today, status: "resch
 
 const carried = { currentDate: today, plannedDate: "2026-06-20", status: "pending" };
 assert.equal(isCarryOverTask(carried), true);
-assert.deepEqual(getActionTaskDisplayStatus(carried, today), { text: "待开始", tone: "success" });
+assert.deepEqual(getActionTaskDisplayStatus(carried, today), { text: "待开始", tone: "neutral" });
 
 const groups = groupTodayTasks([
   carried,

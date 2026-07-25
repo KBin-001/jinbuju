@@ -185,6 +185,7 @@ function buildActivitySnapshot(): ActivitySnapshot {
       status: taskStatusToMemberStatus(task.status),
       estimatedMinutes: task.estimatedMinutes,
       growthMinutes: task.actualMinutes || 0,
+      actualMinutes: task.actualMinutes || 0,
     })),
     todayStatus,
   };

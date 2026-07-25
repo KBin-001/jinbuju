@@ -131,7 +131,8 @@ export function finishActionSession(sessionId: string, markTaskCompleted: boolea
   task.activityDate = session.businessDate;
   task.updatedAt = timestamp;
   task.completedAt = markTaskCompleted ? timestamp : undefined;
-  task.issueReason = undefined;
+  // 仅标记完成时清除完成原因；仅结束计时应保留已有的 issueReason，与 completeActionSession 对齐。
+  if (markTaskCompleted) task.issueReason = undefined;
   updateCheckin(store, task, timestamp);
   writeManualStore(store);
   emit("action-session:update", session);
@@ -171,6 +172,8 @@ export function completeActionSession(sessionId: string, actualMinutes: number, 
   task.activityDate = session.businessDate;
   task.updatedAt = timestamp;
   task.completedAt = partial ? undefined : timestamp;
+  // 标记完成时清除完成原因；部分完成时保留已有的 issueReason，与 finishActionSession 对齐。
+  if (!partial) task.issueReason = undefined;
   updateCheckin(store, task, timestamp);
   writeManualStore(store);
   emit("action-session:update", session);

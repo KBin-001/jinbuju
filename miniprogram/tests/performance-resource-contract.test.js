@@ -55,4 +55,8 @@ assert.match(phoneFeature, /open-type="getPhoneNumber"/);
 assert.match(phoneService, /"bindPhone"[\s\S]*"unbindPhone"/);
 assert.match(cloudAccount, /async function bindPhone[\s\S]*async function unbindPhone/);
 
+// Bug 5 (P1) 契约：team/index.ts buildActivitySnapshot 的 todayActionDetails 必须包含 actualMinutes 字段
+const teamIndex = fs.readFileSync(path.join(miniRoot, "pages/team/index.ts"), "utf8");
+assert.match(teamIndex, /todayActionDetails[\s\S]*actualMinutes[\s\S]*\}\)/, "Bug 5: buildActivitySnapshot 的 todayActionDetails 必须包含 actualMinutes 字段");
+
 console.log("performance and resource cleanup contract tests passed");

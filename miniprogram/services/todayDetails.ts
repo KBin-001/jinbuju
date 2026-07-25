@@ -53,7 +53,7 @@ export interface DetailCalendarDay {
 const COLORS = ["#356859", "#6FAE84", "#F0B53F", "#9CC6AD", "#CFE2D4", "#84AFA0", "#E1C66A"];
 
 function metricsFor(tasks: ActionTask[], date: string): DetailMetrics {
-  const dayTasks = tasks.filter((task) => task.currentDate === date);
+  const dayTasks = tasks.filter((task) => task.currentDate === date && task.status !== "skipped");
   const completed = dayTasks.filter((task) => task.status === "completed").length;
   return {
     minutes: dayTasks.reduce((sum, task) => sum + (task.actualMinutes || 0), 0),
@@ -76,6 +76,8 @@ function dateRange(period: DetailPeriod, selectedDate: string): Array<{ date: st
     return ["一", "二", "三", "四", "五", "六", "日"].map((label, index) => ({ date: formatDate(addDays(monday, index)), label: `周${label}` }));
   }
   if (period === "month") {
+    // 注意：当前设计仅支持单月内范围，所有区间都在 selectedDate 所在月份内。
+    // 若未来需要支持跨月范围，buildBars 月视图的字符串比较需改为 isValidBusinessDate + differenceInBusinessDays。
     const year = selected.getFullYear();
     const month = selected.getMonth();
     const lastDay = new Date(year, month + 1, 0).getDate();
@@ -100,6 +102,8 @@ function buildBars(tasks: ActionTask[], selectedDate: string, period: DetailPeri
       value: tasks.filter((task) => task.currentDate === item.date).reduce((sum, task) => sum + (task.actualMinutes || 0), 0),
     }));
   } else {
+    // 月视图：当前 dateRange 仅生成单月内区间，字符串比较安全。
+    // 若未来支持跨月范围，需改用 isValidBusinessDate + differenceInBusinessDays 做范围判断。
     raw = dateRange(period, selectedDate).map((item) => {
       const [startDate, endText] = item.date.split("|");
       // 用 slice(0, 7) 取 "YYYY-MM"，再拼上 "-DD"，避免 slice(0, 8) 含末尾横杠的脆弱写法

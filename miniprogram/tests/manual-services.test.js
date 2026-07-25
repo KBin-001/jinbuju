@@ -307,4 +307,172 @@ assert.equal(orphanContext.task, null, "任务软删除后上下文应返回 tas
 abandonActionSession(ctxOrphanSession.id, false, new Date("2026-06-21T16:00:15+08:00"));
 assert.equal(getActiveActionSessionContext(), null, "清理孤儿会话后应无活跃会话");
 
+// === Bug 1 (P0) 回归：完成一部分后顺延的原行动应计入行动天数和连续天数 ===
+// 修复前 getProgressSummary 过滤掉所有 rescheduled 任务，导致"完成一部分后顺延"的原行动
+// （status=rescheduled, statusBeforeReschedule=partially_completed）被排除，与 profileGrowth.ts 口径不一致。
+const streakFixGoal = createGoal({ title: "顺延口径修复验证", category: "custom" });
+const streakToday = getTodayBusinessDate();
+const streakDayMinus2 = addBusinessDays(streakToday, -2);
+const streakDayMinus1 = addBusinessDays(streakToday, -1);
+
+// Day -2: 任务 A 完成
+const streakTaskA = createTask({ goalId: streakFixGoal.id, title: "前天完成", currentDate: streakDayMinus2, estimatedMinutes: 30 });
+updateTaskStatus(streakTaskA.id, "completed", 30);
+
+// Day -1: 任务 B 完成一部分后顺延（原行动应计入行动天数和连续天数）
+const streakTaskB = createTask({ goalId: streakFixGoal.id, title: "昨天部分完成后顺延", currentDate: streakDayMinus1, estimatedMinutes: 45 });
+updateTaskStatus(streakTaskB.id, "partially_completed", 15, "not_enough_time");
+rescheduleTask(streakTaskB.id, streakDayMinus1);
+
+// Day 0 (today): 任务 C 完成
+const streakTaskC = createTask({ goalId: streakFixGoal.id, title: "今天完成", currentDate: streakToday, estimatedMinutes: 30 });
+updateTaskStatus(streakTaskC.id, "completed", 25);
+
+// 修正历史任务的 activityDate（updateTaskStatus 统一设为今天，需还原为实际发生日期）
+const streakFixStore = readManualStore();
+const fixTaskA = streakFixStore.tasks.find((task) => task.id === streakTaskA.id);
+fixTaskA.activityDate = streakDayMinus2;
+const fixTaskB = streakFixStore.tasks.find((task) => task.id === streakTaskB.id);
+fixTaskB.activityDate = streakDayMinus1;
+writeManualStore(streakFixStore);
+
+const streakFixSummary = getProgressSummary(streakFixGoal.id, streakToday);
+// actionDates 应包含 Day -2（A）、Day -1（B 顺延原行动）、Day 0（C）
+assert.equal(streakFixSummary.totalActionDays, 3, "Bug 1: 完成一部分后顺延的原行动应计入行动天数");
+assert.equal(streakFixSummary.currentStreakDays, 3, "Bug 1: 完成一部分后顺延的原行动应维持连续天数");
+// 累计投入包含 B 的 15 分钟
+assert.equal(streakFixSummary.totalActualMinutes, 70, "Bug 1: 累计投入应包含完成一部分后顺延的原行动投入");
+// 连续天数成就基于修复后的 currentStreakDays
+const streakBadge3 = streakFixSummary.badges.find((badge) => badge.key === "streak_3");
+assert.equal(streakBadge3.unlocked, true, "Bug 1: 连续 3 天成就应基于修复后的 currentStreakDays 解锁");
+// 顺延的原行动仍处于 rescheduled 状态，确认数据完整性
+const rolloverOrigin = getTask(streakTaskB.id);
+assert.equal(rolloverOrigin.status, "rescheduled", "Bug 1: 顺延原行动状态应为 rescheduled");
+assert.equal(rolloverOrigin.statusBeforeReschedule, "partially_completed", "Bug 1: 顺延原行动应保留 statusBeforeReschedule");
+assert.equal(rolloverOrigin.actualMinutes, 15, "Bug 1: 顺延原行动应保留实际投入");
+
+// === Bug 2 (P0) 回归：热力图和近 7 天使用 activityDate 而非 currentDate ===
+// 修复前 recentDays 和 heatmapDays 通过 task.currentDate 筛选，导致今天完成的顺延行动
+// 错误地出现在原计划日期的格子里。修复后已完成任务按 activityDate 归属，待开始仍按 currentDate。
+const heatmapFixGoal = createGoal({ title: "热力图日期归属验证", category: "custom" });
+const heatmapToday = getTodayBusinessDate();
+const heatmapYesterday = addBusinessDays(heatmapToday, -1);
+
+// 昨天计划的任务，今天完成（updateTaskStatus 设置 activityDate = today, currentDate 仍为 yesterday）
+const carryoverCompleted = createTask({ goalId: heatmapFixGoal.id, title: "昨天计划今天完成", currentDate: heatmapYesterday, estimatedMinutes: 30 });
+updateTaskStatus(carryoverCompleted.id, "completed", 25);
+// 昨天的待开始任务（仍按 currentDate 归属到昨天）
+const pendingYesterday = createTask({ goalId: heatmapFixGoal.id, title: "昨天待开始", currentDate: heatmapYesterday, estimatedMinutes: 20 });
+
+const heatmapFixSummary = getProgressSummary(heatmapFixGoal.id, heatmapToday);
+
+// recentDays 中今天应包含已完成的顺延行动
+const todayRecent = heatmapFixSummary.recentDays.find((day) => day.isToday);
+assert.equal(todayRecent.completedCount, 1, "Bug 2: 今天完成的顺延行动应在 recentDays 今天的 completedCount 中");
+assert.equal(todayRecent.totalCount, 1, "Bug 2: 今天完成的顺延行动应在 recentDays 今天的 totalCount 中");
+// recentDays 中昨天应包含待开始任务，但不含已完成的顺延行动
+const yesterdayRecent = heatmapFixSummary.recentDays.find((day) => day.date === heatmapYesterday);
+assert.equal(yesterdayRecent.completedCount, 0, "Bug 2: 昨天计划今天完成的行动不应在昨天的 completedCount 中");
+assert.equal(yesterdayRecent.totalCount, 1, "Bug 2: 昨天的待开始任务应仍在昨天的 totalCount 中");
+// 热力图今天的位置应显示完成标记
+const todayHeatmap = heatmapFixSummary.heatmapWeeks.flat().find((day) => day.isToday);
+assert.equal(todayHeatmap.completedCount, 1, "Bug 2: 今天完成的顺延行动应在热力图今天的 completedCount 中");
+assert.equal(todayHeatmap.level, 3, "Bug 2: 今天完成的顺延行动应在热力图今天显示完成标记");
+// 热力图昨天的位置应包含待开始任务，但不含已完成的顺延行动
+const yesterdayHeatmap = heatmapFixSummary.heatmapWeeks.flat().find((day) => day.date === heatmapYesterday);
+assert.equal(yesterdayHeatmap.completedCount, 0, "Bug 2: 昨天计划今天完成的行动不应在热力图昨天的 completedCount 中");
+assert.equal(yesterdayHeatmap.totalCount, 1, "Bug 2: 昨天的待开始任务应仍在热力图昨天的 totalCount 中");
+
+// === Bug 3 (P1) 回归：finishActionSession 仅结束计时时保留 issueReason ===
+// 修复前 finishActionSession 无条件清除 issueReason，导致用户之前设置的完成原因丢失。
+const issueReasonGoal = createGoal({ title: "计时结束保留原因验证", category: "custom" });
+const issueReasonToday = getTodayBusinessDate();
+const issueReasonTask = createTask({ goalId: issueReasonGoal.id, title: "先标记完成一部分", currentDate: issueReasonToday, estimatedMinutes: 30 });
+// 通过菜单标记完成一部分并设置原因
+updateTaskStatus(issueReasonTask.id, "partially_completed", 10, "not_enough_time");
+assert.equal(getTask(issueReasonTask.id).issueReason, "not_enough_time", "Bug 3 前置: 应已设置 issueReason");
+// 开始计时后仅结束计时（不标记完成）
+const issueReasonSession = startActionSession(issueReasonTask.id, "countdown", new Date("2026-06-21T09:00:00+08:00"));
+finishActionSession(issueReasonSession.id, false, new Date("2026-06-21T09:02:00+08:00"));
+assert.equal(getTask(issueReasonTask.id).status, "partially_completed", "Bug 3: 仅结束计时后状态应为 partially_completed");
+assert.equal(getTask(issueReasonTask.id).issueReason, "not_enough_time", "Bug 3: 仅结束计时应保留原有 issueReason");
+// 再次计时并标记完成 — 此时 issueReason 应被清除
+const issueReasonSession2 = startActionSession(issueReasonTask.id, "countdown", new Date("2026-06-21T09:05:00+08:00"));
+finishActionSession(issueReasonSession2.id, true, new Date("2026-06-21T09:08:00+08:00"));
+assert.equal(getTask(issueReasonTask.id).status, "completed", "Bug 3: 标记完成后状态应为 completed");
+assert.equal(getTask(issueReasonTask.id).issueReason, undefined, "Bug 3: 标记完成时应清除 issueReason");
+
+// === Bug 4 (P1) 回归：todayCompleted/todayTotal 包含今天实际完成的顺延行动 ===
+const todayStatsGoal = createGoal({ title: "今日统计口径验证", category: "custom" });
+const todayStatsToday = getTodayBusinessDate();
+const todayStatsYesterday = addBusinessDays(todayStatsToday, -1);
+// 昨天计划、今天完成的任务
+const carryoverToday = createTask({ goalId: todayStatsGoal.id, title: "昨天计划今天完成", currentDate: todayStatsYesterday, estimatedMinutes: 30 });
+updateTaskStatus(carryoverToday.id, "completed", 25);
+// 今天计划、今天完成的任务
+const todayCompleted = createTask({ goalId: todayStatsGoal.id, title: "今天完成", currentDate: todayStatsToday, estimatedMinutes: 20 });
+updateTaskStatus(todayCompleted.id, "completed", 20);
+const todayStatsSummary = getProgressSummary(todayStatsGoal.id, todayStatsToday);
+// todayCompleted 应包含今天完成的顺延行动 + 今天计划完成的 = 2
+assert.equal(todayStatsSummary.todayCompleted, 2, "Bug 4: todayCompleted 应包含今天实际完成的顺延行动");
+assert.equal(todayStatsSummary.todayTotal, 2, "Bug 4: todayTotal 应包含今天实际完成的顺延行动");
+
+// === Bug 8 (P2) 验证：连续天数成就基于修复后的 currentStreakDays ===
+// 已随 Bug 1 修复。验证 badges 的 streak_7 也能正确解锁。
+const streak7Goal = createGoal({ title: "连续七天成就验证", category: "custom" });
+const streak7Today = getTodayBusinessDate();
+for (let i = 6; i >= 0; i -= 1) {
+  const date = addBusinessDays(streak7Today, -i);
+  const task = createTask({ goalId: streak7Goal.id, title: `第${7 - i}天`, currentDate: date, estimatedMinutes: 30 });
+  updateTaskStatus(task.id, "completed", 30);
+  // 还原 activityDate 到实际日期（updateTaskStatus 统一设为今天）
+  const s = readManualStore();
+  s.tasks.find((t) => t.id === task.id).activityDate = date;
+  writeManualStore(s);
+}
+const streak7Summary = getProgressSummary(streak7Goal.id, streak7Today);
+assert.equal(streak7Summary.currentStreakDays, 7, "Bug 8: 连续 7 天应正确计算");
+const streak7Badge = streak7Summary.badges.find((badge) => badge.key === "streak_7");
+assert.equal(streak7Badge.unlocked, true, "Bug 8: 连续 7 天成就应基于修复后的 currentStreakDays 解锁");
+
+// === Bug 9 (P3) 验证：totalActualMinutes 与 actionDates 数据源一致 ===
+// 已随 Bug 1 修复。验证有投入的每个日期都被计为行动天数。
+const consistencyGoal = createGoal({ title: "数据源一致性验证", category: "custom" });
+const consistencyToday = getTodayBusinessDate();
+const consistencyDay1 = addBusinessDays(consistencyToday, -1);
+// Day -1: 完成一部分后顺延（原行动有 actualMinutes 和 activityDate）
+const cpTask = createTask({ goalId: consistencyGoal.id, title: "部分完成后顺延", currentDate: consistencyDay1, estimatedMinutes: 30 });
+updateTaskStatus(cpTask.id, "partially_completed", 12, "not_enough_time");
+rescheduleTask(cpTask.id, consistencyDay1);
+// Day 0: 正常完成
+const ctTask = createTask({ goalId: consistencyGoal.id, title: "今天完成", currentDate: consistencyToday, estimatedMinutes: 20 });
+updateTaskStatus(ctTask.id, "completed", 20);
+// 还原 activityDate
+const cs = readManualStore();
+cs.tasks.find((t) => t.id === cpTask.id).activityDate = consistencyDay1;
+writeManualStore(cs);
+const consistencySummary = getProgressSummary(consistencyGoal.id, consistencyToday);
+// totalActualMinutes 包含两天的投入（12 + 20 = 32），totalActionDays 应为 2（两天都有投入）
+assert.equal(consistencySummary.totalActualMinutes, 32, "Bug 9: 累计投入应包含顺延原行动的投入");
+assert.equal(consistencySummary.totalActionDays, 2, "Bug 9: 有投入的每个日期都应被计为行动天数");
+
+// === Bug 10 (P3) 验证：completeActionSession 与 finishActionSession 的 issueReason 处理一致 ===
+// 已随 Bug 3 修复。验证 completeActionSession 在 partial=true 时保留 issueReason，partial=false 时清除。
+const bug10Goal = createGoal({ title: "计时入口一致性验证", category: "custom" });
+const bug10Today = getTodayBusinessDate();
+// 场景 1：completeActionSession partial=true 应保留 issueReason
+const bug10TaskA = createTask({ goalId: bug10Goal.id, title: "completeActionSession 部分完成", currentDate: bug10Today, estimatedMinutes: 30 });
+updateTaskStatus(bug10TaskA.id, "partially_completed", 5, "too_difficult");
+const bug10SessionA = startActionSession(bug10TaskA.id, "countdown", new Date("2026-06-21T10:00:00+08:00"));
+completeActionSession(bug10SessionA.id, 10, "", true, new Date("2026-06-21T10:05:00+08:00"));
+assert.equal(getTask(bug10TaskA.id).status, "partially_completed", "Bug 10: completeActionSession partial=true 状态应为 partially_completed");
+assert.equal(getTask(bug10TaskA.id).issueReason, "too_difficult", "Bug 10: completeActionSession partial=true 应保留 issueReason");
+// 场景 2：completeActionSession partial=false 应清除 issueReason
+const bug10TaskB = createTask({ goalId: bug10Goal.id, title: "completeActionSession 标记完成", currentDate: bug10Today, estimatedMinutes: 30 });
+updateTaskStatus(bug10TaskB.id, "partially_completed", 5, "resource_unavailable");
+const bug10SessionB = startActionSession(bug10TaskB.id, "countdown", new Date("2026-06-21T11:00:00+08:00"));
+completeActionSession(bug10SessionB.id, 10, "", false, new Date("2026-06-21T11:05:00+08:00"));
+assert.equal(getTask(bug10TaskB.id).status, "completed", "Bug 10: completeActionSession partial=false 状态应为 completed");
+assert.equal(getTask(bug10TaskB.id).issueReason, undefined, "Bug 10: completeActionSession partial=false 应清除 issueReason");
+
 console.log("manual service tests passed");

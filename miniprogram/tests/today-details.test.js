@@ -67,4 +67,16 @@ assert.equal(calendar.days.find((item) => item.date === "2026-06-21").isComplete
 assert.equal(calendar.days.find((item) => item.date === "2026-06-29").isFuture, true);
 assert.equal(calendar.days.find((item) => item.date === "2026-06-19").isBeforeMin, true);
 
+// Bug 6 (P1) 回归：skipped 任务不计入完成率分母
+const skippedGoal = createGoal({ title: "跳过任务完成率验证", category: "custom" });
+const skipCompleted = createTask({ goalId: skippedGoal.id, title: "已完成", currentDate: "2026-06-21", estimatedMinutes: 30 });
+const skipPending = createTask({ goalId: skippedGoal.id, title: "待开始", currentDate: "2026-06-21", estimatedMinutes: 20 });
+const skipSkipped = createTask({ goalId: skippedGoal.id, title: "今天不做", currentDate: "2026-06-21", estimatedMinutes: 15 });
+updateTaskStatus(skipCompleted.id, "completed", 25);
+updateTaskStatus(skipSkipped.id, "skipped");
+const skipDay = getTodayDataDetails(skippedGoal.id, "2026-06-21", "day");
+// 排除 skipped 后：total=2（completed + pending），focusRate=50%（1/2）
+assert.equal(skipDay.metrics.total, 2, "Bug 6: skipped 任务不应计入 total 分母");
+assert.equal(skipDay.metrics.focusRate, 50, "Bug 6: skipped 任务不应拉低 focusRate");
+
 console.log("today details tests passed");
