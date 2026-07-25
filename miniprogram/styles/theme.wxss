@@ -49,9 +49,11 @@ page {
   --font-body: 27rpx;
   --font-caption: 23rpx;
   --font-tag: 21rpx;
-  --font-family-brand: "Songti SC", "STSong", "SimSun", serif;
+  --font-family-brand: "Source Han Serif SC", "思源宋体", "Noto Serif CJK SC", "Songti SC", "STSong", "SimSun", serif;
   --font-family-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", sans-serif;
-  --font-family-numeric: "DIN Alternate", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  --font-family-numeric: "Inter", "DIN Alternate", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  --font-weight-title: 500;
+  --font-weight-numeric: 600;
 
   /* Semantic colors */
   --color-border: rgba(36, 91, 77, .12);

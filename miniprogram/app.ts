@@ -14,5 +14,13 @@ App<IAppOption>({
     bootstrapAccount().catch(() => undefined);
     // 同步发布版唯一配色到系统导航栏与 TabBar。
     applyGlobalTheme();
+    // 加载 Inter SemiBold 网络字体供全项目数字排版使用；失败时静默回退到系统字体。
+    wx.loadFontFace({
+      family: "Inter",
+      source: 'url("https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.16/files/inter-latin-600-normal.woff2")',
+      global: true,
+      scopes: ["webView"],
+      fail: () => undefined,
+    });
   },
 });

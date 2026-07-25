@@ -4,7 +4,7 @@ page {
   min-height: 100%;
   background: var(--color-bg-page);
   color: var(--color-text-main);
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-family-sans);
   font-size: 28rpx;
   -webkit-font-smoothing: antialiased;
 }
@@ -89,9 +89,9 @@ button[disabled] {
 .tab-header__title {
   overflow: hidden;
   color: var(--color-primary, #245B4D);
-  font-family: "Songti SC", "STSong", SimSun, serif;
+  font-family: var(--font-family-brand);
   font-size: 40rpx;
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   line-height: 1;
   letter-spacing: 5rpx;
   text-overflow: ellipsis;
@@ -113,8 +113,9 @@ button[disabled] {
 .page-title {
   margin-top: 8rpx;
   color: var(--color-text-main);
+  font-family: var(--font-family-brand);
   font-size: var(--font-page-title);
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
   line-height: 1.3;
 }
 
