@@ -49,6 +49,14 @@ interface ViewTask extends ActionTask {
   isRecommendedAction: boolean;
 }
 interface ViewTaskGroup { key: "today" | "continue"; title: string; tasks: ViewTask[]; }
+interface ActionPresentationGroup {
+  key: "priority" | "quick" | "later";
+  title: string;
+  hint: string;
+  icon: string;
+  tone: "gold" | "green" | "muted";
+  tasks: ViewTask[];
+}
 interface TodayMood { title: string; copy: string; tone: "empty" | "low" | "half" | "done"; mark: string; }
 interface ProactiveInsight { label: string; title: string; body: string; tone: "start" | "progress" | "near" | "done" | "streak"; }
 interface ProgressSegment { active: boolean; }
@@ -84,6 +92,52 @@ function progressSegments(summary: TodaySummary): ProgressSegment[] {
   // completed 和 partially_completed 都标记为 active，体现已推进的进度
   const activeCount = summary.completedCount + summary.partialCount;
   return Array.from({ length: total }, (_, index) => ({ active: index < activeCount }));
+}
+
+/**
+ * 仅用于首页视觉编排：不写回任务优先级，也不改变任务原始顺序。
+ * 第一项可执行行动承接页面已有的推荐规则；随后两项作为轻量启动入口；
+ * 其余行动收在「稍后处理」，让四项以上的列表保持接近设计稿的阅读节奏。
+ */
+function buildActionPresentationGroups(tasks: ViewTask[]): ActionPresentationGroup[] {
+  if (!tasks.length) return [];
+
+  const recommendationIndex = tasks.findIndex((task) => task.isRecommendedAction);
+  const priorityIndex = recommendationIndex >= 0 ? recommendationIndex : 0;
+  const priorityTask = tasks[priorityIndex];
+  const remaining = tasks.filter((_, index) => index !== priorityIndex);
+  const quickTasks = remaining.slice(0, 2);
+  const laterTasks = remaining.slice(2);
+  const groups: ActionPresentationGroup[] = [{
+    key: "priority",
+    title: "优先完成",
+    hint: "聚焦高价值",
+    icon: "flag",
+    tone: "gold",
+    tasks: [priorityTask],
+  }];
+
+  if (quickTasks.length) {
+    groups.push({
+      key: "quick",
+      title: "可快速开始",
+      hint: "快速推进",
+      icon: "thunder",
+      tone: "green",
+      tasks: quickTasks,
+    });
+  }
+  if (laterTasks.length) {
+    groups.push({
+      key: "later",
+      title: "稍后处理",
+      hint: "安排在专注时段后",
+      icon: "time",
+      tone: "muted",
+      tasks: laterTasks,
+    });
+  }
+  return groups;
 }
 function sessionClock(seconds: number): string {
   const safe = Math.max(0, Math.floor(seconds));
@@ -365,6 +419,7 @@ Page(withAppTheme({
     timerSubmitting: false,
     taskGroups: [] as ViewTaskGroup[],
     visibleTasks: [] as ViewTask[],
+    visibleTaskGroups: [] as ActionPresentationGroup[],
     summary: emptySummary(),
     completionPercent: 0,
     focusPercent: 0,
@@ -545,6 +600,7 @@ Page(withAppTheme({
       const progress = goal ? getProgressSummary(goal.id, selectedDate) : null;
       const mood = todayMood(summary);
       const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 4);
+      const visibleTaskGroups = buildActionPresentationGroups(visibleTasks);
       const week = buildWeekDays(today, selectedDate, this.data.weekOffset);
       const calendarMonth = this.data.calendarMonth || monthStart(selectedDate);
       const calendar = buildCalendar(today, selectedDate, calendarMonth, goalTasks);
@@ -569,6 +625,7 @@ Page(withAppTheme({
         activeSessionProgress: sessionProgress(activeSession),
         taskGroups,
         visibleTasks,
+        visibleTaskGroups,
         summary,
         completionPercent: completionPercent(summary),
         focusPercent: focusPercent(summary),
@@ -664,7 +721,12 @@ Page(withAppTheme({
   toggleActionList() {
     const actionListExpanded = !this.data.actionListExpanded;
     const visibleTasks = actionListExpanded ? this.data.tasks : this.data.tasks.slice(0, 4);
-    this.setData({ actionListExpanded, visibleTasks, hiddenActionCount: Math.max(0, this.data.tasks.length - visibleTasks.length) });
+    this.setData({
+      actionListExpanded,
+      visibleTasks,
+      visibleTaskGroups: buildActionPresentationGroups(visibleTasks),
+      hiddenActionCount: Math.max(0, this.data.tasks.length - visibleTasks.length),
+    });
   },
   switchWeek(event: { currentTarget: { dataset: { direction?: string | number } } }) {
     const direction = Number(event.currentTarget.dataset.direction || 0);
@@ -1084,10 +1146,12 @@ Page(withAppTheme({
     const progress = this.data.goal ? getProgressSummary(this.data.goal.id, selectedDate) : null;
     const mood = todayMood(summary);
     const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 4);
+    const visibleTaskGroups = buildActionPresentationGroups(visibleTasks);
     this.setData({
       tasks,
       taskGroups,
       visibleTasks,
+      visibleTaskGroups,
       summary,
       completionPercent: completionPercent(summary),
       focusPercent: focusPercent(summary),

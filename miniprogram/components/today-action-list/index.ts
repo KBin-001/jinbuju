@@ -1,5 +1,6 @@
 Component({
   properties: {
+    taskGroups: { type: Array, value: [] },
     tasks: { type: Array, value: [] },
     activeTaskId: { type: String, value: "" },
     activeStatus: { type: String, value: "" },

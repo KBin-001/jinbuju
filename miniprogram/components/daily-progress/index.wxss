@@ -1,8 +1,16 @@
 :host { display: block; }
-.daily-progress { position: relative; margin-top: 24rpx; padding: 24rpx 26rpx 34rpx; border: 1rpx solid rgba(129,114,86,.12); border-radius: 26rpx; color: #6f7470; background: rgba(255,253,248,.9); box-shadow: 0 7rpx 20rpx rgba(75,62,40,.04); }
-.daily-progress--pressed { opacity: .76; }
-.daily-progress__labels { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; font-size: 21rpx; line-height: 30rpx; }
+.daily-progress { position: relative; margin-top: 18rpx; padding: 18rpx 28rpx 20rpx; border: 1rpx solid rgba(105,96,78,.11); border-radius: 26rpx; color: #626965; background: rgba(255,253,248,.94); box-shadow: 0 8rpx 24rpx rgba(75,62,40,.04); transition: opacity 160ms ease-out, transform 160ms ease-out; }
+.daily-progress--pressed { opacity: .76; transform: scale(.995); }
+.daily-progress__labels { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; font-size: 20rpx; line-height: 30rpx; }
 .daily-progress__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.daily-progress__track { height: 8rpx; margin-top: 25rpx; margin-right: 54rpx; overflow: hidden; border-radius: 999rpx; background: #e9e3d8; }
-.daily-progress__fill { height: 100%; min-width: 0; border-radius: inherit; background: #4f8172; transition: width .2s ease; }
-.daily-progress__percent { position: absolute; right: 26rpx; bottom: 23rpx; color: #9b7532; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 24rpx; }
+.daily-progress__meter { margin-top: 14rpx; display: flex; align-items: center; gap: 22rpx; }
+.daily-progress__track { height: 10rpx; flex: 1; overflow: hidden; border-radius: 999rpx; background: #e7e2d9; }
+.daily-progress__fill { height: 100%; min-width: 0; border-radius: inherit; background: #1d755a; transition: width .2s ease; }
+.daily-progress__percent { width: 76rpx; flex: none; color: #a1661b; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 29rpx; line-height: 34rpx; text-align: right; }
+
+@media (prefers-reduced-motion: reduce) {
+  .daily-progress,
+  .daily-progress__fill {
+    transition: none;
+  }
+}

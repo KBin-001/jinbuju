@@ -1,5 +1,10 @@
 <view class="coach-tip" bindtap="openCoach" hover-class="coach-tip--pressed" aria-label="AI 成长教练建议">
-  <view class="coach-tip__head"><t-icon name="star" size="28rpx" /><text>AI 成长教练</text></view>
-  <view class="coach-tip__text">{{status === 'loading' ? '正在结合今日行动整理下一步…' : text}}</view>
-  <view wx:if="{{status === 'error'}}" class="coach-tip__state">当前展示本地建议</view>
+  <image class="coach-tip__art" src="/assets/ai-coach-shanshui-v2.jpg" mode="widthFix" aria-hidden="true" />
+  <view class="coach-tip__veil"></view>
+  <view class="coach-tip__content">
+    <view class="coach-tip__head"><t-icon name="star" size="28rpx" /><text>AI 成长教练</text></view>
+    <view class="coach-tip__text">{{status === 'loading' ? '正在结合今日行动整理下一步…' : text}}</view>
+    <view wx:if="{{status === 'error'}}" class="coach-tip__state">当前展示本地建议</view>
+    <view class="coach-tip__link"><text>查看今日建议</text><t-icon name="chevron-right" size="26rpx" /></view>
+  </view>
 </view>

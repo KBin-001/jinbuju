@@ -66,22 +66,26 @@
             <view class="task-section-add task-section-add--icon" catchtap="addTask" role="button" aria-label="添加行动"><t-icon name="add" size="27rpx" /></view>
             <view class="execution-preference" catchtap="openExecutionPreference" role="button" aria-label="设置执行偏好">
               <t-icon name="setting" size="24rpx" />
-              <text>执行偏好</text>
+              <text class="execution-preference__label">执行偏好</text>
             </view>
           </view>
         </view>
 
-        <today-action-list
-          tasks="{{visibleTasks}}"
-          active-task-id="{{activeSessionTaskId}}"
-          active-status="{{activeSessionStatus}}"
-          active-minutes="{{activeSessionElapsedMinutes}}"
-          bind:open="openTask"
-          bind:primary="handleTaskPrimary"
-          bind:menu="openTaskMenu"
-        />
-        <view wx:if="{{hiddenActionCount > 0 || actionListExpanded}}" class="action-list-toggle" bindtap="toggleActionList">
-          {{actionListExpanded ? '收起行动' : '展开剩余 ' + hiddenActionCount + ' 项'}}
+        <view class="action-panel">
+          <today-action-list
+            task-groups="{{visibleTaskGroups}}"
+            tasks="{{visibleTasks}}"
+            active-task-id="{{activeSessionTaskId}}"
+            active-status="{{activeSessionStatus}}"
+            active-minutes="{{activeSessionElapsedMinutes}}"
+            bind:open="openTask"
+            bind:primary="handleTaskPrimary"
+            bind:menu="openTaskMenu"
+          />
+          <view wx:if="{{hiddenActionCount > 0 || actionListExpanded}}" class="action-list-toggle" bindtap="toggleActionList" hover-class="action-list-toggle--pressed">
+            <text>{{actionListExpanded ? '收起行动' : '查看全部任务（' + tasks.length + '）'}}</text>
+            <t-icon name="{{actionListExpanded ? 'chevron-up' : 'chevron-down'}}" size="28rpx" />
+          </view>
         </view>
       </view>
 
@@ -207,7 +211,7 @@
       <view class="quick-add-field">
         <view class="quick-add-label">行动日期</view>
         <picker mode="date" value="{{quickAddDate}}" start="{{todayDate}}" end="{{quickAddDateEnd}}" bindchange="changeQuickAddDate">
-          <view class="quick-reminder-picker"><text>{{quickAddDate}}</text><text>选择日期</text></view>
+          <view class="quick-reminder-picker"><text>{{quickAddDate}}</text><text class="quick-reminder-picker__note">选择日期</text></view>
         </picker>
       </view>
 
@@ -217,7 +221,7 @@
       </view>
       <view wx:if="{{quickAddReminderEnabled}}" class="quick-reminder-time">
         <picker mode="time" value="{{quickAddReminderTime}}" bindchange="changeQuickAddReminderTime">
-          <view class="quick-reminder-picker"><text>{{quickAddReminderTime}}</text><text>5 分钟粒度</text></view>
+          <view class="quick-reminder-picker"><text>{{quickAddReminderTime}}</text><text class="quick-reminder-picker__note">5 分钟粒度</text></view>
         </picker>
         <view class="quick-reminder-note">保存时会立即弹出微信一次性订阅授权。</view>
       </view>

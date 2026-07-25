@@ -3,8 +3,10 @@
     <text class="daily-progress__label">{{targetMinutes > 0 ? '今日目标 ' + targetMinutes + '分钟' : '今日目标 待安排'}}</text>
     <text class="daily-progress__label">已投入 {{actualMinutes}}分钟</text>
   </view>
-  <view class="daily-progress__track">
-    <view class="daily-progress__fill" style="width: {{percent}}%;"></view>
+  <view class="daily-progress__meter">
+    <view class="daily-progress__track">
+      <view class="daily-progress__fill" style="width: {{percent}}%;"></view>
+    </view>
+    <view class="daily-progress__percent">{{percent}}%</view>
   </view>
-  <view class="daily-progress__percent">{{percent}}%</view>
 </view>

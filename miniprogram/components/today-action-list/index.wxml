@@ -6,57 +6,84 @@
   </view>
 
   <view
-    wx:for="{{tasks}}"
-    wx:key="id"
-    class="action-row {{item.status === 'completed' ? 'is-completed' : ''}}"
-    data-id="{{item.id}}"
-    bindtap="openTask"
-    hover-class="action-row--pressed"
-    aria-label="{{item.displayTitle + '，' + item.actionTimeText}}"
+    wx:for="{{taskGroups}}"
+    wx:for-item="group"
+    wx:key="key"
+    class="action-group action-group--{{group.tone}}"
   >
-    <view class="action-icon action-icon--{{item.actionIconTone}}">
-      <image class="action-icon__image" src="{{item.actionIconAsset}}" mode="aspectFit" />
+    <view class="action-group__rail" aria-hidden="true">
+      <view class="action-group__node"></view>
+      <view class="action-group__line"></view>
     </view>
-
-    <view class="action-copy">
-      <view class="action-title">{{item.displayTitle}}</view>
-      <view class="action-meta">
-        <text wx:if="{{activeTaskId === item.id}}">
-          {{activeStatus === 'paused' ? '已暂停' : '已专注'}} {{activeMinutes}} 分钟
-        </text>
-        <text wx:elif="{{item.status === 'completed' && item.actualMinutes}}">实际 {{item.actualMinutes}} 分钟</text>
-        <text wx:else>{{item.actionTimeText}}</text>
-        <text wx:if="{{item.rescheduled}}" class="carry-badge">顺延任务</text>
+    <view class="action-group__body">
+      <view class="action-group__head">
+        <view class="action-group__title">
+          <t-icon class="action-group__icon action-group__icon--{{group.tone}}" name="{{group.icon}}" size="30rpx" />
+          <text>{{group.title}}</text>
+        </view>
+        <view class="action-group__hint">{{group.hint}}</view>
       </view>
-    </view>
 
-    <view
-      class="action-mark action-mark--{{item.primaryActionTone}} {{item.primaryAction === 'active' ? 'is-active' : ''}} {{item.primaryAction === 'complete' && !item.canComplete ? 'is-disabled' : ''}}"
-      data-id="{{item.id}}"
-      catchtap="primaryAction"
-      hover-class="action-mark--pressed"
-      role="button"
-      aria-label="{{item.primaryActionLabel + item.displayTitle}}"
-      aria-disabled="{{item.primaryAction === 'complete' && !item.canComplete}}"
-    >
-      <view class="action-mark__disc">
-        <t-icon name="{{item.primaryActionIcon || 'play-circle'}}" size="32rpx" />
-        <view wx:if="{{item.isRecommendedAction}}" class="action-mark__recommendation"></view>
+      <view class="action-group__tasks">
+        <view
+          wx:for="{{group.tasks}}"
+          wx:for-item="item"
+          wx:key="id"
+          class="action-row {{item.status === 'completed' ? 'is-completed' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="openTask"
+          hover-class="action-row--pressed"
+          aria-label="{{item.displayTitle + '，' + item.actionTimeText}}"
+        >
+          <view class="action-icon action-icon--{{item.actionIconTone}}">
+            <image class="action-icon__image" src="{{item.actionIconAsset}}" mode="aspectFit" />
+          </view>
+
+          <view class="action-copy">
+            <view class="action-title">{{item.displayTitle}}</view>
+            <view class="action-meta">
+              <text wx:if="{{activeTaskId === item.id}}">
+                {{activeStatus === 'paused' ? '已暂停' : '已专注'}} {{activeMinutes}} 分钟
+              </text>
+              <text wx:elif="{{item.status === 'completed' && item.actualMinutes}}">实际 {{item.actualMinutes}} 分钟</text>
+              <text wx:else>{{item.actionTimeText}}</text>
+              <text wx:if="{{item.rescheduled}}" class="carry-badge">顺延任务</text>
+            </view>
+          </view>
+
+          <view class="action-control">
+            <view
+              class="action-mark action-mark--{{item.primaryActionTone}} {{item.primaryAction === 'active' ? 'action-mark--active' : ''}} {{item.primaryAction === 'complete' && !item.canComplete ? 'action-mark--disabled' : ''}}"
+              data-id="{{item.id}}"
+              catchtap="primaryAction"
+              hover-class="action-mark--pressed"
+              role="button"
+              aria-label="{{item.primaryActionLabel + item.displayTitle}}"
+              aria-disabled="{{item.primaryAction === 'complete' && !item.canComplete}}"
+            >
+              <view class="action-mark__disc">
+                <t-icon name="{{item.primaryActionIcon || 'play-circle'}}" size="27rpx" />
+                <text wx:if="{{item.primaryAction === 'complete' && !item.canComplete}}" class="action-mark__label">未到期</text>
+                <text wx:elif="{{item.primaryAction === 'active' && activeTaskId === item.id}}" class="action-mark__label action-mark__label--numeric">{{activeMinutes}}分</text>
+                <text wx:else class="action-mark__label">{{item.primaryActionShortLabel || item.primaryActionLabel || '开始'}}</text>
+                <view wx:if="{{item.isRecommendedAction}}" class="action-mark__recommendation"></view>
+              </view>
+            </view>
+            <text class="action-control__minutes">{{item.estimatedMinutes}} 分钟</text>
+          </view>
+
+          <view
+            class="task-more"
+            data-id="{{item.id}}"
+            catchtap="openMenu"
+            hover-class="task-more--pressed"
+            role="button"
+            aria-label="{{item.displayTitle + '更多操作'}}"
+          >
+            <view class="task-more__dot"></view><view class="task-more__dot"></view><view class="task-more__dot"></view>
+          </view>
+        </view>
       </view>
-      <text wx:if="{{item.primaryAction === 'complete' && !item.canComplete}}" class="action-mark__label">未到期</text>
-      <text wx:elif="{{item.primaryAction === 'active' && activeTaskId === item.id}}" class="action-mark__label action-mark__label--numeric">{{activeMinutes}}分</text>
-      <text wx:else class="action-mark__label">{{item.primaryActionShortLabel || item.primaryActionLabel || '开始'}}</text>
-    </view>
-
-    <view
-      class="task-more"
-      data-id="{{item.id}}"
-      catchtap="openMenu"
-      hover-class="task-more--pressed"
-      role="button"
-      aria-label="{{item.displayTitle + '更多操作'}}"
-    >
-      <view></view><view></view><view></view>
     </view>
   </view>
 </view>

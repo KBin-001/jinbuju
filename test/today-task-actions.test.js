@@ -16,12 +16,14 @@ assert.match(actionListWxml, /data-id="\{\{item\.id\}\}"[\s\S]*bindtap="openTask
 assert.match(actionListWxml, /catchtap="primaryAction"/, "单一主操作按钮必须拦截冒泡并独立处理");
 assert.match(actionListWxml, /catchtap="openMenu"/, "任务更多菜单必须拥有独立点击入口");
 assert.doesNotMatch(actionListWxml, /<button[\s>]/, "任务主操作不应继续使用带默认样式的原生长按钮");
-assert.match(actionListWxml, /class="action-mark__disc"/, "任务主操作必须使用圆形行动印记");
+assert.match(actionListWxml, /class="action-mark__disc"/, "任务主操作必须使用独立动作按钮");
 assert.match(actionListWxml, /class="action-mark__label"/, "行动印记必须提供独立可见文字");
 assert.match(actionListWxml, /aria-disabled=/, "不可执行状态必须提供无障碍禁用说明");
-assert.match(actionListWxss, /\.action-mark\s*\{[\s\S]*width:\s*88rpx;[\s\S]*height:\s*96rpx;/, "行动印记点击区域尺寸必须可靠");
-assert.match(actionListWxss, /\.action-mark__disc\s*\{[\s\S]*width:\s*60rpx;[\s\S]*height:\s*60rpx;/, "圆形主体必须保持60rpx");
-assert.match(actionListWxss, /var\(--color-action-soft/, "行动印记应复用现有主题变量");
+assert.match(actionListWxss, /\.action-mark\s*\{[\s\S]*width:\s*132rpx;[\s\S]*height:\s*54rpx;/, "横向动作按钮点击区域尺寸必须可靠");
+assert.match(actionListWxss, /\.action-mark__disc\s*\{[\s\S]*width:\s*132rpx;[\s\S]*height:\s*54rpx;/, "横向动作按钮必须保持紧凑比例");
+assert.match(actionListWxss, /var\(--color-primary/, "动作按钮应复用现有主题变量");
+assert.match(actionListWxml, /wx:for="\{\{taskGroups\}\}"/, "今日行动必须提供展示分组");
+assert.match(actionListWxml, /action-group__rail/, "展示分组必须保留时间轴结构");
 assert.doesNotMatch(actionListWxss, /\.task-primary/, "应完全移除旧的白色长胶囊按钮样式");
 assert.match(script, /updateTaskStatus\(task\.id,\s*"completed"\);/, "完成行动时应由服务层采用预计时长作为默认实际投入");
 assert.doesNotMatch(script, /updateTaskStatus\(task\.id,\s*"completed",\s*task\.actualMinutes\s*\?\?\s*0\)/, "完成行动不应再写入 0 分钟");

@@ -265,3 +265,17 @@
 5. 视觉品质与动效表现。
 
 视觉可以大胆重构，但不能以牺牲真实功能、可读性、性能和数据可靠性为代价。
+
+## Agent skills
+
+### Issue tracker
+
+议题与规格以本地 markdown 文件形式存放于 `.scratch/` 目录。详见 `docs/agents/issue-tracker.md`。
+
+### Triage labels
+
+使用五个默认 triage 标签：`needs-triage`、`needs-info`、`ready-for-agent`、`ready-for-human`、`wontfix`。详见 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+single-context 布局：仓库根目录一个 `CONTEXT.md` + `docs/adr/`。详见 `docs/agents/domain.md`。
