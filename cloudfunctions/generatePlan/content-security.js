@@ -121,7 +121,34 @@ function isRiskyApiError(error) {
   return code === 87014 || code === 87015;
 }
 
-async function assertSafeText(openid, values, scene = 4, securityApi = cloud.openapi.security) {
+// Classifies whether a `msgSecCheck` failure is transient (worth retrying) or
+// permanent. Only network (-1) and server-side (5xxxx) errors are retryable.
+// Content risk rejections (87014/87015), client errors (4xxxx), TypeError and
+// any unknown error are not retried, so we never waste API quota.
+function isTransientError(error) {
+  const code = Number(error && (error.errCode ?? error.errcode ?? error.code));
+  // 87014/87015 are explicit content risk rejections — never retry.
+  if (code === 87014 || code === 87015) return false;
+  // -1 is the generic network error used by wx-server-sdk — retry.
+  if (code === -1) return true;
+  // 4xxxx are client errors (params, permissions, quota) — do not retry.
+  if (code >= 40000 && code < 50000) return false;
+  // 5xxxx are server-side errors — retry.
+  if (code >= 50000) return true;
+  // TypeError (e.g. securityApi is undefined) — do not retry.
+  if (error instanceof TypeError) return false;
+  // Any other unknown error — conservatively do not retry.
+  return false;
+}
+
+async function assertSafeText(openid, values, scene = 4, securityApi = cloud.openapi.security, options = {}) {
+  // Retry and degradation are wired in by subsequent tickets (02, 03).
+  // Defaults preserve the current single-call, fail-closed behavior so this
+  // is a pure signature extension with no external behavior change.
+  const { degradeOnUnavailable = false, maxRetries = 2, retryBaseDelayMs = 500 } = options;
+  void degradeOnUnavailable;
+  void maxRetries;
+  void retryBaseDelayMs;
   const unique = [...new Set((values || []).map(normalizeText).filter(Boolean))];
   for (const content of chunkTexts(unique)) {
     let response;
@@ -222,6 +249,7 @@ module.exports = {
   collectContentText,
   imageContentType,
   imageBufferContentType,
+  isTransientError,
   responseErrorCode,
   responseSuggest,
 };
