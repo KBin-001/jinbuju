@@ -20,7 +20,7 @@ function extractRule(css, selector) {
   return m ? m[1] : "";
 }
 
-// ── Issue 01: theme.wxss font-family variables ──────────────────────────────
+// ── 1. 主题变量正确性（theme.wxss）─────────────────────────────────────────
 
 assert.match(
   theme,
@@ -32,7 +32,6 @@ assert.match(
   /--font-family-brand:\s*[^;]*"Songti SC"/,
   "--font-family-brand 必须回退到 Songti SC",
 );
-
 assert.match(
   theme,
   /--font-family-sans:\s*[^;]*"PingFang SC"/,
@@ -43,7 +42,6 @@ assert.match(
   /--font-family-sans:\s*[^;]*"HarmonyOS Sans SC"/,
   "--font-family-sans 必须包含 HarmonyOS Sans SC",
 );
-
 assert.match(
   theme,
   /--font-family-numeric:\s*[^;]*"Inter"/,
@@ -54,53 +52,10 @@ assert.match(
   /--font-family-numeric:\s*[^;]*"DIN Alternate"/,
   "--font-family-numeric 必须回退到 DIN Alternate",
 );
-
-// ── Issue 01: theme.wxss font-weight tokens ─────────────────────────────────
-
 assert.match(theme, /--font-weight-title:\s*500/, "theme.wxss 必须定义 --font-weight-title: 500");
 assert.match(theme, /--font-weight-numeric:\s*600/, "theme.wxss 必须定义 --font-weight-numeric: 600");
 
-// ── Issue 01: app.wxss page selector ────────────────────────────────────────
-
-const pageRule = extractRule(appStyles, "page");
-assert.ok(
-  /font-family:\s*var\(--font-family-sans\)/.test(pageRule),
-  "app.wxss 的 page 选择器必须使用 var(--font-family-sans) 而非硬编码字体栈",
-);
-assert.ok(
-  !/font-family:\s*-apple-system/.test(pageRule),
-  "app.wxss 的 page 选择器不得残留硬编码 -apple-system 字体栈",
-);
-
-// ── Issue 01: app.wxss .tab-header__title ───────────────────────────────────
-
-const tabTitleRule = extractRule(appStyles, ".tab-header__title");
-assert.ok(
-  /font-family:\s*var\(--font-family-brand\)/.test(tabTitleRule),
-  ".tab-header__title 必须使用 var(--font-family-brand) 而非硬编码 Songti SC",
-);
-assert.ok(
-  !/"Songti SC"/.test(tabTitleRule),
-  ".tab-header__title 不得残留硬编码 \"Songti SC\"",
-);
-assert.ok(
-  /font-weight:\s*var\(--font-weight-title\)/.test(tabTitleRule),
-  ".tab-header__title 必须使用 var(--font-weight-title) 而非硬编码 700",
-);
-
-// ── Issue 01: app.wxss .page-title ──────────────────────────────────────────
-
-const pageTitleRule = extractRule(appStyles, ".page-title");
-assert.ok(
-  /font-family:\s*var\(--font-family-brand\)/.test(pageTitleRule),
-  ".page-title 必须声明 font-family: var(--font-family-brand)",
-);
-assert.ok(
-  /font-weight:\s*var\(--font-weight-title\)/.test(pageTitleRule),
-  ".page-title 必须使用 var(--font-weight-title) 而非硬编码 700",
-);
-
-// ── Issue 02: app.ts Inter webfont loading ──────────────────────────────────
+// ── 2. Inter 字体加载存在（app.ts）──────────────────────────────────────────
 
 assert.ok(
   /wx\.loadFontFace\s*\(/.test(appTs),
@@ -125,16 +80,48 @@ assert.ok(
   /\.catch\s*\(|fail:/.test(appTs),
   "wx.loadFontFace 必须有 catch 或 fail 回调处理失败，不阻断启动",
 );
-
-// ── Issue 02: existing onLaunch calls preserved ─────────────────────────────
-
 assert.match(appTs, /initCloud\s*\(/, "onLaunch 必须保留 initCloud() 调用");
 assert.match(appTs, /bootstrapAccount\s*\(/, "onLaunch 必须保留 bootstrapAccount() 调用");
 assert.match(appTs, /applyGlobalTheme\s*\(/, "onLaunch 必须保留 applyGlobalTheme() 调用");
 
-// ── Issue 03: no hardcoded font-family in pages/ WXSS files ──────────────────
+// ── 3. 全局默认使用变量（app.wxss）──────────────────────────────────────────
 
-const pagesDir = path.join(root, "miniprogram", "pages");
+const pageRule = extractRule(appStyles, "page");
+assert.ok(
+  /font-family:\s*var\(--font-family-sans\)/.test(pageRule),
+  "app.wxss 的 page 选择器必须使用 var(--font-family-sans) 而非硬编码字体栈",
+);
+assert.ok(
+  !/font-family:\s*-apple-system/.test(pageRule),
+  "app.wxss 的 page 选择器不得残留硬编码 -apple-system 字体栈",
+);
+
+const tabTitleRule = extractRule(appStyles, ".tab-header__title");
+assert.ok(
+  /font-family:\s*var\(--font-family-brand\)/.test(tabTitleRule),
+  ".tab-header__title 必须使用 var(--font-family-brand) 而非硬编码 Songti SC",
+);
+assert.ok(
+  !/"Songti SC"/.test(tabTitleRule),
+  ".tab-header__title 不得残留硬编码 \"Songti SC\"",
+);
+assert.ok(
+  /font-weight:\s*var\(--font-weight-title\)/.test(tabTitleRule),
+  ".tab-header__title 必须使用 var(--font-weight-title) 而非硬编码 700",
+);
+
+const pageTitleRule = extractRule(appStyles, ".page-title");
+assert.ok(
+  /font-family:\s*var\(--font-family-brand\)/.test(pageTitleRule),
+  ".page-title 必须声明 font-family: var(--font-family-brand)",
+);
+assert.ok(
+  /font-weight:\s*var\(--font-weight-title\)/.test(pageTitleRule),
+  ".page-title 必须使用 var(--font-weight-title) 而非硬编码 700",
+);
+
+// ── 4. 无硬编码字体族回归（扫描所有页面与组件 WXSS）─────────────────────────
+
 const hardcodedFontPatterns = [
   { re: /"Songti SC"/, label: '"Songti SC"' },
   { re: /STSong/, label: "STSong" },
@@ -157,51 +144,61 @@ function listWxss(dir) {
   return results;
 }
 
-const pageWxssFiles = listWxss(pagesDir);
-const violations = [];
-for (const file of pageWxssFiles) {
-  const content = fs.readFileSync(file, "utf8");
-  const rel = path.relative(root, file).replace(/\\/g, "/");
-  for (const { re, label } of hardcodedFontPatterns) {
-    if (re.test(content)) {
-      violations.push(`${rel}: 残留硬编码 ${label}`);
-    }
-  }
-}
-assert.equal(
-  violations.length,
-  0,
-  `pages/ 下 WXSS 文件不得残留硬编码字体族:\n${violations.join("\n")}`,
-);
+// 豁免列表：变量定义处允许硬编码字体族值
+const exemptFiles = [
+  "miniprogram/styles/theme.wxss", // CSS 变量定义处，必须包含硬编码字体名
+];
 
-// ── Issue 04: no hardcoded font-family in components/ + styles/ + custom-tab-bar/ ─
-
-const issue04Dirs = [
+// 扫描 pages/、components/、styles/、custom-tab-bar/ 下所有 WXSS 文件
+const scanDirs = [
+  path.join(root, "miniprogram", "pages"),
   path.join(root, "miniprogram", "components"),
   path.join(root, "miniprogram", "styles"),
   path.join(root, "miniprogram", "custom-tab-bar"),
 ];
-const issue04Exempt = ["miniprogram/styles/theme.wxss"]; // 变量定义处允许硬编码
 
-const issue04Files = [];
-for (const dir of issue04Dirs) {
-  issue04Files.push(...listWxss(dir));
+const allWxssFiles = [];
+for (const dir of scanDirs) {
+  allWxssFiles.push(...listWxss(dir));
 }
-const issue04Violations = [];
-for (const file of issue04Files) {
+
+const scanViolations = [];
+for (const file of allWxssFiles) {
   const rel = path.relative(root, file).replace(/\\/g, "/");
-  if (issue04Exempt.includes(rel)) continue;
+  if (exemptFiles.includes(rel)) continue;
   const content = fs.readFileSync(file, "utf8");
   for (const { re, label } of hardcodedFontPatterns) {
     if (re.test(content)) {
-      issue04Violations.push(`${rel}: 残留硬编码 ${label}`);
+      scanViolations.push(`${rel}: 残留硬编码 ${label}`);
     }
   }
 }
 assert.equal(
-  issue04Violations.length,
+  scanViolations.length,
   0,
-  `components/ + styles/ + custom-tab-bar/ 下 WXSS 文件不得残留硬编码字体族:\n${issue04Violations.join("\n")}`,
+  `页面与组件 WXSS 文件不得残留硬编码字体族:\n${scanViolations.join("\n")}`,
 );
 
-console.log("typography contract tests passed (issues 01, 02, 03 & 04)");
+// 验证豁免文件确实存在且包含硬编码字体（确认豁免是有意义的，而非文件丢失）
+assert.ok(
+  fs.existsSync(path.join(root, "miniprogram/styles/theme.wxss")),
+  "theme.wxss 必须存在（变量定义处）",
+);
+assert.ok(
+  /--font-family-brand:\s*"Source Han Serif SC"/.test(theme),
+  "theme.wxss 应包含硬编码字体名（这是变量定义处，允许硬编码）",
+);
+
+// scripts/patch-tdesign-icon-font.js 豁免：TDesign 图标字体内部处理，非排版字体
+const patchScriptPath = path.join(root, "miniprogram/scripts/patch-tdesign-icon-font.js");
+assert.ok(
+  fs.existsSync(patchScriptPath),
+  "scripts/patch-tdesign-icon-font.js 必须存在（TDesign 图标字体处理）",
+);
+const patchScript = fs.readFileSync(patchScriptPath, "utf8");
+assert.ok(
+  /font-family:\s*t\b/.test(patchScript),
+  "patch-tdesign-icon-font.js 中的 font-family:t 是 TDesign 图标字体的内部处理，确认豁免",
+);
+
+console.log("typography contract tests passed (issues 01–05)");
