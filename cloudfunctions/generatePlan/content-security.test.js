@@ -319,7 +319,8 @@ test("assertSafeText logs retry warnings and final error on exhaustion", async (
 test("assertSafeText does not log error for non-retried failures", async () => {
   const consoleCapture = captureConsole();
   try {
-    // TypeError is non-transient: no retry, no warn, no error log.
+    // TypeError is non-transient: no retry, no warn log.
+    // An error log is expected for diagnosis of the underlying cause.
     await assert.rejects(
       assertSafeText("openid", ["内容"], 4, {
         msgSecCheck: async () => { throw new TypeError("boom"); },
@@ -327,7 +328,9 @@ test("assertSafeText does not log error for non-retried failures", async () => {
       (error) => error.code === "CONTENT_SECURITY_UNAVAILABLE",
     );
     assert.strictEqual(consoleCapture.calls.warn.length, 0);
-    assert.strictEqual(consoleCapture.calls.error.length, 0);
+    assert.strictEqual(consoleCapture.calls.error.length, 1);
+    const errorLog = consoleCapture.calls.error[0][1];
+    assert.strictEqual(errorLog.cause.errorType, "TypeError");
   } finally {
     consoleCapture.restore();
   }
@@ -498,4 +501,59 @@ test("assertEventContentSafe still rejects risky content for askProgressCoach", 
     (error) => error.code === "CONTENT_SECURITY_REJECTED",
   );
   assert.strictEqual(calls.length, 1);
+});
+
+test("syncManualData does not trigger content security check", async () => {
+  // Regression: syncManualData is a sync operation, not content creation.
+  // Content is checked at creation time via createManualTask, submitCheckin, etc.
+  // Running msgSecCheck on the entire data store during sync was blocking AI
+  // coach对话 when msgSecCheck was unavailable.
+  let checkCalled = false;
+  const api = {
+    msgSecCheck: async () => {
+      checkCalled = true;
+      return { result: { suggest: "pass" } };
+    },
+  };
+  const event = {
+    action: "syncManualData",
+    store: {
+      version: 1,
+      goals: [{ id: "goal_1", title: "通过英语四级", description: "每天复习" }],
+      tasks: [{ id: "task_1", goalId: "goal_1", title: "背单词" }],
+    },
+  };
+  await assertEventContentSafe("openid", "syncManualData", event, api);
+  assert.strictEqual(checkCalled, false, "syncManualData should not call msgSecCheck");
+});
+
+test("assertSafeText degrades on non-transient error when degradeOnUnavailable is true", async () => {
+  // Regression: non-transient errors (TypeError, unknown error format) must
+  // also respect degradeOnUnavailable. Previously only transient errors
+  // (after retry exhaustion) checked the flag.
+  const api = {
+    msgSecCheck: async () => {
+      throw new Error("some unexpected error without errCode");
+    },
+  };
+  // Should degrade (fail-open), not throw
+  await assertSafeText("openid_test", ["测试内容"], 4, api, {
+    degradeOnUnavailable: true,
+    retryBaseDelayMs: 0,
+  });
+});
+
+test("assertSafeText still fails-closed on non-transient error when degradeOnUnavailable is false", async () => {
+  const api = {
+    msgSecCheck: async () => {
+      throw new Error("some unexpected error without errCode");
+    },
+  };
+  await assert.rejects(
+    assertSafeText("openid_test", ["测试内容"], 4, api, {
+      degradeOnUnavailable: false,
+      retryBaseDelayMs: 0,
+    }),
+    (error) => error.code === "CONTENT_SECURITY_UNAVAILABLE",
+  );
 });

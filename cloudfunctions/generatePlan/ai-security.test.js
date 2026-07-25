@@ -36,3 +36,41 @@ test("AI CloudBase initialization requires an injected runtime environment", () 
   assert.strictEqual(resolveCloudEnv({ TCB_ENV: "test-env" }), "test-env");
   assert.throws(() => resolveCloudEnv({}), (error) => error.code === "CLOUDBASE_ENV_NOT_CONFIGURED");
 });
+
+test("assertAiOutputSafe degrades (fail-open) when msgSecCheck is unavailable", async () => {
+  const failingSecurityApi = {
+    msgSecCheck: async () => {
+      const error = new Error("request:fail");
+      error.errCode = -1;
+      throw error;
+    },
+  };
+
+  await assertAiOutputSafe("AI生成的安全回复内容", {
+    context: { OPENID: "openid_test" },
+    securityApi: failingSecurityApi,
+    degradeOnUnavailable: true,
+  });
+});
+
+test("assertAiOutputSafe still rejects when content is flagged even with degradeOnUnavailable", async () => {
+  const rejectingSecurityApi = {
+    msgSecCheck: async () => {
+      const error = new Error("risky content");
+      error.errCode = 87014;
+      throw error;
+    },
+  };
+
+  await assert.rejects(
+    assertAiOutputSafe("风险内容", {
+      context: { OPENID: "openid_test" },
+      securityApi: rejectingSecurityApi,
+      degradeOnUnavailable: true,
+    }),
+    (error) => {
+      assert.strictEqual(error.code, "CONTENT_SECURITY_REJECTED");
+      return true;
+    },
+  );
+});

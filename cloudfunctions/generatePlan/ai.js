@@ -21,13 +21,17 @@ async function assertAiOutputSafe(text, dependencies = {}) {
     error.code = "UNAUTHORIZED";
     throw error;
   }
-  await assertSafeText(context.OPENID, [String(text || "")], 4, dependencies.securityApi || cloud.openapi.security);
+  await assertSafeText(context.OPENID, [String(text || "")], 4, dependencies.securityApi || cloud.openapi.security, {
+    degradeOnUnavailable: dependencies.degradeOnUnavailable ?? false,
+  });
 }
 
 function getApp() {
   if (!app) {
     app = tcb.init({
-      env: reso
+      env: resolveCloudEnv(),
+    });
+  }
   return app;
 }
 
@@ -134,7 +138,7 @@ async function generateMessagesWithMetadata(messages, timeoutMilliseconds = 1800
     error.code = "AI_RESPONSE_EMPTY";
     throw error;
   }
-  await assertAiOutputSafe(text);
+  await assertAiOutputSafe(text, { degradeOnUnavailable: true });
   console.info("CloudBase AI conversation completed", {
     action: logContext.action,
     providerGroup: provider,
@@ -203,7 +207,7 @@ async function generateCoachActionIntent(messages, timeoutMilliseconds = 12000, 
     error.code = "AI_TOOL_ARGUMENTS_INVALID";
     throw error;
   }
-  await assertAiOutputSafe(JSON.stringify(intent));
+  await assertAiOutputSafe(JSON.stringify(intent), { degradeOnUnavailable: true });
   console.info("CloudBase AI coach action extracted", {
     action: logContext.action,
     providerGroup: provider,

@@ -44,7 +44,6 @@ const ACTIONS_REQUIRING_TEXT_CHECK = new Set([
   "submitCheckin",
   "submitGoalClarification",
   "submitStageReview",
-  "syncManualData",
   "updateCloudProfile",
   "updateStagePreviewTask",
   "updateTeamSettings",
@@ -189,6 +188,24 @@ async function callMsgSecCheck(securityApi, payload, config) {
       }
       // Non-transient errors are never retried.
       if (!isTransientError(error)) {
+        // Degrade (fail-open) if the caller opted in. Content risk rejections
+        // are already handled above, so this only applies to infrastructure
+        // failures (TypeError, unknown error formats, permission errors, etc.).
+        if (degradeOnUnavailable) {
+          console.warn("content security check degraded (non-transient)", {
+            openid: openidPrefix(openid),
+            scene,
+            errCode: error.errCode ?? error.errcode,
+            errMsg: String(error.errMsg || error.message || "").slice(0, 200),
+            contentLength: String(payload.content || "").length,
+          });
+          return { result: { suggest: "pass" } };
+        }
+        console.error("content security check unavailable", {
+          openid: openidPrefix(openid),
+          scene,
+          cause: underlyingErrorInfo(error),
+        });
         throw contentSecurityError("CONTENT_SECURITY_UNAVAILABLE", "内容安全检测暂不可用，请稍后重试。", error);
       }
       // Transient error: retry if attempts remain.
