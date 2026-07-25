@@ -21,6 +21,8 @@ Page(withAppTheme({
     actionIconOptions: ACTION_ICON_OPTIONS,
     selectedIconKey: "life" as ActionIconKey,
     iconManual: false,
+    importance: "normal" as "required" | "normal",
+    blocksOthers: false,
     currentDate: getTodayBusinessDate(),
     todayDate: getTodayBusinessDate(),
     dateEnd: reminderDateRange().end,
@@ -58,6 +60,8 @@ Page(withAppTheme({
       isCustomDuration: !(ACTION_DURATION_VALUES as readonly number[]).includes(task.estimatedMinutes),
       selectedIconKey: task.iconManual && task.iconKey ? task.iconKey : inferActionIconKey(task.title, task.description),
       iconManual: Boolean(task.iconManual),
+      importance: task.importance === "required" ? "required" : "normal",
+      blocksOthers: Boolean(task.blocksOthers),
       currentDate: task.currentDate,
       reminderEnabled: task.reminder?.status === "scheduled",
       reminderTime: task.reminder?.time || nextReminderTime(),
@@ -105,6 +109,16 @@ Page(withAppTheme({
 
   toggleReminder(event: { detail: { value?: boolean } }) {
     this.setData({ reminderEnabled: Boolean(event.detail.value), validationMessage: "" });
+  },
+
+  selectImportance(event: { currentTarget: { dataset: { importance?: "required" | "normal" } } }) {
+    const importance = event.currentTarget.dataset.importance;
+    if (importance !== "required" && importance !== "normal") return;
+    this.setData({ importance });
+  },
+
+  toggleBlocksOthers(event: { detail: { value?: boolean } }) {
+    this.setData({ blocksOthers: Boolean(event.detail.value) });
   },
 
   changeReminderTime(event: { detail: { value?: string } }) {
@@ -167,6 +181,8 @@ Page(withAppTheme({
         estimatedMinutes,
         iconKey: this.data.selectedIconKey,
         iconManual: this.data.iconManual,
+        importance: this.data.importance,
+        blocksOthers: this.data.blocksOthers,
         currentDate: this.data.currentDate,
         reminder: this.data.reminderEnabled && reminderAllowed
           ? { time: this.data.reminderTime, remindAt, status: this.data.hadScheduledReminder ? "scheduled" as const : "pending_authorization" as const }

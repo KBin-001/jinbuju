@@ -209,6 +209,28 @@
       </view>
 
       <view class="quick-add-field">
+        <view class="quick-add-label-row">
+          <view class="quick-add-label">重要程度</view>
+          <view class="quick-add-hint">影响今日分组推荐</view>
+        </view>
+        <view class="execution-mode-grid">
+          <view class="execution-mode-option {{quickAddImportance === 'normal' ? 'is-selected' : ''}}" data-importance="normal" catchtap="selectQuickAddImportance">
+            <view class="execution-mode-option__title">普通任务</view>
+            <view class="execution-mode-option__copy">常规推进</view>
+          </view>
+          <view class="execution-mode-option {{quickAddImportance === 'required' ? 'is-selected' : ''}}" data-importance="required" catchtap="selectQuickAddImportance">
+            <view class="execution-mode-option__title">必须完成</view>
+            <view class="execution-mode-option__copy">优先推荐为重点</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="quick-add-field quick-reminder-row">
+        <view><view class="quick-add-label">阻塞其他任务</view><view class="quick-add-hint">标记后评分中获得依赖加分</view></view>
+        <switch color="#245B4D" checked="{{quickAddBlocksOthers}}" bindchange="toggleQuickAddBlocksOthers" />
+      </view>
+
+      <view class="quick-add-field">
         <view class="quick-add-label">行动日期</view>
         <picker mode="date" value="{{quickAddDate}}" start="{{todayDate}}" end="{{quickAddDateEnd}}" bindchange="changeQuickAddDate">
           <view class="quick-reminder-picker"><text>{{quickAddDate}}</text><text class="quick-reminder-picker__note">选择日期</text></view>

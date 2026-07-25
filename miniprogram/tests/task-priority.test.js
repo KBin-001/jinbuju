@@ -200,4 +200,19 @@ const laterTitleGroups = groupTasksByPriority([laterTitleTask], baseContext);
 assert.equal(laterTitleGroups[0].title, "稍后安排", "later 分组标题为'稍后安排'");
 assert.equal(laterTitleGroups[0].hint, "已为你安排到专注时段", "later 分组提示为'已为你安排到专注时段'");
 
+// 17. 清除覆盖（priorityOverride = null）后回到自动评分
+const overrideThenCleared = makeTask({ id: "cleared", priorityOverride: null, importance: "required", currentDate: today });
+const clearedGroups = groupTasksByPriority([overrideThenCleared], baseContext);
+// importance=required + currentDate=today 应回到"今日重点"
+assert.equal(clearedGroups.length, 1, "清除覆盖后只产生一个分组");
+assert.equal(clearedGroups[0].key, "focus", "清除覆盖后必须完成的任务回到今日重点");
+assert.ok(
+  !clearedGroups[0].tasks[0].priorityReasons.some((r) => r.label === "手动置顶"),
+  "清除覆盖后理由不再包含'手动置顶'",
+);
+assert.ok(
+  clearedGroups[0].tasks[0].priorityReasons.some((r) => r.label === "必须完成"),
+  "清除覆盖后理由应包含'必须完成'",
+);
+
 console.log("task priority tests passed");

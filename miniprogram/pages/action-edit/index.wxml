@@ -57,6 +57,29 @@
       </view>
     </view>
 
+    <view class="form-section surface-card">
+      <view class="section-heading">
+        <view class="section-icon"><t-icon name="star" size="30rpx" /></view>
+        <view><view class="section-title">重要程度</view><view class="section-caption">影响今日分组推荐</view></view>
+      </view>
+
+      <view class="duration-grid duration-grid--two">
+        <view class="duration-option {{importance === 'normal' ? 'is-selected' : ''}}" data-importance="normal" bindtap="selectImportance" hover-class="duration-option--pressed">
+          <text>普通任务</text><text>常规推进</text>
+        </view>
+        <view class="duration-option {{importance === 'required' ? 'is-selected' : ''}}" data-importance="required" bindtap="selectImportance" hover-class="duration-option--pressed">
+          <text>必须完成</text><text>优先推荐为重点</text>
+        </view>
+      </view>
+
+      <view class="setting-divider"></view>
+
+      <view class="setting-row reminder-row">
+        <view class="setting-copy"><view class="setting-label">阻塞其他任务</view><view class="setting-description">标记后评分中获得依赖加分</view></view>
+        <switch class="reminder-switch" color="#668F84" checked="{{blocksOthers}}" bindchange="toggleBlocksOthers" />
+      </view>
+    </view>
+
     <view class="form-section schedule-card surface-card">
       <view class="section-heading compact-heading">
         <view class="section-icon"><t-icon name="calendar" size="30rpx" /></view>

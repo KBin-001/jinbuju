@@ -51,6 +51,17 @@ export function updateTaskExecutionMode(taskId: string, executionMode: ActionExe
   return task;
 }
 
+export function updateTaskPriorityOverride(taskId: string, override: "focus" | "quick" | "later" | null): ActionTask {
+  const store = readManualStore();
+  const task = store.tasks.find((item) => item.id === taskId && !item.deletedAt);
+  if (!task) throw new Error("行动不存在");
+  if (!store.goals.some((goal) => goal.id === task.goalId && goal.status === "active")) throw new Error("目标已结束，不能修改行动");
+  task.priorityOverride = override;
+  task.updatedAt = new Date().toISOString();
+  writeManualStore(store);
+  return task;
+}
+
 export function getTasksByGoal(goalId: string): ActionTask[] {
   return readManualStore().tasks
     .filter((task) => task.goalId === goalId && task.status !== "rescheduled" && !task.deletedAt)
