@@ -60,7 +60,7 @@
         <view class="task-section-head">
           <view class="task-section-heading">
             <view class="task-section-title">今日行动</view>
-            <view class="habit-recommend" catchtap="openRecommendInfo" role="button" aria-label="了解推荐机制"><t-icon name="sparkles" size="20rpx" /> 按习惯推荐</view>
+            <view class="habit-recommend" catchtap="openRecommendInfo" role="button" aria-label="了解推荐机制">按习惯推荐</view>
           </view>
           <view class="task-section-tools">
             <view class="task-section-add task-section-add--icon" catchtap="addTask" role="button" aria-label="添加行动"><t-icon name="add" size="27rpx" /></view>
@@ -201,129 +201,145 @@
       class="quick-add-panel"
       style="transform: translateY({{quickAddTouchDeltaY}}px);"
       catchtap="noop"
+      role="dialog"
+      aria-label="{{quickAddMode === 'edit' ? '编辑行动' : '添加行动'}}"
     >
       <view class="quick-add-grabber" bindtouchstart="quickAddTouchStart" bindtouchmove="quickAddTouchMove" bindtouchend="quickAddTouchEnd" bindtouchcancel="quickAddTouchEnd"></view>
       <view class="quick-add-header">
-        <view>
-          <view class="quick-add-title">添加行动</view>
-        </view>
+        <view class="quick-add-header-spacer"></view>
+        <view class="quick-add-title">{{quickAddMode === 'edit' ? '编辑行动' : '添加行动'}}</view>
         <view class="quick-add-close {{quickAddSubmitting ? 'is-disabled' : ''}}" catchtap="closeQuickAdd" aria-label="关闭">
-          <t-icon name="close" />
+          <t-icon name="close" size="30rpx" />
         </view>
       </view>
-      <view class="quick-add-copy">写下一件准备推进的小事，可安排日期并设置一次微信提醒。</view>
 
-      <view class="quick-add-field">
-        <view class="quick-add-label">行动标题</view>
-        <t-input
-          class="quick-add-input"
+      <scroll-view class="quick-add-body" scroll-y enhanced show-scrollbar="{{false}}">
+        <view class="quick-title-input">
+          <input
+          class="quick-title-input__control"
           value="{{quickAddTitle}}"
           maxlength="40"
-          placeholder="例如：完成 20 分钟听力精听"
+          placeholder="行动标题"
           placeholder-class="quick-add-placeholder"
           confirm-type="done"
-          bindchange="inputQuickAddTitle"
+          bindinput="inputQuickAddTitle"
         />
-      </view>
-      <view class="quick-add-field quick-add-minutes-row">
-        <view class="quick-add-label-row">
-          <view class="quick-add-label">预计投入</view>
-          <view class="quick-add-hint">选择一个容易开始的时长</view>
+          <view class="quick-title-input__count">{{quickAddTitle.length}}/40</view>
         </view>
-        <view class="quick-duration-chips">
-          <view wx:for="{{quickDurationPrimaryOptions}}" wx:key="value" class="quick-duration-chip {{quickAddMinuteIndex === item.sourceIndex ? 'is-selected' : ''}}" data-index="{{item.sourceIndex}}" catchtap="selectQuickDurationChip">{{item.value}} 分钟</view>
-          <view class="quick-duration-chip {{quickAddMinutes !== 30 && quickAddMinutes !== 45 && quickAddMinutes !== 60 && quickAddMinutes !== 90 && quickAddMinutes !== 120 ? 'is-selected' : ''}}" catchtap="openCustomDuration">{{quickAddMinutes !== 30 && quickAddMinutes !== 45 && quickAddMinutes !== 60 && quickAddMinutes !== 90 && quickAddMinutes !== 120 ? quickAddMinutes + ' 分钟' : '更多时长'}}</view>
-        </view>
-      </view>
 
-      <view class="quick-add-field">
-        <view class="quick-add-label-row">
-          <view class="quick-add-label">执行方式</view>
-          <view class="quick-add-hint">之后可在行动菜单中修改</view>
-        </view>
-        <view class="execution-mode-grid">
-          <view class="execution-mode-option {{quickAddExecutionMode === 'direct' ? 'is-selected' : ''}}" data-mode="direct" catchtap="selectQuickExecutionMode">
-            <view class="execution-mode-option__title">直接完成</view>
-            <view class="execution-mode-option__copy">轻任务快速打卡</view>
-          </view>
-          <view class="execution-mode-option {{quickAddExecutionMode === 'focus' ? 'is-selected' : ''}}" data-mode="focus" catchtap="selectQuickExecutionMode">
-            <view class="execution-mode-option__title">专注计时</view>
-            <view class="execution-mode-option__copy">长任务记录投入</view>
-          </view>
-          <view class="execution-mode-option {{quickAddExecutionMode === 'ask' ? 'is-selected' : ''}}" data-mode="ask" catchtap="selectQuickExecutionMode">
-            <view class="execution-mode-option__title">每次询问</view>
-            <view class="execution-mode-option__copy">按任务灵活选择</view>
-          </view>
-        </view>
-      </view>
-
-      <view class="quick-add-field">
-        <view class="quick-add-label-row">
-          <view class="quick-add-label">重要程度</view>
-          <view class="quick-add-hint">影响今日分组推荐</view>
-        </view>
-        <view class="execution-mode-grid">
-          <view class="execution-mode-option {{quickAddImportance === 'normal' ? 'is-selected' : ''}}" data-importance="normal" catchtap="selectQuickAddImportance">
-            <view class="execution-mode-option__title">普通任务</view>
-            <view class="execution-mode-option__copy">常规推进</view>
-          </view>
-          <view class="execution-mode-option {{quickAddImportance === 'required' ? 'is-selected' : ''}}" data-importance="required" catchtap="selectQuickAddImportance">
-            <view class="execution-mode-option__title">必须完成</view>
-            <view class="execution-mode-option__copy">优先推荐为重点</view>
+        <view class="quick-settings-section quick-time-section">
+          <view class="quick-section-title"><view class="quick-section-mark"></view><text>预计投入</text></view>
+          <view class="quick-time-card">
+            <view class="quick-time-value"><text class="quick-time-number">{{quickAddMinutes}}</text><text class="quick-time-unit">分钟</text></view>
+            <view class="quick-time-swipe-hint">
+              <t-icon class="quick-time-swipe-icon" name="chevron-left" size="24rpx" />
+              <text>左右滑动调整时间</text>
+              <t-icon class="quick-time-swipe-icon" name="chevron-right" size="24rpx" />
+            </view>
+            <view class="quick-time-ruler-wrap">
+              <view class="quick-time-center">
+                <view class="quick-time-center__caret"></view>
+                <view class="quick-time-center__diamond"></view>
+              </view>
+              <scroll-view
+                class="quick-time-ruler"
+                scroll-x
+                enhanced
+                bounces="{{false}}"
+                show-scrollbar="{{false}}"
+                scroll-left="{{quickDurationScrollLeft}}"
+                scroll-with-animation="{{true}}"
+                bindscroll="onQuickDurationScroll"
+              >
+                <view class="quick-time-ruler__content">
+                  <view class="quick-time-ruler__spacer"></view>
+                  <view
+                    wx:for="{{quickDurationMarks}}"
+                    wx:key="value"
+                    class="quick-time-tick {{item.major ? 'is-major' : ''}} {{quickAddMinutes === item.value ? 'is-selected' : ''}}"
+                  >
+                    <view class="quick-time-tick__line"></view>
+                    <text wx:if="{{item.label}}" class="quick-time-tick__label">{{item.label}}</text>
+                  </view>
+                  <view class="quick-time-ruler__spacer"></view>
+                </view>
+              </scroll-view>
+              <view class="quick-time-ruler__fade quick-time-ruler__fade--left"></view>
+              <view class="quick-time-ruler__fade quick-time-ruler__fade--right"></view>
+            </view>
+            <view class="quick-time-hour">约 {{quickAddHourText}} 小时</view>
           </view>
         </view>
-      </view>
 
-      <view class="quick-add-field quick-reminder-row">
-        <view><view class="quick-add-label">阻塞其他任务</view><view class="quick-add-hint">标记后评分中获得依赖加分</view></view>
-        <switch color="#245B4D" checked="{{quickAddBlocksOthers}}" bindchange="toggleQuickAddBlocksOthers" />
-      </view>
-
-      <view class="quick-add-field">
-        <view class="quick-add-label">行动日期</view>
-        <picker mode="date" value="{{quickAddDate}}" start="{{todayDate}}" end="{{quickAddDateEnd}}" bindchange="changeQuickAddDate">
-          <view class="quick-reminder-picker"><text>{{quickAddDate}}</text><text class="quick-reminder-picker__note">选择日期</text></view>
-        </picker>
-      </view>
-
-      <view class="quick-add-field quick-reminder-row">
-        <view><view class="quick-add-label">提醒我</view><view class="quick-add-hint">每条微信提醒需要一次授权</view></view>
-        <switch color="#245B4D" checked="{{quickAddReminderEnabled}}" bindchange="toggleQuickAddReminder" />
-      </view>
-      <view wx:if="{{quickAddReminderEnabled}}" class="quick-reminder-time">
-        <picker mode="time" value="{{quickAddReminderTime}}" bindchange="changeQuickAddReminderTime">
-          <view class="quick-reminder-picker"><text>{{quickAddReminderTime}}</text><text class="quick-reminder-picker__note">5 分钟粒度</text></view>
-        </picker>
-        <view class="quick-reminder-note">保存时会立即弹出微信一次性订阅授权。</view>
-      </view>
-
-      <view class="quick-add-actions">
-        <t-button class="quick-add-secondary" disabled="{{quickAddSubmitting}}" catchtap="closeQuickAdd">取消</t-button>
-        <t-button class="quick-add-primary" loading="{{quickAddSubmitting}}" disabled="{{quickAddSubmitting || quickAddTitle.length < 2}}" catchtap="saveQuickAdd">保存行动</t-button>
-      </view>
-    </view>
-
-    <view wx:if="{{quickDurationVisible}}" class="quick-duration-layer" catchtap="closeDurationPicker">
-      <view class="quick-duration-panel" catchtap="noop">
-        <view class="quick-duration-header">
-          <t-button class="quick-duration-cancel" catchtap="closeDurationPicker">取消</t-button>
-          <view class="quick-duration-title">选择预计投入</view>
-          <view class="quick-duration-spacer"></view>
-        </view>
-        <view class="quick-duration-options">
-          <view
-            wx:for="{{quickDurationOptions}}"
-            wx:key="value"
-            class="quick-duration-option {{quickAddMinuteIndex === index ? 'is-selected' : ''}}"
-            data-index="{{index}}"
-            catchtap="selectQuickAddDuration"
-          >
-            <view class="quick-duration-option-label">{{item.label}}</view>
-            <view wx:if="{{quickAddMinuteIndex === index}}" class="quick-duration-check">
-              <t-icon name="check" />
+        <view class="quick-settings-section">
+          <view class="quick-section-title"><view class="quick-section-mark"></view><text>执行方式</text></view>
+          <view class="quick-settings-group">
+            <view class="quick-setting-row {{quickAddExecutionMode === 'direct' ? 'is-selected' : ''}}" data-mode="direct" catchtap="selectQuickExecutionMode">
+              <view class="quick-setting-copy"><view class="quick-setting-label">直接完成</view><view class="quick-setting-desc">适合简单行动</view></view>
+              <view class="quick-setting-check"><t-icon wx:if="{{quickAddExecutionMode === 'direct'}}" name="check" size="24rpx" /></view>
+            </view>
+            <view class="quick-setting-row {{quickAddExecutionMode === 'focus' ? 'is-selected' : ''}}" data-mode="focus" catchtap="selectQuickExecutionMode">
+              <view class="quick-setting-copy"><view class="quick-setting-label">专注计时</view><view class="quick-setting-desc">适合需要深度投入的行动</view></view>
+              <view class="quick-setting-check"><t-icon wx:if="{{quickAddExecutionMode === 'focus'}}" name="check" size="24rpx" /></view>
+            </view>
+            <view class="quick-setting-row {{quickAddExecutionMode === 'ask' ? 'is-selected' : ''}}" data-mode="ask" catchtap="selectQuickExecutionMode">
+              <view class="quick-setting-copy"><view class="quick-setting-label">每次询问</view><view class="quick-setting-desc">开始时再选择执行方式</view></view>
+              <view class="quick-setting-check"><t-icon wx:if="{{quickAddExecutionMode === 'ask'}}" name="check" size="24rpx" /></view>
             </view>
           </view>
         </view>
+
+        <view class="quick-settings-section">
+          <view class="quick-section-title"><view class="quick-section-mark"></view><text>重要程度</text></view>
+          <view class="quick-settings-group">
+            <view class="quick-setting-row {{quickAddImportance === 'normal' ? 'is-selected' : ''}}" data-importance="normal" catchtap="selectQuickAddImportance">
+              <view class="quick-setting-copy"><view class="quick-setting-label">正常推进</view><view class="quick-setting-desc">保持稳定节奏</view></view>
+              <view class="quick-setting-check"><t-icon wx:if="{{quickAddImportance === 'normal'}}" name="check" size="24rpx" /></view>
+            </view>
+            <view class="quick-setting-row {{quickAddImportance === 'required' ? 'is-selected' : ''}}" data-importance="required" catchtap="selectQuickAddImportance">
+              <view class="quick-setting-copy"><view class="quick-setting-label">必须完成</view><view class="quick-setting-desc">优先确保完成</view></view>
+              <view class="quick-setting-check"><t-icon wx:if="{{quickAddImportance === 'required'}}" name="check" size="24rpx" /></view>
+            </view>
+          </view>
+        </view>
+
+        <view class="quick-settings-section">
+          <view class="quick-section-title"><view class="quick-section-mark"></view><text>安排</text></view>
+          <view class="quick-settings-group">
+            <picker class="quick-setting-picker" mode="date" value="{{quickAddDate}}" start="{{quickAddDateStart}}" end="{{quickAddDateEnd}}" bindchange="changeQuickAddDate">
+              <view class="quick-setting-row quick-setting-row--picker">
+                <view class="quick-setting-icon"><t-icon name="calendar" size="34rpx" /></view>
+                <view class="quick-setting-label">行动日期</view>
+                <view class="quick-setting-value">{{quickAddDate}}</view>
+                <t-icon class="quick-setting-chevron" name="chevron-right" size="28rpx" />
+              </view>
+            </picker>
+            <view class="quick-setting-row">
+              <view class="quick-setting-icon"><t-icon name="notification" size="34rpx" /></view>
+              <view class="quick-setting-copy"><view class="quick-setting-label">提醒我</view><view class="quick-setting-desc">每次提醒需要微信授权</view></view>
+              <switch class="quick-setting-switch" color="#245B4D" checked="{{quickAddReminderEnabled}}" bindchange="toggleQuickAddReminder" />
+            </view>
+            <picker wx:if="{{quickAddReminderEnabled}}" class="quick-setting-picker" mode="time" value="{{quickAddReminderTime}}" bindchange="changeQuickAddReminderTime">
+              <view class="quick-setting-row quick-setting-row--picker quick-setting-row--sub">
+                <view class="quick-setting-icon"><t-icon name="time" size="32rpx" /></view>
+                <view class="quick-setting-label">提醒时间</view>
+                <view class="quick-setting-value">{{quickAddReminderTime}}</view>
+                <t-icon class="quick-setting-chevron" name="chevron-right" size="28rpx" />
+              </view>
+            </picker>
+            <view class="quick-setting-row">
+              <view class="quick-setting-icon"><t-icon name="setting" size="34rpx" /></view>
+              <view class="quick-setting-copy"><view class="quick-setting-label">阻塞其他任务</view><view class="quick-setting-desc">用于判断今日行动优先级</view></view>
+              <switch class="quick-setting-switch" color="#245B4D" checked="{{quickAddBlocksOthers}}" bindchange="toggleQuickAddBlocksOthers" />
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{quickAddMode === 'edit'}}" class="quick-delete-action" catchtap="deleteQuickAddTask">删除行动</view>
+      </scroll-view>
+
+      <view class="quick-add-actions">
+        <t-button class="quick-add-primary" loading="{{quickAddSubmitting}}" disabled="{{quickAddSubmitting || quickAddTitle.length < 2}}" catchtap="saveQuickAdd">{{quickAddMode === 'edit' ? '保存修改' : '添加到今天'}}</t-button>
       </view>
     </view>
   </view>

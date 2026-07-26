@@ -3,7 +3,7 @@
 }
 
 .action-list {
-  padding: 20rpx 24rpx 18rpx;
+  padding: 25rpx 26rpx 24rpx;
 }
 
 .action-group {
@@ -11,7 +11,7 @@
 }
 
 .action-group + .action-group {
-  margin-top: 28rpx;
+  margin-top: 31rpx;
 }
 
 .action-group__body {
@@ -20,7 +20,7 @@
 }
 
 .action-group__head {
-  min-height: 50rpx;
+  min-height: 52rpx;
   display: flex;
   align-items: center;
   gap: 12rpx;
@@ -33,7 +33,7 @@
   gap: 10rpx;
   color: #17644f;
   font-family: var(--font-family-brand);
-  font-size: 30rpx;
+  font-size: 31rpx;
   font-weight: 600;
   line-height: 42rpx;
   letter-spacing: 1rpx;
@@ -59,25 +59,25 @@
   flex: none;
   padding: 4rpx 14rpx;
   border-radius: 999rpx;
-  color: #8a8f8b;
-  background: rgba(241,244,238,.8);
+  color: #7c817d;
+  background: rgba(242,241,236,.86);
   font-size: 17rpx;
   line-height: 25rpx;
   white-space: nowrap;
 }
 
 .action-group__tasks {
-  margin-top: 12rpx;
+  margin-top: 14rpx;
   overflow: hidden;
   border: 1rpx solid rgba(105,96,78,.09);
-  border-radius: 24rpx;
-  background: rgba(255,253,249,.92);
-  box-shadow: 0 4rpx 14rpx rgba(75,62,40,.03);
+  border-radius: 26rpx;
+  background: #fffdfa;
+  box-shadow: 0 5rpx 16rpx rgba(75,62,40,.035);
 }
 
 .action-row {
-  min-height: 120rpx;
-  padding: 20rpx 18rpx;
+  min-height: 126rpx;
+  padding: 21rpx 18rpx;
   display: flex;
   align-items: center;
   gap: 14rpx;
@@ -96,23 +96,23 @@
 }
 
 .action-row.is-completed {
-  opacity: .72;
+  background: rgba(244,248,244,.72);
 }
 
 .action-icon {
-  width: 64rpx;
-  height: 64rpx;
+  width: 68rpx;
+  height: 68rpx;
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16rpx;
+  border-radius: 17rpx;
   background: #edf2ef;
 }
 
 .action-icon__image {
-  width: 36rpx;
-  height: 36rpx;
+  width: 38rpx;
+  height: 38rpx;
   display: block;
 }
 
@@ -130,7 +130,7 @@
   overflow: hidden;
   color: #17644f;
   font-family: var(--font-family-brand);
-  font-size: 28rpx;
+  font-size: 29rpx;
   font-weight: 600;
   line-height: 40rpx;
   text-overflow: ellipsis;
@@ -144,7 +144,7 @@
   align-items: center;
   gap: 10rpx;
   overflow: hidden;
-  color: #747b77;
+  color: #6f7773;
   font-size: 20rpx;
   line-height: 29rpx;
   white-space: nowrap;
@@ -172,7 +172,7 @@
 }
 
 .action-control {
-  width: 148rpx;
+  width: 132rpx;
   flex: none;
   display: flex;
   flex-direction: column;
@@ -180,8 +180,8 @@
 }
 
 .action-mark {
-  width: 148rpx;
-  height: 62rpx;
+  width: 132rpx;
+  height: 54rpx;
   flex: none;
   display: flex;
   align-items: center;
@@ -193,15 +193,15 @@
 
 .action-mark__disc {
   position: relative;
-  width: 148rpx;
-  height: 62rpx;
+  width: 132rpx;
+  height: 54rpx;
   padding: 0 16rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 7rpx;
   border: 1rpx solid rgba(36,91,77,.2);
-  border-radius: 32rpx;
+  border-radius: 28rpx;
   color: var(--color-primary, #245b4d);
   background: rgba(248,251,248,.9);
   box-shadow: 0 4rpx 12rpx rgba(45,78,67,.04);
@@ -236,9 +236,9 @@
 }
 
 .action-mark--success .action-mark__disc {
-  border-color: rgba(57,116,95,.16);
+  border-color: rgba(57,116,95,.2);
   color: var(--color-success, #39745f);
-  background: #edf4f0;
+  background: #eaf3ee;
 }
 
 .action-mark--active .action-mark__disc {
@@ -286,7 +286,7 @@
 }
 
 .task-more {
-  width: 32rpx;
+  width: 42rpx;
   height: 58rpx;
   flex: none;
   display: flex;
