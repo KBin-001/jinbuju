@@ -1,4 +1,4 @@
-:host { display: block; margin-top: 24rpx; }
+:host { display: block; margin-top: 18rpx; }
 .trend-card { padding: 30rpx 28rpx 12rpx; border: 1rpx solid var(--progress-border,#ede5d8); border-radius: var(--progress-radius,28rpx); background: var(--progress-surface,#fffdf8); box-shadow: var(--progress-shadow,0 10rpx 30rpx rgba(61,48,28,.045)); font-family: var(--font-family-sans); }
 .trend-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20rpx; }
 .trend-title-row { display: flex; align-items: center; gap: 9rpx; }
@@ -12,7 +12,7 @@
 .legend-line { width: 29rpx; height: 4rpx; border-radius: 3rpx; background: var(--progress-primary,#17614f); }
 .legend-line.is-actions { position: relative; height: 2rpx; background: #c79a3b; }
 .legend-dot { position: absolute; box-sizing: border-box; width: 10rpx; height: 10rpx; top: -4rpx; left: 10rpx; border: 3rpx solid #c79a3b; border-radius: 50%; background: #fffdf8; }
-.chart-shell { position: relative; height: 492rpx; margin-top: 27rpx; padding: 0 50rpx; overflow: hidden; }
+.chart-shell { position: relative; height: 430rpx; margin-top: 27rpx; padding: 0 50rpx; overflow: hidden; }
 .trend-canvas { position: absolute; z-index: 1; width: auto; height: auto; top: 0; right: 50rpx; bottom: 0; left: 50rpx; }
 .axis-unit { position: absolute; z-index: 2; top: 0; left: 0; color: #8a8f8b; font-size: 17rpx; pointer-events: none; }
 .axis-labels { position: absolute; z-index: 2; width: 46rpx; top: 32rpx; bottom: 28rpx; display: flex; flex-direction: column; justify-content: space-between; color: #878d89; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 19rpx; font-weight: 400; line-height: 24rpx; pointer-events: none; }
@@ -24,7 +24,7 @@
 .chart-label.is-future,.chart-label.is-future .chart-label__day { color: #a8ada9; }
 .chart-label.is-today { margin-top: -6rpx; padding: 6rpx 0 7rpx; border-radius: 16rpx; background: #e7f0ea; color: #165b49; box-shadow: inset 0 0 0 1rpx rgba(22,91,73,.035); }
 .chart-label.is-today .chart-label__date,.chart-label.is-today .chart-label__day { color: var(--progress-primary,#17614f); font-weight: 600; }
-.trend-highlights { margin-top: 30rpx; padding: 24rpx 4rpx 23rpx; display: flex; border-radius: 20rpx; background: #f8f3e9; }
+.trend-highlights { margin-top: 110rpx; padding: 24rpx 4rpx 23rpx; display: flex; border-radius: 20rpx; background: #f8f3e9; }
 .trend-highlight { min-width: 0; padding: 0 18rpx; flex: 1; }
 .trend-highlight + .trend-highlight { border-left: 1rpx solid rgba(102,113,106,.12); }
 .trend-highlight__title { display: flex; align-items: center; gap: 7rpx; color: #98712e; font-size: 19rpx; line-height: 27rpx; white-space: nowrap; }
@@ -36,4 +36,4 @@
 .trend-empty__title { margin-top: 18rpx; color: #24332e; font-size: 27rpx; font-weight: 600; }
 .trend-empty__description { max-width: 470rpx; margin-top: 9rpx; color: #7b817d; font-size: 21rpx; line-height: 34rpx; }
 .trend-empty__action { min-height: 64rpx; margin-top: 20rpx; padding: 0 24rpx; display: flex; align-items: center; border: 1rpx solid rgba(22,91,73,.16); border-radius: 18rpx; color: #165b49; font-size: 21rpx; font-weight: 600; }
-@media (max-width: 350px) { .trend-card { padding-right: 20rpx; padding-left: 20rpx; }.chart-shell { height: 424rpx; padding-right: 44rpx; padding-left: 44rpx; }.trend-canvas { right: 44rpx; left: 44rpx; }.chart-labels { margin-right: 40rpx; margin-left: 40rpx; }.trend-highlight { padding: 0 9rpx; }.trend-highlight__title { gap: 3rpx; font-size: 16rpx; }.trend-highlight__value { font-size: 28rpx; }.trend-highlight__label { font-size: 16rpx; } }
+@media (max-width: 350px) { .trend-card { padding-right: 20rpx; padding-left: 20rpx; }.chart-shell { height: 356rpx; padding-right: 44rpx; padding-left: 44rpx; }.trend-canvas { right: 44rpx; left: 44rpx; }.chart-labels { margin-right: 40rpx; margin-left: 40rpx; }.trend-highlight { padding: 0 9rpx; }.trend-highlight__title { gap: 3rpx; font-size: 16rpx; }.trend-highlight__value { font-size: 28rpx; }.trend-highlight__label { font-size: 16rpx; } }

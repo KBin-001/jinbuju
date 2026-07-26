@@ -1,3 +1,49 @@
+# 进度页参考稿还原 QA（2026-07-26）
+
+## 对照基准
+
+- source visual truth path: `D:/xwechat_files/Project/jinbuju/docs/ui/进度页面设计稿.png`
+- implementation screenshot path: `C:/Users/24786/.codex/visualizations/2026/07/26/019f9d84-a31f-7f32-b968-430156eafca1/progress-qa/implementation-viewport.png`
+- full-view comparison evidence: `C:/Users/24786/.codex/visualizations/2026/07/26/019f9d84-a31f-7f32-b968-430156eafca1/progress-qa/comparison-final.png`
+- route/state: `pages/plan/index`，真实账号数据，周视图，2026-07-26
+- viewport: 微信开发者工具 iPhone 15 Pro Max，逻辑视口 `430 × 932`，device pixel ratio `3`
+- source pixels: `944 × 1670`
+- implementation capture pixels: `325 × 701`（开发者工具窗口内设备区域）
+- density normalization: 两图均按 `325px` 宽度等比并排；参考稿为较短画幅，实现保留 iPhone 15 Pro Max 的完整纵向视口，不拉伸高度。
+
+## Findings
+
+- 未发现可执行的 P0/P1/P2 差异。
+- 字体与排版：宋体品牌标题、系统无衬线正文和表格数字层级与参考稿一致；目标标题、统计数字和图表标签均未溢出。
+- 间距与布局：顶部标题与副标、横向山水目标卡、紧凑统计带和趋势卡的起始位置已经按参考稿收敛；更高设备只延展趋势图纵向空间，不改变信息顺序。
+- 色彩与令牌：暖米白、墨绿、低饱和金色、暖白卡片和弱阴影一致；对比度满足正文阅读。
+- 图片质量：目标卡与顶部继续使用现有 `progress-mountain-path-v2.jpg` 正式资源，裁切、淡化和文字遮罩清晰；没有新增占位图、CSS 山峰或临时 SVG。
+- 文案与内容：页面文案与参考稿一致；`9 / 13 / 571`、日期和曲线来自模拟器当前真实数据，因此与设计稿示例值不同属于预期。
+- 交互与状态：切换目标、周/月/年、图表点选、历史记录、空状态和下方洞察入口均沿用现有事件链；本轮没有修改业务数据与状态定义。
+
+## Comparison History
+
+1. 首轮对照发现 P2：顶部缺少副标、目标卡仍是圆形缩略图，统计带偏高，趋势曲线区比例与参考稿不一致。
+   - 修复：补充副标；目标卡改为横向山水背景、文字遮罩和右侧金色收边；重新分配首屏高度。
+2. 第二轮对照发现 P2：目标卡内容把最小高度撑开，趋势卡整体下移，摘要过早进入首屏。
+   - 修复：压缩目标卡内部纵向节奏与卡间距，恢复 `430rpx` 曲线区，并将补充摘要保持在首屏之后。
+3. 最终并排对照确认顶部、卡片边界、数据层级、图例、双轴曲线和日期标签无剩余 P0/P1/P2 差异。
+
+## 运行与交互验证
+
+- TypeScript：`npx tsc --noEmit`，通过。
+- 页面契约：`node test/progress-coach-card.test.js`，通过。
+- 成长教练工作区契约：`node miniprogram/tests/progress-coach-workspace.test.js`，通过。
+- 微信开发者工具 npm 构建：通过，`warnings: []`。
+- 微信开发者工具运行：成功进入 `pages/plan/index`；周视图和底部 Tab 切换正常。
+- 控制台仍显示项目已有的 `3` 个错误与 `13` 个警告计数；本轮页面加载日志未出现新增编译错误，现有计数未在本次纯 UI 任务中扩展处理。
+
+final result: passed
+
+---
+
+## 历史 QA 记录
+
 # 进度页第三轮视觉 QA
 
 ## 对照基准

@@ -740,6 +740,11 @@ function emptyTrendHighlights(): TrendHighlights {
   };
 }
 
+function getProgressHeaderLayout() {
+  const layout = getTabHeaderLayout();
+  return { ...layout, headerHeight: layout.headerHeight + 28 };
+}
+
 function highlightBucketLabel(range: TrendRange, bar?: TrendBar): string {
   if (!bar) return "暂无记录";
   if (bar.isToday) return "今天";
@@ -945,7 +950,7 @@ function trendHasData(range: TrendRange, trendView: TrendViewData): boolean {
 
 Page(withAppTheme({
   data: {
-    ...getTabHeaderLayout(),
+    ...getProgressHeaderLayout(),
     appTheme: getCurrentThemeId() as string,
     status: "loading",
     errorMessage: "",

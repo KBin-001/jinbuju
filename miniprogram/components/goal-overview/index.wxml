@@ -1,7 +1,8 @@
 <view class="goal-overview">
-  <view class="goal-overview__visual" aria-hidden="true">
-    <image class="goal-overview__image" src="/assets/progress-mountain-path-v2.jpg" mode="aspectFill" />
-    <view class="goal-overview__flag"><t-icon name="flag" size="29rpx" /></view>
+  <image class="goal-overview__image" src="/assets/progress-mountain-path-v2.jpg" mode="aspectFill" aria-hidden="true" />
+  <view class="goal-overview__wash" aria-hidden="true"></view>
+  <view class="goal-overview__gold-rail" aria-hidden="true">
+    <view class="goal-overview__flag"><t-icon name="flag" size="31rpx" /></view>
   </view>
   <view class="goal-overview__content">
     <view class="goal-overview__top">

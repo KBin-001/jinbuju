@@ -2,7 +2,11 @@
   <view class="landscape-header tab-header" style="height: {{headerHeight}}px;">
     <image class="tab-header__background" src="/assets/progress-mountain-path-v2.jpg" mode="aspectFill" aria-hidden="true" />
     <view class="landscape-header__veil tab-header__veil"></view>
-    <view class="progress-nav tab-header__nav" style="padding-top: {{menuTop}}px; height: {{menuHeight}}px;"><text class="tab-header__title">进度</text><view class="progress-title-mark" aria-hidden="true"></view></view>
+    <view class="progress-nav tab-header__nav" style="padding-top: {{menuTop}}px; height: {{menuHeight}}px;">
+      <text class="tab-header__title">进度</text>
+      <view class="progress-title-mark" aria-hidden="true"></view>
+      <text class="progress-subtitle">持续行动 · 长期成长</text>
+    </view>
   </view>
 
   <view wx:if="{{status === 'loading'}}" class="state-card surface-card">

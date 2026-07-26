@@ -42,7 +42,8 @@
   letter-spacing: 8rpx;
 }
 
-.progress-title-mark { width: 36rpx; height: 2rpx; border-radius: 2rpx; background: var(--progress-gold); opacity: .82; }
+.progress-title-mark { width: 36rpx; height: 2rpx; margin-top: 3rpx; border-radius: 2rpx; background: var(--progress-gold); opacity: .82; }
+.progress-subtitle { position: absolute; top: calc(100% + 20rpx); color: #a9792d; font-family: var(--font-family-brand); font-size: 21rpx; font-weight: 400; line-height: 30rpx; letter-spacing: 5rpx; white-space: nowrap; }
 
 .year-card,
 .growth-record-entry,
