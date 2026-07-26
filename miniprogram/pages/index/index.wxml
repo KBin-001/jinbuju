@@ -117,6 +117,55 @@
     bind:cleanup="cleanupOrphanSession"
   />
 
+  <view wx:if="{{taskMenuVisible}}" class="task-action-sheet" catchtouchmove="noop">
+    <view class="task-action-sheet__mask" catchtap="onTaskMenuClose"></view>
+    <view class="task-action-sheet__panel" catchtap="noop" role="dialog" aria-label="任务操作">
+      <image class="task-action-sheet__landscape" src="/assets/today-hero-mountain-v2.jpg" mode="aspectFill" aria-hidden="true" />
+      <view class="task-action-sheet__grabber"></view>
+      <view class="task-action-sheet__header">
+        <view class="task-action-sheet__title">任务操作</view>
+        <view class="task-action-sheet__subtitle">{{taskMenuSubtitle}}</view>
+        <view wx:if="{{taskMenuRecommendation}}" class="task-action-sheet__recommendation">
+          <t-icon class="task-action-sheet__recommendation-icon" name="highlight" size="24rpx" />
+          <text>{{taskMenuRecommendation}}</text>
+        </view>
+      </view>
+      <scroll-view class="task-action-sheet__body" scroll-y enhanced show-scrollbar="{{false}}">
+        <view wx:for="{{taskMenuGroups}}" wx:key="title" class="task-action-sheet__group">
+          <view class="task-action-sheet__group-title">
+            <view class="task-action-sheet__group-mark" aria-hidden="true"></view>
+            <text>{{item.title}}</text>
+          </view>
+          <view class="task-action-sheet__items">
+            <view
+              wx:for="{{item.items}}"
+              wx:for-item="menuItem"
+              wx:key="label"
+              class="task-action-sheet__item {{menuItem.color === 'danger' ? 'task-action-sheet__item--danger' : ''}}"
+              data-index="{{menuItem.actionIndex}}"
+              catchtap="onTaskMenuItemTap"
+              hover-class="task-action-sheet__item--pressed"
+              role="button"
+              aria-label="{{menuItem.label + '，' + menuItem.desc}}"
+            >
+              <view class="task-action-sheet__icon task-action-sheet__icon--{{menuItem.color || 'default'}}">
+                <t-icon name="{{menuItem.icon}}" size="42rpx" />
+              </view>
+              <view class="task-action-sheet__copy">
+                <view class="task-action-sheet__label">{{menuItem.label}}</view>
+                <view class="task-action-sheet__desc">{{menuItem.desc}}</view>
+              </view>
+              <t-icon class="task-action-sheet__chevron" name="chevron-right" size="30rpx" />
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+      <view class="task-action-sheet__footer">
+        <view class="task-action-sheet__cancel" catchtap="onTaskMenuClose" hover-class="task-action-sheet__cancel--pressed">取消</view>
+      </view>
+    </view>
+  </view>
+
   <view wx:if="{{calendarVisible}}" class="calendar-layer" catchtouchmove="noop">
     <view class="calendar-mask" catchtap="closeCalendar"></view>
     <view class="calendar-panel" catchtap="noop">

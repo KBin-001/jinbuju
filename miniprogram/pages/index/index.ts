@@ -59,6 +59,14 @@ interface ActionPresentationGroup {
   tone: "gold" | "green" | "muted";
   tasks: Array<ViewTask & { priorityReasons: PriorityReason[] }>;
 }
+interface TaskMenuItem {
+  label: string;
+  desc: string;
+  icon: string;
+  color?: "danger";
+  actionIndex: number;
+}
+interface TaskMenuGroup { title: "执行任务" | "调整今天"; items: TaskMenuItem[]; }
 interface TodayMood { title: string; copy: string; tone: "empty" | "low" | "half" | "done"; mark: string; }
 interface ProactiveInsight { label: string; title: string; body: string; tone: "start" | "progress" | "near" | "done" | "streak"; }
 interface ProgressSegment { active: boolean; }
@@ -451,6 +459,10 @@ Page(withAppTheme({
     },
     dailyActionNotificationAvailable: isNotificationConfigured("daily_action_reminder") && new Date().getHours() < 22,
     notificationAuthorizing: false,
+    taskMenuVisible: false,
+    taskMenuSubtitle: "",
+    taskMenuRecommendation: "",
+    taskMenuGroups: [] as TaskMenuGroup[],
     inAppMessage: null as InAppMessage | null,
   },
   profileHandler: null as null | (() => void),
@@ -461,6 +473,7 @@ Page(withAppTheme({
   coachRequestKey: "",
   coachRequestGeneration: 0,
   scrollTopCache: 0,
+  taskMenuActions: [] as Array<() => void>,
   priorityContext: { today: "", currentStreakDays: 0 } as PriorityContext,
   onPageScroll(event: { scrollTop: number }) {
     this.scrollTopCache = event.scrollTop;
@@ -799,6 +812,17 @@ Page(withAppTheme({
       },
     });
   },
+  setTaskPriorityPosition(task: ViewTask) {
+    wx.showActionSheet({
+      itemList: ["设为今日重点", "移到快速推进", "移到稍后安排", "恢复系统推荐"],
+      success: ({ tapIndex }) => {
+        const positions: Array<"focus" | "quick" | "later" | null> = ["focus", "quick", "later", null];
+        const position = positions[tapIndex];
+        if (position === undefined) return;
+        this.setTaskPriorityOverride(task, position);
+      },
+    });
+  },
   async startTask(event: { detail?: { id?: string }; currentTarget?: { dataset?: { id?: string } } }) {
     const taskId = String(event.detail?.id || event.currentTarget?.dataset?.id || "");
     if (!taskId) return;
@@ -1097,29 +1121,49 @@ Page(withAppTheme({
   openTaskMenu(event: { detail?: { id?: string }; currentTarget?: { dataset?: { id?: string } } }) {
     const id = String(event.detail?.id || event.currentTarget?.dataset?.id || "");
     const task = this.data.tasks.find((item) => item.id === id);
-    if (!task) return;
-    const items: string[] = [];
+    if (!task) {
+      wx.showToast({ title: "找不到该行动", icon: "none" });
+      return;
+    }
     const actions: Array<() => void> = [];
-    const push = (label: string, action: () => void) => { items.push(label); actions.push(action); };
+    const execItems: TaskMenuItem[] = [];
+    const adjustItems: TaskMenuItem[] = [];
+    const pushExec = (label: string, desc: string, icon: string, action: () => void) => { execItems.push({ label, desc, icon, actionIndex: actions.length }); actions.push(action); };
+    const pushAdjust = (label: string, desc: string, icon: string, action: () => void, color?: "danger") => { adjustItems.push({ label, desc, icon, color, actionIndex: actions.length }); actions.push(action); };
     if (task.status === "completed") {
-      push("取消完成", () => this.toggleTaskDone({ detail: { id: task.id } }));
+      pushExec("取消完成", "恢复为未完成状态", "rollback", () => this.toggleTaskDone({ detail: { id: task.id } }));
     } else {
       if (this.data.activeSessionTaskId !== task.id) {
-        push("开始专注", () => this.startTask({ detail: { id: task.id } }));
+        pushExec("开始专注", "进入计时模式", "play-circle", () => this.startTask({ detail: { id: task.id } }));
       }
-      push("直接完成", () => this.completeTask(task));
-      push("完成一部分", () => this.chooseReason(task, "partially_completed"));
-      push("设置执行方式", () => this.setTaskExecutionMode(task));
-      push("设为今日重点", () => this.setTaskPriorityOverride(task, "focus"));
-      push("移到快速推进", () => this.setTaskPriorityOverride(task, "quick"));
-      push("稍后安排", () => this.setTaskPriorityOverride(task, "later"));
-      if (task.priorityOverride) push("清除分组覆盖", () => this.setTaskPriorityOverride(task, null));
-      push("顺延到明天", () => this.reschedule(task));
-      push("今天不做", () => this.chooseReason(task, "skipped"));
+      pushExec("标记完成", "直接记录本次行动", "check-circle", () => this.completeTask(task));
+      pushExec("跳过今天", "今天不再提醒，明天正常恢复", "chevron-right-double", () => this.chooseReason(task, "skipped"));
     }
-    push("编辑行动", () => wx.navigateTo({ url: `/pages/action-edit/index?id=${task.id}` }));
-    push("删除行动", () => this.remove(task));
-    wx.showActionSheet({ itemList: items, success: ({ tapIndex }) => actions[tapIndex]?.() });
+    pushAdjust("设为今日重点", "优先展示在今日行动顶部", "star", () => this.setTaskPriorityOverride(task, "focus"));
+    const placement = this.data.visibleTaskGroups.find((group) => group.tasks.some((item) => item.id === task.id))
+      || buildActionPresentationGroups([task], this.priorityContext || { today: getTodayBusinessDate(), currentStreakDays: 0 })[0];
+    const placementTitle = placement?.title || "系统推荐";
+    pushAdjust("调整推荐位置", `当前：${placementTitle}`, "arrow-up-down-1", () => this.setTaskPriorityPosition(task));
+    pushAdjust("编辑任务", "修改名称、时长和重复设置", "edit", () => wx.navigateTo({ url: `/pages/action-edit/index?id=${task.id}` }));
+    pushAdjust("删除任务", "删除后不可恢复", "delete", () => this.remove(task), "danger");
+    this.taskMenuActions = actions;
+    const groups: TaskMenuGroup[] = [];
+    if (execItems.length) groups.push({ title: "执行任务", items: execItems });
+    if (adjustItems.length) groups.push({ title: "调整今天", items: adjustItems });
+    this.setData({
+      taskMenuVisible: true,
+      taskMenuSubtitle: `${task.displayTitle} · 预计 ${task.estimatedMinutes} 分钟`,
+      taskMenuRecommendation: `${placementTitle} · ${task.priorityOverride ? "手动设置" : "系统推荐"}`,
+      taskMenuGroups: groups,
+    });
+  },
+  onTaskMenuItemTap(event: { currentTarget: { dataset: { index: number } } }) {
+    const action = this.taskMenuActions[event.currentTarget.dataset.index];
+    this.setData({ taskMenuVisible: false });
+    if (action) action();
+  },
+  onTaskMenuClose() {
+    this.setData({ taskMenuVisible: false, taskMenuRecommendation: "", taskMenuGroups: [] });
   },
   applyTaskPatch(updatedTask: ViewTask, prevScrollTop: number) {
     const today = getTodayBusinessDate();
