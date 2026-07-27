@@ -6,15 +6,17 @@
   </view>
 
   <view
-    wx:for="{{taskGroups}}"
+    wx:for="{{renderGroups}}"
     wx:for-item="group"
     wx:key="key"
     class="action-group action-group--{{group.tone}}"
   >
     <view class="action-group__body">
       <view class="action-group__head">
+        <view class="action-group__rail">
+          <t-icon class="action-group__icon action-group__icon--{{group.tone}}" name="{{group.icon}}" size="32rpx" />
+        </view>
         <view class="action-group__title">
-          <t-icon class="action-group__icon action-group__icon--{{group.tone}}" name="{{group.icon}}" size="30rpx" />
           <text>{{group.title}}</text>
         </view>
         <view wx:if="{{group.hint}}" class="action-group__hint">{{group.hint}}</view>
@@ -66,7 +68,6 @@
                 <view wx:if="{{item.isRecommendedAction}}" class="action-mark__recommendation"></view>
               </view>
             </view>
-            <text class="action-control__minutes">{{item.estimatedMinutes}} 分钟</text>
           </view>
 
           <view

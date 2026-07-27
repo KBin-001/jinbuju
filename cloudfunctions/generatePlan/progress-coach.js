@@ -114,7 +114,8 @@ function normalizeTask(raw, allowedGoalIds, seenIds) {
     plannedDate: requiredDate(raw.plannedDate, "计划日期"),
     currentDate: requiredDate(raw.currentDate, "行动日期"),
     status,
-    estimatedMinutes: boundedInteger(raw.estimatedMinutes, "预计时间", 5, 240),
+    // 读取历史数据时兼容旧上限；新建行动仍在提案校验处限制为 360 分钟。
+    estimatedMinutes: boundedInteger(raw.estimatedMinutes, "预计时间", 5, 1440),
     actualMinutes: raw.actualMinutes === undefined || raw.actualMinutes === null
       ? 0
       : boundedInteger(raw.actualMinutes, "实际时间", 0, 480),
@@ -698,7 +699,7 @@ function normalizeCreateIntent(raw, fallbackText, analysisDate) {
   const modelTitle = raw && raw.operation === "create_task" ? String(raw.title || "") : "";
   const title = (modelTitle || extractCreateTaskTitle(fallbackText)).replace(/[\r\n\t]/g, " ").trim().slice(0, 40);
   const modelMinutes = Number(raw && raw.operation === "create_task" ? raw.estimatedMinutes : 0);
-  const estimatedMinutes = Number.isInteger(modelMinutes) && modelMinutes >= 5 && modelMinutes <= 240 ? modelMinutes : extractMinutes(fallbackText);
+  const estimatedMinutes = Number.isInteger(modelMinutes) && modelMinutes >= 5 && modelMinutes <= 360 ? modelMinutes : extractMinutes(fallbackText);
   const modelDate = String(raw && raw.operation === "create_task" ? raw.currentDate || "" : "");
   // Relative dates are deterministic business facts. Never let the model turn
   // “明天/后天” back into the current analysis date.
@@ -749,7 +750,7 @@ async function buildCoachCommand(openid, snapshot, question, history, messageSen
     const { currentDate, estimatedMinutes: createMinutes, reminderTime, title } = createIntent;
     if (!title || title.length < 2) return clarification("可以，请先告诉我需要添加的行动名称。", ["title"], { currentDate });
     if (!createMinutes) return clarification(`“${title}”预计需要多少分钟？`, ["estimatedMinutes"], { title, currentDate, reminderTime });
-    if (createMinutes < 5 || createMinutes > 240) return clarification("预计时间需要在 5～240 分钟之间，请重新告诉我。", ["estimatedMinutes"], { title, currentDate, reminderTime });
+    if (createMinutes < 5 || createMinutes > 360) return clarification("预计时间需要在 5～360 分钟之间，请重新告诉我。", ["estimatedMinutes"], { title, currentDate, reminderTime });
     const leadMinutes = reminderTime ? reminderLeadMinutes(currentDate, reminderTime, messageSentAt) : Number.NaN;
     if (reminderTime && Number.isFinite(leadMinutes) && leadMinutes < 10) {
       return clarification(`${reminderTime} 距离现在不足 10 分钟或已经过去，请告诉我一个更晚的提醒时间。`, ["reminderTime"], { title, estimatedMinutes: createMinutes, currentDate, reminderTime });

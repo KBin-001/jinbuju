@@ -37,7 +37,7 @@ export interface Goal {
 }
 
 export type ActionTaskStatus = "pending" | "completed" | "partially_completed" | "skipped" | "rescheduled";
-export type ActionExecutionMode = "direct" | "focus" | "ask";
+export type ActionExecutionMode = "direct" | "focus";
 export type ActionSessionStatus = "running" | "paused" | "completed" | "abandoned";
 
 export interface ActionSession {
@@ -72,7 +72,7 @@ export interface ActionTask {
   plannedDate: string;
   currentDate: string;
   estimatedMinutes: number;
-  /** 执行方式：直接打卡、专注计时，或每次开始时询问。 */
+  /** 执行方式：直接打卡或专注计时。 */
   executionMode?: ActionExecutionMode;
   /** 行动图标；未手动选择时由标题自动映射。 */
   iconKey?: ActionIconKey;

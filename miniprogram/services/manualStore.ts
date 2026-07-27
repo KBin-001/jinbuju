@@ -73,6 +73,7 @@ function normalizeStore(value: Partial<ManualDataStore>): ManualDataStore {
       return {
         ...task,
         goalId: task.goalId || fallbackGoalId,
+        executionMode: task.executionMode === "direct" ? "direct" : "focus",
         actualMinutes: shouldUseEstimatedMinutes ? estimatedMinutes : task.actualMinutes,
       };
     }) : [],

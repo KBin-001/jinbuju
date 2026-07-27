@@ -1,6 +1,6 @@
 import { getActiveGoal } from "../../services/manualGoal";
 import { getProgressSummary, recordDailyCheckin } from "../../services/manualStats";
-import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTask, updateTaskExecutionMode, updateTaskPriorityOverride, updateTaskReminder, updateTaskStatus } from "../../services/manualTask";
+import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTask, updateTaskPriorityOverride, updateTaskReminder, updateTaskStatus } from "../../services/manualTask";
 import { getLocalUserProfile } from "../../services/profile";
 import { bootstrapAccount } from "../../services/account";
 import { analyzeProgress, prepareProgressCoach } from "../../services/progressCoach";
@@ -17,17 +17,22 @@ import { getTabHeaderLayout } from "../../utils/tabHeader";
 import { buildReminderAt, nextReminderTime, normalizeReminderTime, reminderDateRange } from "../../utils/actionReminder";
 import { resolveActionIcon } from "../../utils/actionIcon";
 import { abandonActionSession, finishActionSession, getActiveActionSession, getActiveActionSessionContext, pauseActionSession, resumeActionSession, startActionSession } from "../../services/actionSession";
+import { ACTION_DURATION_MAX_MINUTES, ACTION_DURATION_MIN_MINUTES } from "../../config/action";
 
 const REASONS: Array<{ label: string; value: ActionIssueReason }> = [{ label: "时间不够", value: "not_enough_time" }, { label: "难度太高", value: "too_difficult" }, { label: "缺少资源", value: "resource_unavailable" }, { label: "身体或状态不适", value: "physical_condition" }, { label: "临时有事", value: "temporary_event" }, { label: "任务不符合实际", value: "not_practical" }, { label: "其他", value: "other" }];
-const QUICK_DURATION_MINUTES = 5;
-const QUICK_DURATION_MAX_MINUTES = 240;
+const QUICK_DURATION_MINUTES = ACTION_DURATION_MIN_MINUTES;
+const QUICK_DURATION_MAX_MINUTES = ACTION_DURATION_MAX_MINUTES;
 const QUICK_DURATION_STEP_MINUTES = 5;
+const QUICK_DURATION_MARK_INTERVAL_MINUTES = 15;
 const QUICK_DURATION_TICK_RPX = 24;
+const QUICK_DURATION_SUBSTEP_RPX = QUICK_DURATION_TICK_RPX / (QUICK_DURATION_MARK_INTERVAL_MINUTES / QUICK_DURATION_STEP_MINUTES);
 const QUICK_DURATION_MARKS = Array.from(
-  { length: (QUICK_DURATION_MAX_MINUTES - QUICK_DURATION_MINUTES) / QUICK_DURATION_STEP_MINUTES + 1 },
+  { length: QUICK_DURATION_MAX_MINUTES / QUICK_DURATION_MARK_INTERVAL_MINUTES + 1 },
   (_, index) => {
-    const value = QUICK_DURATION_MINUTES + index * QUICK_DURATION_STEP_MINUTES;
-    return { value, major: value % 30 === 0, label: value % 30 === 0 ? String(value) : "" };
+    const value = index * QUICK_DURATION_MARK_INTERVAL_MINUTES;
+    const major = value % 30 === 0;
+    const showLabel = value > 0 && (value <= 240 ? major : value % 60 === 0);
+    return { value, major, label: showLabel ? String(value) : "" };
   },
 );
 const EXAMPLE_ACTION_TITLES = ["背单词 30 个", "阅读 30 分钟", "听力练习 20 分钟", "真题复盘 1 套"];
@@ -50,7 +55,6 @@ interface ViewTask extends ActionTask {
   primaryActionShortLabel: string;
   primaryActionIcon: string;
   primaryActionTone: "plain" | "focus" | "success";
-  promptExecution: boolean;
   isRecommendedAction: boolean;
   priorityReasons?: PriorityReason[];
 }
@@ -114,7 +118,20 @@ function progressSegments(summary: TodaySummary): ProgressSegment[] {
  */
 function buildActionPresentationGroups(tasks: ViewTask[], context: PriorityContext): ActionPresentationGroup[] {
   if (!tasks.length) return [];
-  return groupTasksByPriority(tasks, context) as ActionPresentationGroup[];
+  let groups: ActionPresentationGroup[] = [];
+  try {
+    groups = groupTasksByPriority(tasks, context) as ActionPresentationGroup[];
+  } catch (_error) {
+    groups = [];
+  }
+  return groups.length ? groups : [{
+    key: "later",
+    title: "稍后安排",
+    hint: "已为你安排到专注时段",
+    icon: "time",
+    tone: "muted",
+    tasks: tasks.map((task) => ({ ...task, priorityReasons: task.priorityReasons || [] })),
+  }];
 }
 function sessionClock(seconds: number): string {
   const safe = Math.max(0, Math.floor(seconds));
@@ -132,9 +149,9 @@ function durationHourCopy(minutes: number): string {
 
 function durationScrollLeft(minutes: number): number {
   const windowWidth = wx.getWindowInfo ? wx.getWindowInfo().windowWidth : 375;
-  const tickPx = QUICK_DURATION_TICK_RPX * windowWidth / 750;
-  const index = Math.round((minutes - QUICK_DURATION_MINUTES) / QUICK_DURATION_STEP_MINUTES);
-  return Math.max(0, index * tickPx);
+  const substepPx = QUICK_DURATION_SUBSTEP_RPX * windowWidth / 750;
+  const stepIndex = Math.round(minutes / QUICK_DURATION_STEP_MINUTES);
+  return Math.max(0, stepIndex * substepPx);
 }
 
 function sessionMinutes(session: ActionSession | null): number {
@@ -318,7 +335,6 @@ function toViewTask(task: ActionTask, selectedDate: string, businessToday = getT
     primaryActionShortLabel: "专注",
     primaryActionIcon: "play-circle",
     primaryActionTone: "focus",
-    promptExecution: false,
     isRecommendedAction: false,
   };
 }
@@ -332,7 +348,6 @@ function decorateTaskAction(task: ViewTask, activeTaskId: string, activeStatus: 
       primaryActionShortLabel: "记录",
       primaryActionIcon: "check-circle",
       primaryActionTone: "success",
-      promptExecution: false,
     };
   }
   if (activeTaskId === task.id) {
@@ -344,7 +359,6 @@ function decorateTaskAction(task: ViewTask, activeTaskId: string, activeStatus: 
       primaryActionShortLabel: paused ? "继续" : "计时中",
       primaryActionIcon: paused ? "play-circle" : "time",
       primaryActionTone: "focus",
-      promptExecution: false,
     };
   }
   if (task.status === "partially_completed") {
@@ -355,21 +369,17 @@ function decorateTaskAction(task: ViewTask, activeTaskId: string, activeStatus: 
       primaryActionShortLabel: "继续",
       primaryActionIcon: "play-circle",
       primaryActionTone: "focus",
-      promptExecution: false,
     };
   }
-  const mode = task.executionMode || "ask";
-  const recommendedAction: TaskPrimaryAction = task.estimatedMinutes <= 15 ? "complete" : "focus";
-  const primaryAction: TaskPrimaryAction = mode === "direct" ? "complete" : mode === "focus" ? "focus" : recommendedAction;
-  const promptExecution = mode === "ask";
+  const mode: ActionExecutionMode = task.executionMode === "direct" ? "direct" : "focus";
+  const primaryAction: TaskPrimaryAction = mode === "direct" ? "complete" : "focus";
   return {
     ...task,
     primaryAction,
-    primaryActionLabel: promptExecution ? "选择执行方式" : primaryAction === "complete" ? "完成行动" : "开始专注",
-    primaryActionShortLabel: promptExecution ? "开始" : primaryAction === "complete" ? "完成" : "专注",
+    primaryActionLabel: primaryAction === "complete" ? "完成行动" : "开始专注",
+    primaryActionShortLabel: primaryAction === "complete" ? "完成" : "专注",
     primaryActionIcon: primaryAction === "complete" ? "check-circle" : "play-circle",
     primaryActionTone: primaryAction === "complete" ? "success" : "focus",
-    promptExecution,
   };
 }
 
@@ -452,7 +462,7 @@ Page(withAppTheme({
     quickAddTitle: "",
     quickAddMinutes: 30,
     quickAddHourText: durationHourCopy(30),
-    quickAddExecutionMode: "ask" as ActionExecutionMode,
+    quickAddExecutionMode: "focus" as ActionExecutionMode,
     quickAddImportance: "normal" as "required" | "normal",
     quickAddBlocksOthers: false,
     quickAddDate: getTodayBusinessDate(),
@@ -801,41 +811,16 @@ Page(withAppTheme({
       wx.showToast({ title: "当前行动正在专注", icon: "none" });
       return;
     }
-    if (task.promptExecution) {
-      wx.showActionSheet({
-        itemList: ["直接完成", "开始专注"],
-        success: ({ tapIndex }) => {
-          if (tapIndex === 0) this.completeTask(task);
-          else if (tapIndex === 1) this.startTask({ detail: { id: task.id } });
-        },
-      });
-      return;
-    }
     if (task.primaryAction === "complete") this.completeTask(task);
     else this.startTask({ detail: { id: task.id } });
   },
   openExecutionPreference() {
     wx.showActionSheet({
-      itemList: ["直接完成：轻任务优先打卡", "专注计时：长任务优先计时", "每次询问：按任务灵活选择"],
+      itemList: ["直接完成：轻任务优先打卡", "专注计时：需要投入时开始计时"],
       success: ({ tapIndex }) => {
-        const mode: ActionExecutionMode = tapIndex === 0 ? "direct" : tapIndex === 1 ? "focus" : "ask";
+        const mode: ActionExecutionMode = tapIndex === 0 ? "direct" : "focus";
         this.setData({ quickAddExecutionMode: mode });
-        wx.showToast({ title: mode === "direct" ? "新增行动默认直接完成" : mode === "focus" ? "新增行动默认专注计时" : "新增行动将每次询问", icon: "none" });
-      },
-    });
-  },
-  setTaskExecutionMode(task: ViewTask) {
-    wx.showActionSheet({
-      itemList: ["直接完成", "专注计时", "每次询问"],
-      success: ({ tapIndex }) => {
-        const mode: ActionExecutionMode = tapIndex === 0 ? "direct" : tapIndex === 1 ? "focus" : "ask";
-        try {
-          updateTaskExecutionMode(task.id, mode);
-          this.load();
-          wx.showToast({ title: "执行方式已更新", icon: "success" });
-        } catch (error) {
-          wx.showToast({ title: error instanceof Error ? error.message : "设置失败", icon: "none" });
-        }
+        wx.showToast({ title: mode === "direct" ? "新增行动默认直接完成" : "新增行动默认专注计时", icon: "none" });
       },
     });
   },
@@ -1005,7 +990,7 @@ Page(withAppTheme({
       quickAddTitle: task?.title || "",
       quickAddMinutes: minutes,
       quickAddHourText: durationHourCopy(minutes),
-      quickAddExecutionMode: task?.executionMode || "ask",
+      quickAddExecutionMode: task?.executionMode === "direct" ? "direct" : "focus",
       quickAddImportance: task?.importance === "required" ? "required" : "normal",
       quickAddBlocksOthers: Boolean(task?.blocksOthers),
       quickAddDate: date,
@@ -1032,7 +1017,7 @@ Page(withAppTheme({
   inputQuickAddTitle(event: { detail: { value?: string } }) { this.setData({ quickAddTitle: String(event.detail.value || "").slice(0, 40) }); },
   selectQuickExecutionMode(event: { currentTarget: { dataset: { mode?: ActionExecutionMode } } }) {
     const mode = event.currentTarget.dataset.mode;
-    if (!mode || !["direct", "focus", "ask"].includes(mode)) return;
+    if (!mode || !["direct", "focus"].includes(mode)) return;
     this.setData({ quickAddExecutionMode: mode });
   },
   selectQuickAddImportance(event: { currentTarget: { dataset: { importance?: "required" | "normal" } } }) {
@@ -1058,11 +1043,11 @@ Page(withAppTheme({
   },
   onQuickDurationScroll(event: { detail: { scrollLeft?: number } }) {
     const windowWidth = wx.getWindowInfo ? wx.getWindowInfo().windowWidth : 375;
-    const tickPx = QUICK_DURATION_TICK_RPX * windowWidth / 750;
-    const index = Math.round(Number(event.detail.scrollLeft || 0) / tickPx);
+    const substepPx = QUICK_DURATION_SUBSTEP_RPX * windowWidth / 750;
+    const index = Math.round(Number(event.detail.scrollLeft || 0) / substepPx);
     const minutes = Math.min(
       QUICK_DURATION_MAX_MINUTES,
-      Math.max(QUICK_DURATION_MINUTES, QUICK_DURATION_MINUTES + index * QUICK_DURATION_STEP_MINUTES),
+      Math.max(QUICK_DURATION_MINUTES, index * QUICK_DURATION_STEP_MINUTES),
     );
     if (minutes !== this.data.quickAddMinutes) {
       this.setData({
@@ -1075,6 +1060,20 @@ Page(withAppTheme({
       this.quickDurationScrollTimer = null;
       this.setData({ quickDurationScrollLeft: durationScrollLeft(minutes) });
     }, 100);
+  },
+  onQuickDurationReachStart() {
+    this.setData({
+      quickAddMinutes: QUICK_DURATION_MINUTES,
+      quickAddHourText: durationHourCopy(QUICK_DURATION_MINUTES),
+      quickDurationScrollLeft: durationScrollLeft(QUICK_DURATION_MINUTES),
+    });
+  },
+  onQuickDurationReachEnd() {
+    this.setData({
+      quickAddMinutes: QUICK_DURATION_MAX_MINUTES,
+      quickAddHourText: durationHourCopy(QUICK_DURATION_MAX_MINUTES),
+      quickDurationScrollLeft: durationScrollLeft(QUICK_DURATION_MAX_MINUTES),
+    });
   },
   quickAddTouchStart(event: WechatMiniprogram.TouchEvent) {
     const touch = event.touches[0];
@@ -1101,7 +1100,7 @@ Page(withAppTheme({
       return;
     }
     if (!Number.isInteger(estimatedMinutes) || estimatedMinutes < QUICK_DURATION_MINUTES || estimatedMinutes > QUICK_DURATION_MAX_MINUTES) {
-      wx.showToast({ title: "预计投入需为 5～240 分钟", icon: "none" });
+      wx.showToast({ title: "预计投入需为 5～360 分钟", icon: "none" });
       return;
     }
     let remindAt = "";
@@ -1165,7 +1164,7 @@ Page(withAppTheme({
         ? "行动已保存，提醒未开启"
         : isEdit ? "行动已更新" : "行动已添加";
       wx.showToast({ title: toastTitle, icon: reminderScheduled || !this.data.quickAddReminderEnabled ? "success" : "none" });
-      this.setData({ quickAddVisible: false, quickAddMode: "create", quickAddTaskId: "", quickAddTitle: "", quickAddMinutes: 30, quickAddHourText: durationHourCopy(30), quickAddExecutionMode: "ask", quickAddImportance: "normal", quickAddBlocksOthers: false, quickAddReminderEnabled: false, quickAddHadScheduledReminder: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
+      this.setData({ quickAddVisible: false, quickAddMode: "create", quickAddTaskId: "", quickAddTitle: "", quickAddMinutes: 30, quickAddHourText: durationHourCopy(30), quickAddExecutionMode: "focus", quickAddImportance: "normal", quickAddBlocksOthers: false, quickAddReminderEnabled: false, quickAddHadScheduledReminder: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
       this.load();
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });

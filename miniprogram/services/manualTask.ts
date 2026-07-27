@@ -3,6 +3,7 @@ import { ActionExecutionMode, ActionIconKey, ActionIssueReason, ActionReminder, 
 import { buildReminderAt } from "../utils/actionReminder";
 import { inferActionIconKey } from "../utils/actionIcon";
 import { createLocalId, readManualStore, writeManualStore } from "./manualStore";
+import { ACTION_DURATION_MAX_MINUTES, ACTION_DURATION_MIN_MINUTES } from "../config/action";
 
 export interface SaveTaskInput { id?: string; goalId: string; title: string; description?: string; currentDate: string; estimatedMinutes: number; executionMode?: ActionExecutionMode; iconKey?: ActionIconKey; iconManual?: boolean; reminder?: ActionReminder | null; importance?: "required" | "normal"; blocksOthers?: boolean; }
 export interface SaveActionRecordInput { taskId: string; title: string; businessDate: string; time: string; actualMinutes: number; status: "completed" | "partially_completed" | "pending"; reflection?: string; }
@@ -12,7 +13,7 @@ function validate(input: SaveTaskInput): void {
   if (title.length < 2 || title.length > 40) throw new Error("行动标题请控制在 2～40 个字");
   if ((input.description || "").trim().length > 150) throw new Error("说明最多 150 个字");
   if (!isValidBusinessDate(input.currentDate)) throw new Error("请选择有效日期");
-  if (!Number.isInteger(input.estimatedMinutes) || input.estimatedMinutes < 5 || input.estimatedMinutes > 240) throw new Error("预计时间应为 5～240 分钟");
+  if (!Number.isInteger(input.estimatedMinutes) || input.estimatedMinutes < ACTION_DURATION_MIN_MINUTES || input.estimatedMinutes > ACTION_DURATION_MAX_MINUTES) throw new Error("预计时间应为 5～360 分钟");
 }
 
 export function createTask(input: SaveTaskInput): ActionTask {
@@ -20,7 +21,7 @@ export function createTask(input: SaveTaskInput): ActionTask {
   const store = readManualStore();
   if (!store.goals.some((goal) => goal.id === input.goalId && goal.status === "active")) throw new Error("当前目标不存在");
   const now = new Date().toISOString();
-  const task: ActionTask = { id: createLocalId("task"), goalId: input.goalId, title: input.title.trim(), description: input.description?.trim() || undefined, plannedDate: input.currentDate, currentDate: input.currentDate, estimatedMinutes: input.estimatedMinutes, executionMode: input.executionMode || "ask", iconKey: input.iconManual && input.iconKey ? input.iconKey : inferActionIconKey(input.title, input.description), iconManual: Boolean(input.iconManual), reminder: input.reminder || undefined, status: "pending", source: "manual", importance: input.importance || "normal", blocksOthers: Boolean(input.blocksOthers), priorityOverride: null, createdAt: now, updatedAt: now };
+  const task: ActionTask = { id: createLocalId("task"), goalId: input.goalId, title: input.title.trim(), description: input.description?.trim() || undefined, plannedDate: input.currentDate, currentDate: input.currentDate, estimatedMinutes: input.estimatedMinutes, executionMode: input.executionMode || "focus", iconKey: input.iconManual && input.iconKey ? input.iconKey : inferActionIconKey(input.title, input.description), iconManual: Boolean(input.iconManual), reminder: input.reminder || undefined, status: "pending", source: "manual", importance: input.importance || "normal", blocksOthers: Boolean(input.blocksOthers), priorityOverride: null, createdAt: now, updatedAt: now };
   store.tasks.push(task);
   writeManualStore(store);
   return task;
@@ -44,7 +45,7 @@ export function updateTaskExecutionMode(taskId: string, executionMode: ActionExe
   const store = readManualStore();
   const task = store.tasks.find((item) => item.id === taskId && !item.deletedAt);
   if (!task) throw new Error("行动不存在");
-  if (!["direct", "focus", "ask"].includes(executionMode)) throw new Error("执行方式无效");
+  if (!["direct", "focus"].includes(executionMode)) throw new Error("执行方式无效");
   task.executionMode = executionMode;
   task.updatedAt = new Date().toISOString();
   writeManualStore(store);
@@ -93,7 +94,7 @@ export function updateTask(input: SaveTaskInput): ActionTask {
   const previousDate = task.currentDate;
     task.title = input.title.trim(); task.description = input.description?.trim() || undefined;
   task.currentDate = input.currentDate; task.estimatedMinutes = input.estimatedMinutes;
-  task.executionMode = input.executionMode || task.executionMode || "ask";
+  task.executionMode = input.executionMode || (task.executionMode === "direct" ? "direct" : "focus");
   task.iconManual = Boolean(input.iconManual);
   task.iconKey = input.iconManual && input.iconKey ? input.iconKey : inferActionIconKey(input.title, input.description);
   if (input.importance === "required" || input.importance === "normal") task.importance = input.importance;
@@ -283,4 +284,3 @@ export function calculateTodaySummary(tasks: ActionTask[]): TodaySummary {
   summary.unfinishedCount = summary.totalCount - summary.completedCount - summary.partialCount;
   return summary;
 }
-

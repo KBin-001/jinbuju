@@ -47,6 +47,31 @@ assert.doesNotMatch(featureFlags, /ENABLE_THEME_SWITCHING/);
   "docs/team-inkgreen-before.png",
 ].forEach((relative) => assert.equal(fs.existsSync(path.join(repoRoot, relative)), false, `旧预览仍存在: ${relative}`));
 
+const resourceExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".mp3", ".aac", ".wav", ".m4a"]);
+const ignoredFolders = new Set(["node_modules", "tests", "typings"]);
+const resourceFiles = [];
+
+function collectResourceFiles(dir) {
+  fs.readdirSync(dir, { withFileTypes: true }).forEach((entry) => {
+    if (ignoredFolders.has(entry.name)) return;
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      collectResourceFiles(fullPath);
+      return;
+    }
+    if (resourceExtensions.has(path.extname(entry.name).toLowerCase())) {
+      resourceFiles.push(fullPath);
+    }
+  });
+}
+
+collectResourceFiles(miniRoot);
+const resourceTotalBytes = resourceFiles.reduce((sum, filePath) => sum + fs.statSync(filePath).size, 0);
+assert.ok(
+  resourceTotalBytes <= 200 * 1024,
+  `????????????? 200KB???? ${(resourceTotalBytes / 1024).toFixed(1)}KB`,
+);
+
 const phoneFeature = fs.readFileSync(path.join(miniRoot, "pages/account-security/index.wxml"), "utf8");
 const phoneService = fs.readFileSync(path.join(miniRoot, "services/account.ts"), "utf8");
 const cloudAccount = fs.readFileSync(path.join(repoRoot, "cloudfunctions/generatePlan/account.js"), "utf8");

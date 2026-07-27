@@ -250,6 +250,8 @@
                 scroll-left="{{quickDurationScrollLeft}}"
                 scroll-with-animation="{{true}}"
                 bindscroll="onQuickDurationScroll"
+                bindscrolltoupper="onQuickDurationReachStart"
+                bindscrolltolower="onQuickDurationReachEnd"
               >
                 <view class="quick-time-ruler__content">
                   <view class="quick-time-ruler__spacer"></view>
@@ -273,32 +275,28 @@
 
         <view class="quick-settings-section">
           <view class="quick-section-title"><view class="quick-section-mark"></view><text>执行方式</text></view>
-          <view class="quick-settings-group">
-            <view class="quick-setting-row {{quickAddExecutionMode === 'direct' ? 'is-selected' : ''}}" data-mode="direct" catchtap="selectQuickExecutionMode">
-              <view class="quick-setting-copy"><view class="quick-setting-label">直接完成</view><view class="quick-setting-desc">适合简单行动</view></view>
+          <view class="quick-settings-group quick-settings-group--segmented">
+            <view class="quick-setting-row quick-setting-row--segment {{quickAddExecutionMode === 'direct' ? 'is-selected' : ''}}" data-mode="direct" catchtap="selectQuickExecutionMode">
               <view class="quick-setting-check"><t-icon wx:if="{{quickAddExecutionMode === 'direct'}}" name="check" size="24rpx" /></view>
+              <view class="quick-setting-copy"><view class="quick-setting-label">直接完成</view><view class="quick-setting-desc">适合简单行动</view></view>
             </view>
-            <view class="quick-setting-row {{quickAddExecutionMode === 'focus' ? 'is-selected' : ''}}" data-mode="focus" catchtap="selectQuickExecutionMode">
-              <view class="quick-setting-copy"><view class="quick-setting-label">专注计时</view><view class="quick-setting-desc">适合需要深度投入的行动</view></view>
+            <view class="quick-setting-row quick-setting-row--segment {{quickAddExecutionMode === 'focus' ? 'is-selected' : ''}}" data-mode="focus" catchtap="selectQuickExecutionMode">
               <view class="quick-setting-check"><t-icon wx:if="{{quickAddExecutionMode === 'focus'}}" name="check" size="24rpx" /></view>
-            </view>
-            <view class="quick-setting-row {{quickAddExecutionMode === 'ask' ? 'is-selected' : ''}}" data-mode="ask" catchtap="selectQuickExecutionMode">
-              <view class="quick-setting-copy"><view class="quick-setting-label">每次询问</view><view class="quick-setting-desc">开始时再选择执行方式</view></view>
-              <view class="quick-setting-check"><t-icon wx:if="{{quickAddExecutionMode === 'ask'}}" name="check" size="24rpx" /></view>
+              <view class="quick-setting-copy"><view class="quick-setting-label">专注计时</view><view class="quick-setting-desc">适合需要深度投入的行动</view></view>
             </view>
           </view>
         </view>
 
         <view class="quick-settings-section">
           <view class="quick-section-title"><view class="quick-section-mark"></view><text>重要程度</text></view>
-          <view class="quick-settings-group">
-            <view class="quick-setting-row {{quickAddImportance === 'normal' ? 'is-selected' : ''}}" data-importance="normal" catchtap="selectQuickAddImportance">
-              <view class="quick-setting-copy"><view class="quick-setting-label">正常推进</view><view class="quick-setting-desc">保持稳定节奏</view></view>
+          <view class="quick-settings-group quick-settings-group--segmented">
+            <view class="quick-setting-row quick-setting-row--segment {{quickAddImportance === 'normal' ? 'is-selected' : ''}}" data-importance="normal" catchtap="selectQuickAddImportance">
               <view class="quick-setting-check"><t-icon wx:if="{{quickAddImportance === 'normal'}}" name="check" size="24rpx" /></view>
+              <view class="quick-setting-copy"><view class="quick-setting-label">正常推进</view><view class="quick-setting-desc">保持稳定节奏</view></view>
             </view>
-            <view class="quick-setting-row {{quickAddImportance === 'required' ? 'is-selected' : ''}}" data-importance="required" catchtap="selectQuickAddImportance">
-              <view class="quick-setting-copy"><view class="quick-setting-label">必须完成</view><view class="quick-setting-desc">优先确保完成</view></view>
+            <view class="quick-setting-row quick-setting-row--segment {{quickAddImportance === 'required' ? 'is-selected' : ''}}" data-importance="required" catchtap="selectQuickAddImportance">
               <view class="quick-setting-check"><t-icon wx:if="{{quickAddImportance === 'required'}}" name="check" size="24rpx" /></view>
+              <view class="quick-setting-copy"><view class="quick-setting-label">必须完成</view><view class="quick-setting-desc">优先确保完成</view></view>
             </view>
           </view>
         </view>
@@ -339,7 +337,7 @@
       </scroll-view>
 
       <view class="quick-add-actions">
-        <t-button class="quick-add-primary" loading="{{quickAddSubmitting}}" disabled="{{quickAddSubmitting || quickAddTitle.length < 2}}" catchtap="saveQuickAdd">{{quickAddMode === 'edit' ? '保存修改' : '添加到今天'}}</t-button>
+        <t-button class="quick-add-primary" loading="{{quickAddSubmitting}}" disabled="{{quickAddSubmitting || quickAddTitle.length < 2}}" catchtap="saveQuickAdd">{{quickAddMode === 'edit' ? '保存修改' : '添加任务'}}</t-button>
       </view>
     </view>
   </view>

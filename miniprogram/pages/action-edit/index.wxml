@@ -50,8 +50,8 @@
           <view wx:for="{{durationOptions}}" wx:key="*this" class="duration-option {{estimatedMinutes === item && !isCustomDuration ? 'is-selected' : ''}}" data-value="{{item}}" bindtap="selectDuration" hover-class="duration-option--pressed"><text>{{item}}</text><text>分钟</text></view>
         </view>
         <view class="custom-duration-box {{isCustomDuration ? 'is-active' : ''}}">
-          <view class="custom-duration-copy"><view>自定义时长</view><text>支持 5～240 分钟</text></view>
-          <view class="custom-duration-input"><input type="number" value="{{estimatedMinutes}}" maxlength="3" bindinput="inputMinutes" /><text>分钟</text></view>
+          <view class="custom-duration-copy"><view>自定义时长</view><text>支持 5～360 分钟</text></view>
+          <view class="custom-duration-input"><input type="number" value="{{estimatedMinutes}}" maxlength="4" bindinput="inputMinutes" /><text>分钟</text></view>
         </view>
         <view class="field-hint"><t-icon name="info-circle" size="24rpx" /><text>完成后可单独修改实际投入，不会覆盖预计时长。</text></view>
       </view>

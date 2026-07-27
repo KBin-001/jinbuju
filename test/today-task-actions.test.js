@@ -22,8 +22,9 @@ assert.match(actionListWxml, /aria-disabled=/, "不可执行状态必须提供�
 assert.match(actionListWxss, /\.action-mark\s*\{[\s\S]*width:\s*132rpx;[\s\S]*height:\s*54rpx;/, "横向动作按钮点击区域尺寸必须可靠");
 assert.match(actionListWxss, /\.action-mark__disc\s*\{[\s\S]*width:\s*132rpx;[\s\S]*height:\s*54rpx;/, "横向动作按钮必须保持紧凑比例");
 assert.match(actionListWxss, /var\(--color-primary/, "动作按钮应复用现有主题变量");
-assert.match(actionListWxml, /wx:for="\{\{taskGroups\}\}"/, "今日行动必须提供展示分组");
+assert.match(actionListWxml, /wx:for="\{\{renderGroups\}\}"/, "今日行动必须渲染带安全回退的展示分组");
 assert.match(actionListWxml, /action-group__rail/, "展示分组必须保留时间轴结构");
+assert.doesNotMatch(actionListWxml, /action-control__minutes/, "主操作按钮下方不应重复展示预计投入时间");
 assert.doesNotMatch(actionListWxss, /\.task-primary/, "应完全移除旧的白色长胶囊按钮样式");
 assert.match(script, /updateTaskStatus\(task\.id,\s*"completed"\);/, "完成行动时应由服务层采用预计时长作为默认实际投入");
 assert.doesNotMatch(script, /updateTaskStatus\(task\.id,\s*"completed",\s*task\.actualMinutes\s*\?\?\s*0\)/, "完成行动不应再写入 0 分钟");
@@ -32,7 +33,7 @@ assert.match(script, /shouldRevealCompleted/, "完成后应保持记录可见，
 assert.match(actionListWxml, /wx:if="\{\{item\.rescheduled\}\}" class="carry-badge">顺延任务</, "顺延任务必须提供清晰来源标记");
 assert.match(actionListWxss, /\.carry-badge/, "顺延任务标记必须有独立的轻量样式");
 assert.match(script, /const summaryTasks = selectedDate === today \? sourceTasks : selectedTasks/, "今天的统计必须包含页面正在展示的待继续任务");
-assert.match(script, /primaryActionShortLabel:\s*promptExecution\s*\?\s*"开始"\s*:\s*primaryAction === "complete"\s*\?\s*"完成"\s*:\s*"专注"/, "待执行状态必须映射“开始／完成／专注”短标签");
+assert.match(script, /primaryActionShortLabel:\s*primaryAction === "complete"\s*\?\s*"完成"\s*:\s*"专注"/, "待执行状态必须映射“完成／专注”短标签");
 assert.match(script, /primaryActionShortLabel:\s*"继续"/, "暂停或部分完成状态必须显示“继续”");
 assert.match(script, /primaryActionShortLabel:\s*"记录"/, "已完成状态必须显示“记录”");
 assert.match(script, /primaryActionIcon:\s*"check-circle"/, "打卡状态必须使用勾选图标");
@@ -40,8 +41,9 @@ assert.match(script, /primaryActionIcon:\s*"play-circle"/, "专注状态必须�
 assert.match(script, /function markRecommendedAction/, "推荐行动必须只在页面展示层派生");
 assert.match(script, /!recommendationAssigned/, "同一列表只能分配一个推荐行动");
 
-for (const action of ["直接完成", "完成一部分", "设置执行方式", "顺延到明天", "今天不做", "编辑行动", "删除行动"]) {
+for (const action of ["开始专注", "标记完成", "跳过今天", "编辑任务", "删除任务"]) {
   assert.equal(script.includes(action), true, `操作菜单缺少“${action}”`);
 }
+assert.equal(script.includes("每次询问"), false, "执行方式入口不应再包含每次询问");
 
 console.log("today task action entry tests passed");

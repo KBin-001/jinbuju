@@ -10,6 +10,7 @@ const editWxml = fs.readFileSync(path.join(root, "pages/action-edit/index.wxml")
 const manualTask = fs.readFileSync(path.join(root, "services/manualTask.ts"), "utf8");
 const typesManual = fs.readFileSync(path.join(root, "types/manual.ts"), "utf8");
 const taskPriority = fs.readFileSync(path.join(root, "utils/taskPriority.ts"), "utf8");
+const actionListLogic = fs.readFileSync(path.join(root, "components/today-action-list/index.ts"), "utf8");
 
 // Issue 01: ActionPresentationGroup key renamed to "focus"
 assert.match(indexLogic, /key:\s*"focus"\s*\|\s*"quick"\s*\|\s*"later"/, "ActionPresentationGroup key 应包含 focus");
@@ -18,6 +19,9 @@ assert.match(indexLogic, /key:\s*"focus"\s*\|\s*"quick"\s*\|\s*"later"/, "Action
 assert.match(indexLogic, /今日重点/, "分组标题应包含'今日重点'");
 assert.match(indexLogic, /快速推进/, "分组标题应包含'快速推进'");
 assert.match(indexLogic, /稍后安排/, "分组标题应包含'稍后安排'");
+assert.match(indexLogic, /groups = groupTasksByPriority\(tasks, context\)/, "页面应先使用正常优先级分组结果");
+assert.match(indexLogic, /groups\.length \? groups : \[\{[\s\S]*key: "later"[\s\S]*tasks: tasks\.map/, "真实任务非空但分组为空时应提供不丢任务的安全回退");
+assert.match(actionListLogic, /renderGroups: groups\.length \? groups : fallbackTasks\.length/, "组件收到非空任务但空分组时仍应渲染安全分组");
 
 // Issue 02: openTaskMenu contains priority override menu items
 assert.match(indexLogic, /设为今日重点/, "openTaskMenu 应包含'设为今日重点'菜单项");
@@ -70,6 +74,7 @@ assert.match(taskPriority, /手动置顶/, "priorityOverride 任务理由应为'
 
 // Issue 04: today-action-list WXML contains priorityReasons data binding
 const actionListWxml = fs.readFileSync(path.join(root, "components/today-action-list/index.wxml"), "utf8");
+assert.match(actionListWxml, /wx:for="\{\{renderGroups\}\}"/, "today-action-list 应渲染经过兜底的分组数据");
 assert.match(actionListWxml, /priorityReasons/, "today-action-list WXML 应包含 priorityReasons 数据绑定");
 assert.match(actionListWxml, /reason-tag/, "today-action-list WXML 应包含 reason-tag 样式类");
 

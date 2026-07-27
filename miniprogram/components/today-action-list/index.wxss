@@ -3,7 +3,7 @@
 }
 
 .action-list {
-  padding: 25rpx 26rpx 24rpx;
+  padding: 22rpx 24rpx 22rpx;
 }
 
 .action-group {
@@ -11,7 +11,7 @@
 }
 
 .action-group + .action-group {
-  margin-top: 31rpx;
+  margin-top: 27rpx;
 }
 
 .action-group__body {
@@ -20,20 +20,29 @@
 }
 
 .action-group__head {
-  min-height: 52rpx;
+  min-height: 48rpx;
   display: flex;
   align-items: center;
   gap: 12rpx;
+}
+
+.action-group__rail {
+  width: 38rpx;
+  height: 42rpx;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .action-group__title {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 10rpx;
+  gap: 0;
   color: #17644f;
   font-family: var(--font-family-brand);
-  font-size: 31rpx;
+  font-size: 30rpx;
   font-weight: 600;
   line-height: 42rpx;
   letter-spacing: 1rpx;
@@ -59,15 +68,34 @@
   flex: none;
   padding: 4rpx 14rpx;
   border-radius: 999rpx;
-  color: #7c817d;
-  background: rgba(242,241,236,.86);
+  border: 1rpx solid transparent;
+  color: #6d746f;
+  background: #f2f1ec;
   font-size: 17rpx;
   line-height: 25rpx;
   white-space: nowrap;
 }
 
+.action-group--gold .action-group__hint {
+  border-color: rgba(200,155,74,.2);
+  color: #9a6b27;
+  background: #fbf3e4;
+}
+
+.action-group--green .action-group__hint {
+  border-color: rgba(73,123,104,.16);
+  color: #3f6f60;
+  background: #edf5f0;
+}
+
+.action-group--muted .action-group__hint {
+  border-color: rgba(113,119,114,.14);
+  color: #707772;
+  background: #f0f1ed;
+}
+
 .action-group__tasks {
-  margin-top: 14rpx;
+  margin-top: 11rpx;
   overflow: hidden;
   border: 1rpx solid rgba(105,96,78,.09);
   border-radius: 26rpx;
@@ -76,8 +104,8 @@
 }
 
 .action-row {
-  min-height: 126rpx;
-  padding: 21rpx 18rpx;
+  min-height: 118rpx;
+  padding: 18rpx;
   display: flex;
   align-items: center;
   gap: 14rpx;
@@ -175,8 +203,8 @@
   width: 132rpx;
   flex: none;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
 }
 
 .action-mark {
@@ -274,15 +302,6 @@
 .action-mark--pressed {
   opacity: .78;
   transform: scale(.96);
-}
-
-.action-control__minutes {
-  margin-top: 6rpx;
-  color: #59615d;
-  font-family: var(--font-family-numeric);
-  font-variant-numeric: tabular-nums;
-  font-size: 18rpx;
-  line-height: 24rpx;
 }
 
 .task-more {

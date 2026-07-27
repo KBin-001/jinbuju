@@ -67,8 +67,9 @@ function cleanRecord(raw, kind) {
     if (typeof raw.goalId !== "string" || !raw.goalId || typeof raw.title !== "string" || !raw.title.trim()) throw createError("MANUAL_SYNC_INVALID", "行动数据无效。");
     if (!validBusinessDate(raw.currentDate)) throw createError("MANUAL_SYNC_INVALID", "行动日期无效。");
     if (!["pending", "completed", "partially_completed", "skipped", "rescheduled"].includes(raw.status)) throw createError("MANUAL_SYNC_INVALID", "行动状态无效。");
-    if (!Number.isInteger(raw.estimatedMinutes) || raw.estimatedMinutes < 5 || raw.estimatedMinutes > 240) throw createError("MANUAL_SYNC_INVALID", "行动预计时间无效。");
-    if (raw.executionMode !== undefined && !["direct", "focus", "ask"].includes(raw.executionMode)) throw createError("MANUAL_SYNC_INVALID", "行动执行方式无效。");
+    // 兼容历史上已保存的长时行动；客户端新增和编辑入口已限制为 360 分钟。
+    if (!Number.isInteger(raw.estimatedMinutes) || raw.estimatedMinutes < 5 || raw.estimatedMinutes > 1440) throw createError("MANUAL_SYNC_INVALID", "行动预计时间无效。");
+    if (raw.executionMode !== undefined && !["direct", "focus"].includes(raw.executionMode)) throw createError("MANUAL_SYNC_INVALID", "行动执行方式无效。");
     if (raw.iconKey !== undefined && !ACTION_ICON_KEYS.has(raw.iconKey)) throw createError("MANUAL_SYNC_INVALID", "行动图标无效。");
     if (raw.iconManual !== undefined && typeof raw.iconManual !== "boolean") throw createError("MANUAL_SYNC_INVALID", "行动图标设置无效。");
     if (raw.actualMinutes !== undefined && (!Number.isInteger(raw.actualMinutes) || raw.actualMinutes < 0 || raw.actualMinutes > 480)) throw createError("MANUAL_SYNC_INVALID", "行动实际时间无效。");

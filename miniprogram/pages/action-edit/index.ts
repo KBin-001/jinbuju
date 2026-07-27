@@ -5,7 +5,7 @@ import { syncManualData } from "../../services/manualSync";
 import { getTodayBusinessDate } from "../../utils/date";
 import { buildReminderAt, nextReminderTime, normalizeReminderTime, reminderDateRange } from "../../utils/actionReminder";
 import { withAppTheme } from "../../services/theme";
-import { ACTION_DURATION_VALUES } from "../../config/action";
+import { ACTION_DURATION_MAX_MINUTES, ACTION_DURATION_MIN_MINUTES, ACTION_DURATION_VALUES } from "../../config/action";
 import { ACTION_ICON_OPTIONS, inferActionIconKey } from "../../utils/actionIcon";
 import { ActionIconKey } from "../../types/manual";
 
@@ -141,8 +141,8 @@ Page(withAppTheme({
       this.setData({ validationMessage: "请填写至少 2 个字的行动标题" });
       return;
     }
-    if (!Number.isInteger(estimatedMinutes) || estimatedMinutes < 5 || estimatedMinutes > 240) {
-      this.setData({ validationMessage: "预计投入需为 5～240 分钟的整数" });
+    if (!Number.isInteger(estimatedMinutes) || estimatedMinutes < ACTION_DURATION_MIN_MINUTES || estimatedMinutes > ACTION_DURATION_MAX_MINUTES) {
+      this.setData({ validationMessage: "预计投入需为 5～360 分钟的整数" });
       return;
     }
     const goalId = this.data.goalId || getActiveGoal()?.id || "";
