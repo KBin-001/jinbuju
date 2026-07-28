@@ -1,17 +1,15 @@
 <view class="page today-page {{activeSessionId ? 'today-page--timing' : ''}}" data-theme="{{appTheme}}">
-  <view class="today-hero tab-header" style="height: {{headerHeight}}px;">
+  <view class="today-hero tab-header" style="height: calc({{menuTop}}px + 112rpx);">
     <image class="today-hero__background tab-header__background" src="/assets/today-hero-mountain-v2.jpg" mode="aspectFill" />
     <view class="today-hero__veil tab-header__veil"></view>
-    <view class="today-nav tab-header__nav" style="padding-top: {{menuTop}}px; height: {{menuHeight}}px;"><text class="tab-header__title">今日</text></view>
-  </view>
-
-  <view wx:if="{{status === 'ready'}}" class="today-profile-row">
-    <image wx:if="{{displayAvatarUrl}}" class="today-avatar" src="{{displayAvatarUrl}}" mode="aspectFill" binderror="useDefaultAvatar" />
-    <image wx:else class="today-avatar" src="/images/icons/avatar.png" mode="aspectFit" />
-    <view class="today-greeting-copy"><text class="today-greeting">{{greetingText}}，行动伙伴</text><text class="today-subtitle">{{greetingSubtitle}}</text></view>
-    <view class="action-streak" aria-label="连续行动天数">
-      <view class="action-streak__value">{{currentStreakDays}}<text>天</text></view>
-      <view class="action-streak__label">连续行动</view>
+    <view class="today-header" style="padding-top: {{menuTop}}px;">
+      <view class="today-header__copy">
+        <view class="today-header__title">今日</view>
+        <view class="today-header__date">{{selectedMonthDay}} · {{weekdayShort}}</view>
+      </view>
+      <view class="today-header__streak" aria-label="连续行动 {{currentStreakDays}} 天">
+        <text>连续行动</text><text class="today-header__streak-number">{{currentStreakDays}}</text><text>天</text>
+      </view>
     </view>
   </view>
 
@@ -32,8 +30,17 @@
   </view>
 
   <block wx:else>
+    <ai-coach-tip
+      wx:if="{{goal}}"
+      status="{{coachStatus}}"
+      title="{{coachHeadline}}"
+      body="{{coachBody}}"
+      text="{{coachTipText}}"
+      bind:open="openDailyCoach"
+    />
+
     <view class="paper-card week-card">
-      <view class="week-head"><view class="week-title">{{selectedMonthDay}}</view><view class="week-switch" catchtap="openCalendar" aria-label="展开完整日历"><text>完整日历</text><text class="week-chevron">›</text></view></view>
+      <view class="week-head"><view class="week-switch" catchtap="openCalendar" aria-label="展开完整日历"><text>完整日历</text><t-icon name="chevron-right" size="26rpx" /></view></view>
       <view class="week-grid">
         <view
           wx:for="{{weekDays}}"
@@ -60,13 +67,18 @@
         <view class="task-section-head">
           <view class="task-section-heading">
             <view class="task-section-title">今日行动</view>
-            <view class="habit-recommend" catchtap="openRecommendInfo" role="button" aria-label="了解推荐机制">按习惯推荐</view>
           </view>
           <view class="task-section-tools">
-            <view class="task-section-add task-section-add--icon" catchtap="addTask" role="button" aria-label="添加行动"><t-icon name="add" size="27rpx" /></view>
-            <view class="execution-preference" catchtap="openExecutionPreference" role="button" aria-label="设置执行偏好">
-              <t-icon name="setting" size="24rpx" />
-              <text class="execution-preference__label">执行偏好</text>
+            <view class="task-tool habit-recommend" catchtap="openSortOptions" role="button" aria-label="按习惯推荐与排序今日行动">
+              <t-icon name="order-descending" size="27rpx" />
+              <text>排序</text>
+            </view>
+            <view class="task-tool" catchtap="addTask" role="button" aria-label="添加行动">
+              <t-icon name="add" size="26rpx" />
+              <text>添加</text>
+            </view>
+            <view class="task-tool" catchtap="openExecutionPreference" role="button" aria-label="设置执行偏好">
+              <text class="execution-preference__label">设置</text>
             </view>
           </view>
         </view>
@@ -78,6 +90,8 @@
             active-task-id="{{activeSessionTaskId}}"
             active-status="{{activeSessionStatus}}"
             active-minutes="{{activeSessionElapsedMinutes}}"
+            active-display="{{activeSessionDisplay}}"
+            active-total-minutes="{{todayActualMinutes}}"
             bind:open="openTask"
             bind:primary="handleTaskPrimary"
             bind:menu="openTaskMenu"
@@ -96,11 +110,6 @@
         bind:open="openTodayDataDetails"
       />
 
-      <ai-coach-tip
-        status="{{coachStatus}}"
-        text="{{coachTipText}}"
-        bind:open="openDailyCoach"
-      />
     </block>
   </block>
 
@@ -112,6 +121,7 @@
     display-time="{{activeSessionDisplay}}"
     progress-percent="{{activeSessionProgress}}"
     orphan="{{activeSessionOrphan}}"
+    bind:open="openActiveSession"
     bind:toggle="toggleActiveTimer"
     bind:finish="requestFinishTimer"
     bind:cleanup="cleanupOrphanSession"
@@ -230,6 +240,7 @@
         <view class="quick-settings-section quick-time-section">
           <view class="quick-section-title"><view class="quick-section-mark"></view><text>预计投入</text></view>
           <view class="quick-time-card">
+            <view class="quick-time-sound {{tickSoundEnabled ? 'is-on' : 'is-off'}}" catchtap="toggleTickSound" aria-label="声音反馈"><t-icon name="{{tickSoundEnabled ? 'sound' : 'sound-mute'}}" size="22rpx" /></view>
             <view class="quick-time-value"><text class="quick-time-number">{{quickAddMinutes}}</text><text class="quick-time-unit">分钟</text></view>
             <view class="quick-time-swipe-hint">
               <t-icon class="quick-time-swipe-icon" name="chevron-left" size="24rpx" />

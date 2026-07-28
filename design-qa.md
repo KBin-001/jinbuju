@@ -275,3 +275,95 @@ final result: passed
 - QA 临时计时会话已清理，任务仍为未完成且实际投入为 0，未污染真实业务数据。
 
 final result: passed
+
+---
+
+# 2026-07-27 今日页参考稿复刻 QA
+
+- Reference: `C:\\Users\\24786\\AppData\\Local\\Temp\\codex-clipboard-2f27a9f1-858c-4fc7-8720-eabccdcacecd.png`
+- Implementation: `C:\\Users\\24786\\.codex\\visualizations\\2026\\07\\27\\019fa3be-614d-7e62-a29f-20bb39ec5a1d\\today-premium-final.png`
+- Side-by-side comparison: `C:\\Users\\24786\\.codex\\visualizations\\2026\\07\\27\\019fa3be-614d-7e62-a29f-20bb39ec5a1d\\today-reference-comparison-final.png`
+- Runtime: WeChat DevTools, iPhone 15 Pro Max, 430 × 932 CSS px, DPR 3
+- Capture: 645 × 1398 px, current real account data, paused focus session
+
+## Full-view comparison
+
+The reference and runtime capture were normalized to the same 853 × 1844 canvas and inspected side by side. The implementation matches the reference direction in page rhythm, large warm whitespace, faint shanshui hero, text-only streak, borderless calendar, thin group separators, single highlighted focus task, restrained timer status bar, and four-item bottom navigation.
+
+## Focused regions
+
+- Header: retained the real avatar and dynamic greeting, removed the circular streak ring, and reduced the streak to a text-only `连续行动 / 8天` block.
+- Date: removed the card-like surface and shadow; retained the real selectable week strip and full calendar entry.
+- Actions: converted repeated cards into line-separated rows; retained real direct-complete, focus, task detail, more-menu, sort, add, and execution-preference event chains.
+- Focus state: only the active task receives a pale green surface and left accent. Paused state remains semantically accurate through amber status text/dot without turning the row into a player.
+- Timer: reduced the floating control to status, task title, elapsed time, and chevron; opening it still routes to the full focus session where pause/resume/end remain available.
+
+## Fix history
+
+- P0: none.
+- P1 fixed: circular streak visualization removed; heavy task cards removed; active timer player controls removed from the Today page; active task and timer bar connected to the existing focus session.
+- P1 fixed: direct-complete tasks now render as an empty completion circle; active focus renders as a filled focus marker.
+- P2 fixed: active paused row changed from a gold panel to the same restrained green highlight used by the reference, leaving amber only as a state cue.
+- Accepted platform variance: the real mini-program reserves the WeChat safe area and displays live user content, so vertical placement and task grouping differ slightly from the static reference while preserving its visual system.
+
+## Verification
+
+- TypeScript: `npm exec tsc -- --noEmit` passed.
+- Targeted Today/task/session tests: 6/6 passed.
+- WeChat DevTools compile: passed with 0 errors and 0 warnings.
+- Runtime console inspection: 0 errors, 0 warnings, 0 exceptions.
+- CDP render inspection: 0 errors and 0 warnings.
+
+## Final result
+
+passed
+
+---
+
+# 2026-07-28 今日页目标稿复刻 QA
+
+- source visual truth path: `C:/Users/24786/AppData/Local/Temp/codex-clipboard-b847a08b-a4d2-441b-935d-4311243b4dad.png`
+- implementation screenshot path: `C:/Users/24786/.codex/visualizations/2026/07/27/019fa3be-614d-7e62-a29f-20bb39ec5a1d/today-redesign-verified.png`
+- side-by-side evidence: `C:/Users/24786/.codex/visualizations/2026/07/27/019fa3be-614d-7e62-a29f-20bb39ec5a1d/today-redesign-comparison-verified.png`
+- viewport: WeChat DevTools, iPhone 15 Pro Max, 430 x 932 CSS px, DPR 3
+- source pixels: 853 x 1844
+- implementation pixels: 645 x 1398
+- density normalization: implementation resized to 853 x 1844; both images have the same 9:19.45 aspect ratio
+- state: 2026-07-28 real account data, no active timer session, two partially completed actions
+
+## Full-view comparison evidence
+
+The normalized side-by-side view confirms the same information order and visual hierarchy: compact date/streak hero, AI coach strip, week calendar, Today Actions toolbar, Quick/Later groups, line-based task rows, state buttons, progress treatment, and four-item tab bar.
+
+## Focused region evidence
+
+- Header: app-owned content matches the source; WeChat capsule/status safe area remains runtime-owned and is intentionally preserved.
+- AI coach: gold label/icon, strong one-line conclusion, muted supporting copy, and right-aligned action match the reference structure.
+- Calendar: weekday/date alignment, selected green circle, muted weekend dates, and full-calendar entry were checked at equal density.
+- Task list: group counters, hairline dividers, start/continue/completed states, ellipsis menu, pale active background, and progress bars were checked at equal density.
+
+## Findings
+
+- P0: none.
+- P1: none.
+- P2: none remaining.
+- Accepted variance: task titles, focused minutes, completion states, and group membership come from real account data rather than the static mock.
+- Accepted variance: the native WeChat bottom safe area makes the persistent tab bar taller than the static source; remaining tasks and the real daily progress section are reachable by normal scrolling.
+
+## Comparison history
+
+1. Pass 1 found P1 drift from the old page: oversized calligraphic logo, avatar greeting block, left play-circle task controls, and AI content below the list. These were replaced with the target hierarchy and right-side state buttons.
+2. Pass 2 found P2 vertical-density drift: the hero and week calendar were too tall, exposing fewer task states above the fold. Hero height, week-card height, group gaps, and active-row height were reduced.
+3. The verified pass shows no actionable P0/P1/P2 mismatch. Live-data and native-safe-area differences are intentional product constraints.
+
+## Verification
+
+- `npm exec tsc -- --noEmit`: passed.
+- Targeted Today/task/session contracts: 6/6 passed.
+- WeChat DevTools compile: 0 errors, 0 warnings.
+- Runtime console: 0 errors, 0 warnings, 0 exceptions.
+- CDP render inspection: 0 errors, 0 warnings.
+
+## Final result
+
+passed

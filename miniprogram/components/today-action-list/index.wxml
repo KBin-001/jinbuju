@@ -18,6 +18,7 @@
         </view>
         <view class="action-group__title">
           <text>{{group.title}}</text>
+          <text class="action-group__count">{{group.count}}</text>
         </view>
         <view wx:if="{{group.hint}}" class="action-group__hint">{{group.hint}}</view>
       </view>
@@ -27,47 +28,35 @@
           wx:for="{{group.tasks}}"
           wx:for-item="item"
           wx:key="id"
-          class="action-row {{item.status === 'completed' ? 'is-completed' : ''}}"
+          class="action-row {{item.status === 'completed' ? 'is-completed' : ''}} {{item.showProgress || activeTaskId === item.id ? 'is-active' : ''}} {{activeTaskId === item.id && activeStatus === 'paused' ? 'is-paused' : ''}}"
           data-id="{{item.id}}"
           bindtap="openTask"
           hover-class="action-row--pressed"
           aria-label="{{item.displayTitle + '，' + item.actionTimeText}}"
         >
-          <view class="action-icon action-icon--{{item.actionIconTone}}">
-            <image class="action-icon__image" src="{{item.actionIconAsset}}" mode="aspectFit" />
-          </view>
-
           <view class="action-copy">
             <view class="action-title">{{item.displayTitle}}</view>
-            <view class="action-meta">
-              <text wx:if="{{activeTaskId === item.id}}">
-                {{activeStatus === 'paused' ? '已暂停' : '已专注'}} {{activeMinutes}} 分钟
-              </text>
-              <text wx:elif="{{item.status === 'completed' && item.actualMinutes}}">实际 {{item.actualMinutes}} 分钟</text>
-              <text wx:else>{{item.actionTimeText}}</text>
-              <text wx:if="{{item.rescheduled}}" class="carry-badge">顺延任务</text>
-              <text wx:if="{{group.key === 'focus' && item.priorityReasons.length}}" wx:for="{{item.priorityReasons}}" wx:for-item="reason" wx:key="key" class="reason-tag">{{reason.label}}</text>
+            <view class="action-meta"><text>{{item.actionMetaText}}</text><text wx:if="{{item.rescheduled}}" class="carry-badge">顺延任务</text></view>
+            <view wx:if="{{item.priorityReasons.length}}" class="priority-reasons" aria-hidden="true">
+              <text wx:for="{{item.priorityReasons}}" wx:for-item="reason" wx:key="key" class="reason-tag">{{reason.label}}</text>
             </view>
           </view>
 
-          <view class="action-control">
-            <view
-              class="action-mark action-mark--{{item.primaryActionTone}} {{item.primaryAction === 'active' ? 'action-mark--active' : ''}} {{item.primaryAction === 'complete' && !item.canComplete ? 'action-mark--disabled' : ''}}"
-              data-id="{{item.id}}"
-              catchtap="primaryAction"
-              hover-class="action-mark--pressed"
-              role="button"
-              aria-label="{{item.primaryActionLabel + item.displayTitle}}"
-              aria-disabled="{{item.primaryAction === 'complete' && !item.canComplete}}"
-            >
-              <view class="action-mark__disc">
-                <t-icon name="{{item.primaryActionIcon || 'play-circle'}}" size="27rpx" />
-                <text wx:if="{{item.primaryAction === 'complete' && !item.canComplete}}" class="action-mark__label">未到期</text>
-                <text wx:elif="{{item.primaryAction === 'active' && activeTaskId === item.id}}" class="action-mark__label action-mark__label--numeric">{{activeMinutes}}分</text>
-                <text wx:else class="action-mark__label">{{item.primaryActionShortLabel || item.primaryActionLabel || '开始'}}</text>
-                <view wx:if="{{item.isRecommendedAction}}" class="action-mark__recommendation"></view>
-              </view>
-            </view>
+          <view
+            class="action-button action-button--{{item.actionButtonTone}} {{item.primaryAction === 'complete' && !item.canComplete ? 'is-disabled' : ''}}"
+            data-id="{{item.id}}"
+            catchtap="primaryAction"
+            hover-class="action-button--pressed"
+            role="button"
+            aria-label="{{item.primaryActionLabel + item.displayTitle}}"
+            aria-disabled="{{item.primaryAction === 'complete' && !item.canComplete}}"
+          >
+            <text>{{item.actionButtonLabel}}</text>
+            <t-icon wx:if="{{item.status === 'completed'}}" name="check" size="24rpx" />
+            <text class="action-mark__label">{{item.primaryActionShortLabel || item.primaryActionLabel || '开始'}}</text>
+          </view>
+          <view class="action-mark action-mark--{{item.primaryActionTone}}" aria-hidden="true">
+            <view class="action-mark__disc"><t-icon name="{{item.primaryActionIcon || 'play-circle'}}" size="24rpx" /></view>
           </view>
 
           <view
@@ -78,8 +67,9 @@
             role="button"
             aria-label="{{item.displayTitle + '更多操作'}}"
           >
-            <view class="task-more__dot"></view><view class="task-more__dot"></view><view class="task-more__dot"></view>
+            <t-icon name="ellipsis" size="30rpx" />
           </view>
+          <view wx:if="{{item.showProgress}}" class="action-progress"><view class="action-progress__fill" style="width: {{item.progressPercent}}%;"></view></view>
         </view>
       </view>
     </view>

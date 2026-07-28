@@ -1,6 +1,6 @@
 import { getActiveGoal } from "../../services/manualGoal";
 import { getProgressSummary, recordDailyCheckin } from "../../services/manualStats";
-import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTask, updateTaskPriorityOverride, updateTaskReminder, updateTaskStatus } from "../../services/manualTask";
+import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTask, updateTaskExecutionMode, updateTaskPriorityOverride, updateTaskReminder, updateTaskStatus } from "../../services/manualTask";
 import { getLocalUserProfile } from "../../services/profile";
 import { bootstrapAccount } from "../../services/account";
 import { analyzeProgress, prepareProgressCoach } from "../../services/progressCoach";
@@ -113,8 +113,8 @@ function progressSegments(summary: TodaySummary): ProgressSegment[] {
 }
 
 /**
- * 今日行动智能分组：委托 groupTasksByPriority 纯函数，基于多维评分自动分入
- * "今日重点""快速推进""稍后安排"三段。上下文从 getProgressSummary 获取。
+ * 今日行动保持「快速推进 / 稍后安排」两段。底层优先级评分仍然保留，
+ * 原本的 focus 与 quick 在首页合并为快速推进，避免分组过碎。
  */
 function buildActionPresentationGroups(tasks: ViewTask[], context: PriorityContext): ActionPresentationGroup[] {
   if (!tasks.length) return [];
@@ -124,14 +124,24 @@ function buildActionPresentationGroups(tasks: ViewTask[], context: PriorityConte
   } catch (_error) {
     groups = [];
   }
-  return groups.length ? groups : [{
-    key: "later",
+  const sourceGroups = groups.length ? groups : [{
+    key: "later" as const,
     title: "稍后安排",
-    hint: "已为你安排到专注时段",
+    hint: "",
     icon: "time",
-    tone: "muted",
+    tone: "muted" as const,
     tasks: tasks.map((task) => ({ ...task, priorityReasons: task.priorityReasons || [] })),
   }];
+  const quickTasks = sourceGroups
+    .filter((group) => group.key === "focus" || group.key === "quick")
+    .reduce<Array<ViewTask & { priorityReasons: PriorityReason[] }>>((all, group) => all.concat(group.tasks), []);
+  const laterTasks = sourceGroups
+    .filter((group) => group.key === "later")
+    .reduce<Array<ViewTask & { priorityReasons: PriorityReason[] }>>((all, group) => all.concat(group.tasks), []);
+  const result: ActionPresentationGroup[] = [];
+  if (quickTasks.length) result.push({ key: "quick", title: "快速推进", hint: "", icon: "play-circle", tone: "green", tasks: quickTasks });
+  if (laterTasks.length) result.push({ key: "later", title: "稍后安排", hint: "", icon: "time", tone: "muted", tasks: laterTasks });
+  return result;
 }
 function sessionClock(seconds: number): string {
   const safe = Math.max(0, Math.floor(seconds));
@@ -170,6 +180,17 @@ function todayMood(summary: TodaySummary): TodayMood {
   if (summary.completedCount > 0) return { title: "先拿下 1 项，节奏已经起来了", copy: `已经完成 ${summary.completedCount} 项，剩下的慢慢推进。`, tone: "low", mark: "进" };
   if (summary.partialCount > 0) return { title: "已经开始推进了", copy: `有 ${summary.partialCount} 项完成了一部分，继续把它收住。`, tone: "low", mark: "进" };
   return { title: "今天别空手离开", copy: `还有 ${summary.totalCount} 项等你开动，挑最小的一件先做。`, tone: "low", mark: "动" };
+}
+function buildCoachPresentation(tasks: ViewTask[], summary: TodaySummary): { title: string; body: string } {
+  const unfinished = tasks.filter((task) => task.status === "pending" || task.status === "partially_completed");
+  if (!summary.totalCount) return { title: "今天先添加 1 项行动", body: "从一件具体的小事开始，建立今天的行动节奏。" };
+  if (!unfinished.length) return { title: "今天的行动已经全部完成", body: "可以回顾投入记录，为明天保留稳定节奏。" };
+  const first = unfinished[0];
+  const second = unfinished[1];
+  return {
+    title: "今天先完成 1 项重点",
+    body: second ? `先完成${first.displayTitle}，再进入${second.displayTitle}。` : `先完成${first.displayTitle}，为今天建立清晰节奏。`,
+  };
 }
 function buildProactiveInsight(summary: TodaySummary, tasks: ViewTask[], progress: ReturnType<typeof getProgressSummary> | null, selectedDate: string, today: string): ProactiveInsight {
   const isToday = selectedDate === today;
@@ -429,6 +450,7 @@ Page(withAppTheme({
     remainingEstimatedMinutes: 0,
     progressSegments: [] as ProgressSegment[],
     actionListExpanded: false,
+    taskSortMode: "habit" as "habit" | "shortest",
     hiddenActionCount: 0,
     heroDayLabel: "DAY 1",
     heroFocusTitle: "今日行动",
@@ -442,6 +464,8 @@ Page(withAppTheme({
     coachStatus: "idle" as "idle" | "loading" | "ready" | "error",
     proactiveInsight: { label: "AI 主动观察", title: "先添加一项今日行动", body: "我会根据完成状态、实际投入和连续天数，主动提醒你下一步。", tone: "start" } as ProactiveInsight,
     coachTipText: "先添加一项今日行动，我会根据真实投入给出下一步建议。",
+    coachHeadline: "今天先添加 1 项行动",
+    coachBody: "从一件具体的小事开始，建立今天的行动节奏。",
     weekday: "",
     weekdayShort: "",
     selectedDate: "",
@@ -496,6 +520,7 @@ Page(withAppTheme({
     taskMenuRecommendation: "",
     taskMenuGroups: [] as TaskMenuGroup[],
     inAppMessage: null as InAppMessage | null,
+    tickSoundEnabled: true,
   },
   profileHandler: null as null | (() => void),
   focusGoalHandler: null as null | (() => void),
@@ -503,6 +528,9 @@ Page(withAppTheme({
   completionSheetTimer: null as ReturnType<typeof setTimeout> | null,
   sessionTicker: null as ReturnType<typeof setInterval> | null,
   quickDurationScrollTimer: null as ReturnType<typeof setTimeout> | null,
+  tickAudioMinor: null as any,
+  tickAudioMajor: null as any,
+  tickSoundLastPlay: 0,
   coachRequestKey: "",
   coachRequestGeneration: 0,
   scrollTopCache: 0,
@@ -518,6 +546,7 @@ Page(withAppTheme({
     on("profile:update", this.profileHandler);
     on("goal:focus:update", this.focusGoalHandler);
     on("action-session:update", this.sessionUpdateHandler);
+    this.initTickSounds();
   },
   onReady() {},
   onHide() { this.stopSessionTicker(); },
@@ -543,6 +572,8 @@ Page(withAppTheme({
       off("action-session:update", this.sessionUpdateHandler);
       this.sessionUpdateHandler = null;
     }
+    if (this.tickAudioMinor) { this.tickAudioMinor.destroy(); this.tickAudioMinor = null; }
+    if (this.tickAudioMajor) { this.tickAudioMajor.destroy(); this.tickAudioMajor = null; }
   },
   onShow() {
     (this as any).getTabBar?.()?.syncSelected?.();
@@ -597,8 +628,16 @@ Page(withAppTheme({
         ...group,
         tasks: group.tasks.map((task) => decorateTaskAction(toViewTask(task, selectedDate, today), activeSession?.taskId || "", activeSession?.status || "")),
       }));
+      const defaultTasks = sortTodayTasksIncompleteFirst(baseTaskGroups.reduce<ViewTask[]>((all, group) => all.concat(group.tasks), []));
+      const orderedTasks = this.data.taskSortMode === "shortest"
+        ? [...defaultTasks].sort((left, right) => {
+          const leftDone = left.status === "completed" ? 1 : 0;
+          const rightDone = right.status === "completed" ? 1 : 0;
+          return leftDone - rightDone || left.estimatedMinutes - right.estimatedMinutes;
+        })
+        : defaultTasks;
       const tasks = markRecommendedAction(
-        sortTodayTasksIncompleteFirst(baseTaskGroups.reduce<ViewTask[]>((all, group) => all.concat(group.tasks), [])),
+        orderedTasks,
         selectedDate === today,
       );
       const taskById = new Map(tasks.map((task) => [task.id, task]));
@@ -617,7 +656,8 @@ Page(withAppTheme({
       const todayMinuteProgress = todayTargetMinutes > 0 ? Math.min(100, Math.round(todayActualMinutes / todayTargetMinutes * 100)) : 0;
       const progress = goal ? getProgressSummary(goal.id, selectedDate) : null;
       const mood = todayMood(summary);
-      const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 4);
+      const coachPresentation = buildCoachPresentation(tasks, summary);
+      const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 5);
       const priorityContext: PriorityContext = { today, goalTargetDate: goal?.targetDate, currentStreakDays: progress?.currentStreakDays || 0 };
       this.priorityContext = priorityContext;
       const visibleTaskGroups = buildActionPresentationGroups(visibleTasks, priorityContext);
@@ -665,6 +705,8 @@ Page(withAppTheme({
         currentStreakDays: progress?.currentStreakDays || 0,
         proactiveInsight: buildProactiveInsight(summary, tasks, progress, selectedDate, today),
         coachTipText: buildCoachTip(buildProactiveInsight(summary, tasks, progress, selectedDate, today), activeSessionTask, activeMinutes),
+        coachHeadline: coachPresentation.title,
+        coachBody: coachPresentation.body,
         weekday: copy.weekday,
         weekdayShort: copy.weekday.replace("星期", "周"),
         weekTitle: week.weekTitle,
@@ -740,7 +782,7 @@ Page(withAppTheme({
   retry() { this.load(); },
   toggleActionList() {
     const actionListExpanded = !this.data.actionListExpanded;
-    const visibleTasks = actionListExpanded ? this.data.tasks : this.data.tasks.slice(0, 4);
+    const visibleTasks = actionListExpanded ? this.data.tasks : this.data.tasks.slice(0, 5);
     this.setData({
       actionListExpanded,
       visibleTasks,
@@ -808,7 +850,7 @@ Page(withAppTheme({
       return;
     }
     if (task.primaryAction === "active") {
-      wx.showToast({ title: "当前行动正在专注", icon: "none" });
+      this.openActiveSession();
       return;
     }
     if (task.primaryAction === "complete") this.completeTask(task);
@@ -816,11 +858,21 @@ Page(withAppTheme({
   },
   openExecutionPreference() {
     wx.showActionSheet({
-      itemList: ["直接完成：轻任务优先打卡", "专注计时：需要投入时开始计时"],
+      itemList: ["直接完成", "开始专注"],
       success: ({ tapIndex }) => {
         const mode: ActionExecutionMode = tapIndex === 0 ? "direct" : "focus";
         this.setData({ quickAddExecutionMode: mode });
         wx.showToast({ title: mode === "direct" ? "新增行动默认直接完成" : "新增行动默认专注计时", icon: "none" });
+      },
+    });
+  },
+  openSortOptions() {
+    wx.showActionSheet({
+      itemList: ["按习惯推荐", "预计时长从短到长"],
+      success: ({ tapIndex }) => {
+        const taskSortMode = tapIndex === 1 ? "shortest" as const : "habit" as const;
+        this.setData({ taskSortMode }, () => this.load());
+        wx.showToast({ title: taskSortMode === "shortest" ? "已按预计时长排序" : "已恢复习惯推荐", icon: "none" });
       },
     });
   },
@@ -852,6 +904,15 @@ Page(withAppTheme({
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "计时启动失败", icon: "none" });
     }
+  },
+  openActiveSession() {
+    if (this.data.activeSessionOrphan) {
+      wx.showToast({ title: "关联行动已删除，请先清理计时", icon: "none" });
+      return;
+    }
+    const taskId = this.data.activeSessionTaskId;
+    if (!taskId) return;
+    wx.navigateTo({ url: `/pages/action-session/index?taskId=${encodeURIComponent(taskId)}` });
   },
   toggleActiveTimer() {
     if (!this.data.activeSessionId || this.data.timerSubmitting) return;
@@ -895,7 +956,7 @@ Page(withAppTheme({
     wx.showModal({
       title: "结束本次计时",
       content: `本次专注 ${minutes} 分钟，是否同时完成"${taskTitle}"？`,
-      cancelText: "仅结束",
+      cancelText: "仅结束计时",
       confirmText: "标记完成",
       confirmColor: MODAL_CONFIRM_COLORS.confirm,
       success: (result) => { this.finishActiveTimer(Boolean(result.confirm)); },
@@ -909,10 +970,11 @@ Page(withAppTheme({
       const context = getActiveActionSessionContext();
       if (!context || !context.session) { wx.showToast({ title: "当前没有进行中的计时", icon: "none" }); return; }
       sessionId = context.session.id;
+      this.setData({ activeSessionId: sessionId });
     }
     this.setData({ timerSubmitting: true });
     try {
-      finishActionSession(sessionId, markTaskCompleted);
+      finishActionSession(this.data.activeSessionId, markTaskCompleted);
       await syncManualData().catch(() => undefined);
       this.stopSessionTicker();
       this.setData({ timerSubmitting: false });
@@ -990,7 +1052,7 @@ Page(withAppTheme({
       quickAddTitle: task?.title || "",
       quickAddMinutes: minutes,
       quickAddHourText: durationHourCopy(minutes),
-      quickAddExecutionMode: task?.executionMode === "direct" ? "direct" : "focus",
+      quickAddExecutionMode: task ? (task.executionMode === "direct" ? "direct" : "focus") : this.data.quickAddExecutionMode,
       quickAddImportance: task?.importance === "required" ? "required" : "normal",
       quickAddBlocksOthers: Boolean(task?.blocksOthers),
       quickAddDate: date,
@@ -1041,6 +1103,38 @@ Page(withAppTheme({
       wx.showToast({ title: error instanceof Error ? error.message : "提醒时间无效", icon: "none" });
     }
   },
+  initTickSounds() {
+    if (this.tickAudioMinor || this.tickAudioMajor) return;
+    try {
+      const stored = wx.getStorageSync("tickSoundEnabled");
+      if (stored === false) { this.setData({ tickSoundEnabled: false }); return; }
+    } catch { /* storage read failed — keep default on */ }
+    const minor = wx.createInnerAudioContext();
+    minor.src = "/assets/sounds/tick-minor.wav";
+    minor.volume = 0.3;
+    minor.preload = true;
+    this.tickAudioMinor = minor;
+    const major = wx.createInnerAudioContext();
+    major.src = "/assets/sounds/tick-major.wav";
+    major.volume = 0.4;
+    major.preload = true;
+    this.tickAudioMajor = major;
+  },
+  playTickSound(isMajor: boolean) {
+    if (!this.data.tickSoundEnabled) return;
+    const now = Date.now();
+    if (now - this.tickSoundLastPlay < 50) return;
+    this.tickSoundLastPlay = now;
+    const ctx = isMajor ? this.tickAudioMajor : this.tickAudioMinor;
+    if (!ctx) return;
+    try { ctx.stop(); ctx.seek(0); ctx.play(); } catch { /* playback failed — silently ignore */ }
+  },
+  toggleTickSound() {
+    const enabled = !this.data.tickSoundEnabled;
+    this.setData({ tickSoundEnabled: enabled });
+    try { wx.setStorageSync("tickSoundEnabled", enabled); } catch { /* storage write failed */ }
+    if (enabled && !this.tickAudioMinor) this.initTickSounds();
+  },
   onQuickDurationScroll(event: { detail: { scrollLeft?: number } }) {
     const windowWidth = wx.getWindowInfo ? wx.getWindowInfo().windowWidth : 375;
     const substepPx = QUICK_DURATION_SUBSTEP_RPX * windowWidth / 750;
@@ -1050,6 +1144,7 @@ Page(withAppTheme({
       Math.max(QUICK_DURATION_MINUTES, index * QUICK_DURATION_STEP_MINUTES),
     );
     if (minutes !== this.data.quickAddMinutes) {
+      this.playTickSound(minutes % 30 === 0);
       this.setData({
         quickAddMinutes: minutes,
         quickAddHourText: durationHourCopy(minutes),
@@ -1224,6 +1319,13 @@ Page(withAppTheme({
       pushExec("跳过今天", "今天不再提醒，明天正常恢复", "chevron-right-double", () => this.chooseReason(task, "skipped"));
     }
     pushAdjust("设为今日重点", "优先展示在今日行动顶部", "star", () => this.setTaskPriorityOverride(task, "focus"));
+    const nextExecutionMode: ActionExecutionMode = task.executionMode === "direct" ? "focus" : "direct";
+    pushAdjust(
+      nextExecutionMode === "focus" ? "改为开始专注" : "改为直接完成",
+      nextExecutionMode === "focus" ? "点击主操作后进入计时" : "点击主操作后直接记录完成",
+      nextExecutionMode === "focus" ? "play-circle" : "check-circle",
+      () => this.setTaskExecutionMode(task, nextExecutionMode),
+    );
     const placement = this.data.visibleTaskGroups.find((group) => group.tasks.some((item) => item.id === task.id))
       || buildActionPresentationGroups([task], this.priorityContext || { today: getTodayBusinessDate(), currentStreakDays: 0 })[0];
     const placementTitle = placement?.title || "系统推荐";
@@ -1249,6 +1351,17 @@ Page(withAppTheme({
   onTaskMenuClose() {
     this.setData({ taskMenuVisible: false, taskMenuRecommendation: "", taskMenuGroups: [] });
   },
+  setTaskExecutionMode(task: ViewTask, executionMode: ActionExecutionMode) {
+    try {
+      const updated = updateTaskExecutionMode(task.id, executionMode);
+      const selectedDate = this.data.selectedDate || getTodayBusinessDate();
+      this.applyTaskPatch(toViewTask(updated, selectedDate), this.scrollTopCache);
+      void syncManualData();
+      wx.showToast({ title: executionMode === "focus" ? "已改为开始专注" : "已改为直接完成", icon: "none" });
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "执行方式更新失败", icon: "none" });
+    }
+  },
   applyTaskPatch(updatedTask: ViewTask, prevScrollTop: number) {
     const today = getTodayBusinessDate();
     const selectedDate = this.data.selectedDate || today;
@@ -1266,7 +1379,8 @@ Page(withAppTheme({
     const summary = calculateTodaySummary(todayTasks);
     const progress = this.data.goal ? getProgressSummary(this.data.goal.id, selectedDate) : null;
     const mood = todayMood(summary);
-    const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 4);
+    const coachPresentation = buildCoachPresentation(tasks, summary);
+    const visibleTasks = this.data.actionListExpanded ? tasks : tasks.slice(0, 5);
     const priorityContext: PriorityContext = { today, goalTargetDate: this.data.goal?.targetDate, currentStreakDays: progress?.currentStreakDays || 0 };
     this.priorityContext = priorityContext;
     const visibleTaskGroups = buildActionPresentationGroups(visibleTasks, priorityContext);
@@ -1293,6 +1407,8 @@ Page(withAppTheme({
       currentStreakDays: progress?.currentStreakDays || 0,
       proactiveInsight: buildProactiveInsight(summary, tasks, progress, selectedDate, today),
       coachTipText: buildCoachTip(buildProactiveInsight(summary, tasks, progress, selectedDate, today), this.data.activeSessionTask, this.data.activeSessionElapsedMinutes),
+      coachHeadline: coachPresentation.title,
+      coachBody: coachPresentation.body,
     }, () => {
       wx.pageScrollTo({ scrollTop: prevScrollTop, duration: 0 });
     });

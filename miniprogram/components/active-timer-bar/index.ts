@@ -9,6 +9,7 @@ Component({
     orphan: { type: Boolean, value: false },
   },
   methods: {
+    openSession() { this.triggerEvent("open"); },
     toggleTimer() { this.triggerEvent("toggle"); },
     finishTimer() { this.triggerEvent("finish"); },
     cleanupOrphan() { this.triggerEvent("cleanup"); },
