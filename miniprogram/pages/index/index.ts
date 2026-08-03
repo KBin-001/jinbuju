@@ -16,6 +16,7 @@ import { groupTasksByPriority, PriorityContext, PriorityReason } from "../../uti
 import { getTabHeaderLayout } from "../../utils/tabHeader";
 import { buildReminderAt, nextReminderTime, normalizeReminderTime, reminderDateRange } from "../../utils/actionReminder";
 import { resolveActionIcon } from "../../utils/actionIcon";
+import { QuickDurationRulerController, createQuickDurationRulerController, quickDurationScrollLeftForMinutes, quickDurationStepPixels } from "../../utils/quickDurationRuler";
 import { abandonActionSession, finishActionSession, getActiveActionSession, getActiveActionSessionContext, pauseActionSession, resumeActionSession, startActionSession } from "../../services/actionSession";
 import { ACTION_DURATION_MAX_MINUTES, ACTION_DURATION_MIN_MINUTES } from "../../config/action";
 
@@ -159,9 +160,13 @@ function durationHourCopy(minutes: number): string {
 
 function durationScrollLeft(minutes: number): number {
   const windowWidth = wx.getWindowInfo ? wx.getWindowInfo().windowWidth : 375;
-  const substepPx = QUICK_DURATION_SUBSTEP_RPX * windowWidth / 750;
-  const stepIndex = Math.round(minutes / QUICK_DURATION_STEP_MINUTES);
-  return Math.max(0, stepIndex * substepPx);
+  return quickDurationScrollLeftForMinutes(
+    minutes,
+    quickDurationStepPixels(windowWidth),
+    QUICK_DURATION_MINUTES,
+    QUICK_DURATION_MAX_MINUTES,
+    QUICK_DURATION_STEP_MINUTES,
+  );
 }
 
 function sessionMinutes(session: ActionSession | null): number {
@@ -500,6 +505,7 @@ Page(withAppTheme({
     quickAddPreservedIconManual: false,
     quickDurationMarks: QUICK_DURATION_MARKS,
     quickDurationScrollLeft: durationScrollLeft(30),
+    quickDurationScrollWithAnimation: false,
     quickAddSubmitting: false,
     quickAddTouchStartY: 0,
     quickAddTouchDeltaY: 0,
@@ -527,7 +533,7 @@ Page(withAppTheme({
   sessionUpdateHandler: null as null | (() => void),
   completionSheetTimer: null as ReturnType<typeof setTimeout> | null,
   sessionTicker: null as ReturnType<typeof setInterval> | null,
-  quickDurationScrollTimer: null as ReturnType<typeof setTimeout> | null,
+  quickDurationRuler: null as QuickDurationRulerController | null,
   tickAudioMinor: null as any,
   tickAudioMajor: null as any,
   tickSoundLastPlay: 0,
@@ -538,6 +544,42 @@ Page(withAppTheme({
   priorityContext: { today: "", currentStreakDays: 0 } as PriorityContext,
   onPageScroll(event: { scrollTop: number }) {
     this.scrollTopCache = event.scrollTop;
+  },
+  ensureQuickDurationRuler(): QuickDurationRulerController {
+    if (this.quickDurationRuler) return this.quickDurationRuler;
+    const ruler = createQuickDurationRulerController({
+      minMinutes: QUICK_DURATION_MINUTES,
+      maxMinutes: QUICK_DURATION_MAX_MINUTES,
+      stepMinutes: QUICK_DURATION_STEP_MINUTES,
+      getStepPixels: () => {
+        const windowWidth = wx.getWindowInfo ? wx.getWindowInfo().windowWidth : 375;
+        return quickDurationStepPixels(windowWidth);
+      },
+      onPreview: (minutes) => {
+        if (!this.data.quickAddVisible || this.data.quickAddMinutes === minutes) return;
+        this.playTickSound(minutes % 30 === 0);
+        this.setData({
+          quickAddMinutes: minutes,
+          quickAddHourText: durationHourCopy(minutes),
+        });
+      },
+      onSnap: ({ minutes, scrollLeft }) => {
+        if (!this.data.quickAddVisible) return;
+        this.setData({
+          quickAddMinutes: minutes,
+          quickAddHourText: durationHourCopy(minutes),
+          quickDurationScrollLeft: scrollLeft,
+          quickDurationScrollWithAnimation: true,
+        });
+        wx.nextTick(() => {
+          if (this.quickDurationRuler === ruler && this.data.quickAddVisible) {
+            this.setData({ quickDurationScrollWithAnimation: false });
+          }
+        });
+      },
+    });
+    this.quickDurationRuler = ruler;
+    return ruler;
   },
   onLoad() {
     this.profileHandler = () => this.load();
@@ -552,9 +594,9 @@ Page(withAppTheme({
   onHide() { this.stopSessionTicker(); },
   onUnload() {
     this.stopSessionTicker();
-    if (this.quickDurationScrollTimer) {
-      clearTimeout(this.quickDurationScrollTimer);
-      this.quickDurationScrollTimer = null;
+    if (this.quickDurationRuler) {
+      this.quickDurationRuler.destroy();
+      this.quickDurationRuler = null;
     }
     if (this.completionSheetTimer) {
       clearTimeout(this.completionSheetTimer);
@@ -1043,8 +1085,10 @@ Page(withAppTheme({
   openQuickAddEditor(task?: ViewTask) {
     const range = reminderDateRange();
     const minutes = task?.estimatedMinutes || 30;
+    const durationRuler = this.ensureQuickDurationRuler();
     const reminderScheduled = task?.reminder?.status === "scheduled";
     const date = task?.currentDate || range.start;
+    durationRuler.initialize(minutes);
     this.setData({
       quickAddVisible: true,
       quickAddMode: task ? "edit" : "create",
@@ -1065,14 +1109,16 @@ Page(withAppTheme({
       quickAddPreservedIconKey: task?.iconKey || "",
       quickAddPreservedIconManual: Boolean(task?.iconManual),
       quickDurationScrollLeft: durationScrollLeft(minutes),
+      quickDurationScrollWithAnimation: false,
       quickAddSubmitting: false,
       quickAddTouchDeltaY: 0,
     });
   },
   closeQuickAdd() {
     if (this.data.quickAddSubmitting) return;
+    this.quickDurationRuler?.reset();
     this.setData(
-      { quickAddVisible: false, quickAddTaskId: "", quickAddTouchDeltaY: 0 },
+      { quickAddVisible: false, quickAddTaskId: "", quickAddTouchDeltaY: 0, quickDurationScrollWithAnimation: false },
     );
   },
   noop() {},
@@ -1135,40 +1181,29 @@ Page(withAppTheme({
     try { wx.setStorageSync("tickSoundEnabled", enabled); } catch { /* storage write failed */ }
     if (enabled && !this.tickAudioMinor) this.initTickSounds();
   },
+  onQuickDurationDragStart() {
+    if (!this.data.quickAddVisible) return;
+    this.ensureQuickDurationRuler().beginGesture();
+  },
+  onQuickDurationDragEnd(event: { detail?: { scrollLeft?: number } }) {
+    if (!this.data.quickAddVisible) return;
+    const scrollLeft = event.detail?.scrollLeft;
+    this.ensureQuickDurationRuler().endGesture(scrollLeft);
+  },
   onQuickDurationScroll(event: { detail: { scrollLeft?: number } }) {
-    const windowWidth = wx.getWindowInfo ? wx.getWindowInfo().windowWidth : 375;
-    const substepPx = QUICK_DURATION_SUBSTEP_RPX * windowWidth / 750;
-    const index = Math.round(Number(event.detail.scrollLeft || 0) / substepPx);
-    const minutes = Math.min(
-      QUICK_DURATION_MAX_MINUTES,
-      Math.max(QUICK_DURATION_MINUTES, index * QUICK_DURATION_STEP_MINUTES),
-    );
-    if (minutes !== this.data.quickAddMinutes) {
-      this.playTickSound(minutes % 30 === 0);
-      this.setData({
-        quickAddMinutes: minutes,
-        quickAddHourText: durationHourCopy(minutes),
-      });
-    }
-    if (this.quickDurationScrollTimer) clearTimeout(this.quickDurationScrollTimer);
-    this.quickDurationScrollTimer = setTimeout(() => {
-      this.quickDurationScrollTimer = null;
-      this.setData({ quickDurationScrollLeft: durationScrollLeft(minutes) });
-    }, 100);
+    if (!this.data.quickAddVisible) return;
+    this.ensureQuickDurationRuler().onScroll(Number(event.detail.scrollLeft || 0));
   },
-  onQuickDurationReachStart() {
-    this.setData({
-      quickAddMinutes: QUICK_DURATION_MINUTES,
-      quickAddHourText: durationHourCopy(QUICK_DURATION_MINUTES),
-      quickDurationScrollLeft: durationScrollLeft(QUICK_DURATION_MINUTES),
-    });
+  onQuickDurationReachStart(event: { detail?: { scrollLeft?: number } }) {
+    if (!this.data.quickAddVisible) return;
+    this.ensureQuickDurationRuler().onScroll(Number(event.detail?.scrollLeft || 0));
   },
-  onQuickDurationReachEnd() {
-    this.setData({
-      quickAddMinutes: QUICK_DURATION_MAX_MINUTES,
-      quickAddHourText: durationHourCopy(QUICK_DURATION_MAX_MINUTES),
-      quickDurationScrollLeft: durationScrollLeft(QUICK_DURATION_MAX_MINUTES),
-    });
+  onQuickDurationReachEnd(event: { detail?: { scrollLeft?: number } }) {
+    if (!this.data.quickAddVisible) return;
+    const scrollLeft = event.detail?.scrollLeft === undefined
+      ? durationScrollLeft(QUICK_DURATION_MAX_MINUTES)
+      : Number(event.detail.scrollLeft);
+    this.ensureQuickDurationRuler().onScroll(scrollLeft);
   },
   quickAddTouchStart(event: WechatMiniprogram.TouchEvent) {
     const touch = event.touches[0];
@@ -1259,7 +1294,8 @@ Page(withAppTheme({
         ? "行动已保存，提醒未开启"
         : isEdit ? "行动已更新" : "行动已添加";
       wx.showToast({ title: toastTitle, icon: reminderScheduled || !this.data.quickAddReminderEnabled ? "success" : "none" });
-      this.setData({ quickAddVisible: false, quickAddMode: "create", quickAddTaskId: "", quickAddTitle: "", quickAddMinutes: 30, quickAddHourText: durationHourCopy(30), quickAddExecutionMode: "focus", quickAddImportance: "normal", quickAddBlocksOthers: false, quickAddReminderEnabled: false, quickAddHadScheduledReminder: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0 });
+      this.quickDurationRuler?.reset();
+      this.setData({ quickAddVisible: false, quickAddMode: "create", quickAddTaskId: "", quickAddTitle: "", quickAddMinutes: 30, quickAddHourText: durationHourCopy(30), quickAddExecutionMode: "focus", quickAddImportance: "normal", quickAddBlocksOthers: false, quickAddReminderEnabled: false, quickAddHadScheduledReminder: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0, quickDurationScrollWithAnimation: false });
       this.load();
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
@@ -1288,7 +1324,8 @@ Page(withAppTheme({
         if (!result.confirm) return;
         try {
           deleteTask(task.id);
-          this.setData({ quickAddVisible: false, quickAddTaskId: "" });
+          this.quickDurationRuler?.reset();
+          this.setData({ quickAddVisible: false, quickAddTaskId: "", quickDurationScrollWithAnimation: false });
           this.load();
           wx.showToast({ title: "行动已删除", icon: "success" });
         } catch (error) {
