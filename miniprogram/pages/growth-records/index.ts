@@ -43,6 +43,8 @@ interface GrowthRecordView {
 interface GrowthRecordGroup {
   date: string;
   dateLabel: string;
+  monthDayLabel: string;
+  weekdayLabel: string;
   completedCount: number;
   actualMinutes: number;
   records: GrowthRecordView[];
@@ -63,6 +65,18 @@ function isProgressRecord(task: ActionTask): boolean {
 function formatDate(value: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "日期未记录";
   return `${Number(value.slice(0, 4))}年${Number(value.slice(5, 7))}月${Number(value.slice(8, 10))}日`;
+}
+
+function formatMonthDay(value: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "日期未记";
+  return `${Number(value.slice(5, 7))}月${Number(value.slice(8, 10))}日`;
+}
+
+function formatWeekday(value: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "";
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "";
+  return ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][date.getDay()];
 }
 
 function streakDays(dates: Set<string>, today: string): number {
@@ -144,6 +158,8 @@ function buildGroups(records: GrowthRecordView[]): GrowthRecordGroup[] {
     const current = groups.get(key) || {
       date: key,
       dateLabel: formatDate(record.date),
+      monthDayLabel: formatMonthDay(record.date),
+      weekdayLabel: formatWeekday(record.date),
       completedCount: 0,
       actualMinutes: 0,
       records: [],

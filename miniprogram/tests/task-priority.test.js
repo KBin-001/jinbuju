@@ -221,7 +221,6 @@ const multiReasonTask = makeTask({
   importance: "required",
   currentDate: today,
   source: "ai",
-  blocksOthers: true,
 });
 const multiContext = { today, currentStreakDays: 7, goalTargetDate: "2026-07-28" };
 const multiGroups = groupTasksByPriority([multiReasonTask], multiContext);

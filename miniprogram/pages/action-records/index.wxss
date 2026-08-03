@@ -48,3 +48,35 @@ page { background: var(--color-background, #F7F3EA); }
 .empty-mountain { width: 140rpx; height: 96rpx; border-radius: 50%; opacity: .7; }
 .tap-pressed { opacity: .66; }
 @media (max-width: 350px) { .page-content { padding-right: 24rpx; padding-left: 24rpx; } .date-heading { align-items: flex-start; flex-direction: column; gap: 3rpx; } .record-row { padding-right: 18rpx; padding-left: 18rpx; } }
+
+/* Semantic type roles for action history and status filters. */
+.nav-title,
+.hero-title { font-size: var(--font-page-title); line-height: var(--line-height-page-title); }
+.hero-eyebrow,
+.date-summary,
+.record-meta { font-size: var(--font-meta); line-height: var(--line-height-meta); }
+.hero-summary,
+.state-desc { font-size: var(--font-caption); line-height: var(--line-height-caption); }
+.filter-item,
+.status-text { font-size: var(--font-tag); line-height: var(--line-height-tag); }
+.date-title,
+.record-title,
+.state-title { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.record-status { font-size: var(--font-icon-display); line-height: var(--line-height-data); }
+.load-more,
+.state-action { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+
+@media (max-width: 350px) {
+  .nav-title,
+  .hero-title { font-size: var(--font-page-title-compact); line-height: var(--line-height-page-title); }
+  .date-title,
+  .record-title,
+  .state-title { font-size: var(--font-card-title-compact); line-height: var(--line-height-card-title); }
+  .hero-summary,
+  .state-desc { font-size: var(--font-caption-compact); line-height: var(--line-height-caption); }
+  .hero-eyebrow,
+  .date-summary,
+  .record-meta { font-size: var(--font-meta-compact); line-height: var(--line-height-meta); }
+  .filter-item,
+  .status-text { font-size: var(--font-tag-compact); line-height: var(--line-height-tag); }
+}

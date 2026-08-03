@@ -739,3 +739,71 @@
   font-size: 23rpx;
 }
 .management-action--danger { border-color: rgba(166,80,73,.22); background: rgba(166,80,73,.06); color: #a65049; }
+
+/* Semantic type roles for the member list and its detail sheet. */
+.nav-title { font-size: var(--font-page-title); line-height: var(--line-height-page-title); }
+.nav-subtitle,
+.hero-meta,
+.detail-update,
+.detail-stat-label,
+.detail-action-meta,
+.detail-action-status,
+.member-progress-text { font-size: var(--font-meta); line-height: var(--line-height-meta); }
+.cache-notice,
+.empty-copy,
+.detail-status-copy,
+.privacy-copy { font-size: var(--font-caption); line-height: var(--line-height-caption); }
+.hero-eyebrow,
+.filter-tab,
+.role-chip,
+.status-chip,
+.member-section-count { font-size: var(--font-tag); line-height: var(--line-height-tag); }
+.hero-name { font-size: var(--font-page-title); line-height: var(--line-height-page-title); }
+.hero-stat-value,
+.detail-stat-value { font-size: var(--font-data); line-height: var(--line-height-data); }
+.hero-stat-label { font-size: var(--font-tag); line-height: var(--line-height-tag); }
+.search-input,
+.member-action,
+.detail-status-copy,
+.detail-action-title,
+.privacy-title { font-size: var(--font-body); line-height: var(--line-height-body); }
+.member-section-title,
+.detail-section-title { font-size: var(--font-section-title); line-height: var(--line-height-section-title); }
+.member-name,
+.detail-name { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.member-rank,
+.member-minutes { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+.encourage-button,
+.member-detail-link,
+.empty-action,
+.management-action,
+.detail-footer-secondary,
+.detail-footer-primary { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+.detail-stat-value text,
+.detail-action-meta { font-size: var(--font-meta); line-height: var(--line-height-meta); }
+
+@media (max-width: 350px) {
+  .nav-title,
+  .hero-name { font-size: var(--font-page-title-compact); line-height: var(--line-height-page-title); }
+  .empty-copy,
+  .detail-status-copy,
+  .privacy-copy { font-size: var(--font-caption-compact); line-height: var(--line-height-caption); }
+  .nav-subtitle,
+  .hero-meta,
+  .detail-update,
+  .detail-stat-label,
+  .detail-action-meta,
+  .detail-action-status,
+  .member-progress-text { font-size: var(--font-meta-compact); line-height: var(--line-height-meta); }
+  .member-section-title,
+  .detail-section-title { font-size: var(--font-section-title-compact); line-height: var(--line-height-section-title); }
+  .member-name,
+  .detail-name { font-size: var(--font-card-title-compact); line-height: var(--line-height-card-title); }
+  .hero-stat-value,
+  .detail-stat-value { font-size: var(--font-data-compact); line-height: var(--line-height-data); }
+  .hero-eyebrow,
+  .filter-tab,
+  .role-chip,
+  .status-chip,
+  .member-section-count { font-size: var(--font-tag-compact); line-height: var(--line-height-tag); }
+}

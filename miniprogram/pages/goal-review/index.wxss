@@ -109,3 +109,82 @@ page { background: var(--color-background, #F7F3EA); }
 @media (prefers-reduced-motion: reduce) {
   .tap-pressed { transition: none; }
 }
+
+/* Semantic type roles for completed-goal review and reflection. */
+.nav-title { font-size: var(--font-page-title); line-height: var(--line-height-page-title); }
+.hero-title,
+.section-title,
+.next-title,
+.empty-title,
+.state-title { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.hero-eyebrow,
+.section-eyebrow,
+.hero-chip,
+.section-count,
+.summary-kicker,
+.trend-date { font-size: var(--font-tag); line-height: var(--line-height-tag); }
+.hero-date,
+.summary-guidance,
+.section-subtitle,
+.empty-note,
+.reflection-copy,
+.insight-copy,
+.empty-copy,
+.state-desc { font-size: var(--font-caption); line-height: var(--line-height-caption); }
+.summary-number,
+.summary-rate,
+.stat-value { font-size: var(--font-data); line-height: var(--line-height-data); }
+.summary-unit,
+.summary-label,
+.stat-unit,
+.stat-label,
+.reflection-meta,
+.action-date,
+.action-minutes,
+.trend-name,
+.trend-value,
+.trend-footnote,
+.insight-note { font-size: var(--font-meta); line-height: var(--line-height-meta); }
+.summary-fact,
+.action-title,
+.insight-title { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+.expand-button,
+.state-button,
+.state-link { font-size: var(--font-body); line-height: var(--line-height-body); }
+
+@media (max-width: 350px) {
+  .nav-title { font-size: var(--font-page-title-compact); line-height: var(--line-height-page-title); }
+  .hero-title,
+  .section-title,
+  .next-title,
+  .empty-title,
+  .state-title { font-size: var(--font-card-title-compact); line-height: var(--line-height-card-title); }
+  .hero-date,
+  .summary-guidance,
+  .section-subtitle,
+  .empty-note,
+  .reflection-copy,
+  .insight-copy,
+  .empty-copy,
+  .state-desc { font-size: var(--font-caption-compact); line-height: var(--line-height-caption); }
+  .summary-number,
+  .summary-rate,
+  .stat-value { font-size: var(--font-data-compact); line-height: var(--line-height-data); }
+  .hero-eyebrow,
+  .section-eyebrow,
+  .hero-chip,
+  .section-count,
+  .summary-kicker,
+  .trend-date { font-size: var(--font-tag-compact); line-height: var(--line-height-tag); }
+  .summary-unit,
+  .summary-label,
+  .stat-unit,
+  .stat-label,
+  .reflection-meta,
+  .action-date,
+  .action-minutes,
+  .trend-name,
+  .trend-value,
+  .trend-footnote,
+  .insight-note { font-size: var(--font-meta-compact); line-height: var(--line-height-meta); }
+}

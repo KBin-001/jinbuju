@@ -7,6 +7,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const page = read("miniprogram/pages/index/index.wxml");
 const logic = read("miniprogram/pages/index/index.ts");
 const actionList = read("miniprogram/components/today-action-list/index.wxml");
+const actionListStyle = read("miniprogram/components/today-action-list/index.wxss");
 const timerBar = read("miniprogram/components/active-timer-bar/index.wxml");
 const timerService = read("miniprogram/services/actionSession.ts");
 
@@ -21,7 +22,9 @@ assert.match(actionList, /primaryActionShortLabel \|\| item\.primaryActionLabel 
 assert.match(actionList, /t-icon name="\{\{item\.primaryActionIcon \|\| 'play-circle'\}\}"/);
 assert.match(actionList, /catchtap="openMenu"/);
 assert.match(actionList, /activeTaskId === item\.id/);
-assert.match(page, /按习惯推荐/);
+assert.match(read("miniprogram/components/today-action-list/index.ts"), /isCompleted \? "已完成"[\s\S]*\? "标记完成"/, "未完成操作与已完成结果必须使用不同文案");
+assert.match(actionListStyle, /\.action-row\.is-active\s*\{[^}]*background:\s*transparent/s);
+assert.doesNotMatch(page, /排序|按习惯推荐|openSortOptions/);
 assert.match(page, /执行偏好/);
 assert.match(page, /bind:primary="handleTaskPrimary"/);
 assert.match(logic, /primaryActionLabel: "开始专注"/);

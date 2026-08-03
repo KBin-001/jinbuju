@@ -8,13 +8,13 @@
  *   任务优先分 = 重要程度 × 35%
  *              + 截止紧迫度 × 25%
  *              + 对目标的推动价值 × 20%
- *              + 连续行动与任务依赖 × 10%
+ *              + 连续行动情况 × 10%
  *              + 用户执行习惯 × 10%
  */
 
 /** 推荐理由标签 */
 export interface PriorityReason {
-  key: "manual_pin" | "due_today" | "streak" | "core_goal" | "blocks_others" | "rollover" | "required";
+  key: "manual_pin" | "due_today" | "streak" | "core_goal" | "rollover" | "required";
   label: string;
 }
 
@@ -23,10 +23,9 @@ const REASON_PRIORITY: Record<string, number> = {
   manual_pin: 0,
   due_today: 1,
   core_goal: 2,
-  blocks_others: 3,
-  required: 4,
-  streak: 5,
-  rollover: 6,
+  required: 3,
+  streak: 4,
+  rollover: 5,
 };
 
 /** 每个任务最多展示的理由标签数量 */
@@ -60,7 +59,6 @@ export interface PriorityScorableTask {
   source?: string;
   rolloverCount?: number;
   importance?: "required" | "normal";
-  blocksOthers?: boolean;
   priorityOverride?: "focus" | "quick" | "later" | null;
 }
 
@@ -88,10 +86,6 @@ const GROUP_DEFS: Record<"focus" | "quick" | "later", { title: string; hint: str
 
 function normalizeImportance(task: PriorityScorableTask): "required" | "normal" {
   return task.importance === "required" ? "required" : "normal";
-}
-
-function normalizeBlocksOthers(task: PriorityScorableTask): boolean {
-  return task.blocksOthers === true;
 }
 
 function normalizeOverride(task: PriorityScorableTask): "focus" | "quick" | "later" | null {
@@ -152,13 +146,10 @@ function scoreTask(task: PriorityScorableTask, context: PriorityContext): { scor
   }
   if (task.estimatedMinutes >= 60) goalScore = Math.min(100, goalScore + 5);
 
-  // 4. 连续行动与任务依赖 10%
-  let dependencyScore = 40;
-  if (normalizeBlocksOthers(task)) {
-    dependencyScore = 100;
-    reasons.push({ key: "blocks_others", label: "阻塞其他任务" });
-  } else if (Number(task.rolloverCount || 0) > 0) {
-    dependencyScore = 75;
+  // 4. 连续行动情况 10%
+  let continuityScore = 40;
+  if (Number(task.rolloverCount || 0) > 0) {
+    continuityScore = 75;
     reasons.push({ key: "rollover", label: `连续 ${task.rolloverCount} 天未完成` });
   }
 
@@ -173,7 +164,7 @@ function scoreTask(task: PriorityScorableTask, context: PriorityContext): { scor
   const score = importanceScore * 0.35
     + urgencyScore * 0.25
     + goalScore * 0.20
-    + dependencyScore * 0.10
+    + continuityScore * 0.10
     + habitScore * 0.10;
 
   return { score, reasons };

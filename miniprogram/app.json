@@ -8,7 +8,6 @@
   ],
   "subpackages": [
     { "root": "pages/goal-create", "pages": ["index"] },
-    { "root": "pages/action-edit", "pages": ["index"] },
     { "root": "pages/action-session", "pages": ["index"] },
     { "root": "pages/action-records", "pages": ["index"] },
     { "root": "pages/growth-records", "pages": ["index"] },
@@ -44,7 +43,6 @@
     "pages/index/index": {
       "network": "all",
       "packages": [
-        "pages/action-edit",
         "pages/action-session",
         "pages/checkin",
         "pages/daily-coach",
@@ -56,7 +54,6 @@
     "pages/plan/index": {
       "network": "all",
       "packages": [
-        "pages/action-edit",
         "pages/ai-coach",
         "pages/growth-records",
         "pages/goal-detail",

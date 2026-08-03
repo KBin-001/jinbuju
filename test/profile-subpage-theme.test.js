@@ -5,7 +5,7 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const pages = [
   "profile", "goal-manage", "history", "achievements", "data-sync", "account-security",
-  "privacy-center", "about", "growth-records", "action-records", "goal-detail", "goal-create", "action-edit",
+  "privacy-center", "about", "growth-records", "action-records", "goal-detail", "goal-create",
 ];
 const files = pages.flatMap((page) => ["index.wxss", "index.wxml"].map((file) => path.join(root, "miniprogram/pages", page, file))).filter(fs.existsSync);
 const source = files.map((file) => fs.readFileSync(file, "utf8")).join("\n");

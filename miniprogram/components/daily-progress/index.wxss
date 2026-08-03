@@ -17,8 +17,8 @@
   justify-content: space-between;
   gap: 20rpx;
   color: #696e69;
-  font-size: 20rpx;
-  line-height: 29rpx;
+  font-size: var(--font-meta);
+  line-height: var(--line-height-meta);
 }
 .daily-progress__label {
   overflow: hidden;
@@ -49,13 +49,22 @@
   flex: none;
   color: #b07c18;
   font-family: var(--font-family-numeric);
-  font-size: 32rpx;
+  font-size: var(--font-body-strong);
   font-weight: 500;
-  line-height: 36rpx;
+  line-height: var(--line-height-body-strong);
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 @media (prefers-reduced-motion: reduce) {
   .daily-progress,
   .daily-progress__fill { transition: none; }
+}
+
+/* Shared progress labels use the same data and metadata roles everywhere. */
+.daily-progress__label { font-size: var(--font-meta); line-height: var(--line-height-meta); }
+.daily-progress__percent { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+
+@media (max-width: 350px) {
+  .daily-progress__label { font-size: var(--font-meta-compact); line-height: var(--line-height-meta); }
+  .daily-progress__percent { font-size: var(--font-body-compact); line-height: var(--line-height-body); }
 }

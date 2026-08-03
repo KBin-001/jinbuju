@@ -4,6 +4,7 @@ import { DetailCalendarDay, DetailPeriod, DurationSlice, getTodayDataBounds, get
 import { ActionTask } from "../../types/manual";
 import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
 import { MODAL_CONFIRM_COLORS } from "../../services/theme";
+import { openTodayActionEditor } from "../../utils/todayActionEditor";
 
 function dateLabel(value: string): string {
   const date = new Date(`${value}T00:00:00`);
@@ -187,7 +188,10 @@ Page({
   openRecordEditor(event: { currentTarget: { dataset: { id?: string } } }) {
     const taskId = String(event.currentTarget.dataset.id || "");
     const task = getTask(taskId);
-    if (!task) return;
+    if (!task || task.deletedAt) {
+      wx.showToast({ title: "该行动记录已不存在，请刷新后重试", icon: "none" });
+      return;
+    }
     this.setData({
       recordEditorVisible: true,
       recordEditorTask: task,
@@ -258,9 +262,6 @@ Page({
   },
 
   goAddAction() {
-    wx.navigateTo({
-      url: `/pages/action-edit/index?goalId=${encodeURIComponent(this.data.goalId)}&date=${encodeURIComponent(this.data.date)}`,
-      fail: () => wx.showToast({ title: "添加页面打开失败", icon: "none" }),
-    });
+    openTodayActionEditor({ mode: "create", goalId: this.data.goalId, date: this.data.date });
   },
 });

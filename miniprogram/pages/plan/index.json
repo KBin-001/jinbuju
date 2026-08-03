@@ -4,7 +4,7 @@
   "enablePullDownRefresh": false,
   "backgroundColor": "#F7F3EA",
   "usingComponents": {
-    "action-record-editor": "/components/action-record-editor/index",
+    "completed-record-editor": "/components/completed-record-editor/index",
     "goal-overview": "/components/goal-overview/index",
     "progress-metrics": "/components/progress-metrics/index",
     "action-trend-chart": "/components/action-trend-chart/index",

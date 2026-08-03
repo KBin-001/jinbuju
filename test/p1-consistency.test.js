@@ -6,7 +6,6 @@ const root = path.resolve(__dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const team = read("miniprogram/pages/team/index.ts");
 const today = read("miniprogram/pages/index/index.ts");
-const actionEdit = read("miniprogram/pages/action-edit/index.ts");
 const durations = read("miniprogram/config/action.ts");
 
 assert.match(team, /const cached = getCachedTeam\(\);[\s\S]*this\.applyTeamData\(cached\);/, "小队页应先展示本地缓存");
@@ -14,8 +13,7 @@ assert.match(team, /Promise\.all\(\[syncPromise, activityPromise\]\)/, "行动�
 assert.match(team, /const originalTasks = snapshot\.tasks[\s\S]*originalById[\s\S]*writeManualStore\(store\)/, "一键完成失败时应恢复任务快照");
 
 assert.match(durations, /15, 25, 30, 45, 60, 90, 120, 180, 240/, "统一时长选项应覆盖已支持值");
-assert.match(today, /ACTION_DURATION_OPTIONS/, "今日页应复用统一时长选项");
-assert.match(actionEdit, /ACTION_DURATION_VALUES/, "行动编辑页应复用统一时长选项");
+assert.match(today, /ACTION_DURATION_MAX_MINUTES[\s\S]*ACTION_DURATION_MIN_MINUTES/, "今日页应复用统一时长边界");
 
 const sourceRoots = [path.join(root, "miniprogram/pages"), path.join(root, "miniprogram/components")];
 const tsFiles = [];

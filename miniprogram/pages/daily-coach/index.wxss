@@ -135,3 +135,56 @@ button::after { border: 0; }
   .scope-popover { width: 500rpx; }
 }
 @media (prefers-reduced-motion: reduce) { .loading-orb { animation: none; } }
+
+/* Semantic type roles for the daily coach's diagnosis and action review. */
+.nav-title { font-size: var(--font-page-title); line-height: var(--line-height-page-title); }
+.hero-title,
+.advice-title,
+.section-title,
+.recent-title { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.metric-value { font-size: var(--font-data); line-height: var(--line-height-data); }
+.metric-label,
+.task-title,
+.recent-summary { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+.metric-note,
+.section-subtitle,
+.task-subtitle,
+.recent-longest { font-size: var(--font-meta); line-height: var(--line-height-meta); }
+.scope-switch,
+.scope-option text:first-child,
+.advice-quick,
+.task-status { font-size: var(--font-tag); line-height: var(--line-height-tag); }
+.hero-title,
+.advice-copy,
+.state-copy,
+.task-copy,
+.recent-copy,
+.task-empty { font-size: var(--font-caption); line-height: var(--line-height-caption); }
+.section-link,
+.empty-action-button,
+.task-empty-action,
+.retry-button { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+.recent-mark { font-size: var(--font-icon-display); line-height: var(--line-height-data); }
+
+@media (max-width: 350px) {
+  .nav-title { font-size: var(--font-page-title-compact); line-height: var(--line-height-page-title); }
+  .hero-title,
+  .advice-title,
+  .section-title,
+  .recent-title { font-size: var(--font-card-title-compact); line-height: var(--line-height-card-title); }
+  .hero-title,
+  .advice-copy,
+  .state-copy,
+  .task-copy,
+  .recent-copy,
+  .task-empty { font-size: var(--font-caption-compact); line-height: var(--line-height-caption); }
+  .metric-value { font-size: var(--font-data-compact); line-height: var(--line-height-data); }
+  .metric-note,
+  .section-subtitle,
+  .task-subtitle,
+  .recent-longest { font-size: var(--font-meta-compact); line-height: var(--line-height-meta); }
+  .scope-switch,
+  .scope-option text:first-child,
+  .advice-quick,
+  .task-status { font-size: var(--font-tag-compact); line-height: var(--line-height-tag); }
+}

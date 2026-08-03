@@ -29,8 +29,6 @@ assert.equal(resolveActionIcon("跑步", "", "reading").key, "reading", "用户�
 
 const typeSource = read("miniprogram/types/manual.ts");
 const service = read("miniprogram/services/manualTask.ts");
-const editPage = read("miniprogram/pages/action-edit/index.ts");
-const editTemplate = read("miniprogram/pages/action-edit/index.wxml");
 const todayPage = read("miniprogram/pages/index/index.ts");
 const todayTemplate = read("miniprogram/pages/index/index.wxml");
 const todayActionListTemplate = read("miniprogram/components/today-action-list/index.wxml");
@@ -40,15 +38,10 @@ assert.match(typeSource, /iconKey\?: ActionIconKey/);
 assert.match(typeSource, /iconManual\?: boolean/);
 assert.match(service, /iconManual: Boolean\(input\.iconManual\)/);
 assert.match(service, /inferActionIconKey\(input\.title, input\.description\)/, "未手选时保存应继续按标题映射");
-assert.match(editTemplate, /wx:for="\{\{actionIconOptions\}\}"/);
-assert.match(editTemplate, /bindtap="selectActionIcon"/);
-assert.match(editTemplate, /bindtap="useAutomaticActionIcon"/);
-assert.match(editTemplate, /<image src="\{\{item\.asset\}\}"/, "图标选择器必须使用本地 SVG 实体资源");
-assert.doesNotMatch(editTemplate, /<t-icon name="\{\{item\.icon\}\}"/, "图标选择器不得依赖被裁剪的动态图标字体");
-assert.match(editPage, /selectedIconKey: this\.data\.iconManual \? this\.data\.selectedIconKey : inferActionIconKey/);
+assert.match(todayPage, /quickAddPreservedIconKey: task\?\.iconKey \|\| ""/, "统一半屏编辑时应保留已有行动图标");
+assert.match(todayPage, /iconKey: this\.data\.quickAddPreservedIconKey \|\| undefined/, "统一半屏保存时应继续传递已有图标");
 assert.match(todayPage, /resolveActionIcon\(task\.title, task\.description, task\.iconManual \? task\.iconKey : undefined\)/);
 assert.match(todayTemplate, /<today-action-list/);
-assert.match(todayActionListTemplate, /<image[^>]+src="\{\{item\.actionIconAsset\}\}"/);
 assert.doesNotMatch(todayActionListTemplate, /item\.actionIconName/, "任务分类图标不得再依赖运行时动态图标字体");
 assert.doesNotMatch(todayActionListTemplate, /icon-book\.svg|icon-headphone\.svg|icon-doc\.svg/, "今日任务不应继续使用旧的三图标占位方案");
 assert.match(cloudSync, /ACTION_ICON_KEYS/);

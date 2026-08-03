@@ -532,3 +532,59 @@
 .success-card .success-encouragement, .success-card .stat-label { color: var(--color-text-secondary, #7C817D); }
 .error-actions { width: 100%; margin-top: 24rpx; display: flex; justify-content: center; gap: 14rpx; }
 .error-secondary { border: 1rpx solid rgba(36,91,77,.18); color: var(--color-primary, #245B4D); background: var(--color-card, #FFFDF8); }
+
+/* Semantic type roles for check-in status, reflection and completion. */
+.section-eyebrow,
+.section-count,
+.reason-hint,
+.note-count { font-size: var(--font-tag); line-height: var(--line-height-tag); }
+.section-title,
+.task-status-title,
+.success-title,
+.no-task-title { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.summary-subtitle,
+.summary-date,
+.task-status-desc,
+.note-hint,
+.success-encouragement,
+.state-copy { font-size: var(--font-caption); line-height: var(--line-height-caption); }
+.progress-count-strong,
+.stat-value,
+.progress-rate { font-size: var(--font-data); line-height: var(--line-height-data); }
+.progress-count,
+.stat-label,
+.feeling-label,
+.status-btn-label,
+.reason-btn { font-size: var(--font-meta); line-height: var(--line-height-meta); }
+.feeling-option,
+.reason-option-active,
+.status-btn,
+.checkin-button,
+.bottom-action,
+.error-secondary { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+.note-input,
+.choice-label,
+.summary-card,
+.completed-reflection { font-size: var(--font-body); line-height: var(--line-height-body); }
+.state-title { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+
+@media (max-width: 350px) {
+  .section-title,
+  .task-status-title,
+  .success-title,
+  .no-task-title,
+  .state-title { font-size: var(--font-card-title-compact); line-height: var(--line-height-card-title); }
+  .summary-subtitle,
+  .summary-date,
+  .task-status-desc,
+  .note-hint,
+  .success-encouragement,
+  .state-copy { font-size: var(--font-caption-compact); line-height: var(--line-height-caption); }
+  .progress-count-strong,
+  .stat-value,
+  .progress-rate { font-size: var(--font-data-compact); line-height: var(--line-height-data); }
+  .section-eyebrow,
+  .section-count,
+  .reason-hint,
+  .note-count { font-size: var(--font-tag-compact); line-height: var(--line-height-tag); }
+}

@@ -49,3 +49,45 @@
 .primary-button[disabled] { background: var(--color-disabled-bg); color: var(--color-disabled-text); }
 .pressed { opacity: .76; }
 @media (max-width: 350px) { .goal-page { padding-left: 24rpx; padding-right: 24rpx; } .goal-hero { height: 196rpx; } .hero-title { font-size: 36rpx; } .form-section { min-height: 580rpx; padding: 24rpx 22rpx; } .stepper__item:not(:last-child)::after { width: 70rpx; } }
+
+/* Semantic type roles for goal creation fields and duration choices. */
+.hero-kicker,
+.field-count,
+.stepper__dot { font-size: var(--font-tag); line-height: var(--line-height-tag); }
+.hero-title { font-size: var(--font-page-title); line-height: var(--line-height-page-title); }
+.hero-copy,
+.section-caption,
+.direction-note,
+.field-help,
+.choice-note,
+.inline-note,
+.error-message,
+.result-preview { font-size: var(--font-caption); line-height: var(--line-height-caption); }
+.section-title,
+.direction-label { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.stepper__item,
+.field-label,
+.choice-label,
+.text-input,
+.text-link,
+.duration-chip { font-size: var(--font-body); line-height: var(--line-height-body); }
+.footer-actions button,
+.primary-button,
+.secondary-button { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+
+@media (max-width: 350px) {
+  .hero-title { font-size: var(--font-page-title-compact); line-height: var(--line-height-page-title); }
+  .section-title,
+  .direction-label { font-size: var(--font-card-title-compact); line-height: var(--line-height-card-title); }
+  .hero-copy,
+  .section-caption,
+  .direction-note,
+  .field-help,
+  .choice-note,
+  .inline-note,
+  .error-message,
+  .result-preview { font-size: var(--font-caption-compact); line-height: var(--line-height-caption); }
+  .hero-kicker,
+  .field-count,
+  .stepper__dot { font-size: var(--font-tag-compact); line-height: var(--line-height-tag); }
+}

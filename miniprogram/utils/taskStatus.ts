@@ -134,6 +134,23 @@ export function sortTodayTasksIncompleteFirst<T extends DisplayStatusTask>(tasks
 }
 
 /**
+ * 将今日页行动拆成仍需执行与已经完成两组。
+ * 两组内部都保持原始顺序，完成行动只用于结果展示，不再参与优先级评分。
+ */
+export function partitionTodayTasksByCompletion<T extends DisplayStatusTask>(tasks: T[]): {
+  incompleteTasks: T[];
+  completedTasks: T[];
+} {
+  const incompleteTasks: T[] = [];
+  const completedTasks: T[] = [];
+  tasks.forEach((task) => {
+    if (task.status === "completed") completedTasks.push(task);
+    else incompleteTasks.push(task);
+  });
+  return { incompleteTasks, completedTasks };
+}
+
+/**
  * 将任务分为「今日行动」和「待继续」两组。
  *
  * 规则：

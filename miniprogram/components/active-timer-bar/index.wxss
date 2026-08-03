@@ -24,22 +24,22 @@
 .timer-bar--pressed { opacity: .78; transform: scale(.992); }
 .timer-bar__dot { width: 18rpx; height: 18rpx; flex: none; border: 5rpx solid rgba(36, 91, 77, .13); border-radius: 50%; background: #245b4d; }
 .timer-bar__dot.is-paused { border-color: rgba(200, 155, 74, .14); background: #c89b4a; }
-.timer-bar__status { flex: none; font-size: 22rpx; font-weight: 550; line-height: 30rpx; white-space: nowrap; }
-.timer-bar__separator { flex: none; color: #7f9d91; font-size: 22rpx; }
-.timer-bar__title { min-width: 0; flex: 1; overflow: hidden; color: #3b4c46; font-size: 21rpx; line-height: 30rpx; text-overflow: ellipsis; white-space: nowrap; }
-.timer-bar__clock { flex: none; color: #245b4d; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 24rpx; line-height: 32rpx; letter-spacing: 1rpx; }
+.timer-bar__status { flex: none; font-size: var(--font-meta); font-weight: 550; line-height: var(--line-height-meta); white-space: nowrap; }
+.timer-bar__separator { flex: none; color: #7f9d91; font-size: var(--font-meta); line-height: var(--line-height-meta); }
+.timer-bar__title { min-width: 0; flex: 1; overflow: hidden; color: #3b4c46; font-size: var(--font-meta); line-height: var(--line-height-meta); text-overflow: ellipsis; white-space: nowrap; }
+.timer-bar__clock { flex: none; color: #245b4d; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: var(--font-calendar); line-height: var(--line-height-data); letter-spacing: 1rpx; }
 .timer-bar__chevron { flex: none; color: #245b4d; }
 .timer-bar__a11y-controls { display: none; }
 
 .timer-bar--orphan { gap: 12rpx; border-color: rgba(184, 97, 82, .24); color: #9b5549; }
-.timer-bar__orphan-copy { min-width: 0; flex: 1; overflow: hidden; font-size: 21rpx; text-overflow: ellipsis; white-space: nowrap; }
-.timer-bar__cleanup { height: 50rpx; padding: 0 18rpx; display: flex; align-items: center; border: 1rpx solid rgba(184, 97, 82, .2); border-radius: 25rpx; color: #9b5549; background: #f8e9e5; font-size: 19rpx; }
+.timer-bar__orphan-copy { min-width: 0; flex: 1; overflow: hidden; font-size: var(--font-meta); line-height: var(--line-height-meta); text-overflow: ellipsis; white-space: nowrap; }
+.timer-bar__cleanup { height: 50rpx; padding: 0 18rpx; display: flex; align-items: center; border: 1rpx solid rgba(184, 97, 82, .2); border-radius: 25rpx; color: #9b5549; background: #f8e9e5; font-size: var(--font-tag); line-height: var(--line-height-tag); }
 
 @media (max-width: 350px) {
   .timer-bar { right: 14rpx; left: 14rpx; padding: 0 20rpx; gap: 9rpx; }
-  .timer-bar__title { font-size: 18rpx; }
-  .timer-bar__status, .timer-bar__separator { font-size: 19rpx; }
-  .timer-bar__clock { font-size: 21rpx; }
+  .timer-bar__title { font-size: var(--font-meta-compact); }
+  .timer-bar__status, .timer-bar__separator { font-size: var(--font-meta-compact); }
+  .timer-bar__clock { font-size: var(--font-meta); }
 }
 
 @media (prefers-reduced-motion: reduce) {

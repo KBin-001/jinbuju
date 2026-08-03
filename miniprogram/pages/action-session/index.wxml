@@ -6,29 +6,47 @@
     <button class="secondary-button" bindtap="goBack">返回今日</button>
   </view>
   <block wx:else>
-    <view class="session-head"><text class="goal-label">{{goalTitle}}</text><text class="mode-label">{{session.mode === 'countdown' ? '按预计投入倒计时' : '自由正计时'}}</text></view>
-    <view class="focus-area">
-      <text class="task-title">{{task.title}}</text>
-      <t-progress
-        class="session-progress"
-        theme="circle"
-        percentage="{{session.mode === 'countdown' ? progressPercent : 0}}"
-        label="{{false}}"
-        stroke-width="14rpx"
-        color="{{session.status === 'paused' ? '#C89B4A' : '#245B4D'}}"
-        track-color="#DCE7E1"
-        aria-label="{{session.status === 'paused' ? '行动已暂停' : '行动计时中'}}"
-      >
-        <view slot="label" class="timer-ring__inner"><text class="timer-value">{{displayTime}}</text><text class="timer-hint">{{session.status === 'paused' ? '已暂停' : remainingText}}</text></view>
-      </t-progress>
-      <text class="focus-copy">把注意力放在这一件事上。退出小程序后，计时仍会按时间戳恢复。</text>
+    <image class="session-atmosphere" src="/pages/action-session/assets/mountains-v1.jpg" mode="aspectFill" aria-hidden="true" />
+    <view class="session-content">
+      <view class="session-head">
+        <text class="goal-label">{{goalTitle}}</text>
+        <text class="mode-label">{{session.mode === 'countdown' ? '按预计投入倒计时' : '自由正计时'}}</text>
+      </view>
+      <view class="focus-area">
+        <view class="task-heading">
+          <text class="task-title">{{task.title}}</text>
+          <image class="task-seal" src="/assets/today-action-seal-v1.png" mode="aspectFit" aria-hidden="true" />
+        </view>
+        <t-progress
+          class="session-progress"
+          theme="circle"
+          percentage="{{session.mode === 'countdown' ? progressPercent : 0}}"
+          label="{{false}}"
+          stroke-width="6rpx"
+          color="{{session.status === 'paused' ? '#C89B4A' : '#245B4D'}}"
+          track-color="#A8BDB5"
+          aria-label="{{session.status === 'paused' ? '行动已暂停' : '行动计时中'}}"
+        >
+          <view slot="label" class="timer-ring__inner">
+            <text class="timer-value">{{displayTime}}</text>
+            <text class="timer-hint">{{session.status === 'paused' ? '已暂停' : remainingText}}</text>
+          </view>
+        </t-progress>
+        <view class="focus-message">
+          <text class="focus-quote">心定于一事，时间自有回响。</text>
+          <view class="focus-divider"></view>
+          <text class="focus-copy">退出小程序后，计时仍会按时间戳恢复。</text>
+        </view>
+      </view>
+      <view class="session-controls">
+        <view class="session-actions">
+          <button wx:if="{{session.status === 'running'}}" class="secondary-button" bindtap="pause">暂停</button>
+          <button wx:else class="secondary-button" bindtap="resume">继续</button>
+          <button class="primary-button" bindtap="prepareComplete">提前完成</button>
+        </view>
+        <view class="danger-link" bindtap="abandon">放弃本次行动</view>
+      </view>
     </view>
-    <view class="session-actions">
-      <button wx:if="{{session.status === 'running'}}" class="secondary-button" bindtap="pause"><t-icon name="pause-circle" size="34rpx" />暂停</button>
-      <button wx:else class="secondary-button" bindtap="resume"><t-icon name="play-circle" size="34rpx" />继续</button>
-      <button class="primary-button" bindtap="prepareComplete">提前完成</button>
-    </view>
-    <view class="danger-link" bindtap="abandon">放弃本次行动</view>
   </block>
 
   <view wx:if="{{completionVisible}}" class="sheet-mask" catchtap="closeCompletion"></view>

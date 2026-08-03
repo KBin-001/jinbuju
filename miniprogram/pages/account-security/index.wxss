@@ -20,6 +20,39 @@ page { background: var(--color-background); }
 .unbind-button { border: 1rpx solid var(--color-danger); background: var(--color-card); color: var(--color-danger); }
 .is-disabled { opacity: .45; }
 .error-message { margin-top: 18rpx; color: var(--color-danger); font-size: 23rpx; line-height: 34rpx; }
+
+/* Semantic type roles for account identity and safety actions. */
+.account-hero__title { font-size: var(--font-page-title); line-height: var(--line-height-page-title); }
+.account-hero__subtitle,
+.identity-note,
+.phone-purpose,
+.link-note,
+.consent-check label,
+.error-message { font-size: var(--font-caption); line-height: var(--line-height-caption); }
+.section-title,
+.link-title { font-size: var(--font-section-title); line-height: var(--line-height-section-title); }
+.identity-label,
+.safe-chip,
+.optional-chip { font-size: var(--font-tag); line-height: var(--line-height-tag); }
+.identity-value { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.phone-button,
+.unbind-button { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+
+@media (max-width: 350px) {
+  .account-hero__title { font-size: var(--font-page-title-compact); line-height: var(--line-height-page-title); }
+  .section-title,
+  .link-title,
+  .identity-value { font-size: var(--font-card-title-compact); line-height: var(--line-height-card-title); }
+  .account-hero__subtitle,
+  .identity-note,
+  .phone-purpose,
+  .link-note,
+  .consent-check label,
+  .error-message { font-size: var(--font-caption-compact); line-height: var(--line-height-caption); }
+  .identity-label,
+  .safe-chip,
+  .optional-chip { font-size: var(--font-tag-compact); line-height: var(--line-height-tag); }
+}
 .link-card { padding-top: 4rpx; padding-bottom: 4rpx; }
 .link-row { min-height: 116rpx; }
 .link-row + .link-row { border-top: 1rpx solid var(--color-divider); }

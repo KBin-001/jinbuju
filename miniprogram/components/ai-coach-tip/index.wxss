@@ -1,17 +1,16 @@
 :host { display: block; }
 .coach-tip {
-  min-height: 190rpx;
+  min-height: 164rpx;
   margin: 0;
-  border-top: 1rpx solid rgba(30, 40, 35, .07);
-  border-bottom: 1rpx solid rgba(30, 40, 35, .07);
-  background: rgba(255, 253, 249, .58);
+  border: 0;
+  background: transparent;
   box-sizing: border-box;
   transition: opacity 160ms ease-out;
 }
 .coach-tip--pressed { opacity: .72; }
 .coach-tip__content {
-  min-height: 190rpx;
-  padding: 25rpx 12rpx 23rpx;
+  min-height: 164rpx;
+  padding: 18rpx 12rpx 15rpx;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -22,13 +21,13 @@
   align-items: center;
   gap: 10rpx;
   color: #a4741f;
-  font-size: 22rpx;
-  font-weight: 500;
-  line-height: 32rpx;
+  font-size: var(--font-meta);
+  font-weight: 550;
+  line-height: var(--line-height-meta);
   letter-spacing: 1rpx;
 }
 .coach-tip__main {
-  margin-top: 16rpx;
+  margin-top: 13rpx;
   display: flex;
   align-items: center;
   gap: 24rpx;
@@ -38,9 +37,9 @@
   display: -webkit-box;
   overflow: hidden;
   color: #181a18;
-  font-size: 31rpx;
+  font-size: var(--font-card-title);
   font-weight: 600;
-  line-height: 42rpx;
+  line-height: var(--line-height-card-title);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
 }
@@ -49,8 +48,8 @@
   display: -webkit-box;
   overflow: hidden;
   color: #6f756f;
-  font-size: 21rpx;
-  line-height: 31rpx;
+  font-size: var(--font-caption);
+  line-height: var(--line-height-caption);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
 }
@@ -63,15 +62,16 @@
   justify-content: flex-end;
   gap: 4rpx;
   color: #9e701e;
-  font-size: 21rpx;
+  font-size: var(--font-body);
+  line-height: var(--line-height-body);
   font-weight: 500;
 }
-.coach-tip__state { margin-top: 5rpx; color: #969a95; font-size: 16rpx; }
+.coach-tip__state { margin-top: 5rpx; color: #969a95; font-size: var(--font-tag); line-height: var(--line-height-tag); }
 
 @media (max-width: 350px) {
   .coach-tip__content { padding-right: 4rpx; padding-left: 4rpx; }
-  .coach-tip__title { font-size: 27rpx; }
-  .coach-tip__link { min-width: 106rpx; font-size: 18rpx; }
+  .coach-tip__title { font-size: var(--font-card-title-compact); }
+  .coach-tip__link { min-width: 106rpx; font-size: var(--font-meta-compact); }
 }
 @media (prefers-reduced-motion: reduce) {
   .coach-tip { transition: none; }

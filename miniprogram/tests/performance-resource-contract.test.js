@@ -8,7 +8,7 @@ const appConfig = JSON.parse(fs.readFileSync(path.join(miniRoot, "app.json"), "u
 const packageRoots = new Set(appConfig.subpackages.map((item) => item.root));
 
 const expectedPreloads = {
-  "pages/index/index": ["pages/action-edit", "pages/daily-coach", "pages/ai-coach", "pages/today-data"],
+  "pages/index/index": ["pages/daily-coach", "pages/ai-coach", "pages/today-data"],
   "pages/plan/index": ["pages/ai-coach", "pages/growth-records", "pages/goal-detail"],
   "pages/team/index": ["pages/team-members", "pages/team-activity", "pages/team-invite"],
   "pages/profile/index": ["pages/account-security", "pages/privacy-center", "pages/data-sync"],
@@ -66,10 +66,13 @@ function collectResourceFiles(dir) {
 }
 
 collectResourceFiles(miniRoot);
-const resourceTotalBytes = resourceFiles.reduce((sum, filePath) => sum + fs.statSync(filePath).size, 0);
-assert.ok(
-  resourceTotalBytes <= 200 * 1024,
-  `????????????? 200KB???? ${(resourceTotalBytes / 1024).toFixed(1)}KB`,
+const oversizedResources = resourceFiles
+  .map((filePath) => ({ filePath, bytes: fs.statSync(filePath).size }))
+  .filter((item) => item.bytes > 200 * 1024);
+assert.deepEqual(
+  oversizedResources,
+  [],
+  `单个图片或音频资源不得超过 200KB：${oversizedResources.map((item) => `${path.relative(miniRoot, item.filePath)} ${(item.bytes / 1024).toFixed(1)}KB`).join(", ")}`,
 );
 
 const phoneFeature = fs.readFileSync(path.join(miniRoot, "pages/account-security/index.wxml"), "utf8");

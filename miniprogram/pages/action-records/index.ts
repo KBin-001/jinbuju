@@ -4,6 +4,7 @@ import { MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
 import { ActionTask, Goal } from "../../types/manual";
 import { getTodayBusinessDate } from "../../utils/date";
 import { getActionTaskDisplayStatus } from "../../utils/taskStatus";
+import { openTodayActionEditor } from "../../utils/todayActionEditor";
 
 type RecordFilter = "all" | "continue" | "completed";
 
@@ -174,12 +175,15 @@ Page(withAppTheme({
   openRecord(event: { currentTarget: { dataset: { id?: string } } }) {
     const taskId = String(event.currentTarget.dataset.id || "");
     const task = getTask(taskId);
-    if (!task) return;
+    if (!task || task.deletedAt) {
+      wx.showToast({ title: "该行动已不存在，请刷新后重试", icon: "none" });
+      return;
+    }
     if (task.status === "completed" || task.status === "partially_completed") {
       this.setData({ recordEditorVisible: true, editingRecordId: task.id, recordEditorTask: task, savingRecord: false, deletingRecord: false });
       return;
     }
-    wx.navigateTo({ url: `/pages/action-edit/index?id=${encodeURIComponent(task.id)}` });
+    openTodayActionEditor({ mode: "edit", taskId: task.id });
   },
 
   closeRecordEditor() {
@@ -231,7 +235,7 @@ Page(withAppTheme({
       wx.navigateTo({ url: "/pages/goal-create/index" });
       return;
     }
-    wx.navigateTo({ url: `/pages/action-edit/index?goalId=${encodeURIComponent(goalId)}&date=${getTodayBusinessDate()}` });
+    openTodayActionEditor({ mode: "create", goalId, date: getTodayBusinessDate() });
   },
 
   retry() {

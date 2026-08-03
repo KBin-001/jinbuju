@@ -14,7 +14,7 @@
     <view class="action-group__body">
       <view class="action-group__head">
         <view class="action-group__rail">
-          <t-icon class="action-group__icon action-group__icon--{{group.tone}}" name="{{group.icon}}" size="32rpx" />
+          <image class="action-group__brush" src="{{group.brushAsset}}" mode="aspectFit" aria-hidden="true" />
         </view>
         <view class="action-group__title">
           <text>{{group.title}}</text>

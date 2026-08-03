@@ -1,9 +1,4 @@
 <view class="goal-overview">
-  <image class="goal-overview__image" src="/assets/progress-mountain-path-v2.jpg" mode="aspectFill" aria-hidden="true" />
-  <view class="goal-overview__wash" aria-hidden="true"></view>
-  <view class="goal-overview__gold-rail" aria-hidden="true">
-    <view class="goal-overview__flag"><t-icon name="flag" size="31rpx" /></view>
-  </view>
   <view class="goal-overview__content">
     <view class="goal-overview__top">
       <view class="goal-overview__eyebrow">当前目标</view>
@@ -14,16 +9,18 @@
     <view class="goal-overview__title">{{goal.title}}</view>
     <view class="goal-overview__period">{{period}}</view>
     <view class="goal-stage" wx:if="{{stage}}">
-      <view class="goal-stage__labels"><text>{{stage.startLabel}}</text><text>{{stage.endLabel}}</text></view>
       <view class="goal-stage__track">
-        <view class="goal-stage__fill" style="width: {{stage.progressPercent}}%;"></view>
-        <view class="goal-stage__node is-start"></view>
-        <view class="goal-stage__node is-mid-one"></view>
-        <view class="goal-stage__node is-mid-two"></view>
-        <view class="goal-stage__node is-end"></view>
-        <view class="goal-stage__current" style="left: {{stage.progressPercent}}%;"></view>
+        <canvas canvas-id="goalStageCanvas" class="goal-stage__canvas"></canvas>
+        <text class="goal-stage__label is-start">{{stage.startLabel}}</text>
+        <text class="goal-stage__label is-mid-one">成长期</text>
+        <text class="goal-stage__label is-mid-two">稳定期</text>
+        <text class="goal-stage__label is-end">{{stage.endLabel}}</text>
+        <view class="goal-stage__flag"><t-icon name="flag" size="27rpx" color="#B78329" /></view>
       </view>
-      <view class="goal-stage__caption">{{stage.caption}}</view>
+      <view class="goal-stage__meta">
+        <view class="goal-stage__invested">已坚持{{stage.elapsedDays}}天</view>
+        <view class="goal-stage__caption">{{stage.caption}}</view>
+      </view>
     </view>
   </view>
 </view>

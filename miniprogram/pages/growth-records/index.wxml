@@ -1,60 +1,63 @@
 <view class="growth-records-page" data-theme="{{appTheme}}">
-  <view class="page-wash" aria-hidden="true"></view>
+  <image class="page-hero-art" src="/assets/growth-records/hero-orbit-v1.jpg" mode="widthFix" aria-hidden="true" />
   <view class="custom-nav" style="height: {{headerHeight}}px;">
     <view class="custom-nav__inner" style="padding-top: {{menuTop}}px; height: {{menuHeight}}px;">
       <view class="nav-back" bindtap="goBack" hover-class="tap-pressed" aria-role="button" aria-label="返回"><t-icon name="chevron-left" size="42rpx" /></view>
-      <text class="nav-title">成长记录</text>
+      <view class="nav-title-row"><text class="nav-title">成长记录</text><image class="nav-seal" src="/assets/today-action-seal-v1.png" mode="heightFix" /></view>
       <view class="nav-placeholder"></view>
     </view>
   </view>
 
   <view class="page-content">
-    <view wx:if="{{status === 'loading'}}" class="state-card page-state"><view class="state-symbol"><t-loading theme="circular" size="48rpx" /></view><text class="state-title">正在整理完整成长记录</text><text class="state-desc">目标、行动与真实投入马上就好。</text></view>
-    <view wx:elif="{{status === 'error'}}" class="state-card page-state"><view class="state-symbol state-symbol--warning"><t-icon name="error-circle" size="48rpx" /></view><text class="state-title">成长记录暂时无法读取</text><text class="state-desc">{{errorMessage}}</text><view class="state-action" bindtap="retry">重新加载</view></view>
+    <view wx:if="{{status === 'loading'}}" class="page-state"><view class="state-symbol"><t-loading theme="circular" size="48rpx" /></view><text class="state-title">正在整理完整成长记录</text><text class="state-desc">目标、行动与真实投入马上就好。</text></view>
+    <view wx:elif="{{status === 'error'}}" class="page-state"><view class="state-symbol state-symbol--warning"><t-icon name="error-circle" size="48rpx" /></view><text class="state-title">成长记录暂时无法读取</text><text class="state-desc">{{errorMessage}}</text><view class="state-action" bindtap="retry">重新加载</view></view>
 
     <block wx:else>
-      <view class="growth-hero">
-        <image class="hero-mountain" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" />
-        <view class="hero-veil"></view>
-        <view class="hero-content">
-          <view class="hero-heading"><view class="hero-copy"><text class="hero-eyebrow">成长总览</text><text class="hero-title">每一步，都有真实记录</text></view><view class="history-entry" bindtap="openHistory" hover-class="tap-pressed">历史目标<t-icon name="chevron-right" size="26rpx" /></view></view>
-          <view class="summary-grid">
-            <view class="summary-item"><text class="summary-value">{{summary.completedActions}}</text><text class="summary-label">完成行动</text></view>
-            <view class="summary-item"><text class="summary-value">{{summary.totalMinutes}}</text><text class="summary-label">投入分钟</text></view>
-            <view class="summary-item"><text class="summary-value">{{summary.actionDays}}</text><text class="summary-label">行动天数</text></view>
-            <view class="summary-item"><text class="summary-value">{{summary.currentStreakDays}}</text><text class="summary-label">连续天数</text></view>
-          </view>
+      <view class="growth-records-hero">
+        <view class="hero-copy">
+          <text class="hero-eyebrow">成长总览</text>
+          <view class="hero-title"><text>每一步，</text><text>都有真实记录</text></view>
+          <view class="history-entry" bindtap="openHistory" hover-class="tap-pressed" aria-role="button"><text>历史目标</text><t-icon name="chevron-right" size="27rpx" /></view>
         </view>
+        <view class="summary-item summary-item--actions"><text class="summary-value">{{summary.completedActions}}</text><text class="summary-label">完成行动</text></view>
+        <view class="summary-item summary-item--minutes"><text class="summary-value">{{summary.totalMinutes}}</text><text class="summary-label">投入分钟</text></view>
+        <view class="summary-item summary-item--days"><text class="summary-value">{{summary.actionDays}}</text><text class="summary-label">行动天数</text></view>
+        <view class="summary-item summary-item--streak"><text class="summary-value summary-value--streak">{{summary.currentStreakDays}}</text><text class="summary-label summary-label--streak">连续天数</text></view>
       </view>
 
       <block wx:if="{{totalRecordCount > 0}}">
         <view class="filter-section">
-          <view class="filter-heading"><text>目标范围</text><text>{{totalRecordCount}} 条真实记录</text></view>
+          <view class="filter-heading"><text class="filter-title">目标范围</text><text class="filter-total">{{totalRecordCount}} 条真实记录</text></view>
           <scroll-view class="goal-filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
             <view class="goal-filter-inner">
-              <view wx:for="{{goalOptions}}" wx:for-index="goalIndex" wx:key="id" class="goal-filter {{goalIndex === 0 ? 'goal-filter--all' : ''}} {{item.selected ? 'is-active' : ''}}" data-id="{{item.id}}" bindtap="selectGoal" hover-class="tap-pressed" aria-role="button" aria-label="按{{item.label}}筛选">{{item.label}}</view>
+              <view wx:for="{{goalOptions}}" wx:key="id" class="goal-filter {{item.selected ? 'is-active' : ''}}" data-id="{{item.id}}" bindtap="selectGoal" hover-class="tap-pressed" aria-role="button" aria-label="按{{item.label}}筛选">
+                <text class="goal-filter__label">{{item.label}}</text><view class="goal-filter__node"><view class="goal-filter__core"></view></view>
+              </view>
             </view>
           </scroll-view>
           <view class="record-filter-bar" role="tablist">
-            <view wx:for="{{recordFilters}}" wx:key="key" class="record-filter {{recordFilter === item.key ? 'is-active' : ''}}" data-filter="{{item.key}}" bindtap="selectRecordFilter" role="tab" aria-selected="{{recordFilter === item.key}}">{{item.label}}</view>
+            <view wx:for="{{recordFilters}}" wx:key="key" class="record-filter {{recordFilter === item.key ? 'is-active' : ''}}" data-filter="{{item.key}}" bindtap="selectRecordFilter" role="tab" aria-selected="{{recordFilter === item.key}}"><text>{{item.label}}</text><view class="record-filter__indicator"></view></view>
           </view>
         </view>
 
-        <view wx:if="{{groups.length === 0}}" class="state-card compact-state"><view class="state-symbol"><t-icon name="filter" size="46rpx" /></view><text class="state-title">当前筛选下没有记录</text><text class="state-desc">可以查看全部目标与全部状态，继续回顾完整成长过程。</text><view class="state-action state-action--outline" bindtap="clearFilters">清除筛选</view></view>
+        <view wx:if="{{groups.length === 0}}" class="page-state compact-state"><view class="state-symbol"><t-icon name="filter" size="46rpx" /></view><text class="state-title">当前筛选下没有记录</text><text class="state-desc">可以查看全部目标与全部状态，继续回顾完整成长过程。</text><view class="state-action state-action--outline" bindtap="clearFilters">清除筛选</view></view>
 
         <view wx:else class="record-groups">
+          <image class="timeline-thread" src="/assets/growth-records/timeline-thread-v1.png" mode="scaleToFill" aria-hidden="true" />
           <view wx:for="{{groups}}" wx:key="date" class="date-group">
-            <view class="date-heading"><view class="date-title-wrap"><view class="date-mark"></view><text class="date-title">{{item.dateLabel}}</text></view><text class="date-summary">完成 {{item.completedCount}} 项 · 投入 {{item.actualMinutes}} 分钟</text></view>
-            <view class="record-card">
+            <view class="date-rail">
+              <view class="date-label"><text class="date-label__day">{{item.monthDayLabel}}</text><text class="date-label__weekday">{{item.weekdayLabel}}</text></view>
+            </view>
+            <view class="date-content">
+              <view class="date-heading"><text class="date-summary">完成 {{item.completedCount}} 项 · 投入 {{item.actualMinutes}} 分钟</text></view>
               <view wx:for="{{item.records}}" wx:for-item="record" wx:key="id" class="record-row {{record.readOnly ? 'is-readonly' : ''}}" data-id="{{record.id}}" bindtap="openRecord" hover-class="tap-pressed">
-                <view class="record-status record-status--{{record.statusTone}}"><t-icon name="{{record.statusKind === 'completed' ? 'check' : 'time'}}" size="23rpx" /></view>
+                <image class="record-brush" src="{{record.statusTone === 'success' ? '/assets/today-action-brush-green-v1.png' : '/assets/today-action-brush-gold-v1.png'}}" mode="scaleToFill" aria-hidden="true" />
                 <view class="record-main">
-                  <view class="record-top"><text class="record-title">{{record.title}}</text><text class="status-text status-text--{{record.statusTone}} status-text--{{record.statusKind}}">{{record.statusText}}</text></view>
-                  <text class="record-goal">{{record.goalTitle}}</text>
+                  <text class="record-title">{{record.title}}</text>
+                  <view class="record-meta"><text>{{record.goalTitle}}</text><text class="record-meta__dot">·</text><text>{{record.minutesText}}</text><text wx:if="{{record.readOnly}}" class="readonly-label">· {{record.archived ? '历史复盘' : '仅供回顾'}}</text></view>
                   <text wx:if="{{record.reflection}}" class="record-reflection">“{{record.reflection}}”</text>
-                  <view class="record-meta"><text>{{record.minutesText}}</text><text wx:if="{{record.readOnly}}" class="readonly-label">{{record.archived ? '历史复盘' : '仅供回顾'}}</text></view>
                 </view>
-                <view class="record-arrow"><t-icon name="chevron-right" size="27rpx" /></view>
+                <view class="record-state-link status-text--{{record.statusTone}}"><text>{{record.statusText}}</text><t-icon name="chevron-right" size="26rpx" /></view>
               </view>
             </view>
           </view>
@@ -62,9 +65,11 @@
         </view>
       </block>
 
-      <view wx:else class="state-card page-state empty-state"><view class="state-symbol"><t-icon name="chart" size="50rpx" /></view><text class="state-title">还没有成长记录</text><text class="state-desc">完成或部分完成一项真实行动后，这里会按日期保存你的投入与变化。</text><view class="state-action" bindtap="goToday">去今日添加行动</view></view>
+      <view wx:else class="page-state empty-state"><view class="state-symbol"><t-icon name="chart" size="50rpx" /></view><text class="state-title">还没有成长记录</text><text class="state-desc">完成或部分完成一项真实行动后，这里会按日期保存你的投入与变化。</text><view class="state-action" bindtap="goToday">去今日添加行动</view></view>
     </block>
   </view>
+
+  <image class="page-footer-mountain" src="/assets/progress-goal-mountains-v1.jpg" mode="aspectFill" aria-hidden="true" />
 
   <action-record-editor visible="{{recordEditorVisible}}" task="{{recordEditorTask}}" saving="{{savingRecord}}" deleting="{{deletingRecord}}" bind:close="closeRecordEditor" bind:save="saveRecordEditor" bind:delete="deleteRecordEditor" />
 </view>

@@ -8,16 +8,17 @@ import { recordProductEvent } from "../../services/productEvents";
 
 const CARD_WIDTH = 690;
 const FONT_FAMILY = '"PingFang SC", "Microsoft YaHei", sans-serif';
+const SERIF_FONT_FAMILY = '"STKaiti", "KaiTi", serif';
 
 type CanvasContext = any;
 type CanvasNode = any;
 type CardMode = "today" | "streak" | "week" | "stage";
 
 function cardPresentation(mode: CardMode, values: { done: number; total: number; focusMinutes: number; streak: number; totalMinutes: number; weekDone: number; weekTotal: number; weekMinutes: number; goalProgress: number }) {
-  if (mode === "streak") return { cardTitle: "连续行动卡", primaryLabel: "连续行动", primaryValue: `${values.streak} 天`, secondaryCopy: `累计真实投入 ${values.totalMinutes} 分钟`, listTitle: "最近完成行动", emptyCopy: "还没有可展示的完成行动", encouragement: "稳定不是每天完美，而是愿意继续。" };
-  if (mode === "week") return { cardTitle: "本周复盘卡", primaryLabel: "本周完成", primaryValue: `${values.weekDone} / ${values.weekTotal}`, secondaryCopy: `本周真实投入 ${values.weekMinutes} 分钟`, listTitle: "本周代表行动", emptyCopy: "本周还没有已完成行动", encouragement: "看见这一周，才能更好地走向下一周。" };
-  if (mode === "stage") return { cardTitle: "阶段目标完成卡", primaryLabel: "目标完成", primaryValue: `${values.goalProgress}%`, secondaryCopy: `累计真实投入 ${values.totalMinutes} 分钟`, listTitle: "阶段代表行动", emptyCopy: "阶段记录暂不可展示", encouragement: "这一程已经完成，下一程从经验出发。" };
-  return { cardTitle: "今日完成卡", primaryLabel: "今日完成", primaryValue: `${values.done} / ${values.total}`, secondaryCopy: `今日实际投入 ${values.focusMinutes} 分钟`, listTitle: "今日完成清单", emptyCopy: "今天还没有已完成行动", encouragement: "每天完成一点，就会靠近一点。" };
+  if (mode === "streak") return { cardTitle: "连续行动卡", primaryLabel: "连续行动", heroValue: `${values.streak}`, heroUnit: "天坚持", secondaryCopy: `累计真实投入 ${values.totalMinutes} 分钟`, listTitle: "最近完成行动", emptyCopy: "还没有可展示的完成行动", encouragement: "稳定不是每天完美，而是愿意继续。" };
+  if (mode === "week") return { cardTitle: "本周复盘卡", primaryLabel: "本周完成", heroValue: `${values.weekDone}`, heroUnit: "项行动", secondaryCopy: `本周实际投入 ${values.weekMinutes} 分钟`, listTitle: "本周代表行动", emptyCopy: "本周还没有已完成行动", encouragement: "看见这一周，才能更好地走向下一周。" };
+  if (mode === "stage") return { cardTitle: "阶段目标完成卡", primaryLabel: "阶段完成", heroValue: `${values.goalProgress}%`, heroUnit: "目标进度", secondaryCopy: `累计真实投入 ${values.totalMinutes} 分钟`, listTitle: "阶段代表行动", emptyCopy: "阶段记录暂不可展示", encouragement: "这一程已经完成，下一程从经验出发。" };
+  return { cardTitle: "今日完成卡", primaryLabel: "今日完成", heroValue: `${values.done}`, heroUnit: "项行动", secondaryCopy: `实际投入 ${values.focusMinutes} 分钟`, listTitle: "已完成清单", emptyCopy: "今天还没有已完成行动", encouragement: "每天完成一点，就会靠近一点。" };
 }
 
 function weekdayText(dateValue: string): string {
@@ -25,29 +26,8 @@ function weekdayText(dateValue: string): string {
   return `周${["日", "一", "二", "三", "四", "五", "六"][day]}`;
 }
 
-function roundedPath(ctx: CanvasContext, x: number, y: number, width: number, height: number, radius: number): void {
-  const r = Math.min(radius, width / 2, height / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + width - r, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
-  ctx.lineTo(x + width, y + height - r);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
-  ctx.lineTo(x + r, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
-function fillRounded(ctx: CanvasContext, x: number, y: number, width: number, height: number, radius: number, color: string): void {
-  roundedPath(ctx, x, y, width, height, radius);
-  ctx.fillStyle = color;
-  ctx.fill();
-}
-
-function setFont(ctx: CanvasContext, size: number, weight = 400): void {
-  ctx.font = `${weight} ${size}px ${FONT_FAMILY}`;
+function setFont(ctx: CanvasContext, size: number, weight = 400, family = FONT_FAMILY): void {
+  ctx.font = `${weight} ${size}px ${family}`;
 }
 
 function ellipsis(ctx: CanvasContext, value: string, maxWidth: number): string {
@@ -113,9 +93,10 @@ Page({
     cardModes: [] as Array<{ value: CardMode; label: string; enabled: boolean }>,
     cardTitle: "今日完成卡",
     primaryLabel: "今日完成",
-    primaryValue: "0 / 0",
-    secondaryCopy: "今日实际投入 0 分钟",
-    listTitle: "今日完成清单",
+    heroValue: "0",
+    heroUnit: "项行动",
+    secondaryCopy: "实际投入 0 分钟",
+    listTitle: "已完成清单",
     emptyCopy: "今天还没有已完成行动",
     encouragement: "每天完成一点，就会靠近一点。",
     dateText: "",
@@ -245,30 +226,28 @@ Page({
     const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
     const dpr = Math.min(Number(windowInfo.pixelRatio || 2), 3);
     const visibleTaskCount = this.data.hideTasks ? 0 : this.data.completedTasks.length;
-    const listHeight = this.data.hideTasks || visibleTaskCount === 0 ? 142 : 112 + visibleTaskCount * 52;
-    const cardHeight = 799 + listHeight;
+    const cardHeight = 1180;
     canvas.width = CARD_WIDTH * dpr;
     canvas.height = cardHeight * dpr;
     const ctx = canvas.getContext("2d") as CanvasContext;
     ctx.scale(dpr, dpr);
 
-    ctx.fillStyle = "#FBFCF8";
+    ctx.fillStyle = "#F7F3EA";
     ctx.fillRect(0, 0, CARD_WIDTH, cardHeight);
-    ctx.fillStyle = "#356859";
-    ctx.fillRect(0, 0, CARD_WIDTH, 96);
 
-    setFont(ctx, 25, 700);
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillText(`今日进度｜目标计划打卡 · ${this.data.cardTitle}`, 36, 61);
-    setFont(ctx, 21, 400);
-    ctx.fillStyle = "rgba(255,255,255,0.78)";
-    ctx.textAlign = "right";
-    ctx.fillText(`${this.data.dateText} ${this.data.weekday}`, 654, 60);
-    ctx.textAlign = "left";
+    const landscapeImage = await loadCanvasImage(canvas, "/assets/today-hero-calendar-v4.jpg");
+    if (landscapeImage) {
+      ctx.save();
+      ctx.globalAlpha = 0.62;
+      ctx.drawImage(landscapeImage, -16, 330, 760, 760);
+      ctx.restore();
+      ctx.fillStyle = "rgba(247,243,234,0.72)";
+      ctx.fillRect(0, 290, CARD_WIDTH, 250);
+    }
 
-    const avatarX = 40;
-    const avatarY = 132;
-    const avatarSize = 84;
+    const avatarX = 50;
+    const avatarY = 48;
+    const avatarSize = 82;
     const avatarImage = await loadCanvasImage(canvas, this.data.avatarUrl || "/images/icons/avatar.png");
     ctx.save();
     ctx.beginPath();
@@ -283,9 +262,9 @@ Page({
       const crop = Math.min(sourceWidth, sourceHeight);
       ctx.drawImage(avatarImage, offset, top, crop, crop, avatarX, avatarY, avatarSize, avatarSize);
     } else {
-      ctx.fillStyle = "#E3F1E8";
+      ctx.fillStyle = "#E4EEE9";
       ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
-      ctx.fillStyle = "#356859";
+      ctx.fillStyle = "#245B4D";
       ctx.beginPath();
       ctx.arc(avatarX + avatarSize / 2, avatarY + 31, 15, 0, Math.PI * 2);
       ctx.fill();
@@ -295,111 +274,134 @@ Page({
     }
     ctx.restore();
 
-    setFont(ctx, 30, 700);
-    ctx.fillStyle = "#233B34";
-    ctx.fillText(ellipsis(ctx, this.data.nickname, 280), 146, 166);
-    fillRounded(ctx, 146, 179, 92, 30, 15, "#FFF1C7");
-    setFont(ctx, 18, 600);
-    ctx.fillStyle = "#A87B18";
-    ctx.textAlign = "center";
-    ctx.fillText("当前目标", 192, 200);
-    ctx.textAlign = "left";
+    setFont(ctx, 27, 700);
+    ctx.fillStyle = "#24312D";
+    ctx.fillText(ellipsis(ctx, this.data.nickname, 220), 152, 80);
+    setFont(ctx, 20, 400);
+    ctx.fillStyle = "#747A76";
+    ctx.fillText("当前目标", 152, 116);
     setFont(ctx, 22, 400);
-    ctx.fillStyle = "#71827A";
-    ctx.fillText(ellipsis(ctx, this.data.goalTitle, 372), 250, 201);
+    ctx.fillStyle = "#245B4D";
+    ctx.fillText(ellipsis(ctx, this.data.goalTitle, 190), 246, 116);
 
-    fillRounded(ctx, 34, 252, 622, 220, 28, "#FFFFFF");
-    setFont(ctx, 22, 400);
-    ctx.fillStyle = "#71827A";
-    ctx.fillText(this.data.primaryLabel, 68, 305);
-    setFont(ctx, 52, 800);
-    ctx.fillStyle = "#233B34";
-    ctx.fillText(this.data.primaryValue, 68, 370);
     setFont(ctx, 21, 400);
-    ctx.fillText(this.data.secondaryCopy, 68, 418);
+    ctx.fillStyle = "#4F5652";
+    ctx.textAlign = "right";
+    ctx.fillText(`${this.data.dateText} ${this.data.weekday}`, 638, 80);
+    setFont(ctx, 17, 400);
+    ctx.fillStyle = "#888D89";
+    ctx.fillText("记录真实成长", 638, 111);
+    ctx.textAlign = "left";
 
-    ctx.fillStyle = "#E9EFEA";
-    ctx.fillRect(337, 300, 1, 124);
-    const ringX = 526;
-    const ringY = 362;
+    setFont(ctx, 54, 600, SERIF_FONT_FAMILY);
+    ctx.fillStyle = "#245B4D";
+    ctx.fillText(this.data.primaryLabel, 54, 226);
+    setFont(ctx, 104, 600, SERIF_FONT_FAMILY);
+    ctx.fillStyle = "#C28F35";
+    ctx.fillText(this.data.heroValue, 55, 350);
+    const valueWidth = ctx.measureText(this.data.heroValue).width;
+    setFont(ctx, 66, 500, SERIF_FONT_FAMILY);
+    ctx.fillStyle = "#245B4D";
+    ctx.fillText(this.data.heroUnit, Math.min(55 + valueWidth + 22, 300), 342);
+    ctx.fillStyle = "#C89B4A";
+    ctx.fillRect(58, 366, 86, 5);
+    setFont(ctx, 25, 400);
+    ctx.fillStyle = "#505854";
+    ctx.fillText(this.data.secondaryCopy, 56, 423);
+
+    const ringX = 155;
+    const ringY = 586;
     ctx.beginPath();
-    ctx.arc(ringX, ringY, 66, 0, Math.PI * 2);
-    ctx.strokeStyle = "#DDEBDD";
-    ctx.lineWidth = 14;
+    ctx.arc(ringX, ringY, 88, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(36,91,77,0.13)";
+    ctx.lineWidth = 18;
     ctx.stroke();
     if (this.data.goalProgress > 0) {
       ctx.beginPath();
-      ctx.arc(ringX, ringY, 66, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(this.data.goalProgress, 100) / 100);
-      ctx.strokeStyle = "#356859";
-      ctx.lineWidth = 14;
-      ctx.lineCap = "round";
+      ctx.arc(ringX, ringY, 88, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(this.data.goalProgress, 100) / 100);
+      ctx.strokeStyle = "#245B4D";
+      ctx.lineWidth = 18;
+      ctx.lineCap = "butt";
       ctx.stroke();
     }
-    setFont(ctx, 38, 800);
-    ctx.fillStyle = "#356859";
+    setFont(ctx, 48, 500, SERIF_FONT_FAMILY);
+    ctx.fillStyle = "#245B4D";
     ctx.textAlign = "center";
-    ctx.fillText(`${this.data.goalProgress}%`, ringX, ringY + 5);
-    setFont(ctx, 18, 400);
-    ctx.fillStyle = "#71827A";
-    ctx.fillText("目标进度", ringX, ringY + 32);
+    ctx.fillText(`${this.data.goalProgress}%`, ringX, ringY + 3);
+    setFont(ctx, 19, 400);
+    ctx.fillStyle = "#666D69";
+    ctx.fillText("目标进度", ringX, ringY + 34);
     ctx.textAlign = "left";
 
-    const listY = 496;
-    fillRounded(ctx, 34, listY, 622, listHeight, 28, "#FFFFFF");
-    setFont(ctx, 24, 700);
-    ctx.fillStyle = "#233B34";
-    ctx.fillText(this.data.listTitle, 66, listY + 48);
-    setFont(ctx, 19, 400);
-    ctx.fillStyle = "#71827A";
+    ctx.fillStyle = "rgba(200,155,74,0.62)";
+    ctx.fillRect(302, 522, 1, 128);
+    ctx.beginPath();
+    ctx.arc(302.5, 586, 5, 0, Math.PI * 2);
+    ctx.fillStyle = "#C89B4A";
+    ctx.fill();
+
+    const listX = 346;
+    const listY = 525;
+    setFont(ctx, 27, 500, SERIF_FONT_FAMILY);
+    ctx.fillStyle = "#245B4D";
+    ctx.fillText(this.data.listTitle, listX, listY);
+    setFont(ctx, 17, 400);
+    ctx.fillStyle = "#7C817D";
     ctx.textAlign = "right";
-    ctx.fillText(this.data.hideTasks ? "已隐藏" : "隐藏内容：关", 624, listY + 47);
+    ctx.fillText(this.data.hideTasks ? "内容已隐藏" : "真实完成记录", 635, listY);
     ctx.textAlign = "left";
     if (this.data.hideTasks) {
-      setFont(ctx, 24, 700);
-      ctx.fillStyle = "#356859";
-      ctx.fillText(this.data.secondaryCopy, 66, listY + 100);
+      setFont(ctx, 22, 500);
+      ctx.fillStyle = "#626965";
+      ctx.fillText(this.data.secondaryCopy, listX, listY + 54);
     } else if (visibleTaskCount > 0) {
       this.data.completedTasks.forEach((task: { title: string }, index: number) => {
-        const rowY = listY + 95 + index * 52;
-        drawCheck(ctx, 80, rowY - 8);
-        setFont(ctx, 23, 400);
-        ctx.fillStyle = "#233B34";
-        ctx.fillText(ellipsis(ctx, task.title, 500), 108, rowY);
+        const rowY = listY + 53 + index * 43;
+        drawCheck(ctx, listX + 15, rowY - 8);
+        setFont(ctx, 22, 400);
+        ctx.fillStyle = "#303733";
+        ctx.fillText(ellipsis(ctx, task.title, 245), listX + 42, rowY);
       });
     } else {
-      setFont(ctx, 23, 600);
-      ctx.fillStyle = "#71827A";
-      ctx.fillText(this.data.emptyCopy, 66, listY + 100);
+      setFont(ctx, 21, 400);
+      ctx.fillStyle = "#6F7672";
+      ctx.fillText(this.data.emptyCopy, listX, listY + 54);
     }
 
-    const growthY = listY + listHeight + 24;
-    fillRounded(ctx, 34, growthY, 622, 78, 24, "#EAF5EF");
-    setFont(ctx, 20, 400);
-    ctx.fillStyle = "#71827A";
-    ctx.fillText("连续坚持", 64, growthY + 48);
-    setFont(ctx, 23, 800);
-    ctx.fillStyle = "#233B34";
-    ctx.fillText(`${this.data.streak} 天`, 190, growthY + 48);
-    ctx.fillStyle = "#CFDED6";
-    ctx.fillRect(332, growthY + 22, 1, 34);
-    setFont(ctx, 20, 400);
-    ctx.fillStyle = "#71827A";
-    ctx.fillText("累计投入", 360, growthY + 48);
-    setFont(ctx, 23, 800);
-    ctx.fillStyle = "#233B34";
-    ctx.fillText(`${this.data.totalMinutes} 分钟`, 492, growthY + 48);
+    const encouragementY = 816;
+    ctx.fillStyle = "#C89B4A";
+    ctx.fillRect(52, encouragementY, 4, 116);
+    setFont(ctx, 35, 500, SERIF_FONT_FAMILY);
+    ctx.fillStyle = "#245B4D";
+    const encouragementParts = this.data.encouragement.split("，");
+    ctx.fillText(encouragementParts[0] ? `${encouragementParts[0]}，` : this.data.encouragement, 76, encouragementY + 42);
+    if (encouragementParts[1]) ctx.fillText(encouragementParts.slice(1).join("，"), 76, encouragementY + 84);
+    setFont(ctx, 19, 400);
+    ctx.fillStyle = "#747A76";
+    ctx.fillText("记录今天的成长，迎接更好的自己。", 76, encouragementY + 124);
 
-    const encouragementY = growthY + 132;
-    setFont(ctx, 27, 700);
-    ctx.fillStyle = "#233B34";
-    ctx.textAlign = "center";
-    ctx.fillText(this.data.encouragement, CARD_WIDTH / 2, encouragementY);
-    ctx.fillStyle = "#E6EEE9";
-    ctx.fillRect(52, encouragementY + 44, 586, 1);
-    setFont(ctx, 20, 400);
-    ctx.fillStyle = "#71827A";
-    ctx.fillText("我在「今日进度」记录今天的成长", CARD_WIDTH / 2, encouragementY + 92);
-    ctx.textAlign = "left";
+    const growthY = 1004;
+    ctx.fillStyle = "rgba(200,155,74,0.64)";
+    ctx.fillRect(50, growthY, 590, 1);
+    setFont(ctx, 19, 400);
+    ctx.fillStyle = "#737975";
+    ctx.fillText("连续坚持", 100, growthY + 54);
+    setFont(ctx, 40, 500, SERIF_FONT_FAMILY);
+    ctx.fillStyle = "#245B4D";
+    ctx.fillText(`${this.data.streak}`, 100, growthY + 98);
+    setFont(ctx, 19, 400);
+    ctx.fillText("天", 150, growthY + 95);
+    ctx.fillStyle = "rgba(200,155,74,0.56)";
+    ctx.fillRect(337, growthY + 32, 1, 66);
+    setFont(ctx, 19, 400);
+    ctx.fillStyle = "#737975";
+    ctx.fillText("累计投入", 390, growthY + 54);
+    setFont(ctx, 40, 500, SERIF_FONT_FAMILY);
+    ctx.fillStyle = "#245B4D";
+    ctx.fillText(`${this.data.totalMinutes}`, 390, growthY + 98);
+    const minutesWidth = ctx.measureText(`${this.data.totalMinutes}`).width;
+    setFont(ctx, 19, 400);
+    ctx.fillText("分钟", 400 + minutesWidth, growthY + 95);
 
     return { canvas, dpr, height: cardHeight };
   },

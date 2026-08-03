@@ -1,0 +1,49 @@
+<view wx:if="{{visible}}" class="completed-editor" catchtouchmove="noop">
+  <view class="completed-editor__mask" catchtap="close"></view>
+  <view class="completed-editor__panel" catchtap="noop">
+    <image class="completed-editor__atmosphere" src="/assets/profile/goal-mountain-v2.jpg" mode="aspectFill" aria-hidden="true" />
+    <view class="completed-editor__grabber"></view>
+    <view class="completed-editor__head">
+      <view>
+        <view class="completed-editor__eyebrow">完成记录</view>
+        <view class="completed-editor__title">调整这次行动</view>
+        <view class="completed-editor__subtitle">只校准真实发生的内容与时间</view>
+      </view>
+      <view class="completed-editor__close" catchtap="close" hover-class="is-pressed" aria-role="button" aria-label="关闭完成记录编辑器"><t-icon name="close" size="32rpx" /></view>
+    </view>
+
+    <view class="completed-editor__body">
+      <view class="completed-field">
+        <view class="completed-field__label">行动内容</view>
+        <view class="completed-field__shell">
+          <input class="completed-field__input" value="{{title}}" maxlength="40" placeholder="写下完成的行动" bindinput="inputTitle" />
+          <text class="completed-field__counter">{{title.length}}/40</text>
+        </view>
+      </view>
+
+      <view class="completed-field">
+        <view class="completed-field__label">实际投入</view>
+        <view class="completed-field__shell completed-field__shell--minutes">
+          <t-icon name="time" size="34rpx" />
+          <input class="completed-field__minutes" type="number" value="{{actualMinutesText}}" maxlength="3" bindinput="inputMinutes" />
+          <text class="completed-field__unit">分钟</text>
+        </view>
+      </view>
+
+      <view class="completed-field">
+        <view class="completed-field__label">完成时间</view>
+        <view class="completed-field__shell completed-field__shell--date">
+          <t-icon name="calendar" size="34rpx" />
+          <picker class="completed-field__date" mode="date" value="{{completedDate}}" bindchange="changeDate"><view>{{completedDate}}</view></picker>
+          <view class="completed-field__divider"></view>
+          <picker class="completed-field__time" mode="time" value="{{completedTime}}" bindchange="changeTime"><view>{{completedTime}}</view></picker>
+          <t-icon name="chevron-right" size="28rpx" />
+        </view>
+      </view>
+    </view>
+
+    <view class="completed-editor__footer">
+      <button class="completed-editor__save {{saving || title.length < 2 ? 'is-disabled' : ''}}" loading="{{saving}}" disabled="{{saving || title.length < 2}}" bindtap="save" hover-class="is-pressed">{{saving ? '正在保存' : '保存记录'}}</button>
+    </view>
+  </view>
+</view>

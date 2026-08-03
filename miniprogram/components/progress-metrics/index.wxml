@@ -1,9 +1,12 @@
-<view class="metrics-card" aria-label="目标累计统计">
-  <view wx:for="{{items}}" wx:key="label" class="metric-item">
-    <view class="metric-main">
-      <view class="metric-icon"><t-icon name="{{item.icon}}" size="36rpx" /></view>
+<view class="metrics-card" aria-label="当前统计范围数据概览">
+  <view class="metrics-grid">
+    <view wx:for="{{items}}" wx:key="label" class="metric-item">
+      <view class="metric-heading"><t-icon name="{{item.icon}}" size="31rpx" /><text>{{item.label}}</text></view>
       <view class="metric-value {{item.value.length >= 4 ? 'is-long' : ''}}"><text class="metric-number">{{item.value}}</text><text class="metric-unit">{{item.unit}}</text></view>
+      <view class="metric-meta">{{item.meta}}</view>
     </view>
-    <view class="metric-label">{{item.label}}</view>
+  </view>
+  <view class="metrics-history" bindtap="openHistory" hover-class="tap-pressed" aria-role="button" aria-label="查看历史记录">
+    <text>查看历史记录</text><t-icon name="chevron-right" size="29rpx" />
   </view>
 </view>

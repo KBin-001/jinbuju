@@ -102,8 +102,6 @@ export interface ActionTask {
   reminder?: ActionReminder;
   /** 重要程度：required 表示必须完成，在优先级评分中获得更高权重。未填默认 normal。 */
   importance?: "required" | "normal";
-  /** 是否阻塞其他任务，标记为 true 的任务在评分中获得依赖维度加分。未填默认 false。 */
-  blocksOthers?: boolean;
   /** 用户手动覆盖的分组；非 null 时直接进入对应分组，跳过自动评分。未填默认 null。 */
   priorityOverride?: "focus" | "quick" | "later" | null;
 }

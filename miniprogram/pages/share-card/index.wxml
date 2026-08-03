@@ -6,7 +6,7 @@
     style="top: {{navButtonTop}}px; width: {{navButtonSize}}px; height: {{navButtonSize}}px;"
     bindtap="closePage"
     aria-label="关闭分享卡"
-  ><t-icon name="close" size="38rpx" /></t-button>
+  ><t-icon name="close" size="36rpx" /></t-button>
 
   <view wx:if="{{status === 'loading'}}" class="share-state">
     <view class="state-dot"></view>
@@ -21,89 +21,122 @@
 
   <scroll-view wx:else class="share-scroll" scroll-y enhanced show-scrollbar="{{false}}">
     <view class="share-content" style="padding-top: {{contentTop}}px;">
-      <scroll-view class="template-switch" scroll-x enhanced show-scrollbar="{{false}}">
-        <view class="template-switch__inner">
-          <view wx:for="{{cardModes}}" wx:key="value" class="template-chip {{cardMode === item.value ? 'is-active' : ''}} {{item.enabled ? '' : 'is-disabled'}}" data-mode="{{item.value}}" bindtap="selectCardMode">{{item.label}}</view>
+      <view class="share-sheet">
+        <scroll-view class="template-switch" scroll-x enhanced show-scrollbar="{{false}}">
+          <view class="template-switch__inner">
+            <view
+              wx:for="{{cardModes}}"
+              wx:key="value"
+              class="template-tab {{cardMode === item.value ? 'is-active' : ''}} {{item.enabled ? '' : 'is-disabled'}}"
+              data-mode="{{item.value}}"
+              bindtap="selectCardMode"
+            >
+              <text>{{item.label}}</text>
+              <view wx:if="{{cardMode === item.value}}" class="template-tab__line"></view>
+            </view>
+          </view>
+        </scroll-view>
+
+        <view class="share-card">
+          <image class="share-landscape" src="/assets/today-hero-calendar-v4.jpg" mode="aspectFill" aria-hidden="true" />
+
+          <view class="share-card-body">
+            <view class="share-identity">
+              <view class="identity-person">
+                <view class="share-avatar">
+                  <image wx:if="{{avatarUrl}}" src="{{avatarUrl}}" mode="aspectFill" />
+                  <image wx:else src="/images/icons/avatar.png" mode="aspectFit" />
+                </view>
+                <view class="identity-copy">
+                  <view class="identity-name">{{nickname}}</view>
+                  <view class="identity-goal-row">
+                    <text class="identity-label">当前目标</text>
+                    <text class="identity-goal">{{goalTitle}}</text>
+                  </view>
+                </view>
+              </view>
+              <view class="identity-date">
+                <text>{{dateText}} {{weekday}}</text>
+                <text class="identity-date__sub">记录真实成长</text>
+              </view>
+            </view>
+
+            <view class="share-hero">
+              <view class="hero-label">{{primaryLabel}}</view>
+              <view class="hero-result">
+                <text class="hero-number">{{heroValue}}</text>
+                <text class="hero-unit">{{heroUnit}}</text>
+              </view>
+              <view class="hero-stroke"></view>
+              <view class="hero-investment">{{secondaryCopy}}</view>
+            </view>
+
+            <view class="share-progress-row">
+              <view class="goal-ring" style="background: conic-gradient(#245B4D 0% {{goalProgress}}%, rgba(36, 91, 77, 0.12) {{goalProgress}}% 100%);">
+                <view class="goal-ring-inner">
+                  <view>{{goalProgress}}%</view>
+                  <text>目标进度</text>
+                </view>
+              </view>
+
+              <view class="progress-divider"><view class="progress-divider__dot"></view></view>
+
+              <view class="share-list">
+                <view class="list-head">
+                  <view class="list-title">{{listTitle}}</view>
+                  <view class="privacy-control">
+                    <text>{{hideTasks ? '已隐藏' : '隐藏内容'}}</text>
+                    <t-switch value="{{hideTasks}}" color="#245B4D" bindchange="toggleTaskPrivacy" />
+                  </view>
+                </view>
+                <view wx:if="{{hideTasks}}" class="hidden-summary">{{secondaryCopy}}</view>
+                <view wx:elif="{{completedTasks.length > 0}}" class="completed-list">
+                  <view wx:for="{{completedTasks}}" wx:key="id" class="completed-item">
+                    <view class="completed-check"><t-icon name="check" size="22rpx" /></view>
+                    <text>{{item.title}}</text>
+                  </view>
+                </view>
+                <view wx:else class="hidden-summary">{{emptyCopy}}</view>
+              </view>
+            </view>
+
+            <view class="share-encouragement">
+              <view class="encouragement-rule"></view>
+              <view class="encouragement-copy">
+                <view>{{encouragement}}</view>
+                <text>记录今天的成长，迎接更好的自己。</text>
+              </view>
+            </view>
+
+            <view class="share-growth-strip">
+              <view class="growth-item">
+                <view class="growth-icon"><t-icon name="flag" size="52rpx" /></view>
+                <view>
+                  <view class="growth-label">连续坚持</view>
+                  <view class="growth-value"><text>{{streak}}</text> 天</view>
+                </view>
+              </view>
+              <view class="growth-divider"></view>
+              <view class="growth-item">
+                <view class="growth-icon"><t-icon name="time" size="52rpx" /></view>
+                <view>
+                  <view class="growth-label">累计投入</view>
+                  <view class="growth-value"><text>{{totalMinutes}}</text> 分钟</view>
+                </view>
+              </view>
+            </view>
+          </view>
         </view>
-      </scroll-view>
-      <view class="share-card">
-        <view class="share-brand-bar">
-          <view class="brand-name"><text class="brand-mark"></text>今日进度｜目标计划打卡 · {{cardTitle}}</view>
-          <view class="brand-date">{{dateText}} {{weekday}}</view>
-        </view>
 
-        <view class="share-card-body">
-          <view class="share-identity">
-            <view class="share-avatar">
-              <image wx:if="{{avatarUrl}}" src="{{avatarUrl}}" mode="aspectFill" />
-              <image wx:else src="/images/icons/avatar.png" mode="aspectFit" />
-            </view>
-            <view class="identity-copy">
-              <view class="identity-name">{{nickname}}</view>
-              <view class="identity-goal-row">
-                <text class="identity-chip">当前目标</text>
-                <text class="identity-goal">{{goalTitle}}</text>
-              </view>
-            </view>
-          </view>
-
-          <view class="share-core-card">
-            <view class="core-left">
-              <view class="core-label">{{primaryLabel}}</view>
-              <view class="core-count"><text>{{primaryValue}}</text></view>
-              <view class="core-minutes">{{secondaryCopy}}</view>
-            </view>
-            <view class="core-divider"></view>
-            <view class="goal-ring" style="background: conic-gradient(#356859 0% {{goalProgress}}%, #DDEBDD {{goalProgress}}% 100%);">
-              <view class="goal-ring-inner">
-                <view>{{goalProgress}}%</view>
-                <text>目标进度</text>
-              </view>
-            </view>
-          </view>
-
-          <view class="share-list-card">
-            <view class="list-head">
-              <view class="list-title">{{listTitle}}</view>
-              <view class="privacy-control">
-                <text>{{hideTasks ? '已隐藏' : '隐藏内容'}}</text>
-                <t-switch value="{{hideTasks}}" color="#356859" bindchange="toggleTaskPrivacy" />
-              </view>
-            </view>
-            <view wx:if="{{hideTasks}}" class="hidden-summary">{{secondaryCopy}}</view>
-            <view wx:elif="{{completedTasks.length > 0}}" class="completed-list">
-              <view wx:for="{{completedTasks}}" wx:key="id" class="completed-item">
-                <view class="completed-check">✓</view>
-                <text>{{item.title}}</text>
-              </view>
-            </view>
-            <view wx:else class="hidden-summary">{{emptyCopy}}</view>
-          </view>
-
-          <view class="share-growth-strip">
-            <view class="growth-item">
-              <text class="growth-icon is-yellow"><t-icon name="flag" size="28rpx" /></text>
-              <text class="growth-label">连续坚持</text>
-              <text class="growth-value">{{streak}} 天</text>
-            </view>
-            <view class="growth-divider"></view>
-            <view class="growth-item">
-              <text class="growth-icon"><t-icon name="time" size="28rpx" /></text>
-              <text class="growth-label">累计投入</text>
-              <text class="growth-value">{{totalMinutes}} 分钟</text>
-            </view>
-          </view>
-
-          <view class="share-encouragement">{{encouragement}}</view>
-          <view class="share-signature"><text class="signature-mark"></text>我在「今日进度」记录今天的成长</view>
-        </view>
-      </view>
-
-      <view class="share-save-area">
-        <t-button class="save-image-button" loading="{{saving}}" disabled="{{saving}}" bindtap="saveImage">
-          <t-icon wx:if="{{!saving}}" class="save-icon" name="download" size="30rpx" />
+        <view
+          class="save-image-button {{saving ? 'is-saving' : ''}}"
+          role="button"
+          aria-label="{{saving ? '正在生成图片' : '保存图片'}}"
+          bindtap="saveImage"
+        >
+          <image class="save-brush" src="/assets/share-save-brush-v1.png" mode="scaleToFill" aria-hidden="true" />
           <text>{{saving ? '正在生成图片' : '保存图片'}}</text>
-        </t-button>
+        </view>
         <view class="save-tip">图片仅保存在你的设备中</view>
       </view>
     </view>

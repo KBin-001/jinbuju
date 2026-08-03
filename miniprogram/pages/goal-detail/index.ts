@@ -5,6 +5,7 @@ import { ActionTask, Goal, ProgressSummary } from "../../types/manual";
 import { MODAL_CONFIRM_COLORS, withAppTheme } from "../../services/theme";
 import { addBusinessDays, formatDisplayDate, getTodayBusinessDate } from "../../utils/date";
 import { getActionTaskDisplayStatus } from "../../utils/taskStatus";
+import { openTodayActionEditor } from "../../utils/todayActionEditor";
 
 interface StatItem {
   label: string;
@@ -146,8 +147,11 @@ Page(withAppTheme({
 
   addAction() {
     const goal = this.data.goal;
-    if (!goal) return;
-    wx.navigateTo({ url: `/pages/action-edit/index?goalId=${encodeURIComponent(goal.id)}` });
+    if (!goal) {
+      wx.showToast({ title: "目标已不存在，请返回后重试", icon: "none" });
+      return;
+    }
+    openTodayActionEditor({ mode: "create", goalId: goal.id, date: getTodayBusinessDate() });
   },
 
   viewProgress() {

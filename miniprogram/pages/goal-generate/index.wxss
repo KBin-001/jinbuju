@@ -206,3 +206,47 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Semantic type roles for AI goal clarification and generation states. */
+.gen-title,
+.clarify-title,
+.analysis-goal,
+.generation-error .state-title { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.gen-sub,
+.clarify-sub,
+.fallback-copy,
+.complete-hint,
+.retry-hint,
+.state-description { font-size: var(--font-caption); line-height: var(--line-height-caption); }
+.field-label,
+.question-title,
+.phase-text { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+.required-mark,
+.answer-chip { font-size: var(--font-tag); line-height: var(--line-height-tag); }
+.answer-input,
+.answer-textarea { font-size: var(--font-body); line-height: var(--line-height-body); }
+.previous-button,
+.next-button,
+.generation-complete button,
+.retry-button { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+.phase-icon,
+.complete-icon,
+.state-mark { font-size: var(--font-icon-display); line-height: var(--line-height-data); }
+
+@media (max-width: 350px) {
+  .gen-title,
+  .clarify-title,
+  .analysis-goal,
+  .generation-error .state-title { font-size: var(--font-card-title-compact); line-height: var(--line-height-card-title); }
+  .gen-sub,
+  .clarify-sub,
+  .fallback-copy,
+  .complete-hint,
+  .retry-hint,
+  .state-description { font-size: var(--font-caption-compact); line-height: var(--line-height-caption); }
+  .field-label,
+  .question-title,
+  .phase-text { font-size: var(--font-body-compact); line-height: var(--line-height-body); }
+  .required-mark,
+  .answer-chip { font-size: var(--font-tag-compact); line-height: var(--line-height-tag); }
+}

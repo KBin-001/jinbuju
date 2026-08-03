@@ -1,10 +1,12 @@
 <view class="page progress-page" data-theme="{{appTheme}}">
+  <view class="progress-atmosphere" aria-hidden="true">
+    <image class="progress-atmosphere__pines" src="/assets/progress-pine-ridge-v1.jpg" mode="aspectFill" />
+    <image class="progress-atmosphere__mountains" src="/assets/progress-goal-mountains-v1.jpg" mode="aspectFill" />
+  </view>
   <view class="landscape-header tab-header" style="height: {{headerHeight}}px;">
-    <image class="tab-header__background" src="/assets/progress-mountain-path-v2.jpg" mode="aspectFill" aria-hidden="true" />
     <view class="landscape-header__veil tab-header__veil"></view>
-    <view class="progress-nav tab-header__nav" style="padding-top: {{menuTop}}px; height: {{menuHeight}}px;">
-      <text class="tab-header__title">进度</text>
-      <view class="progress-title-mark" aria-hidden="true"></view>
+    <view class="progress-nav tab-header__nav" style="padding-top: {{menuTop}}px; height: calc({{menuHeight}}px + 48rpx);">
+      <image class="progress-brand-logo" src="/assets/progress-brand-lockup-v1.png" mode="widthFix" aria-label="进度" />
       <text class="progress-subtitle">持续行动 · 长期成长</text>
     </view>
   </view>
@@ -31,7 +33,7 @@
 
   <block wx:else>
     <goal-overview goal="{{goal}}" period="{{goalPeriod}}" stage="{{goalStage}}" switch-label="{{canSwitchGoal ? '切换目标' : '查看目标'}}" bind:switch="openGoalPicker" />
-    <progress-metrics items="{{overviewStats}}" />
+    <progress-metrics items="{{overviewStats}}" bind:history="openHistoryReview" />
 
     <action-trend-chart
       id="actionTrendChart"
@@ -45,7 +47,6 @@
       has-any-task="{{hasAnyTask}}"
       bind:rangechange="onTrendRangeChange"
       bind:select="onTrendSelect"
-      bind:history="openHistoryReview"
       bind:emptyaction="onTrendEmptyAction"
     />
 
@@ -85,31 +86,32 @@
       <view class="history-link" bindtap="openHistoryReview"><text>查看历史记录</text><t-icon name="chevron-right" size="30rpx" /></view>
     </view>
 
-    <coach-insight wx:if="{{hasTrendData}}" insight="{{coachInsight}}" bind:open="openAiCoach" />
+    <coach-insight wx:if="{{hasTrendData}}" insight="{{coachInsight}}" scope-label="{{coachScopeLabel}}" action-title="提前安排明日首项任务" bind:open="openAiCoach" bind:action="arrangeCoachAction" />
 
     <view wx:if="{{goal}}" class="growth-record-entry surface-card" bindtap="openGrowthRecords" hover-class="tap-pressed" aria-role="button" aria-label="查看完整成长记录">
-      <view class="growth-record-icon"><view class="growth-record-bars"><view class="growth-record-bar is-first"></view><view class="growth-record-bar is-second"></view><view class="growth-record-bar is-third"></view></view></view>
+      <view class="growth-record-icon"><t-icon name="chart-line" size="31rpx" color="#245B4D" /></view>
       <view class="growth-record-copy"><view class="section-title">成长记录</view><view class="growth-record-summary">{{growthRecordSummary}}</view></view>
       <view class="growth-record-action"><text class="growth-record-action__label">查看全部</text><t-icon name="chevron-right" size="30rpx" /></view>
     </view>
 
-    <view wx:if="{{recentCompletedTasks.length}}" class="recent-tasks-card surface-card">
-      <view class="recent-tasks-head">
-        <view><view class="section-title">最近任务</view><view class="recent-tasks-description">仅显示今日已完成，可修改实际投入</view></view>
-        <view class="recent-tasks-count">{{recentCompletedTasks.length}} 项</view>
+    <view class="recent-completion-card surface-card">
+      <view class="recent-completion-head">
+        <view><view class="section-title recent-completion-title">最近完成</view><view class="recent-completion-summary">近 7 天完成 {{recentCompletedCount}} 项</view></view>
+        <view class="recent-completion-all" bindtap="openRecentHistory" hover-class="tap-pressed" aria-role="button" aria-label="查看全部完成记录"><text>查看全部</text><t-icon name="chevron-right" size="29rpx" /></view>
       </view>
-      <view class="recent-task-list">
-        <block wx:for="{{recentCompletedTasks}}" wx:key="id">
-          <view wx:if="{{index === 0}}" class="recent-task-row" data-id="{{item.id}}" bindtap="openRecentTask" hover-class="tap-pressed" aria-role="button" aria-label="编辑{{item.title}}的实际投入">
-            <view class="recent-task-status"><t-icon name="check" size="24rpx" /></view>
-            <view class="recent-task-copy">
-              <view class="recent-task-title">{{item.title}}</view>
-              <view class="recent-task-meta"><text>{{item.completedTime}}</text><text class="recent-task-meta__estimate">预计 {{item.estimatedMinutes}} 分钟</text></view>
-            </view>
-            <view class="recent-task-actual"><text class="recent-task-actual__number">{{item.actualMinutes}}</text><text class="recent-task-actual__unit">分钟</text></view>
-            <t-icon class="recent-task-arrow" name="chevron-right" size="28rpx" color="#969A96" />
+      <view wx:if="{{recentCompletedTasks.length}}" class="recent-completion-list">
+        <view wx:for="{{recentCompletedTasks}}" wx:key="id" class="recent-completion-row" data-id="{{item.id}}" bindtap="openRecentTask" hover-class="recent-completion-row--pressed" aria-role="button" aria-label="查看行动详情：{{item.title}}">
+          <view class="recent-completion-rail {{index === 0 ? 'is-primary' : ''}}" aria-hidden="true"></view>
+          <view class="recent-completion-copy">
+            <view class="recent-completion-name">{{item.title}}</view>
+            <view class="recent-completion-meta"><text>{{item.completedLabel}}</text><text>实际 {{item.actualMinutes}} 分钟</text></view>
+            <view wx:if="{{item.estimateLabel || item.efficiencyLabel}}" class="recent-completion-detail"><text wx:if="{{item.estimateLabel}}">{{item.estimateLabel}}</text><text wx:if="{{item.efficiencyLabel}}" class="is-efficient">{{item.efficiencyLabel}}</text></view>
           </view>
-        </block>
+          <t-icon class="recent-completion-arrow" name="chevron-right" size="31rpx" color="#929895" />
+        </view>
+      </view>
+      <view wx:else class="recent-completion-empty">
+        <t-icon name="check-circle" size="43rpx" /><view><text>近 7 天还没有完成记录</text><text>完成一项行动后，会在这里留下真实投入。</text></view>
       </view>
     </view>
   </block>
@@ -128,6 +130,6 @@
     </view>
   </view>
 
-  <action-record-editor visible="{{recordEditorVisible}}" task="{{recordEditorTask}}" saving="{{savingRecord}}" deleting="{{deletingRecord}}" bind:close="closeRecordEditor" bind:save="saveRecordEditor" bind:delete="deleteRecordEditor" />
+  <completed-record-editor visible="{{recordEditorVisible}}" task="{{recordEditorTask}}" saving="{{savingRecord}}" bind:close="closeRecordEditor" bind:save="saveRecordEditor" />
 
 </view>

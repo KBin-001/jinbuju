@@ -773,3 +773,69 @@
   .coach-chat__composer { right: 16rpx; left: 16rpx; padding-right: 9rpx; padding-left: 17rpx; }
   .coach-chat__send { width: 56rpx; height: 56rpx; }
 }
+
+/* Semantic type roles for coach answers, evidence and composer text. */
+.coach-chat__invitation-title-text,
+.coach-chat__response-title { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.coach-chat__invitation-subtitle,
+.coach-chat__message-time,
+.coach-chat__metric-unit,
+.coach-chat__metric-label,
+.coach-chat__section-detail,
+.coach-chat__priority-detail,
+.coach-chat__timeline-detail,
+.coach-chat__team-detail,
+.coach-chat__timeline-time,
+.coach-chat__comparison-previous,
+.coach-chat__comparison-delta,
+.coach-chat__trend-copy,
+.coach-chat__action-detail,
+.coach-chat__action-time,
+.coach-chat__proposal-reminder { font-size: var(--font-meta); line-height: var(--line-height-meta); }
+.coach-chat__quick,
+.coach-chat__structure-label,
+.coach-chat__section-index { font-size: var(--font-tag); line-height: var(--line-height-tag); }
+.coach-chat__user-text,
+.coach-chat__answer,
+.coach-chat__response-summary,
+.coach-chat__proposal,
+.coach-chat__comparison-label,
+.coach-chat__action-title,
+.coach-chat__team-value,
+.coach-chat__error { font-size: var(--font-body); line-height: var(--line-height-body); }
+.coach-chat__eyebrow,
+.coach-chat__metric-value,
+.coach-chat__comparison-current { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+.coach-chat__input { font-size: var(--font-body); line-height: var(--line-height-body); }
+
+@media (max-width: 350px) {
+  .coach-chat__invitation-title-text,
+  .coach-chat__response-title { font-size: var(--font-card-title-compact); line-height: var(--line-height-card-title); }
+  .coach-chat__invitation-subtitle,
+  .coach-chat__message-time,
+  .coach-chat__metric-unit,
+  .coach-chat__metric-label,
+  .coach-chat__section-detail,
+  .coach-chat__priority-detail,
+  .coach-chat__timeline-detail,
+  .coach-chat__team-detail,
+  .coach-chat__timeline-time,
+  .coach-chat__comparison-previous,
+  .coach-chat__comparison-delta,
+  .coach-chat__trend-copy,
+  .coach-chat__action-detail,
+  .coach-chat__action-time,
+  .coach-chat__proposal-reminder { font-size: var(--font-meta-compact); line-height: var(--line-height-meta); }
+  .coach-chat__quick,
+  .coach-chat__structure-label,
+  .coach-chat__section-index { font-size: var(--font-tag-compact); line-height: var(--line-height-tag); }
+  .coach-chat__user-text,
+  .coach-chat__answer,
+  .coach-chat__response-summary,
+  .coach-chat__proposal,
+  .coach-chat__comparison-label,
+  .coach-chat__action-title,
+  .coach-chat__team-value,
+  .coach-chat__error,
+  .coach-chat__input { font-size: var(--font-body-compact); line-height: var(--line-height-body); }
+}

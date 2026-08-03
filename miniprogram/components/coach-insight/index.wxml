@@ -1,15 +1,31 @@
-<view class="coach-insight" bindtap="openCoach" hover-class="tap-pressed" aria-role="button">
-  <view class="coach-insight__title">教练观察</view>
-  <view class="coach-insight__body">
-    <view class="coach-score">
-      <t-progress class="coach-progress" theme="circle" percentage="{{insight.score || 0}}" size="154rpx" stroke-width="7" color="#17614F" track-color="#E5E9E4" label="{{false}}" />
-      <view class="coach-score__copy"><text>稳定性</text><view class="coach-score__value">{{insight.score}}<text class="coach-score__unit">%</text></view><text>{{insight.status}}</text></view>
+<view class="coach-insight">
+  <image class="coach-backdrop" src="/assets/progress-goal-mountains-v1.jpg" mode="aspectFill" aria-hidden="true" />
+  <view class="coach-content">
+    <view class="coach-head">
+      <view class="coach-title"><image class="coach-seal" src="/assets/today-action-seal-v1.png" mode="heightFix" aria-hidden="true" /><text>教练观察</text></view>
+      <view class="coach-analysis" bindtap="openCoach" hover-class="tap-pressed" aria-role="button" aria-label="查看完整分析">
+        <text>完整分析</text><t-icon name="chevron-right" size="29rpx" />
+      </view>
     </view>
-    <view class="coach-copy">
-      <view class="coach-conclusion">{{insight.conclusion}}</view>
-      <view class="coach-evidence"><text class="coach-evidence__label">图表证据</text><view class="coach-evidence__copy">{{insight.evidence}}</view></view>
-      <view class="coach-advice"><t-icon class="coach-advice__icon" name="target" size="26rpx" /><text class="coach-advice__label">下一步建议</text><view class="coach-advice__copy">{{insight.advice}}</view></view>
+
+    <view class="coach-memo">
+      <image class="coach-memo__rail" src="/assets/today-action-brush-gold-v1.png" mode="scaleToFill" aria-hidden="true" />
+      <view class="coach-memo__body">
+        <view class="coach-section">
+          <text class="coach-section__label">{{scopeLabel}}观察</text>
+          <text class="coach-conclusion">{{insight.conclusion}}</text>
+          <text class="coach-evidence">{{insight.evidence}}</text>
+        </view>
+        <view class="coach-section coach-section--advice">
+          <text class="coach-section__label">下一步建议</text>
+          <text class="coach-advice">{{insight.advice || actionTitle}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="coach-footer" bindtap="handleAction" hover-class="coach-action--pressed" aria-role="button" aria-label="{{actionTitle}}">
+      <view class="coach-duration"><t-icon name="time" size="28rpx" /><text>预计用时约 1 分钟</text></view>
+      <view class="coach-action__link"><text>安排任务</text><t-icon name="chevron-right" size="29rpx" /></view>
     </view>
   </view>
-  <view class="coach-link"><text>查看完整分析</text><t-icon name="chevron-right" size="27rpx" /></view>
 </view>

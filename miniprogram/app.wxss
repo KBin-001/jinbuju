@@ -5,7 +5,7 @@ page {
   background: var(--color-bg-page);
   color: var(--color-text-main);
   font-family: var(--font-family-sans);
-  font-size: 28rpx;
+  font-size: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -90,9 +90,9 @@ button[disabled] {
   overflow: hidden;
   color: var(--color-primary, #245B4D);
   font-family: var(--font-family-brand);
-  font-size: 40rpx;
+  font-size: var(--font-page-title);
   font-weight: var(--font-weight-title);
-  line-height: 1;
+  line-height: var(--line-height-page-title);
   letter-spacing: 5rpx;
   text-overflow: ellipsis;
   text-shadow: 0 2rpx 8rpx rgba(255, 253, 247, .68);
@@ -116,14 +116,14 @@ button[disabled] {
   font-family: var(--font-family-brand);
   font-size: var(--font-page-title);
   font-weight: var(--font-weight-title);
-  line-height: 1.3;
+  line-height: var(--line-height-page-title);
 }
 
 .page-subtitle {
   margin-top: 12rpx;
   color: var(--color-text-secondary);
   font-size: var(--font-body);
-  line-height: 1.6;
+  line-height: var(--line-height-body);
 }
 
 .card {
@@ -154,7 +154,7 @@ button[disabled] {
   border-radius: var(--radius-card-small);
   background: var(--color-primary-soft);
   color: var(--color-primary);
-  font-size: 38rpx;
+  font-size: var(--font-icon-display);
   font-weight: 700;
 }
 
@@ -163,7 +163,7 @@ button[disabled] {
   color: var(--color-text-main);
   font-size: var(--font-card-title);
   font-weight: 650;
-  line-height: 1.4;
+  line-height: var(--line-height-card-title);
 }
 
 .state-description {
@@ -171,7 +171,7 @@ button[disabled] {
   margin-top: 12rpx;
   color: var(--color-text-secondary);
   font-size: var(--font-body);
-  line-height: 1.65;
+  line-height: var(--line-height-body);
 }
 
 .primary-button,
@@ -313,7 +313,7 @@ button[disabled] {
   color: var(--color-primary);
   font-size: var(--font-tag);
   font-weight: 600;
-  line-height: 1.35;
+  line-height: var(--line-height-tag);
 }
 
 .progress-bar {
@@ -335,7 +335,7 @@ button[disabled] {
   padding: 22rpx 24rpx;
   border-radius: var(--radius-card-small);
   font-size: var(--font-caption);
-  line-height: 1.65;
+  line-height: var(--line-height-caption);
 }
 
 .ai-notice {

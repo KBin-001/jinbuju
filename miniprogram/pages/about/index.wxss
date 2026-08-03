@@ -20,3 +20,22 @@ page { background: #F7F3EA; }
 .about-link { min-height: 82rpx; display: flex; align-items: center; justify-content: space-between; color: #24312D; font-size: 26rpx; }
 .about-link + .about-link { border-top: 1rpx solid rgba(121,111,91,.13); }
 @media (max-width: 350px) { .about-hero__content { padding: 28rpx; gap: 20rpx; } .about-mark { width: 88rpx; height: 88rpx; border-radius: 27rpx; font-size: 42rpx; } .about-title { font-size: 37rpx; } .about-subtitle { font-size: 22rpx; } }
+
+/* Semantic type roles for product identity, about copy and feedback. */
+.about-title { font-size: var(--font-page-title); line-height: var(--line-height-page-title); }
+.about-mark { font-size: var(--font-icon-display); line-height: var(--line-height-data); }
+.about-subtitle,
+.about-version { font-size: var(--font-meta); line-height: var(--line-height-meta); }
+.about-heading { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.about-copy { font-size: var(--font-longform); line-height: var(--line-height-body); }
+.about-footnote { font-size: var(--font-caption); line-height: var(--line-height-caption); }
+.feedback-button,
+.about-link { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+
+@media (max-width: 350px) {
+  .about-title { font-size: var(--font-page-title-compact); line-height: var(--line-height-page-title); }
+  .about-heading { font-size: var(--font-card-title-compact); line-height: var(--line-height-card-title); }
+  .about-copy { font-size: var(--font-body-compact); line-height: var(--line-height-body); }
+  .about-subtitle,
+  .about-version { font-size: var(--font-meta-compact); line-height: var(--line-height-meta); }
+}

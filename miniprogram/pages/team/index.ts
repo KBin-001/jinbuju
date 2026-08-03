@@ -99,6 +99,11 @@ interface HeroAvatarSlot {
   isExtra?: boolean;
 }
 
+interface TeamJourneyPoint {
+  left: number;
+  top: number;
+}
+
 function normalizeTeamDisplayName(team: Team | null): string {
   const name = (team?.name || TEAM_NAME).trim();
   if (!name || /^自律同行\s+[A-Z0-9]{4,6}\s*队$/.test(name)) return TEAM_NAME;
@@ -337,16 +342,26 @@ function companionActionSummary(member: MemberView): string {
 }
 
 function buildHeroAvatarSlots(members: MemberView[]): HeroAvatarSlot[] {
-  const slots = members.slice(0, 4).map((member): HeroAvatarSlot => ({
+  return members.slice(0, 4).map((member): HeroAvatarSlot => ({
     id: member.id,
     avatar: member.avatar || "",
     avatarText: member.avatarText,
     isEmpty: false,
   }));
-  if (members.length > 4) {
-    slots.push({ id: "extra", avatar: "", avatarText: `+${members.length - 4}`, isEmpty: false, isExtra: true });
-  }
-  return slots;
+}
+
+function buildTeamJourneyPoint(progressPercent: number): TeamJourneyPoint {
+  const t = Math.max(0, Math.min(1, progressPercent / 100));
+  const inverse = 1 - t;
+  const left = (inverse ** 3 * 7)
+    + (3 * inverse ** 2 * t * 38)
+    + (3 * inverse * t ** 2 * 73)
+    + (t ** 3 * 94);
+  const top = (inverse ** 3 * 82)
+    + (3 * inverse ** 2 * t * 82)
+    + (3 * inverse * t ** 2 * 61)
+    + (t ** 3 * 12);
+  return { left: Math.round(left * 10) / 10, top: Math.round(top * 10) / 10 };
 }
 
 function buildCompanionRows(members: MemberView[]): CompanionRow[] {
@@ -457,6 +472,7 @@ Page(withAppTheme({
       totalMembers: 0,
       totalGrowthMinutes: 0,
     } as TeamStatsView,
+    teamJourneyPoint: { left: 7, top: 82 } as TeamJourneyPoint,
     companionRows: [] as CompanionRow[],
     companionExtra: 0,
     selfRankNote: "按自己的节奏行动，每一步都会计入今日榜单",
@@ -522,6 +538,10 @@ Page(withAppTheme({
     }
   },
 
+  onReady() {
+    this.scheduleTeamJourneyDraw();
+  },
+
   onShow() {
     (this as any).getTabBar?.()?.syncSelected?.();
     this.setData({ appTheme: getCurrentThemeId() });
@@ -530,6 +550,63 @@ Page(withAppTheme({
     this.load();
     this.startBusinessDateWatcher();
     this.scheduleNotificationPrompt();
+    this.scheduleTeamJourneyDraw();
+  },
+
+  scheduleTeamJourneyDraw() {
+    wx.nextTick(() => this.drawTeamJourney());
+  },
+
+  drawTeamJourney() {
+    if (this.data.teamViewMode !== "group") return;
+    const query = this.createSelectorQuery();
+    query.select(".team-journey-canvas").fields({ size: true }).exec((result: Array<{ width?: number; height?: number }>) => {
+      const target = result?.[0];
+      if (!target?.width || !target.height) return;
+      const width = target.width;
+      const height = target.height;
+      const ctx = wx.createCanvasContext("teamJourneyCanvas", this);
+      const startX = width * .07;
+      const startY = height * .82;
+      const endX = width * .94;
+      const endY = height * .12;
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.save();
+      ctx.setStrokeStyle("rgba(89,104,99,.38)");
+      ctx.setLineWidth(1.2);
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.bezierCurveTo(width * .38, height * .82, width * .73, height * .61, endX, endY);
+      ctx.stroke();
+      ctx.restore();
+
+      const progress = Math.max(0, Math.min(1, this.data.teamStats.todayCompletionRate / 100));
+      if (progress > 0) {
+        const steps = 42;
+        ctx.save();
+        ctx.setStrokeStyle("#245B4D");
+        ctx.setLineWidth(1.8);
+        ctx.setLineCap("round");
+        ctx.beginPath();
+        for (let index = 0; index <= steps; index += 1) {
+          const t = progress * index / steps;
+          const inverse = 1 - t;
+          const x = (inverse ** 3 * startX)
+            + (3 * inverse ** 2 * t * width * .38)
+            + (3 * inverse * t ** 2 * width * .73)
+            + (t ** 3 * endX);
+          const y = (inverse ** 3 * startY)
+            + (3 * inverse ** 2 * t * height * .82)
+            + (3 * inverse * t ** 2 * height * .61)
+            + (t ** 3 * endY);
+          if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.draw();
+    });
   },
 
   onHide() {
@@ -735,6 +812,7 @@ Page(withAppTheme({
         ? "联网后可邀请"
         : "队长已关闭成员邀请";
 
+    const teamStats = team ? buildTeamStats(team, dailyStats, memberViews) : this.data.teamStats;
     this.setData({
       status: team ? "ready" : "empty",
       runtime: runtime || null,
@@ -751,7 +829,8 @@ Page(withAppTheme({
       teamAvatar: team?.avatar || "",
       teamAvatarText: (team?.name || TEAM_NAME).slice(0, 1),
       heroAvatarSlots: buildHeroAvatarSlots(memberViews),
-      teamStats: team ? buildTeamStats(team, dailyStats, memberViews) : this.data.teamStats,
+      teamStats,
+      teamJourneyPoint: buildTeamJourneyPoint(teamStats.todayCompletionRate),
       companionRows,
       companionExtra: Math.max(0, memberViews.length - new Set(companionRows.map((item) => item.id)).size),
       selfRankNote: buildSelfRankNote(memberViews),
@@ -768,6 +847,7 @@ Page(withAppTheme({
       canInviteFriends: canInvite,
       inviteUnavailableText,
     });
+    if (teamViewMode === "group") this.scheduleTeamJourneyDraw();
   },
 
   retry() { this.setData({ status: "loading" }); this.load(); },

@@ -1,6 +1,6 @@
-import { getActiveGoal } from "../../services/manualGoal";
+import { getActiveGoal, getGoal, setCurrentGoal } from "../../services/manualGoal";
 import { getProgressSummary, recordDailyCheckin } from "../../services/manualStats";
-import { calculateTodaySummary, createTask, deleteTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTask, updateTaskExecutionMode, updateTaskPriorityOverride, updateTaskReminder, updateTaskStatus } from "../../services/manualTask";
+import { calculateTodaySummary, createTask, deleteTask, getTask, getTasksByGoal, getTodayPageTasks, rescheduleTask, updateTask, updateTaskExecutionMode, updateTaskPriorityOverride, updateTaskReminder, updateTaskStatus } from "../../services/manualTask";
 import { getLocalUserProfile } from "../../services/profile";
 import { bootstrapAccount } from "../../services/account";
 import { analyzeProgress, prepareProgressCoach } from "../../services/progressCoach";
@@ -9,9 +9,9 @@ import { syncManualData } from "../../services/manualSync";
 import { cancelTaskReminder, InAppMessage, listInAppMessages, readInAppMessage, requestNotificationAuthorization, requestNotificationAuthorizationWithReceipt, upsertTaskReminder } from "../../services/notification";
 import { isNotificationConfigured } from "../../config/notification";
 import { ActionExecutionMode, ActionIssueReason, ActionSession, ActionTask, ActionTaskStatus, Goal, TodaySummary } from "../../types/manual";
-import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate, getTimeGreeting } from "../../utils/date";
+import { addDays, formatDate, formatDisplayDate, getTodayBusinessDate, getTimeGreeting, isValidBusinessDate } from "../../utils/date";
 import { off, on } from "../../utils/eventBus";
-import { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask, sortTodayTasksIncompleteFirst } from "../../utils/taskStatus";
+import { getActionTaskDisplayStatus, groupTodayTasks, isCarryOverTask, partitionTodayTasksByCompletion, sortTodayTasksIncompleteFirst } from "../../utils/taskStatus";
 import { groupTasksByPriority, PriorityContext, PriorityReason } from "../../utils/taskPriority";
 import { getTabHeaderLayout } from "../../utils/tabHeader";
 import { buildReminderAt, nextReminderTime, normalizeReminderTime, reminderDateRange } from "../../utils/actionReminder";
@@ -19,6 +19,7 @@ import { resolveActionIcon } from "../../utils/actionIcon";
 import { QuickDurationRulerController, createQuickDurationRulerController, isQuickDurationFeedbackEnabled, quickDurationScrollLeftForMinutes, quickDurationStepPixels } from "../../utils/quickDurationRuler";
 import { abandonActionSession, finishActionSession, getActiveActionSession, getActiveActionSessionContext, pauseActionSession, resumeActionSession, startActionSession } from "../../services/actionSession";
 import { ACTION_DURATION_MAX_MINUTES, ACTION_DURATION_MIN_MINUTES } from "../../config/action";
+import { consumeTodayActionEditor } from "../../utils/todayActionEditor";
 
 const REASONS: Array<{ label: string; value: ActionIssueReason }> = [{ label: "时间不够", value: "not_enough_time" }, { label: "难度太高", value: "too_difficult" }, { label: "缺少资源", value: "resource_unavailable" }, { label: "身体或状态不适", value: "physical_condition" }, { label: "临时有事", value: "temporary_event" }, { label: "任务不符合实际", value: "not_practical" }, { label: "其他", value: "other" }];
 const QUICK_DURATION_MINUTES = ACTION_DURATION_MIN_MINUTES;
@@ -81,11 +82,11 @@ interface ViewTask extends ActionTask {
 }
 interface ViewTaskGroup { key: "today" | "continue"; title: string; tasks: ViewTask[]; }
 interface ActionPresentationGroup {
-  key: "focus" | "quick" | "later";
+  key: "focus" | "quick" | "later" | "completed";
   title: string;
   hint: string;
   icon: string;
-  tone: "gold" | "green" | "muted";
+  tone: "gold" | "green" | "muted" | "done";
   tasks: Array<ViewTask & { priorityReasons: PriorityReason[] }>;
 }
 interface TaskMenuItem {
@@ -139,20 +140,23 @@ function progressSegments(summary: TodaySummary): ProgressSegment[] {
  */
 function buildActionPresentationGroups(tasks: ViewTask[], context: PriorityContext): ActionPresentationGroup[] {
   if (!tasks.length) return [];
+  const { incompleteTasks, completedTasks } = partitionTodayTasksByCompletion(tasks);
   let groups: ActionPresentationGroup[] = [];
-  try {
-    groups = groupTasksByPriority(tasks, context) as ActionPresentationGroup[];
-  } catch (_error) {
-    groups = [];
+  if (incompleteTasks.length) {
+    try {
+      groups = groupTasksByPriority(incompleteTasks, context) as ActionPresentationGroup[];
+    } catch (_error) {
+      groups = [];
+    }
   }
-  const sourceGroups = groups.length ? groups : [{
+  const sourceGroups = groups.length ? groups : incompleteTasks.length ? [{
     key: "later" as const,
     title: "稍后安排",
     hint: "",
     icon: "time",
     tone: "muted" as const,
-    tasks: tasks.map((task) => ({ ...task, priorityReasons: task.priorityReasons || [] })),
-  }];
+    tasks: incompleteTasks.map((task) => ({ ...task, priorityReasons: task.priorityReasons || [] })),
+  }] : [];
   const quickTasks = sourceGroups
     .filter((group) => group.key === "focus" || group.key === "quick")
     .reduce<Array<ViewTask & { priorityReasons: PriorityReason[] }>>((all, group) => all.concat(group.tasks), []);
@@ -162,6 +166,14 @@ function buildActionPresentationGroups(tasks: ViewTask[], context: PriorityConte
   const result: ActionPresentationGroup[] = [];
   if (quickTasks.length) result.push({ key: "quick", title: "快速推进", hint: "", icon: "play-circle", tone: "green", tasks: quickTasks });
   if (laterTasks.length) result.push({ key: "later", title: "稍后安排", hint: "", icon: "time", tone: "muted", tasks: laterTasks });
+  if (completedTasks.length) result.push({
+    key: "completed",
+    title: "已完成",
+    hint: "",
+    icon: "check-circle",
+    tone: "done",
+    tasks: completedTasks.map((task) => ({ ...task, priorityReasons: [] })),
+  });
   return result;
 }
 function sessionClock(seconds: number): string {
@@ -475,7 +487,6 @@ Page(withAppTheme({
     remainingEstimatedMinutes: 0,
     progressSegments: [] as ProgressSegment[],
     actionListExpanded: false,
-    taskSortMode: "habit" as "habit" | "shortest",
     hiddenActionCount: 0,
     heroDayLabel: "DAY 1",
     heroFocusTitle: "今日行动",
@@ -508,12 +519,14 @@ Page(withAppTheme({
     quickAddVisible: false,
     quickAddMode: "create" as "create" | "edit",
     quickAddTaskId: "",
+    quickAddGoalId: "",
     quickAddTitle: "",
     quickAddMinutes: 30,
     quickAddHourText: durationHourCopy(30),
+    quickDurationEditing: false,
+    quickDurationInput: "30",
     quickAddExecutionMode: "focus" as ActionExecutionMode,
     quickAddImportance: "normal" as "required" | "normal",
-    quickAddBlocksOthers: false,
     quickAddDate: getTodayBusinessDate(),
     quickAddDateStart: getTodayBusinessDate(),
     quickAddDateEnd: reminderDateRange().end,
@@ -526,6 +539,7 @@ Page(withAppTheme({
     quickDurationMarks: QUICK_DURATION_MARKS,
     quickDurationScrollLeft: durationScrollLeft(30),
     quickDurationScrollWithAnimation: false,
+    quickAddScrollTop: 0,
     quickAddSubmitting: false,
     quickAddTouchStartY: 0,
     quickAddTouchDeltaY: 0,
@@ -640,11 +654,58 @@ Page(withAppTheme({
     this.setData({ appTheme: getCurrentThemeId() });
     // 先立即加载本地数据，让页面马上显示内容
     this.load();
+    this.openPendingTodayActionEditor();
     // 今日页不能依赖用户先打开“我的”页；缓存会立即生效，云端完成后由 profile:update 再刷新。
     bootstrapAccount().catch(() => undefined).then(() => this.load());
     // 再后台同步云端数据，完成后刷新一次
     syncManualData().catch(() => undefined).then(() => this.load());
     this.loadInAppMessage();
+  },
+  openPendingTodayActionEditor() {
+    const request = consumeTodayActionEditor();
+    if (!request) return;
+
+    let task: ActionTask | undefined;
+    let targetGoal: Goal | null = null;
+    let initialDate: string | undefined;
+    if (request.mode === "edit") {
+      task = getTask(request.taskId) || undefined;
+      if (!task || task.deletedAt) {
+        wx.showToast({ title: "该行动已不存在", icon: "none" });
+        return;
+      }
+      const taskGoal = getGoal(task.goalId);
+      if (!taskGoal || taskGoal.status !== "active") {
+        wx.showToast({ title: "该行动所属目标已结束", icon: "none" });
+        return;
+      }
+      targetGoal = taskGoal;
+    } else {
+      const requestedGoal = request.goalId ? getGoal(request.goalId) : getActiveGoal();
+      if (request.goalId && (!requestedGoal || requestedGoal.status !== "active")) {
+        wx.showToast({ title: "目标已发生变化，请重新选择", icon: "none" });
+        return;
+      }
+      targetGoal = requestedGoal;
+      initialDate = request.date;
+    }
+
+    if (!targetGoal) {
+      this.goCreateGoal();
+      return;
+    }
+
+    const openEditor = () => this.openQuickAddEditor(task, { goalId: targetGoal.id, date: initialDate });
+    if (this.data.goal?.id === targetGoal.id) {
+      openEditor();
+      return;
+    }
+    try {
+      if (request.mode === "edit" || request.goalId) setCurrentGoal(targetGoal.id);
+      this.load(openEditor);
+    } catch (error) {
+      wx.showToast({ title: error instanceof Error ? error.message : "目标切换失败，请重试", icon: "none" });
+    }
   },
   async loadInAppMessage() {
     try {
@@ -670,7 +731,7 @@ Page(withAppTheme({
     if (tabPages.has(message.page)) wx.switchTab({ url: message.page });
     else wx.navigateTo({ url: message.page });
   },
-  load() {
+  load(onLoaded?: () => void) {
     // 已有数据时不闪 loading，保持旧内容可见，后台静默刷新
     if (this.data.status !== "ready") this.setData({ status: "loading", errorMessage: "" });
     try {
@@ -689,15 +750,8 @@ Page(withAppTheme({
         tasks: group.tasks.map((task) => decorateTaskAction(toViewTask(task, selectedDate, today), activeSession?.taskId || "", activeSession?.status || "")),
       }));
       const defaultTasks = sortTodayTasksIncompleteFirst(baseTaskGroups.reduce<ViewTask[]>((all, group) => all.concat(group.tasks), []));
-      const orderedTasks = this.data.taskSortMode === "shortest"
-        ? [...defaultTasks].sort((left, right) => {
-          const leftDone = left.status === "completed" ? 1 : 0;
-          const rightDone = right.status === "completed" ? 1 : 0;
-          return leftDone - rightDone || left.estimatedMinutes - right.estimatedMinutes;
-        })
-        : defaultTasks;
       const tasks = markRecommendedAction(
-        orderedTasks,
+        defaultTasks,
         selectedDate === today,
       );
       const taskById = new Map(tasks.map((task) => [task.id, task]));
@@ -779,6 +833,7 @@ Page(withAppTheme({
       }, () => {
         this.syncSessionTicker();
         this.prepareTodayCoach();
+        onLoaded?.();
       });
     } catch (error) { this.setData({ status: "error", errorMessage: error instanceof Error ? error.message : "本地数据读取失败" }); }
   },
@@ -923,16 +978,6 @@ Page(withAppTheme({
         const mode: ActionExecutionMode = tapIndex === 0 ? "direct" : "focus";
         this.setData({ quickAddExecutionMode: mode });
         wx.showToast({ title: mode === "direct" ? "新增行动默认直接完成" : "新增行动默认专注计时", icon: "none" });
-      },
-    });
-  },
-  openSortOptions() {
-    wx.showActionSheet({
-      itemList: ["按习惯推荐", "预计时长从短到长"],
-      success: ({ tapIndex }) => {
-        const taskSortMode = tapIndex === 1 ? "shortest" as const : "habit" as const;
-        this.setData({ taskSortMode }, () => this.load());
-        wx.showToast({ title: taskSortMode === "shortest" ? "已按预计时长排序" : "已恢复习惯推荐", icon: "none" });
       },
     });
   },
@@ -1087,36 +1132,30 @@ Page(withAppTheme({
       fail: () => wx.showToast({ title: "每日教练打开失败", icon: "none" }),
     });
   },
-  openRecommendInfo() {
-    wx.showModal({
-      title: "按习惯推荐",
-      content: "根据截止时间、预计时长和你的行动习惯自动排序，你可以随时调整。",
-      showCancel: false,
-      confirmText: "知道了",
-      confirmColor: MODAL_CONFIRM_COLORS.confirm,
-    });
-  },
   addTask() {
     if (!this.data.goal) { this.goCreateGoal(); return; }
     this.openQuickAddEditor();
   },
-  openQuickAddEditor(task?: ViewTask) {
+  openQuickAddEditor(task?: ActionTask, initial: { goalId?: string; date?: string } = {}) {
     const range = reminderDateRange();
     const minutes = task?.estimatedMinutes || 30;
     const durationRuler = this.ensureQuickDurationRuler();
     const reminderScheduled = task?.reminder?.status === "scheduled";
-    const date = task?.currentDate || range.start;
+    const requestedDate = task?.currentDate || initial.date || range.start;
+    const date = isValidBusinessDate(requestedDate) ? requestedDate : range.start;
     durationRuler.initialize(minutes);
     this.setData({
       quickAddVisible: true,
       quickAddMode: task ? "edit" : "create",
       quickAddTaskId: task?.id || "",
+      quickAddGoalId: task?.goalId || initial.goalId || this.data.goal?.id || "",
       quickAddTitle: task?.title || "",
       quickAddMinutes: minutes,
       quickAddHourText: durationHourCopy(minutes),
+      quickDurationEditing: false,
+      quickDurationInput: String(minutes),
       quickAddExecutionMode: task ? (task.executionMode === "direct" ? "direct" : "focus") : this.data.quickAddExecutionMode,
       quickAddImportance: task?.importance === "required" ? "required" : "normal",
-      quickAddBlocksOthers: Boolean(task?.blocksOthers),
       quickAddDate: date,
       quickAddDateStart: date < range.start ? date : range.start,
       quickAddDateEnd: range.end,
@@ -1128,19 +1167,57 @@ Page(withAppTheme({
       quickAddPreservedIconManual: Boolean(task?.iconManual),
       quickDurationScrollLeft: durationScrollLeft(minutes),
       quickDurationScrollWithAnimation: false,
+      quickAddScrollTop: 1,
       quickAddSubmitting: false,
       quickAddTouchDeltaY: 0,
     });
+    wx.nextTick(() => this.setData({ quickAddScrollTop: 0 }));
   },
   closeQuickAdd() {
     if (this.data.quickAddSubmitting) return;
     this.quickDurationRuler?.reset();
     this.setData(
-      { quickAddVisible: false, quickAddTaskId: "", quickAddTouchDeltaY: 0, quickDurationScrollWithAnimation: false },
+      { quickAddVisible: false, quickAddTaskId: "", quickAddGoalId: "", quickDurationEditing: false, quickDurationInput: "30", quickAddTouchDeltaY: 0, quickDurationScrollWithAnimation: false },
     );
   },
   noop() {},
   inputQuickAddTitle(event: { detail: { value?: string } }) { this.setData({ quickAddTitle: String(event.detail.value || "").slice(0, 40) }); },
+  openCustomDuration() {
+    if (this.data.quickAddSubmitting || this.data.quickDurationEditing) return;
+    this.setData({
+      quickDurationEditing: true,
+      quickDurationInput: String(this.data.quickAddMinutes),
+    });
+  },
+  inputCustomDuration(event: { detail: { value?: string } }): string {
+    const value = String(event.detail.value || "").replace(/\D/g, "").slice(0, 3);
+    this.setData({ quickDurationInput: value });
+    return value;
+  },
+  confirmCustomDuration() {
+    if (!this.data.quickDurationEditing) return;
+    const minutes = Number(this.data.quickDurationInput);
+    if (!Number.isInteger(minutes) || minutes < QUICK_DURATION_MINUTES || minutes > QUICK_DURATION_MAX_MINUTES) {
+      this.setData({
+        quickDurationEditing: false,
+        quickDurationInput: String(this.data.quickAddMinutes),
+      });
+      wx.showToast({ title: "请输入 5～360 的整数分钟", icon: "none" });
+      return;
+    }
+    const snap = this.ensureQuickDurationRuler().initialize(minutes);
+    this.setData({
+      quickAddMinutes: minutes,
+      quickAddHourText: durationHourCopy(minutes),
+      quickDurationEditing: false,
+      quickDurationInput: String(minutes),
+      quickDurationScrollLeft: snap.scrollLeft,
+      quickDurationScrollWithAnimation: true,
+    });
+    wx.nextTick(() => {
+      if (this.data.quickAddVisible) this.setData({ quickDurationScrollWithAnimation: false });
+    });
+  },
   selectQuickExecutionMode(event: { currentTarget: { dataset: { mode?: ActionExecutionMode } } }) {
     const mode = event.currentTarget.dataset.mode;
     if (!mode || !["direct", "focus"].includes(mode)) return;
@@ -1150,9 +1227,6 @@ Page(withAppTheme({
     const importance = event.currentTarget.dataset.importance;
     if (importance !== "required" && importance !== "normal") return;
     this.setData({ quickAddImportance: importance });
-  },
-  toggleQuickAddBlocksOthers(event: { detail: { value?: boolean } }) {
-    this.setData({ quickAddBlocksOthers: Boolean(event.detail.value) });
   },
   changeQuickAddDate(event: { detail: { value?: string } }) {
     this.setData({ quickAddDate: String(event.detail.value || getTodayBusinessDate()) });
@@ -1177,6 +1251,7 @@ Page(withAppTheme({
   },
   onQuickDurationDragStart() {
     if (!this.data.quickAddVisible) return;
+    if (this.data.quickDurationEditing) this.confirmCustomDuration();
     this.ensureQuickDurationRuler().beginGesture();
   },
   onQuickDurationDragEnd(event: { detail?: { scrollLeft?: number } }) {
@@ -1215,10 +1290,15 @@ Page(withAppTheme({
   },
   async saveQuickAdd() {
     if (this.data.quickAddSubmitting) return;
-    const goal = this.data.goal;
-    if (!goal) { this.goCreateGoal(); return; }
+    const goal = this.data.quickAddGoalId ? getGoal(this.data.quickAddGoalId) : this.data.goal;
+    if (!goal || goal.status !== "active") {
+      wx.showToast({ title: "当前目标已结束，请重新选择", icon: "none" });
+      return;
+    }
     const title = this.data.quickAddTitle.trim();
-    const estimatedMinutes = Number(this.data.quickAddMinutes);
+    const estimatedMinutes = Number(
+      this.data.quickDurationEditing ? this.data.quickDurationInput : this.data.quickAddMinutes,
+    );
     if (title.length < 2 || title.length > 40) {
       wx.showToast({ title: "行动标题请控制在 2～40 个字", icon: "none" });
       return;
@@ -1251,7 +1331,7 @@ Page(withAppTheme({
       const reminderAllowed = !needsAuthorization || receipt?.result === "accept";
       const input = {
         id: isEdit ? this.data.quickAddTaskId : undefined,
-        goalId: goal.id,
+        goalId: this.data.quickAddGoalId || goal.id,
         title,
         description: this.data.quickAddPreservedDescription,
         estimatedMinutes,
@@ -1259,7 +1339,6 @@ Page(withAppTheme({
         iconKey: this.data.quickAddPreservedIconKey || undefined,
         iconManual: this.data.quickAddPreservedIconManual,
         importance: this.data.quickAddImportance,
-        blocksOthers: this.data.quickAddBlocksOthers,
         currentDate: this.data.quickAddDate,
         reminder: this.data.quickAddReminderEnabled && reminderAllowed
           ? {
@@ -1289,7 +1368,7 @@ Page(withAppTheme({
         : isEdit ? "行动已更新" : "行动已添加";
       wx.showToast({ title: toastTitle, icon: reminderScheduled || !this.data.quickAddReminderEnabled ? "success" : "none" });
       this.quickDurationRuler?.reset();
-      this.setData({ quickAddVisible: false, quickAddMode: "create", quickAddTaskId: "", quickAddTitle: "", quickAddMinutes: 30, quickAddHourText: durationHourCopy(30), quickAddExecutionMode: "focus", quickAddImportance: "normal", quickAddBlocksOthers: false, quickAddReminderEnabled: false, quickAddHadScheduledReminder: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0, quickDurationScrollWithAnimation: false });
+      this.setData({ quickAddVisible: false, quickAddMode: "create", quickAddTaskId: "", quickAddGoalId: "", quickAddTitle: "", quickAddMinutes: 30, quickAddHourText: durationHourCopy(30), quickDurationEditing: false, quickDurationInput: "30", quickAddExecutionMode: "focus", quickAddImportance: "normal", quickAddReminderEnabled: false, quickAddHadScheduledReminder: false, quickAddSubmitting: false, quickAddTouchDeltaY: 0, quickDurationScrollWithAnimation: false });
       this.load();
     } catch (error) {
       wx.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
@@ -1304,14 +1383,14 @@ Page(withAppTheme({
   },
   deleteQuickAddTask() {
     if (this.data.quickAddSubmitting || this.data.quickAddMode !== "edit") return;
-    const task = this.data.tasks.find((item) => item.id === this.data.quickAddTaskId);
+    const task = getTask(this.data.quickAddTaskId);
     if (!task) {
       wx.showToast({ title: "找不到该行动", icon: "none" });
       return;
     }
     wx.showModal({
       title: "删除行动？",
-      content: `“${task.displayTitle}”删除后无法恢复。`,
+      content: `“${task.title}”删除后无法恢复。`,
       confirmText: "删除",
       confirmColor: MODAL_CONFIRM_COLORS.danger,
       success: (result) => {
@@ -1319,7 +1398,7 @@ Page(withAppTheme({
         try {
           deleteTask(task.id);
           this.quickDurationRuler?.reset();
-          this.setData({ quickAddVisible: false, quickAddTaskId: "", quickDurationScrollWithAnimation: false });
+          this.setData({ quickAddVisible: false, quickAddTaskId: "", quickAddGoalId: "", quickDurationScrollWithAnimation: false });
           this.load();
           wx.showToast({ title: "行动已删除", icon: "success" });
         } catch (error) {

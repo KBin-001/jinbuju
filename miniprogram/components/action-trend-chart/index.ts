@@ -161,12 +161,11 @@ Component({
       const average = activeBars.length ? activeBars.reduce((sum, bar) => sum + bar.minutes, 0) / activeBars.length : 0;
       if (average > 0) {
         const y = bottom - average / maxMinutes * plotHeight;
-        const averageEndX = visibleMinutePoints[visibleMinutePoints.length - 1]?.x ?? width - sidePadding;
+        const averageEndX = Math.max(sidePadding + 36, width - sidePadding - 104);
         ctx.save(); ctx.setLineDash([4, 5]); setStrokeStyle(ctx, "rgba(36,91,77,.28)"); setLineWidth(ctx, 1);
         ctx.beginPath(); ctx.moveTo(sidePadding, y); ctx.lineTo(averageEndX, y); ctx.stroke(); ctx.restore();
         setFillStyle(ctx, "#65716B"); setFontSize(ctx, 10); setTextAlign(ctx, "left");
-        const averageLabelX = Math.min(width - sidePadding - 88, averageEndX + 7);
-        ctx.fillText(`平均 ${Math.round(average)} 分钟`, averageLabelX, Math.max(top + 12, y - 7));
+        ctx.fillText(`平均 ${Math.round(average)} 分钟`, averageEndX + 7, Math.max(top + 12, y + 4));
       }
 
       if (visibleMinutePoints.length) {
@@ -174,17 +173,13 @@ Component({
         ctx.lineTo(visibleMinutePoints[visibleMinutePoints.length - 1].x, bottom);
         ctx.lineTo(visibleMinutePoints[0].x, bottom);
         ctx.closePath();
-        setFillStyle(ctx, "rgba(23,97,79,.050)"); ctx.fill();
-        ctx.beginPath(); smoothCurve(ctx, visibleMinutePoints); setStrokeStyle(ctx, "#17614F"); setLineWidth(ctx, 2.25); setLineCap(ctx, "round"); setLineJoin(ctx, "round"); ctx.stroke();
+        setFillStyle(ctx, "rgba(23,97,79,.065)"); ctx.fill();
+        ctx.beginPath(); smoothCurve(ctx, visibleMinutePoints); setStrokeStyle(ctx, "#17614F"); setLineWidth(ctx, 2); setLineCap(ctx, "round"); setLineJoin(ctx, "round"); ctx.stroke();
       }
       minutePoints.forEach((point, index) => {
         if (bars[index].isFuture) return;
         ctx.beginPath(); ctx.arc(point.x, point.y, bars[index].isToday ? 4.8 : 3.7, 0, Math.PI * 2);
         setFillStyle(ctx, "#17614F"); ctx.fill(); setLineWidth(ctx, 2); setStrokeStyle(ctx, "#FFFDF8"); ctx.stroke();
-        if (bars[index].minutes > 0) {
-          setFillStyle(ctx, "#27352F"); setFontSize(ctx, 10); setTextAlign(ctx, "center");
-          ctx.fillText(String(bars[index].minutes), point.x, Math.max(14, point.y - 11));
-        }
       });
 
       if (this.data.completionEnabled && visibleActionPoints.length) {
@@ -193,15 +188,31 @@ Component({
           if (bars[index].isFuture) return;
           ctx.beginPath(); ctx.arc(point.x, point.y, bars[index].isToday ? 5 : 4, 0, Math.PI * 2);
           setFillStyle(ctx, "#FFFDF8"); ctx.fill(); setLineWidth(ctx, bars[index].isToday ? 2.4 : 2); setStrokeStyle(ctx, "#C5963E"); ctx.stroke();
-          if (bars[index].actions > 0) {
-            const minutePoint = minutePoints[index];
-            const isCrowded = Math.abs(point.y - minutePoint.y) < 20;
-            const labelY = isCrowded ? Math.min(bottom - 5, point.y + 16) : Math.max(top + 10, point.y - 10);
-            setFillStyle(ctx, "#A97A25"); setFontSize(ctx, 9); setTextAlign(ctx, "center");
-            ctx.fillText(String(bars[index].actions), point.x, labelY);
-          }
+          const minutePoint = minutePoints[index];
+          const isCrowded = Math.abs(point.y - minutePoint.y) < 24;
+          const nearBottom = minutePoint.y > bottom - 25;
+          const labelX = isCrowded && nearBottom ? point.x - 10 : point.x;
+          const labelY = isCrowded && !nearBottom ? Math.max(top + 10, point.y - 15) : Math.max(top + 10, point.y - 11);
+          setFillStyle(ctx, "#A97A25"); setFontSize(ctx, 9); setTextAlign(ctx, "center");
+          ctx.fillText(String(bars[index].actions), labelX, labelY);
         });
       }
+
+      minutePoints.forEach((point, index) => {
+        if (bars[index].isFuture) return;
+        const actionPoint = actionPoints[index];
+        const isCrowded = this.data.completionEnabled && Math.abs(actionPoint.y - point.y) < 24;
+        const nearBottom = point.y > bottom - 25;
+        const nearTop = point.y < top + 24;
+        const labelX = isCrowded && nearBottom ? point.x + 12 : point.x;
+        const labelY = nearTop
+          ? Math.min(bottom - 4, point.y + 22)
+          : isCrowded && !nearBottom
+            ? Math.min(bottom - 4, point.y + 19)
+            : point.y - 12;
+        setFillStyle(ctx, "#27352F"); setFontSize(ctx, 10); setTextAlign(ctx, "center");
+        ctx.fillText(String(bars[index].minutes), labelX, labelY);
+      });
     },
     changeRange(event: WechatMiniprogram.TouchEvent) {
       this.triggerEvent("rangechange", { key: String(event.currentTarget.dataset.key || "week") });

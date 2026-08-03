@@ -1,5 +1,8 @@
 {
   "navigationBarTitleText": "行动中",
+  "navigationBarBackgroundColor": "#F7F3EA",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#F7F3EA",
   "enablePullDownRefresh": false,
   "disableScroll": true
 }

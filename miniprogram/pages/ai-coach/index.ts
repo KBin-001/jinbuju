@@ -1,5 +1,5 @@
 import { getActiveGoal, getActiveGoals, getArchivedGoals, getGoal } from "../../services/manualGoal";
-import { getTaskHistoryByGoal } from "../../services/manualTask";
+import { getTask, getTaskHistoryByGoal } from "../../services/manualTask";
 import { getProgressSummary } from "../../services/manualStats";
 import { getLocalUserProfile } from "../../services/profile";
 import { bootstrapAccount } from "../../services/account";
@@ -10,6 +10,7 @@ import { addDays, formatDate, getTodayBusinessDate } from "../../utils/date";
 import { ActionTask, Goal } from "../../types/manual";
 import { CoachActionProposal, CoachRange, ProgressCoachChatMessage } from "../../types/progressCoach";
 import { off, on } from "../../utils/eventBus";
+import { openTodayActionEditor } from "../../utils/todayActionEditor";
 
 interface ChatMessage extends ProgressCoachChatMessage {
   id: string;
@@ -674,8 +675,20 @@ Page({
   openReviewItem(event: { currentTarget: { dataset: { taskId?: string } } }) {
     const taskId = String(event.currentTarget.dataset.taskId || "");
     const item = this.data.reviewItems.find((candidate) => candidate.id === taskId);
-    if (!item?.editable) return;
-    wx.navigateTo({ url: `/pages/action-edit/index?id=${encodeURIComponent(taskId)}` });
+    if (!item) {
+      wx.showToast({ title: "该行动已不存在，请刷新后重试", icon: "none" });
+      return;
+    }
+    if (!item.editable) {
+      wx.showToast({ title: "该行动当前不可编辑", icon: "none" });
+      return;
+    }
+    const task = getTask(taskId);
+    if (!task || task.deletedAt) {
+      wx.showToast({ title: "该行动已不存在，请刷新后重试", icon: "none" });
+      return;
+    }
+    openTodayActionEditor({ mode: "edit", taskId });
   },
 
   goProgress() { wx.switchTab({ url: "/pages/plan/index" }); },

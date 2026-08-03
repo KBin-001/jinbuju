@@ -26,5 +26,30 @@ page { background: var(--color-bg-page, #F7F3EA); }
 .sheet-title { font-size: 32rpx; font-weight: 700; }
 .sheet-copy { margin: 12rpx 0 22rpx; color: #7C817D; font-size: 24rpx; line-height: 38rpx; }
 .sheet-error { margin-top: 12rpx; color: #9B554D; font-size: 22rpx; }
+
+/* Semantic type roles for data export, deletion and restore flows. */
+.page-eyebrow { font-size: var(--font-tag); line-height: var(--line-height-tag); }
+.page-title { font-size: var(--font-page-title); line-height: var(--line-height-page-title); }
+.page-subtitle,
+.section-desc,
+.retained-note,
+.error-copy,
+.sheet-copy,
+.sheet-error { font-size: var(--font-caption); line-height: var(--line-height-caption); }
+.section-title,
+.sheet-title { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+
+@media (max-width: 350px) {
+  .page-title { font-size: var(--font-page-title-compact); line-height: var(--line-height-page-title); }
+  .section-title,
+  .sheet-title { font-size: var(--font-card-title-compact); line-height: var(--line-height-card-title); }
+  .page-subtitle,
+  .section-desc,
+  .retained-note,
+  .error-copy,
+  .sheet-copy,
+  .sheet-error { font-size: var(--font-caption-compact); line-height: var(--line-height-caption); }
+  .page-eyebrow { font-size: var(--font-tag-compact); line-height: var(--line-height-tag); }
+}
 .sheet-danger { width: 100%; margin-top: 24rpx; }
 @media (max-width: 350px) { .button-row { grid-template-columns: 1fr; } }

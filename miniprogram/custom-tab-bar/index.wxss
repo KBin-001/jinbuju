@@ -43,9 +43,9 @@
 
 .custom-tab-label {
   font-family: var(--font-family-sans, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif);
-  font-size: 23rpx;
+  font-size: var(--font-tag);
   font-weight: 500;
-  line-height: 28rpx;
+  line-height: var(--line-height-tag);
 }
 
 .custom-tab-item.is-selected {

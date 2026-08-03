@@ -1,10 +1,11 @@
 <view class="page today-page {{activeSessionId ? 'today-page--timing' : ''}}" data-theme="{{appTheme}}">
+  <image class="today-atmosphere" src="/assets/today-hero-calendar-v4.jpg" mode="aspectFill" aria-hidden="true" />
   <view class="today-hero tab-header" style="height: calc({{menuTop}}px + 112rpx);">
-    <image class="today-hero__background tab-header__background" src="/assets/today-hero-mountain-v2.jpg" mode="aspectFill" />
-    <view class="today-hero__veil tab-header__veil"></view>
     <view class="today-header" style="padding-top: {{menuTop}}px;">
       <view class="today-header__copy">
-        <view class="today-header__title">今日</view>
+        <view class="today-header__brand-row">
+          <image class="today-header__brand-logo" src="/assets/today-brand-lockup-v3.png" mode="widthFix" aria-label="今日" />
+        </view>
         <view class="today-header__date">{{selectedMonthDay}} · {{weekdayShort}}</view>
       </view>
       <view class="today-header__streak" aria-label="连续行动 {{currentStreakDays}} 天">
@@ -31,6 +32,7 @@
 
   <block wx:else>
     <ai-coach-tip
+      class="today-coach"
       wx:if="{{goal}}"
       status="{{coachStatus}}"
       title="{{coachHeadline}}"
@@ -67,12 +69,10 @@
         <view class="task-section-head">
           <view class="task-section-heading">
             <view class="task-section-title">今日行动</view>
+            <image class="task-section-seal" src="/assets/today-action-seal-v1.png" mode="aspectFit" aria-hidden="true" />
+            <view class="task-section-count" aria-label="当前展示 {{visibleTasks.length}} 项行动">{{visibleTasks.length}} 项</view>
           </view>
           <view class="task-section-tools">
-            <view class="task-tool habit-recommend" catchtap="openSortOptions" role="button" aria-label="按习惯推荐与排序今日行动">
-              <t-icon name="order-descending" size="27rpx" />
-              <text>排序</text>
-            </view>
             <view class="task-tool" catchtap="addTask" role="button" aria-label="添加行动">
               <t-icon name="add" size="26rpx" />
               <text>添加</text>
@@ -214,6 +214,7 @@
       role="dialog"
       aria-label="{{quickAddMode === 'edit' ? '编辑行动' : '添加行动'}}"
     >
+      <image class="quick-add-landscape" src="/assets/today-hero-mountain-v2.jpg" mode="aspectFill" aria-hidden="true" />
       <view class="quick-add-grabber" bindtouchstart="quickAddTouchStart" bindtouchmove="quickAddTouchMove" bindtouchend="quickAddTouchEnd" bindtouchcancel="quickAddTouchEnd"></view>
       <view class="quick-add-header">
         <view class="quick-add-header-spacer"></view>
@@ -223,7 +224,7 @@
         </view>
       </view>
 
-      <scroll-view class="quick-add-body" scroll-y enhanced show-scrollbar="{{false}}">
+      <scroll-view class="quick-add-body" scroll-y enhanced scroll-top="{{quickAddScrollTop}}" show-scrollbar="{{false}}">
         <view class="quick-title-input">
           <input
           class="quick-title-input__control"
@@ -240,12 +241,39 @@
         <view class="quick-settings-section quick-time-section">
           <view class="quick-section-title"><view class="quick-section-mark"></view><text>预计投入</text></view>
           <view class="quick-time-card">
-            <view class="quick-time-sound {{tickSoundEnabled ? 'is-on' : 'is-off'}}" catchtap="toggleTickSound" aria-label="声音反馈"><t-icon name="{{tickSoundEnabled ? 'sound' : 'sound-mute'}}" size="22rpx" /></view>
-            <view class="quick-time-value"><text class="quick-time-number">{{quickAddMinutes}}</text><text class="quick-time-unit">分钟</text></view>
-            <view class="quick-time-swipe-hint">
-              <t-icon class="quick-time-swipe-icon" name="chevron-left" size="24rpx" />
-              <text>左右滑动调整时间</text>
-              <t-icon class="quick-time-swipe-icon" name="chevron-right" size="24rpx" />
+            <view
+              class="quick-time-editor {{quickDurationEditing ? 'is-editing' : ''}}"
+              bindtap="openCustomDuration"
+              hover-class="quick-time-editor--pressed"
+              role="button"
+              aria-label="当前预计投入 {{quickAddMinutes}} 分钟，点击输入时间"
+            >
+              <view class="quick-time-value {{quickDurationEditing ? 'is-editing' : ''}}">
+                <input
+                  wx:if="{{quickDurationEditing}}"
+                  class="quick-time-input"
+                  type="number"
+                  value="{{quickDurationInput}}"
+                  focus="{{true}}"
+                  maxlength="3"
+                  selection-start="0"
+                  selection-end="3"
+                  confirm-type="done"
+                  cursor-spacing="18"
+                  aria-label="输入预计投入分钟数"
+                  catchtap="noop"
+                  bindinput="inputCustomDuration"
+                  bindconfirm="confirmCustomDuration"
+                  bindblur="confirmCustomDuration"
+                />
+                <text wx:else class="quick-time-number">{{quickAddMinutes}}</text>
+                <text class="quick-time-unit">分钟</text>
+                <t-icon wx:if="{{!quickDurationEditing}}" class="quick-time-edit-icon" name="edit" size="28rpx" color="#8D918E" />
+              </view>
+            </view>
+            <view class="quick-time-range-hint">
+              <text wx:if="{{quickDurationEditing}}">输入 5～360 的整数分钟</text>
+              <text wx:else>5–360 分钟</text>
             </view>
             <view class="quick-time-ruler-wrap">
               <view class="quick-time-center">
@@ -260,6 +288,7 @@
                 enable-passive="{{true}}"
                 fast-deceleration="{{true}}"
                 show-scrollbar="{{false}}"
+                aria-label="左右滑动调整时间，当前 {{quickAddMinutes}} 分钟"
                 scroll-left="{{quickDurationScrollLeft}}"
                 scroll-with-animation="{{quickDurationScrollWithAnimation}}"
                 binddragstart="onQuickDurationDragStart"
@@ -340,11 +369,6 @@
                 <t-icon class="quick-setting-chevron" name="chevron-right" size="28rpx" />
               </view>
             </picker>
-            <view class="quick-setting-row">
-              <view class="quick-setting-icon"><t-icon name="setting" size="34rpx" /></view>
-              <view class="quick-setting-copy"><view class="quick-setting-label">阻塞其他任务</view><view class="quick-setting-desc">用于判断今日行动优先级</view></view>
-              <switch class="quick-setting-switch" color="#245B4D" checked="{{quickAddBlocksOthers}}" bindchange="toggleQuickAddBlocksOthers" />
-            </view>
           </view>
         </view>
 
@@ -352,7 +376,7 @@
       </scroll-view>
 
       <view class="quick-add-actions">
-        <t-button class="quick-add-primary" loading="{{quickAddSubmitting}}" disabled="{{quickAddSubmitting || quickAddTitle.length < 2}}" catchtap="saveQuickAdd">{{quickAddMode === 'edit' ? '保存修改' : '添加任务'}}</t-button>
+        <t-button class="quick-add-primary" block="{{true}}" loading="{{quickAddSubmitting}}" disabled="{{quickAddSubmitting || quickAddTitle.length < 2}}" catchtap="saveQuickAdd">{{quickAddMode === 'edit' ? '保存修改' : '添加行动'}}</t-button>
       </view>
     </view>
   </view>

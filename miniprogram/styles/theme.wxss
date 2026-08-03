@@ -42,13 +42,58 @@ page {
   --color-text-muted: var(--color-text-light);
   --color-text-weak: var(--color-text-light);
   --color-text-inverse: #FFFFFF;
+  /* Semantic type scale: calibrated to the compact reading density of 今日. */
   --font-page-title: 40rpx;
+  --font-section-title: 34rpx;
+  --font-card-title: 28rpx;
+  --font-body-strong: 25rpx;
+  --font-body: 22rpx;
+  --font-caption: 20rpx;
+  --font-meta: 18rpx;
+  --font-tag: 16rpx;
   --font-data: 44rpx;
-  --font-card-title: 32rpx;
-  --font-section-title: 30rpx;
-  --font-body: 27rpx;
-  --font-caption: 23rpx;
-  --font-tag: 21rpx;
+
+  /* Text line-height contract. Ratios keep system-font scaling readable. */
+  --line-height-page-title: 1.3;
+  --line-height-section-title: 1.32;
+  --line-height-card-title: 1.4;
+  --line-height-body-strong: 1.5;
+  --line-height-body: 1.55;
+  --line-height-caption: 1.55;
+  --line-height-meta: 1.4;
+  --line-height-tag: 1.2;
+  --line-height-data: 1;
+  --line-height-brand-display: 1.9;
+
+  /* Controlled exceptions: brand lockups, data heroes, timers, marks and long copy. */
+  --font-brand-display: 52rpx;
+  --font-data-hero: 70rpx;
+  --font-timer: 112rpx;
+  --font-timer-compact: 88rpx;
+  --font-timer-editor: 68rpx;
+  --font-timer-editor-compact: 60rpx;
+  --font-calendar: 26rpx;
+  --font-icon-display: 38rpx;
+  --font-longform: var(--font-body);
+
+  /* Approved narrow-screen reductions; do not introduce page-local sizes in media queries. */
+  --font-page-title-compact: 34rpx;
+  --font-section-title-compact: 30rpx;
+  --font-card-title-compact: 26rpx;
+  --font-body-compact: 20rpx;
+  --font-caption-compact: 18rpx;
+  --font-meta-compact: 16rpx;
+  --font-tag-compact: 14rpx;
+  --font-data-compact: 38rpx;
+
+  /* Existing names remain valid while pages migrate to the semantic roles. */
+  --font-title: var(--font-page-title);
+  --font-section: var(--font-section-title);
+  --font-card: var(--font-card-title);
+  --font-emphasis: var(--font-body-strong);
+  --font-description: var(--font-caption);
+  --font-secondary: var(--font-meta);
+  --font-label: var(--font-tag);
   --font-family-brand: "Source Han Serif SC", "思源宋体", "Noto Serif CJK SC", "Songti SC", "STSong", "SimSun", serif;
   --font-family-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", sans-serif;
   --font-family-numeric: "Inter", "DIN Alternate", "Avenir Next", "Helvetica Neue", Arial, sans-serif;

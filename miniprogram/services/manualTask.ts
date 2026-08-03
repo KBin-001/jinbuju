@@ -5,8 +5,9 @@ import { inferActionIconKey } from "../utils/actionIcon";
 import { createLocalId, readManualStore, writeManualStore } from "./manualStore";
 import { ACTION_DURATION_MAX_MINUTES, ACTION_DURATION_MIN_MINUTES } from "../config/action";
 
-export interface SaveTaskInput { id?: string; goalId: string; title: string; description?: string; currentDate: string; estimatedMinutes: number; executionMode?: ActionExecutionMode; iconKey?: ActionIconKey; iconManual?: boolean; reminder?: ActionReminder | null; importance?: "required" | "normal"; blocksOthers?: boolean; }
+export interface SaveTaskInput { id?: string; goalId: string; title: string; description?: string; currentDate: string; estimatedMinutes: number; executionMode?: ActionExecutionMode; iconKey?: ActionIconKey; iconManual?: boolean; reminder?: ActionReminder | null; importance?: "required" | "normal"; }
 export interface SaveActionRecordInput { taskId: string; title: string; businessDate: string; time: string; actualMinutes: number; status: "completed" | "partially_completed" | "pending"; reflection?: string; }
+export interface UpdateCompletedActionRecordInput { taskId: string; title: string; businessDate: string; time: string; actualMinutes: number; }
 
 function validate(input: SaveTaskInput): void {
   const title = input.title.trim();
@@ -21,7 +22,7 @@ export function createTask(input: SaveTaskInput): ActionTask {
   const store = readManualStore();
   if (!store.goals.some((goal) => goal.id === input.goalId && goal.status === "active")) throw new Error("当前目标不存在");
   const now = new Date().toISOString();
-  const task: ActionTask = { id: createLocalId("task"), goalId: input.goalId, title: input.title.trim(), description: input.description?.trim() || undefined, plannedDate: input.currentDate, currentDate: input.currentDate, estimatedMinutes: input.estimatedMinutes, executionMode: input.executionMode || "focus", iconKey: input.iconManual && input.iconKey ? input.iconKey : inferActionIconKey(input.title, input.description), iconManual: Boolean(input.iconManual), reminder: input.reminder || undefined, status: "pending", source: "manual", importance: input.importance || "normal", blocksOthers: Boolean(input.blocksOthers), priorityOverride: null, createdAt: now, updatedAt: now };
+  const task: ActionTask = { id: createLocalId("task"), goalId: input.goalId, title: input.title.trim(), description: input.description?.trim() || undefined, plannedDate: input.currentDate, currentDate: input.currentDate, estimatedMinutes: input.estimatedMinutes, executionMode: input.executionMode || "focus", iconKey: input.iconManual && input.iconKey ? input.iconKey : inferActionIconKey(input.title, input.description), iconManual: Boolean(input.iconManual), reminder: input.reminder || undefined, status: "pending", source: "manual", importance: input.importance || "normal", priorityOverride: null, createdAt: now, updatedAt: now };
   store.tasks.push(task);
   writeManualStore(store);
   return task;
@@ -98,7 +99,6 @@ export function updateTask(input: SaveTaskInput): ActionTask {
   task.iconManual = Boolean(input.iconManual);
   task.iconKey = input.iconManual && input.iconKey ? input.iconKey : inferActionIconKey(input.title, input.description);
   if (input.importance === "required" || input.importance === "normal") task.importance = input.importance;
-  if (typeof input.blocksOthers === "boolean") task.blocksOthers = input.blocksOthers;
   if (input.reminder === null) task.reminder = undefined;
   else if (input.reminder) task.reminder = input.reminder;
   else if (task.reminder && task.reminder.status === "scheduled" && previousDate !== input.currentDate) {
@@ -255,6 +255,12 @@ export function updateActionRecord(input: SaveActionRecordInput): ActionTask {
   task.updatedAt = now;
   writeManualStore(store);
   return task;
+}
+
+export function updateCompletedActionRecord(input: UpdateCompletedActionRecordInput): ActionTask {
+  const task = getTask(input.taskId);
+  if (!task || task.status !== "completed") throw new Error("该完成记录已发生变化");
+  return updateActionRecord({ ...input, status: "completed", reflection: task.reflection });
 }
 
 export function deleteTask(taskId: string): void {

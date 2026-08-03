@@ -8,6 +8,7 @@ import { bootstrapAccount } from "../../services/account";
 import { getTodayBusinessDate } from "../../utils/date";
 import { ProgressCoachChatMessage } from "../../types/progressCoach";
 import { off, on } from "../../utils/eventBus";
+import { openTodayActionEditor } from "../../utils/todayActionEditor";
 
 interface DailyChatMessage extends ProgressCoachChatMessage {
   id: string;
@@ -284,14 +285,14 @@ Page({
   openTodayRecords() { wx.navigateTo({ url: `/pages/today-data/index?date=${encodeURIComponent(this.data.analysis.date || getTodayBusinessDate())}` }); },
   openTask(event: { currentTarget: { dataset: { taskId?: string } } }) {
     const taskId = String(event.currentTarget.dataset.taskId || "");
-    if (taskId) wx.navigateTo({ url: `/pages/action-edit/index?id=${encodeURIComponent(taskId)}` });
+    if (taskId) openTodayActionEditor({ mode: "edit", taskId });
   },
   addTodayAction() {
     if (!this.data.analysis.goalId) {
       wx.navigateTo({ url: "/pages/goal-create/index" });
       return;
     }
-    wx.navigateTo({ url: `/pages/action-edit/index?goalId=${encodeURIComponent(this.data.analysis.goalId)}&date=${encodeURIComponent(this.data.analysis.date || getTodayBusinessDate())}` });
+    openTodayActionEditor({ mode: "create", goalId: this.data.analysis.goalId, date: this.data.analysis.date || getTodayBusinessDate() });
   },
   toggleScopeMenu() {
     this.setData({ scopeMenuOpen: !this.data.scopeMenuOpen });

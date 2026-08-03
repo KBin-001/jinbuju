@@ -18,7 +18,7 @@
 .legal-title {
   color: var(--color-primary);
   font-family: var(--font-family-brand);
-  font-size: 44rpx;
+  font-size: var(--font-page-title);
   font-weight: var(--font-weight-title);
   letter-spacing: 2rpx;
   line-height: 1.35;
@@ -131,7 +131,7 @@
 
 .legal-heading {
   color: var(--color-text-main);
-  font-size: 30rpx;
+  font-size: var(--font-section-title);
   font-weight: 700;
   line-height: 1.45;
 }
@@ -147,7 +147,7 @@
 .legal-copy {
   margin-top: 14rpx;
   color: var(--color-text-body);
-  font-size: 26rpx;
+  font-size: var(--font-longform);
   line-height: 1.8;
 }
 
@@ -159,7 +159,7 @@
 .legal-subheading {
   margin-top: 18rpx;
   color: var(--color-primary);
-  font-size: 27rpx;
+  font-size: var(--font-body-strong);
   font-weight: 650;
   line-height: 1.5;
 }
@@ -176,7 +176,7 @@
   background: var(--color-gold-soft);
   color: var(--color-warning);
   font-weight: 600;
-  font-size: 23rpx;
+  font-size: var(--font-caption);
 }
 
 .legal-emphasis {
@@ -194,7 +194,7 @@
   position: relative;
   padding-left: 26rpx;
   color: var(--color-text-body);
-  font-size: 26rpx;
+  font-size: var(--font-longform);
   line-height: 1.8;
 }
 
@@ -233,7 +233,7 @@
 
 .legal-info-card-title {
   color: var(--color-text-main);
-  font-size: 26rpx;
+  font-size: var(--font-body-strong);
   font-weight: 650;
   line-height: 1.4;
 }
@@ -241,7 +241,7 @@
 .legal-info-card-desc {
   margin-top: 6rpx;
   color: var(--color-text-secondary);
-  font-size: 24rpx;
+  font-size: var(--font-longform);
   line-height: 1.65;
 }
 
@@ -283,7 +283,7 @@
   border-radius: var(--radius-pill);
   background: var(--color-primary-soft);
   color: var(--color-primary);
-  font-size: 22rpx;
+  font-size: var(--font-caption);
   font-weight: 600;
   line-height: 1.4;
 }
@@ -293,15 +293,28 @@
   margin-top: 32rpx;
   padding: 0 12rpx;
   color: var(--color-text-light);
-  font-size: 22rpx;
+  font-size: var(--font-caption);
   line-height: 1.7;
   text-align: center;
 }
 
+/* Semantic type roles for long-form legal content. */
+.legal-title { font-size: var(--font-page-title); line-height: var(--line-height-page-title); }
+.legal-heading { font-size: var(--font-section-title); line-height: var(--line-height-section-title); }
+.legal-copy,
+.legal-list-item,
+.legal-info-card-desc { font-size: var(--font-longform); line-height: var(--line-height-body); }
+.legal-subheading,
+.legal-info-card-title { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+.legal-placeholder,
+.legal-contact-copy,
+.legal-footnote { font-size: var(--font-caption); line-height: var(--line-height-caption); }
+
 /* ===== 响应式与小屏适配 ===== */
 @media (max-width: 340px) {
   .legal-title {
-    font-size: 40rpx;
+    font-size: var(--font-page-title);
+    line-height: var(--line-height-page-title);
   }
 
   .legal-toc-list {

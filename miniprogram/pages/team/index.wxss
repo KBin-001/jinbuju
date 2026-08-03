@@ -706,3 +706,443 @@
 .team-info-row--action > view:first-child { min-width: 0; display: flex; flex: 1; flex-direction: column; }
 .team-info-row--action > .setting-row-value { display: flex; align-items: center; gap: 5rpx; flex: none; color: #245b4d; font-size: 21rpx; }
 .team-info-help { max-width: 360rpx; margin-top: 5rpx; overflow: hidden; color: #8b8f8b; font-size: 19rpx; line-height: 28rpx; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 2026-07 小队主页：连续宣纸画布 + 山势同行进度 */
+.team-page {
+  --team-paper: #f8f4eb;
+  --team-ink: #245b4d;
+  --team-ink-deep: #24312d;
+  --team-celadon: #7f9d91;
+  --team-gold: #b78329;
+  --team-line: rgba(86, 92, 85, .14);
+  background: var(--team-paper);
+}
+
+.team-bg { opacity: .54; }
+.team-bg-mask { background: linear-gradient(180deg, rgba(248,244,235,.08), rgba(248,244,235,.58) 72%, var(--team-paper) 100%); }
+.team-content { padding-top: 0; }
+
+.team-hero.paper-card {
+  position: relative;
+  width: auto;
+  min-height: 650rpx;
+  margin-right: -28rpx;
+  margin-left: -28rpx;
+  padding: 38rpx 48rpx 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.team-journey-landscape {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 590rpx;
+  opacity: .68;
+}
+
+.team-journey-veil {
+  position: absolute;
+  z-index: 1;
+  inset: 0 0 auto;
+  height: 640rpx;
+  background: linear-gradient(90deg, rgba(248,244,235,.98) 0%, rgba(248,244,235,.90) 36%, rgba(248,244,235,.24) 72%, rgba(248,244,235,.32) 100%);
+  pointer-events: none;
+}
+
+.team-journey-content,
+.solo-invite { position: relative; z-index: 2; }
+
+.team-journey-content .hero-identity { min-height: 96rpx; }
+.team-journey-content .hero-title { max-width: 520rpx; color: var(--team-ink-deep); font-size: 47rpx; line-height: 60rpx; letter-spacing: 4rpx; }
+.hero-seal { width: 31rpx; height: 31rpx; margin-left: 12rpx; opacity: .86; }
+.team-journey-content .hero-subtitle { max-width: 520rpx; margin-top: 7rpx; color: #606762; font-size: 22rpx; line-height: 34rpx; letter-spacing: 1rpx; }
+
+.hero-room-row {
+  min-height: 65rpx;
+  margin-top: 15rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.team-journey-content .hero-room {
+  min-width: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  color: #4f5955;
+  font-family: var(--font-family-numeric);
+  font-variant-numeric: tabular-nums;
+  font-size: 22rpx;
+  line-height: 34rpx;
+  letter-spacing: 1rpx;
+  text-align: left;
+}
+
+.team-journey-content .hero-room-copy {
+  min-width: 69rpx;
+  height: 42rpx;
+  margin: 0;
+  padding: 0 14rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1rpx solid rgba(36,91,77,.24);
+  border-radius: 22rpx;
+  color: var(--team-ink);
+  font-family: var(--font-family-sans);
+  font-size: 19rpx;
+  line-height: 42rpx;
+  text-decoration: none;
+  letter-spacing: 0;
+}
+
+.hero-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8rpx; flex: none; }
+.team-journey-content .hero-invite,
+.team-journey-content .hero-settings {
+  min-width: 0;
+  height: 52rpx;
+  margin: 0;
+  padding: 0 12rpx;
+  gap: 5rpx;
+  border: 0;
+  border-radius: 26rpx;
+  color: var(--team-ink);
+  background: rgba(248,244,235,.62);
+  font-size: 19rpx;
+  white-space: nowrap;
+}
+.team-journey-content .hero-invite image,
+.team-journey-content .hero-settings image { width: 25rpx; height: 25rpx; margin: 0; }
+.team-journey-content .hero-invite { color: #986c26; }
+.team-journey-content .hero-member-waiting { max-width: 120rpx; color: #8b8d89; font-size: 18rpx; line-height: 26rpx; text-align: right; }
+
+.hero-members-row { min-height: 66rpx; margin-top: 10rpx; display: flex; align-items: center; }
+.team-journey-content .hero-avatar-stack { min-width: 0; }
+.team-journey-content .hero-avatar {
+  width: 58rpx;
+  height: 58rpx;
+  margin-left: -11rpx;
+  border: 3rpx solid rgba(248,244,235,.95);
+  background: #e8ece7;
+  box-shadow: 0 1rpx 5rpx rgba(36,49,45,.10);
+}
+.team-journey-content .hero-avatar--extra { color: var(--team-ink); font-size: 18rpx; }
+.hero-member-count { margin-left: 14rpx; color: var(--team-ink); font-family: var(--font-family-numeric); font-size: 23rpx; line-height: 34rpx; }
+
+.team-journey-track { position: relative; height: 205rpx; margin: -4rpx 0 0; }
+.team-journey-canvas { position: absolute; width: 100%; height: 100%; inset: 0; }
+.team-journey-node,
+.team-journey-current,
+.team-journey-goal-node {
+  position: absolute;
+  z-index: 3;
+  box-sizing: border-box;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.team-journey-node { width: 18rpx; height: 18rpx; border: 3rpx solid #596863; background: #f8f4eb; }
+.team-journey-node--one { top: 76%; left: 34%; }
+.team-journey-node--two { top: 61%; left: 59%; }
+.team-journey-node--three { top: 36%; left: 78%; }
+.team-journey-current { width: 25rpx; height: 25rpx; border: 3rpx solid rgba(248,244,235,.95); background: var(--team-ink); box-shadow: 0 2rpx 8rpx rgba(36,91,77,.18); }
+.team-journey-goal { position: absolute; z-index: 4; top: -1rpx; right: 3rpx; width: 46rpx; height: 62rpx; color: var(--team-gold); }
+.team-journey-goal-node { right: 5rpx; bottom: 1rpx; width: 19rpx; height: 19rpx; border: 3rpx solid var(--team-gold); background: #f8f4eb; transform: none; }
+
+.hero-metrics {
+  min-height: 157rpx;
+  display: grid;
+  grid-template-columns: 1.18fr 1fr .92fr;
+  align-items: start;
+  border-bottom: 1rpx solid var(--team-line);
+}
+.hero-metric { position: relative; min-width: 0; min-height: 116rpx; padding: 5rpx 18rpx 14rpx; text-align: center; }
+.hero-metric:first-child { padding-left: 0; text-align: left; }
+.hero-metric:last-child { padding-right: 0; }
+.hero-metric + .hero-metric::before { position: absolute; top: 8rpx; bottom: 25rpx; left: 0; width: 1rpx; content: ""; background: rgba(86,92,85,.18); }
+.hero-metric-label { display: block; color: #66706c; font-family: var(--font-family-brand); font-size: 23rpx; line-height: 33rpx; letter-spacing: 2rpx; }
+.hero-metric--primary .hero-metric-label { color: var(--team-ink); }
+.hero-metric-value { margin-top: 5rpx; display: flex; align-items: baseline; justify-content: center; color: var(--team-ink); white-space: nowrap; }
+.hero-metric:first-child .hero-metric-value { justify-content: flex-start; }
+.hero-metric-value > text:first-child { font-family: var(--font-family-numeric); font-size: 56rpx; line-height: 65rpx; font-variant-numeric: tabular-nums; }
+.hero-metric-value > text:last-child { margin-left: 4rpx; color: #4e5753; font-size: 20rpx; line-height: 29rpx; }
+.hero-metric-note { display: block; margin-top: -1rpx; color: #858b87; font-size: 18rpx; line-height: 27rpx; }
+
+.companion-card,
+.activity-card {
+  width: auto;
+  margin-right: 4rpx;
+  margin-left: 4rpx;
+  padding: 20rpx 8rpx 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.section-head { min-height: 52rpx; padding: 0 6rpx; align-items: center; }
+.section-title { color: var(--team-ink); font-family: var(--font-family-brand); font-size: 34rpx; line-height: 45rpx; letter-spacing: 4rpx; }
+.section-link { color: #a8782f; font-size: 21rpx; }
+.section-link image { opacity: .78; }
+.companion-list { margin-top: 12rpx; }
+.companion-row,
+.companion-row--completed,
+.companion-row--completed + .companion-row {
+  min-height: 128rpx;
+  margin: 0;
+  padding: 15rpx 5rpx;
+  border-width: 0 0 1rpx;
+  border-style: solid;
+  border-color: var(--team-line);
+  border-radius: 0;
+  background: transparent;
+}
+.companion-rank { width: 48rpx; flex-basis: 48rpx; color: #8a8f8b; font-family: var(--font-family-numeric); font-size: 31rpx; font-weight: 500; }
+.companion-row:nth-child(1) .companion-rank,
+.companion-row:nth-child(3) .companion-rank { color: var(--team-gold); }
+.companion-avatar { width: 66rpx; height: 66rpx; flex-basis: 66rpx; margin-right: 15rpx; border: 2rpx solid rgba(255,255,255,.9); box-shadow: 0 2rpx 7rpx rgba(36,49,45,.09); }
+.companion-name { max-width: 156rpx; color: var(--team-ink-deep); font-family: var(--font-family-brand); font-size: 27rpx; font-weight: 520; }
+.companion-action { max-width: 330rpx; margin-top: 4rpx; color: #626a66; font-size: 21rpx; line-height: 30rpx; }
+.companion-progress { height: 6rpx; margin-top: 12rpx; border-radius: 4rpx; background: rgba(127,157,145,.18); }
+.companion-progress-fill--completed { background: var(--team-ink); }
+.companion-progress-fill--doing { background: var(--team-gold); }
+.companion-progress-fill--pending { background: #d6d7d2; }
+.companion-progress-fill--missed { background: #aeb9b2; }
+.companion-metric { width: 124rpx; flex-basis: 124rpx; margin-left: 12rpx; }
+.companion-status { color: #777d79; font-size: 20rpx; line-height: 30rpx; }
+.companion-status--completed { color: var(--team-ink); }
+.companion-status--doing { color: #a67122; }
+.companion-minutes { margin-top: 7rpx; color: var(--team-ink-deep); font-size: 27rpx; line-height: 34rpx; }
+.companion-minutes text { color: #6e7470; font-size: 17rpx; }
+.self-prompt {
+  min-height: 93rpx;
+  margin: 25rpx 3rpx 0;
+  padding: 16rpx 18rpx 16rpx 24rpx;
+  border: 1rpx solid rgba(86,92,85,.16);
+  border-radius: 18rpx;
+  background: rgba(255,252,246,.32);
+}
+.self-prompt-copy { padding-right: 17rpx; }
+.self-prompt-title { color: #565f5b; font-size: 19rpx; }
+.self-prompt-note { max-width: 390rpx; margin-top: 5rpx; color: #6f7471; font-size: 20rpx; line-height: 29rpx; }
+.self-prompt-button { min-width: 154rpx; height: 64rpx; padding: 0 22rpx; border: 0; border-radius: 33rpx; background: var(--team-ink); color: #fff; font-size: 23rpx; }
+.companion-more { color: #9a722f; }
+
+.activity-card { margin-top: 13rpx; padding-top: 26rpx; padding-bottom: 30rpx; border-top: 1rpx solid var(--team-line); }
+.activity-list { margin-top: 9rpx; }
+.activity-row { min-height: 82rpx; border-bottom: 1rpx solid rgba(86,92,85,.10); }
+.activity-row:last-child { border-bottom: 0; }
+.activity-line { display: none; }
+.activity-avatar { width: 54rpx; height: 54rpx; flex-basis: 54rpx; margin-right: 16rpx; }
+.activity-copy { color: #555d59; font-size: 21rpx; }
+.activity-copy text { color: var(--team-ink-deep); font-weight: 560; }
+.activity-time { color: #8a8f8b; font-size: 18rpx; }
+.activity-empty { border-radius: 0; background: transparent; }
+
+@media (max-width: 350px) {
+  .team-hero.paper-card { min-height: 625rpx; padding-right: 38rpx; padding-left: 38rpx; }
+  .team-journey-content .hero-title { font-size: 42rpx; }
+  .hero-room-row { align-items: flex-start; flex-direction: column; gap: 4rpx; }
+  .hero-actions { align-self: stretch; justify-content: flex-start; }
+  .team-journey-track { height: 180rpx; }
+  .hero-metric { padding-right: 10rpx; padding-left: 10rpx; }
+  .hero-metric-value > text:first-child { font-size: 48rpx; }
+  .hero-metric-label { font-size: 20rpx; }
+  .companion-card,.activity-card { margin-right: 0; margin-left: 0; padding-right: 0; padding-left: 0; }
+  .companion-avatar { width: 58rpx; height: 58rpx; flex-basis: 58rpx; margin-right: 10rpx; }
+  .companion-name { max-width: 125rpx; font-size: 24rpx; }
+  .companion-action { max-width: 250rpx; font-size: 19rpx; }
+  .companion-metric { width: 105rpx; flex-basis: 105rpx; margin-left: 8rpx; }
+  .self-prompt-note { max-width: 310rpx; font-size: 18rpx; }
+  .self-prompt-button { min-width: 132rpx; padding-right: 16rpx; padding-left: 16rpx; font-size: 20rpx; }
+}
+
+/* Semantic type roles: the small team flows share the same hierarchy as the
+ * four primary tabs while keeping rankings and hero metrics readable. */
+.team-nav .tab-header__title { font-size: var(--font-page-title); line-height: var(--line-height-page-title); }
+.team-service-notice,
+.team-notification-optin text,
+.hero-subtitle,
+.hero-primary-note,
+.state-copy,
+.empty-team-description,
+.empty-community-description,
+.popup-copy,
+.team-community-state-copy,
+.team-community-description,
+.team-info-slogan { font-size: var(--font-caption); line-height: var(--line-height-caption); }
+.team-notification-optin > view > view,
+.hero-primary-title,
+.solo-invite-heading,
+.hero-today-heading,
+.popup-title,
+.settings-title,
+.team-community-state-title,
+.detail-section-title,
+.team-info-name { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.team-notification-optin button,
+.hero-settings,
+.hero-invite,
+.solo-invite-button,
+.hero-primary,
+.state-action,
+.empty-team-button,
+.empty-community-action,
+.popup-button,
+.team-community-retry,
+.self-prompt-button,
+.settings-footer-button,
+.management-action,
+.detail-footer-primary,
+.detail-footer-secondary { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+.hero-title,
+.team-journey-content .hero-title { font-size: var(--font-page-title); line-height: var(--line-height-page-title); }
+.hero-room,
+.hero-member-waiting,
+.hero-member-count,
+.hero-today-meta,
+.hero-primary-note,
+.team-community-kicker,
+.team-community-tip,
+.team-community-expiry,
+.team-community-privacy,
+.team-info-help,
+.owner-setting-help,
+.team-info-row--action .setting-row-value { font-size: var(--font-meta); line-height: var(--line-height-meta); }
+.hero-room-copy,
+.hero-primary-status,
+.hero-metric-label,
+.companion-status,
+.soft-tag,
+.role-chip,
+.status-chip,
+.activity-type-tag,
+.empty-team-eyebrow,
+.empty-community-badge { font-size: var(--font-tag); line-height: var(--line-height-tag); }
+.hero-metric-value > text:first-child,
+.hero-progress-value > text:first-child,
+.hero-progress-rate,
+.hero-metric-value { font-size: var(--font-data); line-height: var(--line-height-data); }
+.hero-metric-value > text:last-child,
+.hero-progress-rate text,
+.hero-metric-note,
+.companion-minutes text,
+.activity-time,
+.settings-count { font-size: var(--font-meta); line-height: var(--line-height-meta); }
+.section-title { font-size: var(--font-section-title); line-height: var(--line-height-section-title); }
+.section-link,
+.companion-action,
+.activity-copy,
+.self-prompt-note,
+.companion-more,
+.detail-status-copy,
+.detail-action-title,
+.team-info-row,
+.setting-label,
+.owner-setting-row,
+.team-info-slogan { font-size: var(--font-body); line-height: var(--line-height-body); }
+.companion-name,
+.detail-name,
+.team-community-title,
+.detail-section-title,
+.team-journey-content .hero-primary-title { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.companion-rank,
+.companion-minutes,
+.detail-stat-value,
+.member-minutes,
+.hero-today-meta-number,
+.room-code-value { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+.activity-empty,
+.companion-empty,
+.detail-empty,
+.detail-action-meta,
+.task-detail-meta,
+.setting-help,
+.option-desc,
+.team-info-help { font-size: var(--font-caption); line-height: var(--line-height-caption); }
+.state-title,
+.empty-team-title,
+.empty-community-title,
+.empty-title,
+.empty-community-title { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.empty-team-benefit text:first-child,
+.empty-team-proof,
+.empty-community-benefits,
+.team-community-description,
+.detail-action-status,
+.privacy-title,
+.privacy-copy { font-size: var(--font-body); line-height: var(--line-height-body); }
+.hero-spark,
+.state-seal,
+.empty-seal { font-size: var(--font-icon-display); line-height: var(--line-height-data); }
+.hero-title,
+.team-info-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 350px) {
+  .team-nav .tab-header__title,
+  .hero-title { font-size: var(--font-page-title-compact); line-height: var(--line-height-page-title); }
+  .section-title { font-size: var(--font-section-title-compact); line-height: var(--line-height-section-title); }
+  .team-notification-optin text,
+  .hero-subtitle,
+  .hero-primary-note,
+  .state-copy,
+  .empty-team-description,
+  .empty-community-description,
+  .popup-copy,
+  .team-community-state-copy,
+  .team-community-description,
+  .team-info-slogan,
+  .activity-empty,
+  .companion-empty,
+  .detail-empty,
+  .detail-action-meta,
+  .task-detail-meta,
+  .setting-help,
+  .option-desc,
+  .team-info-help { font-size: var(--font-caption-compact); line-height: var(--line-height-caption); }
+  .hero-room,
+  .hero-member-waiting,
+  .hero-member-count,
+  .team-community-kicker,
+  .team-community-tip,
+  .team-community-expiry,
+  .team-community-privacy,
+  .team-info-help,
+  .owner-setting-help,
+  .activity-time,
+  .settings-count { font-size: var(--font-meta-compact); line-height: var(--line-height-meta); }
+  .companion-name,
+  .detail-name,
+  .team-community-title,
+  .detail-section-title,
+  .team-journey-content .hero-primary-title,
+  .state-title,
+  .empty-team-title,
+  .empty-community-title,
+  .empty-title { font-size: var(--font-card-title-compact); line-height: var(--line-height-card-title); }
+  .hero-metric-value > text:first-child,
+  .hero-progress-value > text:first-child,
+  .hero-progress-rate,
+  .hero-metric-value,
+  .detail-stat-value,
+  .member-minutes,
+  .room-code-value { font-size: var(--font-data-compact); line-height: var(--line-height-data); }
+  .hero-metric-label,
+  .companion-status,
+  .soft-tag,
+  .role-chip,
+  .status-chip,
+  .activity-type-tag,
+  .empty-team-eyebrow,
+  .empty-community-badge { font-size: var(--font-tag-compact); line-height: var(--line-height-tag); }
+}

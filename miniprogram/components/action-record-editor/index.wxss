@@ -73,7 +73,7 @@
 
 .record-eyebrow {
   color: var(--color-primary-light, #7F9D91);
-  font-size: 21rpx;
+  font-size: var(--font-meta);
   font-weight: 650;
   letter-spacing: 2rpx;
 }
@@ -81,9 +81,9 @@
 .record-title {
   margin-top: 6rpx;
   color: var(--color-text-main, #24312D);
-  font-size: 38rpx;
+  font-size: var(--font-card-title);
   font-weight: 700;
-  line-height: 52rpx;
+  line-height: var(--line-height-card-title);
 }
 
 .record-close {
@@ -106,9 +106,9 @@
 .record-label {
   margin-bottom: 12rpx;
   color: var(--color-text-body, #4F615B);
-  font-size: 25rpx;
+  font-size: var(--font-body-strong);
   font-weight: 550;
-  line-height: 36rpx;
+  line-height: var(--line-height-body-strong);
 }
 
 .record-input-shell,
@@ -129,7 +129,7 @@
   height: 88rpx;
   flex: 1;
   color: var(--color-text-main, #24312D);
-  font-size: 28rpx;
+  font-size: var(--font-body);
 }
 
 .record-date-shell {
@@ -140,12 +140,12 @@
   min-width: 0;
   flex: 1;
   color: var(--color-text-body, #4F615B);
-  font-size: 25rpx;
+  font-size: var(--font-body);
 }
 
 .record-time-picker {
   color: var(--color-text-body, #4F615B);
-  font-size: 25rpx;
+  font-size: var(--font-body);
 }
 
 .record-minutes-shell {
@@ -158,7 +158,7 @@
 
 .record-minutes-unit {
   color: var(--color-text-secondary, #7C817D);
-  font-size: 23rpx;
+  font-size: var(--font-meta);
 }
 
 .record-segments {
@@ -179,7 +179,7 @@
   gap: 6rpx;
   border-radius: 15rpx;
   color: var(--color-text-secondary, #7C817D);
-  font-size: 23rpx;
+  font-size: var(--font-meta);
   transition: background-color 180ms ease, color 180ms ease, opacity 180ms ease;
 }
 
@@ -202,8 +202,8 @@
   width: 100%;
   height: 126rpx;
   color: var(--color-text-main, #24312D);
-  font-size: 25rpx;
-  line-height: 37rpx;
+  font-size: var(--font-body);
+  line-height: var(--line-height-body);
 }
 
 .record-reflection-counter {
@@ -211,7 +211,7 @@
   right: 18rpx;
   bottom: 10rpx;
   color: var(--color-text-light, #9B9F9B);
-  font-size: 20rpx;
+  font-size: var(--font-meta);
 }
 
 .record-ai-note {
@@ -235,21 +235,21 @@
   border-radius: 14rpx;
   background: var(--color-primary-light, #7F9D91);
   color: #FFFFFF;
-  font-size: 18rpx;
+  font-size: var(--font-meta);
   font-weight: 700;
 }
 
 .record-ai-title {
   color: var(--color-primary-dark, #183F35);
-  font-size: 23rpx;
+  font-size: var(--font-meta);
   font-weight: 650;
 }
 
 .record-ai-copy {
   margin-top: 5rpx;
   color: var(--color-text-secondary, #7C817D);
-  font-size: 21rpx;
-  line-height: 32rpx;
+  font-size: var(--font-caption);
+  line-height: var(--line-height-caption);
 }
 
 .record-scroll-spacer {
@@ -276,9 +276,9 @@
   border-radius: 999rpx;
   background: var(--color-primary, #245B4D);
   color: #FFFFFF;
-  font-size: 28rpx;
+  font-size: var(--font-body);
   font-weight: 650;
-  line-height: 88rpx;
+  line-height: var(--line-height-body);
   box-shadow: var(--shadow-button, 0 8rpx 18rpx rgba(36, 91, 77, .14));
   transition: opacity 180ms ease, transform 180ms ease;
 }
@@ -299,8 +299,8 @@
   align-items: center;
   justify-content: center;
   color: var(--color-danger, #B86152);
-  font-size: 23rpx;
-  line-height: 36rpx;
+  font-size: var(--font-meta);
+  line-height: var(--line-height-meta);
   text-align: center;
   transition: opacity 180ms ease;
 }
@@ -329,11 +329,11 @@
 @media (max-width: 350px) {
   .record-panel { height: 89vh; }
   .record-head { padding-right: 28rpx; padding-left: 28rpx; }
-  .record-title { font-size: 36rpx; }
+  .record-title { font-size: var(--font-card-title-compact); }
   .record-field,
   .record-ai-note { margin-right: 28rpx; margin-left: 28rpx; }
   .record-footer { padding-right: 28rpx; padding-left: 28rpx; }
-  .record-label { font-size: 23rpx; }
+  .record-label { font-size: var(--font-body-compact); }
 }
 
 @media (prefers-reduced-motion: reduce) {

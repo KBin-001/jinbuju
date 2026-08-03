@@ -1,24 +1,66 @@
 <view class="achievement-page" style="padding-top: {{topInset}}px;">
-  <view class="achievement-ambient achievement-ambient--one"></view>
-  <view class="achievement-ambient achievement-ambient--two"></view>
-
   <view class="achievement-nav">
-    <view class="achievement-nav-button" bindtap="goBack" hover-class="is-pressed" aria-role="button" aria-label="返回"><t-icon name="chevron-left" size="44rpx" /></view>
-    <view class="achievement-nav-title">成长收藏</view>
+    <view class="achievement-nav-button" bindtap="goBack" hover-class="is-pressed" aria-role="button" aria-label="返回">
+      <t-icon name="chevron-left" size="44rpx" />
+    </view>
+    <view class="achievement-nav-title">成长收藏<text class="achievement-nav-seal">藏</text></view>
     <view class="achievement-nav-space"></view>
   </view>
 
   <scroll-view class="achievement-scroll" scroll-y show-scrollbar="{{false}}" enhanced>
-    <view class="achievement-content">
+    <view wx:if="{{status === 'loading'}}" class="achievement-state">
+      <t-loading theme="circular" size="42rpx" text="正在整理你的成长收藏" />
+    </view>
+
+    <view wx:elif="{{status === 'error'}}" class="achievement-state achievement-state--error">
+      <view class="achievement-state-title">成长收藏暂时没有打开</view>
+      <view class="achievement-state-copy">{{errorMessage}}</view>
+      <view class="achievement-state-action" bindtap="loadAchievements" hover-class="is-pressed">重新加载</view>
+    </view>
+
+    <view wx:else class="achievement-content">
       <view class="achievement-hero">
+        <image class="achievement-hero-landscape" src="/assets/achievements/collection-hero-landscape-v1.jpg" mode="aspectFill" />
         <view class="achievement-hero-copy">
-          <view class="achievement-hero-kicker">成长记录</view>
-          <view class="achievement-hero-title">认真走过的路，都值得被收藏</view>
-          <view class="achievement-hero-summary"><text class="achievement-hero-number">{{unlockedCount}}</text><text> 项已收藏</text><text class="achievement-hero-percent">共 {{totalCount}} 项</text></view>
+          <view class="achievement-hero-summary">
+            <text class="achievement-hero-number">{{unlockedCount}}</text>
+            <view class="achievement-hero-unit"><text>项已收藏</text><text>共 {{totalCount}} 项</text></view>
+          </view>
+          <view class="achievement-hero-message">{{heroCopy}}</view>
+          <view class="achievement-stage"><t-icon name="chart-line" size="25rpx" /><text>成长阶段 · {{stageLabel}}</text></view>
         </view>
-        <view wx:if="{{nextAchievement}}" class="achievement-featured tier-{{nextAchievement.tier}}" data-id="{{nextAchievement.id}}" bindtap="openAchievement" aria-role="button" aria-label="{{nextAchievement.ariaLabel}}">
-          <image src="{{nextAchievement.icon}}" mode="aspectFit" />
-          <text>{{nextAchievement.unlocked ? '最近收藏' : '接近达成'}}</text>
+        <view wx:if="{{heroAchievement}}" class="achievement-signature tier-{{heroAchievement.tier}}" data-id="{{heroAchievement.id}}" bindtap="openAchievement" hover-class="is-pressed" aria-role="button" aria-label="{{heroAchievement.ariaLabel}}">
+          <image src="/assets/achievements/collection-signature-medallion.svg" mode="aspectFit" />
+          <view class="achievement-signature-seal">已藏</view>
+        </view>
+      </view>
+
+      <view class="achievement-focus-row">
+        <view wx:if="{{latestAchievement}}" class="achievement-focus-card achievement-focus-card--latest" data-id="{{latestAchievement.id}}" bindtap="openAchievement" hover-class="is-pressed" aria-role="button" aria-label="查看最近收藏 {{latestAchievement.title}}">
+          <view class="achievement-focus-kicker"><t-icon name="star" size="27rpx" /><text>刚刚收藏</text></view>
+          <view class="achievement-focus-main">
+            <image src="{{latestAchievement.icon}}" mode="aspectFit" />
+            <view class="achievement-focus-copy"><view class="achievement-focus-title">{{latestAchievement.title}}</view><view class="achievement-focus-meta">{{latestAchievement.unlockedDateLabel}}</view></view>
+          </view>
+          <view class="achievement-focus-note">{{latestMeaning}}</view>
+          <view class="achievement-text-action">查看纪念<t-icon name="chevron-right" size="27rpx" /></view>
+        </view>
+
+        <view wx:if="{{nextAchievement}}" class="achievement-focus-card achievement-focus-card--next">
+          <view class="achievement-focus-kicker"><t-icon name="time" size="27rpx" /><text>下一枚收藏</text></view>
+          <view class="achievement-next-main">
+            <view class="achievement-next-copy"><view class="achievement-focus-title">{{nextAchievement.title}}</view><view class="achievement-focus-meta">{{nextAchievement.progressText}}</view></view>
+            <view class="achievement-next-badge tier-{{nextAchievement.tier}}" data-id="{{nextAchievement.id}}" bindtap="openAchievement" hover-class="is-pressed"><image src="{{nextAchievement.icon}}" mode="aspectFit" /><view class="achievement-next-lock"><t-icon name="lock-on" size="20rpx" /></view></view>
+          </view>
+          <view class="achievement-focus-note">{{nextAchievement.remainingText}}即可解锁</view>
+          <view class="achievement-progress-track"><view style="width: {{nextAchievement.progressPercent}}%;"></view></view>
+          <view class="achievement-outline-action" bindtap="goToday" hover-class="is-pressed">继续行动<t-icon name="chevron-right" size="27rpx" /></view>
+        </view>
+
+        <view wx:if="{{!latestAchievement && !nextAchievement}}" class="achievement-focus-card achievement-focus-card--empty">
+          <view class="achievement-focus-title">收藏从今天开始</view>
+          <view class="achievement-focus-note">完成一次真实行动，这里就会留下第一份纪念。</view>
+          <view class="achievement-outline-action" bindtap="goToday" hover-class="is-pressed">去完成行动<t-icon name="chevron-right" size="27rpx" /></view>
         </view>
       </view>
 
@@ -27,25 +69,45 @@
       </view>
 
       <view wx:for="{{visibleCategories}}" wx:for-item="category" wx:key="key" class="achievement-section">
-        <view class="achievement-section-head">
-          <view><view class="achievement-section-title">{{category.title}}</view><view class="achievement-section-subtitle">{{category.subtitle}}</view></view>
-          <view class="achievement-section-count">{{category.unlockedCount}} / 3</view>
+        <view class="achievement-section-head" data-key="{{category.key}}" bindtap="toggleCategory" hover-class="is-pressed" aria-role="button" aria-label="{{category.expanded ? '收起' : '展开'}}{{category.title}}">
+          <view class="achievement-section-heading">
+            <image class="achievement-section-icon" src="{{category.iconPath}}" mode="aspectFit" />
+            <view><view class="achievement-section-title">{{category.title}}</view><view class="achievement-section-subtitle">{{category.subtitle}}</view></view>
+          </view>
+          <view class="achievement-section-count"><text>{{category.unlockedCount}}</text> / {{category.totalCount}}<text class="achievement-section-count-label">已收藏</text><t-icon name="{{category.expanded ? 'chevron-up' : 'chevron-down'}}" size="27rpx" /></view>
         </view>
-        <view class="achievement-grid">
+
+        <view wx:if="{{category.expanded}}" class="achievement-grid">
           <view wx:for="{{category.achievements}}" wx:for-item="achievement" wx:key="id" class="achievement-card {{achievement.unlocked ? 'is-unlocked' : 'is-locked'}} {{achievement.nearUnlock ? 'is-near' : ''}} tier-{{achievement.tier}}" data-id="{{achievement.id}}" bindtap="openAchievement" hover-class="is-pressed" aria-role="button" aria-label="{{achievement.ariaLabel}}">
             <view class="achievement-badge-shell">
               <view class="achievement-badge-ring"></view>
               <image class="achievement-badge-image" src="{{achievement.icon}}" mode="aspectFit" lazy-load />
-              <view class="achievement-state-icon"><t-icon name="{{achievement.unlocked ? 'check-circle-filled' : 'lock-on'}}" size="24rpx" /></view>
+              <view class="achievement-state-icon"><t-icon name="{{achievement.unlocked ? 'check' : 'lock-on'}}" size="21rpx" /></view>
             </view>
-            <view class="achievement-card-title">{{achievement.title}}</view>
-            <view class="achievement-card-status">{{achievement.unlocked ? '已收藏' : achievement.progressText}}</view>
-            <view wx:if="{{!achievement.unlocked}}" class="achievement-card-track"><view style="width: {{achievement.progressPercent}}%;"></view></view>
+            <view class="achievement-card-copy">
+              <view class="achievement-card-title">{{achievement.title}}</view>
+              <view class="achievement-card-description">{{achievement.description}}</view>
+              <view class="achievement-card-status">{{achievement.unlocked ? '已收藏 · ' + achievement.unlockedDateLabel : achievement.progressText}}</view>
+              <view wx:if="{{!achievement.unlocked}}" class="achievement-card-track"><view style="width: {{achievement.progressPercent}}%;"></view></view>
+            </view>
+            <t-icon class="achievement-card-arrow" name="chevron-right" size="29rpx" />
           </view>
         </view>
       </view>
-      <view wx:if="{{visibleCategories.length === 0}}" class="achievement-empty">这里暂时没有符合条件的成长记录</view>
-      <view class="achievement-bottom-copy">每项收藏都来自真实行动记录。</view>
+
+      <view wx:if="{{visibleCategories.length === 0}}" class="achievement-empty">
+        <view class="achievement-empty-title">这里还没有符合条件的收藏</view>
+        <view class="achievement-empty-copy">继续行动后，新的成长记录会自然出现。</view>
+        <view class="achievement-outline-action" bindtap="goToday" hover-class="is-pressed">回到今日</view>
+      </view>
+
+      <view class="achievement-memory-card" bindtap="generateGrowthCard" hover-class="is-pressed" aria-role="button" aria-label="生成成长纪念卡">
+        <view class="achievement-memory-icon"><t-icon name="image" size="34rpx" /></view>
+        <view class="achievement-memory-copy"><view>生成成长纪念卡</view><text>把真实坚持保存下来</text></view>
+        <view class="achievement-memory-action">去生成<t-icon name="chevron-right" size="28rpx" /></view>
+      </view>
+
+      <view class="achievement-bottom-copy"><text></text>你的收藏，见证走过的路与未来的方向<text></text></view>
     </view>
   </scroll-view>
 
@@ -76,12 +138,13 @@
   <view wx:if="{{celebrating}}" class="achievement-celebration" catchtouchmove="noop">
     <view class="achievement-celebration-mask"></view>
     <view class="achievement-celebration-card">
+      <view class="achievement-celebration-seal">新藏</view>
       <view class="achievement-reveal tier-{{celebrating.tier}}"><image src="{{celebrating.icon}}" mode="aspectFit" /></view>
-      <view class="achievement-celebration-kicker">新的成长记录</view>
+      <view class="achievement-celebration-kicker">这一步，已经被好好收藏</view>
       <view class="achievement-celebration-title">{{celebrating.title}}</view>
       <view class="achievement-celebration-copy">{{celebrating.description}}</view>
       <view class="achievement-celebration-date">{{celebrationDate}}</view>
-      <view class="achievement-celebration-button" bindtap="closeCelebration" hover-class="is-pressed">知道了</view>
+      <view class="achievement-celebration-button" bindtap="closeCelebration" hover-class="is-pressed">收入收藏</view>
     </view>
   </view>
 </view>

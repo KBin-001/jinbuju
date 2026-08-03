@@ -148,3 +148,89 @@ page { background: #F8F5EE; }
 .is-disabled { opacity: .52; }
 @media (max-width: 350px) { .profile-content { padding-right: 28rpx; padding-left: 28rpx; } .profile-identity { margin-right: 30rpx; margin-left: 30rpx; gap: 18rpx; } .profile-avatar { width: 92rpx; height: 92rpx; } .profile-user-name { font-size: 31rpx; } .profile-edit-line { min-width: 86rpx; } .goal-card__content, .goal-empty { padding-right: 18rpx; padding-left: 20rpx; gap: 14rpx; } .goal-manage { margin-right: -25rpx; } .goal-card__icon { width: 56rpx; height: 56rpx; } .community-card__content { padding-right: 13rpx; padding-left: 18rpx; gap: 12rpx; } .community-card__icon { width: 54rpx; height: 54rpx; border-radius: 18rpx; } .community-card__title { font-size: 27rpx; } .community-card__title-row { gap: 7rpx; } .community-card__badge { min-width: 52rpx; padding-right: 8rpx; padding-left: 8rpx; font-size: 16rpx; } .community-card__description { font-size: 18rpx; } .community-card__benefits { font-size: 16rpx; letter-spacing: 0; } .community-card__action { min-width: 100rpx; font-size: 18rpx; } .manage-card { padding-right: 21rpx; padding-left: 21rpx; } .manage-row { gap: 11rpx; } .manage-value { max-width: 112rpx; } .customer-service-sheet-panel, .community-sheet-panel { padding-right: 22rpx; padding-left: 22rpx; } .customer-service-qr-frame { width: 548rpx; height: 803rpx; } .customer-service-qr-image { width: 524rpx; height: 779rpx; } .community-qr-frame { width: 530rpx; height: 736rpx; } .community-qr-image { width: 506rpx; height: 712rpx; } .community-privacy-note { font-size: 17rpx; line-height: 27rpx; } }
 @media (prefers-reduced-motion: reduce) { .paper-card { animation: none; } }
+
+/* Semantic type roles for identity, goal summary and account settings. */
+.profile-nav__title { font-size: var(--font-page-title); line-height: var(--line-height-page-title); }
+.profile-user-name { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.profile-display-id,
+.profile-sync-line,
+.goal-persisted,
+.growth-summary,
+.manage-value,
+.manage-copy text + text,
+.community-card__benefits,
+.customer-service-sheet-tip,
+.community-qr-tip,
+.community-qr-expiry { font-size: var(--font-meta); line-height: var(--line-height-meta); }
+.profile-edit-line,
+.goal-manage,
+.profile-label,
+.manage-copy text,
+.sheet-save,
+.sheet-cancel,
+.avatar-choose-btn,
+.community-state-action { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+.section-title { font-size: var(--font-section-title); line-height: var(--line-height-section-title); }
+.section-kicker,
+.sheet-kicker,
+.customer-service-sheet-kicker,
+.community-sheet-kicker { font-size: var(--font-tag); line-height: var(--line-height-tag); }
+.profile-state-title,
+.goal-empty__title,
+.community-card__title,
+.sheet-title,
+.customer-service-sheet-title,
+.community-sheet-title,
+.community-state-title { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.profile-state-copy,
+.sync-notice,
+.goal-empty__copy,
+.community-card__description,
+.profile-helper,
+.customer-service-sheet-copy,
+.community-state-copy,
+.community-ready-copy,
+.community-privacy-note { font-size: var(--font-caption); line-height: var(--line-height-caption); }
+.goal-title { font-size: var(--font-card-title); line-height: var(--line-height-card-title); }
+.goal-empty__button,
+.community-card__action,
+.community-state-action { font-size: var(--font-body-strong); line-height: var(--line-height-body-strong); }
+.community-card__badge { font-size: var(--font-tag); line-height: var(--line-height-tag); }
+
+@media (max-width: 350px) {
+  .profile-nav__title { font-size: var(--font-page-title-compact); line-height: var(--line-height-page-title); }
+  .profile-user-name,
+  .profile-state-title,
+  .goal-empty__title,
+  .community-card__title,
+  .sheet-title,
+  .customer-service-sheet-title,
+  .community-sheet-title,
+  .community-state-title,
+  .goal-title { font-size: var(--font-card-title-compact); line-height: var(--line-height-card-title); }
+  .profile-state-copy,
+  .sync-notice,
+  .goal-empty__copy,
+  .community-card__description,
+  .profile-helper,
+  .customer-service-sheet-copy,
+  .community-state-copy,
+  .community-ready-copy,
+  .community-privacy-note { font-size: var(--font-caption-compact); line-height: var(--line-height-caption); }
+  .profile-display-id,
+  .profile-sync-line,
+  .goal-persisted,
+  .growth-summary,
+  .manage-value,
+  .manage-copy text + text,
+  .community-card__benefits,
+  .customer-service-sheet-tip,
+  .community-qr-tip,
+  .community-qr-expiry { font-size: var(--font-meta-compact); line-height: var(--line-height-meta); }
+  .section-title { font-size: var(--font-section-title-compact); line-height: var(--line-height-section-title); }
+  .section-kicker,
+  .sheet-kicker,
+  .customer-service-sheet-kicker,
+  .community-sheet-kicker,
+  .community-card__badge { font-size: var(--font-tag-compact); line-height: var(--line-height-tag); }
+}

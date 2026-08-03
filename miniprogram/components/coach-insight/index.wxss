@@ -1,18 +1,29 @@
-:host { display: block; margin-top: 24rpx; }
-.coach-insight { position: relative; padding: 28rpx 30rpx 20rpx; border: 1rpx solid var(--progress-border,#ede5d8); border-radius: var(--progress-radius,28rpx); background: var(--progress-surface,#fffdf8); box-shadow: var(--progress-shadow,0 10rpx 30rpx rgba(61,48,28,.045)); font-family: var(--font-family-sans); }
-.coach-insight__title { color: var(--progress-text,#27352f); font-size: 33rpx; font-weight: 600; line-height: 44rpx; }
-.coach-insight__body { margin-top: 18rpx; display: flex; align-items: center; gap: 30rpx; }
-.coach-score { position: relative; width: 154rpx; height: 154rpx; flex: 0 0 auto; }
-.coach-score__copy { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #5f6a65; font-size: 17rpx; line-height: 26rpx; }
-.coach-score__value { color: var(--progress-primary,#17614f); font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; font-size: 38rpx; font-weight: 600; line-height: 44rpx; }
-.coach-score__unit { font-size: 20rpx; }
-.coach-copy { min-width: 0; flex: 1; }
-.coach-conclusion { display: -webkit-box; overflow: hidden; color: #34423d; font-size: 25rpx; font-weight: 500; line-height: 39rpx; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.coach-evidence { margin-top: 12rpx; padding: 11rpx 14rpx; display: flex; align-items: flex-start; gap: 9rpx; border: 0; border-radius: 12rpx; color: #586660; background: rgba(248,243,233,.72); font-size: 20rpx; line-height: 31rpx; }
-.coach-evidence__label { flex: 0 0 auto; color: #8d682a; font-weight: 600; }
-.coach-evidence__copy,.coach-advice__copy { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.coach-advice { margin-top: 12rpx; display: grid; grid-template-columns: auto auto 1fr; align-items: start; gap: 7rpx; color: #4f615b; font-size: 20rpx; line-height: 31rpx; }
-.coach-advice__icon { color: var(--progress-primary,#17614f); }.coach-advice__label { color: var(--progress-primary,#17614f); font-weight: 600; white-space: nowrap; }
-.coach-link { min-height: 50rpx; margin-top: 10rpx; display: flex; align-items: center; justify-content: flex-end; color: #8e6728; font-size: 19rpx; font-weight: 600; }
-.tap-pressed { opacity: .76; }
-@media (max-width: 350px) { .coach-insight { padding-right: 22rpx; padding-left: 22rpx; }.coach-insight__body { align-items: flex-start; gap: 18rpx; }.coach-score { width: 124rpx; height: 124rpx; }.coach-progress { transform: scale(.805); transform-origin: left top; }.coach-score__copy { width: 124rpx; height: 124rpx; }.coach-score__value { font-size: 31rpx; }.coach-conclusion { font-size: 22rpx; line-height: 34rpx; }.coach-evidence { display: block; font-size: 18rpx; line-height: 28rpx; }.coach-evidence__copy { margin-top: 4rpx; }.coach-advice { font-size: 18rpx; line-height: 28rpx; } }
+:host { display: block; margin-top: 28rpx; }
+.coach-insight { position: relative; min-height: 428rpx; overflow: hidden; border: 1rpx solid rgba(197,150,62,.13); border-radius: var(--progress-radius,28rpx); background: #fffdf8; box-shadow: 0 8rpx 26rpx rgba(61,48,28,.035); font-family: var(--font-family-sans); }
+.coach-backdrop { position: absolute; z-index: 0; width: 73%; height: 100%; top: 0; right: 0; opacity: .30; pointer-events: none; }
+.coach-content { position: relative; z-index: 1; padding: 32rpx 30rpx 0; }
+.coach-head { display: flex; align-items: center; justify-content: space-between; gap: 24rpx; }
+.coach-title { display: flex; align-items: center; gap: 12rpx; color: #153f34; font-family: var(--font-family-brand); font-size: var(--font-section-title); font-weight: 550; line-height: var(--line-height-section-title); letter-spacing: 2rpx; }
+.coach-seal { width: auto; height: 31rpx; }
+.coach-analysis { min-height: 54rpx; display: flex; align-items: center; color: var(--progress-primary,#17614f); font-size: var(--font-meta); font-weight: 500; line-height: var(--line-height-meta); white-space: nowrap; }
+.coach-memo { margin-top: 25rpx; display: grid; grid-template-columns: 11rpx minmax(0,1fr); gap: 25rpx; }
+.coach-memo__rail { width: 8rpx; height: 230rpx; margin-top: 3rpx; opacity: .72; }
+.coach-memo__body { min-width: 0; }
+.coach-section { display: flex; flex-direction: column; }
+.coach-section--advice { margin-top: 27rpx; }
+.coach-section__label { color: #a77724; font-family: var(--font-family-brand); font-size: var(--font-tag); font-weight: 550; line-height: var(--line-height-tag); letter-spacing: 2rpx; }
+.coach-conclusion { margin-top: 8rpx; display: -webkit-box; overflow: hidden; color: #17483b; font-family: var(--font-family-brand); font-size: var(--font-card-title); font-weight: 500; line-height: var(--line-height-card-title); letter-spacing: 1rpx; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.coach-evidence { margin-top: 7rpx; display: -webkit-box; overflow: hidden; color: #737976; font-size: var(--font-caption); line-height: var(--line-height-caption); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.coach-advice { margin-top: 7rpx; display: -webkit-box; overflow: hidden; color: #263c35; font-family: var(--font-family-brand); font-size: var(--font-body-strong); font-weight: 500; line-height: var(--line-height-body-strong); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.coach-footer { min-height: 82rpx; margin-top: 24rpx; display: flex; align-items: center; justify-content: space-between; gap: 18rpx; border-top: 1rpx solid rgba(167,119,36,.28); transition: opacity 180ms ease, transform 180ms ease; }
+.coach-action__link { min-height: 60rpx; display: flex; align-items: center; color: var(--progress-primary,#17614f); font-size: var(--font-body); font-weight: 600; line-height: var(--line-height-body); white-space: nowrap; }
+.coach-duration { display: flex; align-items: center; gap: 10rpx; color: #858b87; font-size: var(--font-meta); line-height: var(--line-height-meta); }
+.tap-pressed { opacity: .62; }
+.coach-action--pressed { opacity: .72; transform: scale(.99); }
+@media (max-width: 350px) {
+  .coach-content { padding-right: 24rpx; padding-left: 24rpx; }
+  .coach-title { font-size: var(--font-section-title-compact); }
+  .coach-conclusion { font-size: var(--font-card-title-compact); }
+  .coach-advice { font-size: var(--font-body-compact); }
+  .coach-action__link { font-size: var(--font-meta-compact); }
+}

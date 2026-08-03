@@ -1,7 +1,7 @@
 <view class="trend-card">
   <view class="trend-head">
     <view>
-      <view class="trend-title-row"><view class="trend-title">行动趋势</view><t-icon name="info-circle" size="27rpx" color="#87918C" /></view>
+      <view class="trend-title-row"><view class="trend-title">行动趋势</view><image class="trend-title-seal" src="/assets/today-action-seal-v1.png" mode="heightFix" aria-hidden="true" /></view>
       <view class="trend-period">{{periodLabel}}</view>
     </view>
     <view class="trend-tabs" role="tablist">
@@ -16,9 +16,12 @@
     <view class="trend-empty__action" bindtap="handleEmptyAction">{{hasAnyTask ? '去今日页开始行动' : '添加今日行动'}}</view>
   </view>
   <block wx:else>
-    <view class="chart-legend">
-      <view class="legend-item"><view class="legend-line is-minutes"></view><text>投入时间（分钟）</text></view>
-      <view wx:if="{{completionEnabled}}" class="legend-item"><view class="legend-line is-actions"><view class="legend-dot"></view></view><text>完成行动（项）</text></view>
+    <view class="chart-toolbar">
+      <view class="chart-legend">
+        <view class="legend-item"><view class="legend-line is-minutes"></view><text>投入时间（分钟）</text></view>
+        <view wx:if="{{completionEnabled}}" class="legend-item"><view class="legend-line is-actions"><view class="legend-dot"></view></view><text>完成行动（项）</text></view>
+      </view>
+      <view class="trend-activity">{{summary.activityLabel}}</view>
     </view>
     <view class="chart-shell" bindtap="selectPoint">
       <view class="axis-unit">分钟</view>
@@ -28,26 +31,8 @@
     </view>
     <view class="chart-labels">
       <view wx:for="{{chart.bars}}" wx:key="key" class="chart-label {{item.isToday ? 'is-today' : ''}} {{item.isFuture ? 'is-future' : ''}}">
-        <text class="chart-label__date">{{item.subLabel || item.label}}</text><text class="chart-label__day">{{item.isToday ? '今天' : item.label}}</text>
-      </view>
-    </view>
-    <view class="trend-highlights">
-      <view class="trend-highlight">
-        <view class="trend-highlight__title"><t-icon name="chart-line" size="25rpx" /><text>最高投入</text></view>
-        <view class="trend-highlight__value">{{highlights.maxMinutes.value}}<text class="trend-highlight__unit">{{highlights.maxMinutes.unit}}</text></view>
-        <view class="trend-highlight__label">{{highlights.maxMinutes.label}}</view>
-      </view>
-      <view class="trend-highlight">
-        <view class="trend-highlight__title"><t-icon name="chart-bar" size="25rpx" /><text>平均投入</text></view>
-        <view class="trend-highlight__value">{{highlights.averageMinutes.value}}<text class="trend-highlight__unit">{{highlights.averageMinutes.unit}}</text></view>
-        <view class="trend-highlight__label">{{highlights.averageMinutes.label}}</view>
-      </view>
-      <view class="trend-highlight">
-        <view class="trend-highlight__title"><t-icon name="calendar" size="25rpx" /><text>连续投入天数</text></view>
-        <view class="trend-highlight__value">{{highlights.streak.value}}<text class="trend-highlight__unit">{{highlights.streak.unit}}</text></view>
-        <view class="trend-highlight__label">{{highlights.streak.label}}</view>
+        <text class="chart-label__day">{{item.isToday ? '今天' : item.label}}</text><text class="chart-label__date">{{item.subLabel || item.label}}</text>
       </view>
     </view>
   </block>
-  <view class="history-link" bindtap="openHistory"><text>查看历史记录</text><t-icon name="chevron-right" size="28rpx" /></view>
 </view>
