@@ -16,7 +16,7 @@ import { groupTasksByPriority, PriorityContext, PriorityReason } from "../../uti
 import { getTabHeaderLayout } from "../../utils/tabHeader";
 import { buildReminderAt, nextReminderTime, normalizeReminderTime, reminderDateRange } from "../../utils/actionReminder";
 import { resolveActionIcon } from "../../utils/actionIcon";
-import { QuickDurationRulerController, createQuickDurationRulerController, quickDurationScrollLeftForMinutes, quickDurationStepPixels } from "../../utils/quickDurationRuler";
+import { QuickDurationRulerController, createQuickDurationRulerController, isQuickDurationFeedbackEnabled, quickDurationScrollLeftForMinutes, quickDurationStepPixels } from "../../utils/quickDurationRuler";
 import { abandonActionSession, finishActionSession, getActiveActionSession, getActiveActionSessionContext, pauseActionSession, resumeActionSession, startActionSession } from "../../services/actionSession";
 import { ACTION_DURATION_MAX_MINUTES, ACTION_DURATION_MIN_MINUTES } from "../../config/action";
 
@@ -27,6 +27,8 @@ const QUICK_DURATION_STEP_MINUTES = 5;
 const QUICK_DURATION_MARK_INTERVAL_MINUTES = 15;
 const QUICK_DURATION_TICK_RPX = 24;
 const QUICK_DURATION_SUBSTEP_RPX = QUICK_DURATION_TICK_RPX / (QUICK_DURATION_MARK_INTERVAL_MINUTES / QUICK_DURATION_STEP_MINUTES);
+const QUICK_DURATION_FEEDBACK_STORAGE_KEY = "durationFeedbackEnabled";
+const LEGACY_QUICK_DURATION_FEEDBACK_STORAGE_KEY = "tickSoundEnabled";
 const QUICK_DURATION_MARKS = Array.from(
   { length: QUICK_DURATION_MAX_MINUTES / QUICK_DURATION_MARK_INTERVAL_MINUTES + 1 },
   (_, index) => {
@@ -38,6 +40,24 @@ const QUICK_DURATION_MARKS = Array.from(
 );
 const EXAMPLE_ACTION_TITLES = ["背单词 30 个", "阅读 30 分钟", "听力练习 20 分钟", "真题复盘 1 套"];
 type TaskPrimaryAction = "complete" | "focus" | "active" | "result";
+function readQuickDurationFeedbackEnabled(): boolean {
+  try {
+    const current = wx.getStorageSync(QUICK_DURATION_FEEDBACK_STORAGE_KEY);
+    const legacy = wx.getStorageSync(LEGACY_QUICK_DURATION_FEEDBACK_STORAGE_KEY);
+    return isQuickDurationFeedbackEnabled(current, legacy);
+  } catch {
+    return true;
+  }
+}
+
+function vibrateQuickDurationStep(): void {
+  if (typeof wx.vibrateShort !== "function") return;
+  try {
+    const request = wx.vibrateShort({ type: "light" }) as unknown as { catch?: (handler: () => void) => unknown } | undefined;
+    request?.catch?.(() => undefined);
+  } catch { /* unsupported or failed haptics are intentionally silent */ }
+}
+
 interface ViewTask extends ActionTask {
   displayTitle: string;
   statusLabel: string;
@@ -526,6 +546,7 @@ Page(withAppTheme({
     taskMenuRecommendation: "",
     taskMenuGroups: [] as TaskMenuGroup[],
     inAppMessage: null as InAppMessage | null,
+    durationFeedbackEnabled: true,
     tickSoundEnabled: true,
   },
   profileHandler: null as null | (() => void),
@@ -534,9 +555,6 @@ Page(withAppTheme({
   completionSheetTimer: null as ReturnType<typeof setTimeout> | null,
   sessionTicker: null as ReturnType<typeof setInterval> | null,
   quickDurationRuler: null as QuickDurationRulerController | null,
-  tickAudioMinor: null as any,
-  tickAudioMajor: null as any,
-  tickSoundLastPlay: 0,
   coachRequestKey: "",
   coachRequestGeneration: 0,
   scrollTopCache: 0,
@@ -557,12 +575,13 @@ Page(withAppTheme({
       },
       onPreview: (minutes) => {
         if (!this.data.quickAddVisible || this.data.quickAddMinutes === minutes) return;
-        this.playTickSound(minutes % 30 === 0);
         this.setData({
           quickAddMinutes: minutes,
           quickAddHourText: durationHourCopy(minutes),
         });
       },
+      isFeedbackEnabled: () => this.data.quickAddVisible && this.data.durationFeedbackEnabled !== false,
+      onFeedback: () => vibrateQuickDurationStep(),
       onSnap: ({ minutes, scrollLeft }) => {
         if (!this.data.quickAddVisible) return;
         this.setData({
@@ -588,7 +607,8 @@ Page(withAppTheme({
     on("profile:update", this.profileHandler);
     on("goal:focus:update", this.focusGoalHandler);
     on("action-session:update", this.sessionUpdateHandler);
-    this.initTickSounds();
+    const durationFeedbackEnabled = readQuickDurationFeedbackEnabled();
+    this.setData({ durationFeedbackEnabled, tickSoundEnabled: durationFeedbackEnabled });
   },
   onReady() {},
   onHide() { this.stopSessionTicker(); },
@@ -614,8 +634,6 @@ Page(withAppTheme({
       off("action-session:update", this.sessionUpdateHandler);
       this.sessionUpdateHandler = null;
     }
-    if (this.tickAudioMinor) { this.tickAudioMinor.destroy(); this.tickAudioMinor = null; }
-    if (this.tickAudioMajor) { this.tickAudioMajor.destroy(); this.tickAudioMajor = null; }
   },
   onShow() {
     (this as any).getTabBar?.()?.syncSelected?.();
@@ -1149,37 +1167,13 @@ Page(withAppTheme({
       wx.showToast({ title: error instanceof Error ? error.message : "提醒时间无效", icon: "none" });
     }
   },
-  initTickSounds() {
-    if (this.tickAudioMinor || this.tickAudioMajor) return;
-    try {
-      const stored = wx.getStorageSync("tickSoundEnabled");
-      if (stored === false) { this.setData({ tickSoundEnabled: false }); return; }
-    } catch { /* storage read failed — keep default on */ }
-    const minor = wx.createInnerAudioContext();
-    minor.src = "/assets/sounds/tick-minor.wav";
-    minor.volume = 0.3;
-    minor.preload = true;
-    this.tickAudioMinor = minor;
-    const major = wx.createInnerAudioContext();
-    major.src = "/assets/sounds/tick-major.wav";
-    major.volume = 0.4;
-    major.preload = true;
-    this.tickAudioMajor = major;
-  },
-  playTickSound(isMajor: boolean) {
-    if (!this.data.tickSoundEnabled) return;
-    const now = Date.now();
-    if (now - this.tickSoundLastPlay < 50) return;
-    this.tickSoundLastPlay = now;
-    const ctx = isMajor ? this.tickAudioMajor : this.tickAudioMinor;
-    if (!ctx) return;
-    try { ctx.stop(); ctx.seek(0); ctx.play(); } catch { /* playback failed — silently ignore */ }
-  },
   toggleTickSound() {
-    const enabled = !this.data.tickSoundEnabled;
-    this.setData({ tickSoundEnabled: enabled });
-    try { wx.setStorageSync("tickSoundEnabled", enabled); } catch { /* storage write failed */ }
-    if (enabled && !this.tickAudioMinor) this.initTickSounds();
+    const enabled = !this.data.durationFeedbackEnabled;
+    this.setData({ durationFeedbackEnabled: enabled, tickSoundEnabled: enabled });
+    try {
+      wx.setStorageSync(QUICK_DURATION_FEEDBACK_STORAGE_KEY, enabled);
+      wx.setStorageSync(LEGACY_QUICK_DURATION_FEEDBACK_STORAGE_KEY, enabled);
+    } catch { /* storage write failure is intentionally silent */ }
   },
   onQuickDurationDragStart() {
     if (!this.data.quickAddVisible) return;

@@ -5,6 +5,11 @@ export const QUICK_DURATION_RULER_SUBSTEP_RPX = QUICK_DURATION_RULER_TICK_RPX
   / (QUICK_DURATION_RULER_MARK_INTERVAL_MINUTES / QUICK_DURATION_RULER_STEP_MINUTES);
 export const QUICK_DURATION_RULER_SETTLE_DELAY_MS = 120;
 export const QUICK_DURATION_RULER_PROGRAMMATIC_GUARD_MS = 320;
+export const QUICK_DURATION_RULER_FEEDBACK_MIN_INTERVAL_MS = 70;
+
+export function isQuickDurationFeedbackEnabled(currentPreference: unknown, legacyPreference: unknown): boolean {
+  return currentPreference !== false && legacyPreference !== false;
+}
 
 export type QuickDurationRulerTimer = unknown;
 
@@ -22,9 +27,13 @@ export interface QuickDurationRulerOptions {
   getStepPixels?: () => number;
   settleDelayMs?: number;
   programmaticGuardMs?: number;
+  feedbackMinIntervalMs?: number;
+  now?: () => number;
+  isFeedbackEnabled?: () => boolean;
   schedule?: (callback: () => void, delayMs: number) => QuickDurationRulerTimer;
   cancel?: (timer: QuickDurationRulerTimer) => void;
   onPreview?: (minutes: number) => void;
+  onFeedback?: (minutes: number) => void | PromiseLike<unknown>;
   onSnap?: (snap: QuickDurationSnap) => void;
 }
 
@@ -105,6 +114,8 @@ export function createQuickDurationRulerController(options: QuickDurationRulerOp
   const stepMinutes = positiveOr(Number(options.stepMinutes), QUICK_DURATION_RULER_STEP_MINUTES);
   const settleDelayMs = Math.max(0, finiteOr(Number(options.settleDelayMs), QUICK_DURATION_RULER_SETTLE_DELAY_MS));
   const programmaticGuardMs = Math.max(0, finiteOr(Number(options.programmaticGuardMs), QUICK_DURATION_RULER_PROGRAMMATIC_GUARD_MS));
+  const feedbackMinIntervalMs = Math.max(0, finiteOr(Number(options.feedbackMinIntervalMs), QUICK_DURATION_RULER_FEEDBACK_MIN_INTERVAL_MS));
+  const now = options.now || (() => Date.now());
   const schedule = options.schedule || ((callback: () => void, delayMs: number) => setTimeout(callback, delayMs));
   const cancel = options.cancel || ((timer: QuickDurationRulerTimer) => clearTimeout(timer as ReturnType<typeof setTimeout>));
   const getStepPixels = options.getStepPixels || (() => positiveOr(Number(options.stepPixels), 1));
@@ -117,6 +128,30 @@ export function createQuickDurationRulerController(options: QuickDurationRulerOp
   let programmaticTarget: number | null = null;
   let lastRealScrollLeft = quickDurationScrollLeftForMinutes(minMinutes, getStepPixels(), minMinutes, maxMinutes, stepMinutes);
   let previewMinutes = clampQuickDurationMinutes(minMinutes, minMinutes, maxMinutes, stepMinutes);
+  let lastFeedbackMinutes: number | null = null;
+  let lastFeedbackAt: number | null = null;
+
+  const clearFeedbackState = (): void => {
+    lastFeedbackMinutes = null;
+    lastFeedbackAt = null;
+  };
+
+  const notifyFeedback = (minutes: number): void => {
+    if (!options.onFeedback || options.isFeedbackEnabled?.() === false || lastFeedbackMinutes === minutes) return;
+    lastFeedbackMinutes = minutes;
+    let timestamp = Date.now();
+    try {
+      timestamp = finiteOr(Number(now()), timestamp);
+    } catch { /* feedback timing must never affect the ruler */ }
+    if (lastFeedbackAt !== null && timestamp - lastFeedbackAt < feedbackMinIntervalMs) return;
+    lastFeedbackAt = timestamp;
+    try {
+      const result = options.onFeedback(minutes);
+      if (result && typeof (result as any).then === "function") {
+        Promise.resolve(result).catch(() => undefined);
+      }
+    } catch { /* unsupported or failed feedback is intentionally silent */ }
+  };
 
   const clearSettleTimer = (): void => {
     if (settleTimer === null) return;
@@ -185,6 +220,7 @@ export function createQuickDurationRulerController(options: QuickDurationRulerOp
     if (destroyed) return { minutes: previewMinutes, scrollLeft: lastRealScrollLeft, animate: false };
     interactionToken += 1;
     clearSettleTimer();
+    clearFeedbackState();
     const normalized = clampQuickDurationMinutes(minutes, minMinutes, maxMinutes, stepMinutes);
     const scrollLeft = quickDurationScrollLeftForMinutes(normalized, getStepPixels(), minMinutes, maxMinutes, stepMinutes);
     previewMinutes = normalized;
@@ -215,7 +251,13 @@ export function createQuickDurationRulerController(options: QuickDurationRulerOp
     );
     const previewChanged = minutes !== previewMinutes;
     previewMinutes = minutes;
-    if (previewChanged) options.onPreview?.(minutes);
+    if (previewChanged) {
+      try {
+        options.onPreview?.(minutes);
+      } finally {
+        notifyFeedback(minutes);
+      }
+    }
     scheduleSettle();
     return { ignored: false, minutes, previewChanged };
   };
@@ -233,6 +275,7 @@ export function createQuickDurationRulerController(options: QuickDurationRulerOp
     interactionToken += 1;
     clearSettleTimer();
     clearProgrammaticGuard();
+    clearFeedbackState();
     previewMinutes = clampQuickDurationMinutes(minMinutes, minMinutes, maxMinutes, stepMinutes);
     lastRealScrollLeft = quickDurationScrollLeftForMinutes(previewMinutes, getStepPixels(), minMinutes, maxMinutes, stepMinutes);
   };
